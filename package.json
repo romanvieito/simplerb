@@ -12,6 +12,7 @@
     "@headlessui/react": "^1.7.17",
     "@headlessui/tailwindcss": "^0.1.2",
     "@heroicons/react": "^2.0.13",
+    "@mui/icons-material": "^5.15.16",
     "@mui/material": "^5.15.15",
     "@next/third-parties": "^14.2.1",
     "@stripe/stripe-js": "^3.2.0",

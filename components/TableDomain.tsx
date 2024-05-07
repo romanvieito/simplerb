@@ -3,11 +3,14 @@ import { Toaster, toast } from "react-hot-toast";
 import mixpanel from "../utils/mixpanel-config";
 import React, { useState } from 'react';
 import { Table, TableHead, TableBody, TableCell, TableContainer, TableRow, Paper, TablePagination, Tooltip } from '@mui/material';
+import IconButton from '@mui/material/IconButton';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
+import { Favorite } from "@mui/icons-material";
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -19,6 +22,24 @@ const style = {
   border: '1px #000',
   boxShadow: 24,
   p: 2,
+};
+
+const checkAvailability = async (domain: string) => {
+  toast(
+    (t) => (
+      <div>
+        Check Availability for <b>{domain}</b> coming soon
+      </div>
+    ),
+    {
+      icon: "🔍",
+    }
+  );
+  // Mixpanel tracking for button click
+  mixpanel.track("Buy domain", {
+    // You can add properties to the event as needed
+    domain: domain,
+  });
 };
 
 const checkBuyDomain = async (domain: string) => {
@@ -86,35 +107,38 @@ const CellDomain: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
     );  
 };
 
-const CellStatus: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
-    const domainStatus = dinfo.available
-    ? "Available"
-    : "Not available";
-  const domainClass = dinfo.available
-    ? "text-green-600"
-    : "text-red-300";  
-    
-    return (
-        admin ? 
-        <>
-        <span className={`font-bold ${domainClass}`}>
-            {domainStatus}
-        </span>        
-        </> : 
-        <>*
-        </>
-    )
+const CellCheckAvailability: React.FC<DomainInfoItem> = ({ dinfo }) => {  
+  return (
+    <IconButton aria-label="toggle visibility">
+      <Tooltip
+        title={
+          <div>
+            <p>Click me to check availability</p>
+          </div>
+        }
+      >
+        <VisibilityIcon onClick={() =>
+            checkAvailability(getCleanDomainName(dinfo))
+        }/>
+      </Tooltip>      
+    </IconButton>
+  )
 };
 
 const CellRate: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
-  return (
+  /*return (
       admin ? 
       <>
         <span className="text-lg font-medium mr-4 flex-1 hover:underline">{dinfo.rate}</span>
       </> : 
       <>*
       </>
-  )
+  )*/
+  return (
+      <>
+        <span className="text-lg font-medium mr-4 flex-1 hover:underline">{dinfo.rate}</span>
+      </>
+  )  
 };
 
 const CellBuyDomain: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
@@ -204,7 +228,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin }) => {
                     <Tooltip
                       title={
                         <div>
-                          <p>*Premium feature</p>
+                          <p>*{" "}Premium feature</p>
                         </div>
                       }
                     >
@@ -300,22 +324,16 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin }) => {
               .map((row, index) => (
                 <TableRow key={index}>
                   <TableCell component="th" scope="row">
+                    <section style={{ display: 'flex', alignItems: 'center' }}>
                     <CellDomain dinfo={row} admin={admin} />
+                    <CellCheckAvailability dinfo={row} />
+                    </section>
                     <CellBuyDomain dinfo={row} admin={admin} />
                     <CellCheckSocials dinfo={row} admin={admin} />
                   </TableCell>
-                  {/* <TableCell align="center">
-                    <CellStatus dinfo={row} admin={admin} />
-                  </TableCell> */}
                   <TableCell align="center">
                     <CellRate dinfo={row} admin={admin} />
                   </TableCell>
-                  {/* <TableCell align="center">
-                    <CellBuyDomain dinfo={row} admin={admin} />
-                  </TableCell>
-                  <TableCell align="center">
-                    <CellCheckSocials dinfo={row} admin={admin} />
-                  </TableCell> */}
                 </TableRow>
               ))}
           </TableBody>

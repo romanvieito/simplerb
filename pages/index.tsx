@@ -10,9 +10,7 @@ import LoadingDots from "../components/LoadingDots";
 import { Tooltip } from "@mui/material";
 import { 
   COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN, 
-  COUNT_DOMAINS_TO_SEARCH_YES_ADMIN, 
-  COUNT_ITERATIONS_SEARCH_DOMAINS, 
-  COUNT_SHOW_DOMAINS_AVAILABILITY, 
+  COUNT_DOMAINS_TO_SEARCH_YES_ADMIN,
   DomainInfo } from "../utils/Definitions";
 
 import {
@@ -31,24 +29,6 @@ import { convertTextRateToJson, addRateToDomainInfo } from "../utils/TextRate";
 
 type Domain = string;
 
-const trackingDomainAvailables = (data: any, bio: any, vibe: any, credits: any) => {
-    //TODO llevarse este code pa una fuction externa, tracking domain availables
-    const domainAvailability = data.map((d: DomainInfo) => [
-      d.domain,
-      d.available,
-    ]);
-
-    // Mixpanel tracking for button click
-    mixpanel.track("Domain Availability", {
-      // You can add properties to the event as needed
-      user_prompt: bio,
-      vibe: vibe,
-      credits: credits,
-      domainData: JSON.stringify(domainAvailability),
-    });
-    //Hasta aqui el TODO      
-}
-
 const Home: NextPage = () => {
   const [loading, setLoading] = useState(false);
   const [bio, setBio] = useState("");
@@ -64,9 +44,7 @@ const Home: NextPage = () => {
 
   //States to validate disponibilidad del domain name
   // const [domains, setDomains] = useState('');
-  const [availability, setAvailability] = useState<DomainInfo[]>([]);
-
-  const [countSearch, setCountSearch] = useState<number>(3);
+  const [domainfounded, setDomainFounded] = useState<DomainInfo[]>([]);
 
   // Get the user from clerk
   const { isLoaded, user } = useUser();
@@ -112,67 +90,13 @@ const Home: NextPage = () => {
     }
   };
 
-  const checkAvailability = async (tempGeneratedDomains: Domain[]) => {
-    
-    if(credits === 0) return;
-
-    setLoading(true);
-    setAvailability([]);
-    
-    try {
-      const response = await fetch("/api/check-availability", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ domains: tempGeneratedDomains }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-
-      trackingDomainAvailables(data, bio, vibe, credits);  
-
-      // Check if there are any available domains, and show a toast if there are none
-      const availableDomains = data.filter((d: DomainInfo) => d.available);
-
-      if(admin) {
-        const availableDomainsWithRate = await getDomainNamesWithRate(availableDomains);
-        setAvailability(availableDomainsWithRate);
-      }
-      else 
-        setAvailability(data);
-
-      if (availableDomains.length === 0) {
-        toast(
-          (t) => (
-            <div>
-              No available domains found. Please <b>provide more details</b> or{" "}
-              <b>try different keywords</b> for better results.
-            </div>
-          ),
-          {
-            icon: "💡",
-            duration: 10000,
-          }
-        );
-      }
-    
-      return availableDomains.length;
-
-    } catch (error) {
-      console.error("Failed to fetch domains availability:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const countDomain = admin ? 
+  const countDomainToPrompt = admin ? 
     stringGenerateCountDomain(COUNT_DOMAINS_TO_SEARCH_YES_ADMIN) : 
     stringGenerateCountDomain(COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN);
+
+  const countShowDomain = admin ? 
+    COUNT_DOMAINS_TO_SEARCH_YES_ADMIN : 
+    COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN;
 
   // debugger;
   // console.log({ generatedBios });
@@ -180,170 +104,120 @@ const Home: NextPage = () => {
 
   const searchDomain = async () => {
 
-    let exclude = ""; 
     let tempGeneratedDomains = "";
-    let countDomainAvailability = 0;
+    let domainNames: DomainInfo[] = [];
+
+    setGeneratedBios("");
 
     try {
-      do {
-        // const prompt = `${countDomain}, that adhere to the following criteria for an effective and marketable online presence:
-        // Brevity: The domain names should be concise, aiming to keep the length as short as possible.
-        // Simplicity: Each domain name must be easy to spell and pronounce. This ensures the name is memorable and facilitates brand recall.
-        // Top-Level Domain: All suggested domain names should use the .com extension to maintain universal recognition and accessibility.
-        // Good Examples:
-        // Starbucks.com: Simple, memorable, and concise.
-        // Nike.com: Extremely short and iconic.
-        // Apple.com: Easy to spell and pronounce.
-        // JetBlue.com: Descriptive and easy to remember.
-        // Ambient.com: Simple and evocative.
-        // Amazon.com: Short, memorable, and now synonymous with online shopping.
-        // Examples to Avoid:
-        // Axelon.com: Sounds like a common English word but isn't, which might lead to confusion.
-        // Altus.com: Another pseudo-English word that lacks immediate brandability.
-        // Prius.com: Can be challenging to pronounce for non-native speakers, potentially hindering global brand recall.
-        // Please craft domain names that align with these standards, focusing on creating an engaging and memorable online identity ${bio ? `and prioritize this info: ` + bio : 'random'}.
-        //  ${
-        //   vibe === "Friendly"
-        //     ? "The domains should feel relaxed and welcoming, suitable for personal blogs, small businesses, or customer-oriented services that emphasize a community feel."
-        //     : vibe === "Professional"
-        //     ? "The domains should convey credibility and professionalism, ideal for consulting firms or any business where trust is paramount."
-        //     : vibe === "Creative"
-        //     ? "The domains should be unique and memorable, inspiring creativity, ideal for design studios, tech innovators, or any business that prides itself on thinking outside the box."
-        //     : vibe === "Sophisticated"
-        //     ? "The domains should embody sophistication and elegance, perfect for luxury brands, exclusive clubs, or high-end service industries."
-        //     : ""
-        //  }
-        // ${exclude}`;
+      const prompt = `
+        Role: You are Seth Godin, tasked with creating domain names. ${
+          bio ? `Client's input: ` + bio : ""
+        }.
+        Objective: Your mission is to develop ${countDomainToPrompt} that meet the following criteria for an effective and marketable online presence:
+        1. Memorable: Craft domain names that maximize brand recall and leave a lasting impression.
+        2. Brevity: Keep the domain names concise, aiming for short lengths.
+        3. Simplicity: Ensure each domain name is easy to spell and pronounce.
+        4. TLD: Craft memorable web addresses exploring diverse and inventive combinations of domain names and TLDs, such as .com, .net, .io, .co, .ai, .app, .me, .biz, .club, and .cc.
 
-        const prompt = `
-          Role: You are Seth Godin, tasked with creating domain names. ${
-            bio ? `Client's input: ` + bio : ""
-          }.
-          Objective: Your mission is to develop ${countDomain} that meet the following criteria for an effective and marketable online presence:
-          1. Memorable: Craft domain names that maximize brand recall and leave a lasting impression.
-          2. Brevity: Keep the domain names concise, aiming for short lengths.
-          3. Simplicity: Ensure each domain name is easy to spell and pronounce.
-          4. TLD: Craft memorable web addresses exploring diverse and inventive combinations of domain names and TLDs, such as .com, .net, .io, .co, .ai, .app, .me, .biz, .club, and .cc.
+        Good Examples:
+        - Starbucks.com: Simple, memorable, and concise.
+        - Apple.com: Easy to spell and pronounce.
+        - JetBlue.com: Descriptive and easy to remember.
+        - Ambient.com: Simple and evocative.
+        - Amazon.com: Short, memorable, and now synonymous with online shopping.
 
-          Good Examples:
-          - Starbucks.com: Simple, memorable, and concise.
-          - Apple.com: Easy to spell and pronounce.
-          - JetBlue.com: Descriptive and easy to remember.
-          - Ambient.com: Simple and evocative.
-          - Amazon.com: Short, memorable, and now synonymous with online shopping.
+        Examples to Avoid:
+        - Axelon.com: Sounds like a common English word but isn't, leading to potential confusion.
+        - Altus.com: Lacks immediate brandability.
+        - Prius.com: Pronunciation challenges may hinder global brand recall.
 
-          Examples to Avoid:
-          - Axelon.com: Sounds like a common English word but isn't, leading to potential confusion.
-          - Altus.com: Lacks immediate brandability.
-          - Prius.com: Pronunciation challenges may hinder global brand recall.
-
-          Please craft domain names that ${
-            vibe === "Friendly"
-              ? "feel relaxed and welcoming, suitable for personal blogs, small businesses, or customer-oriented services that emphasize a community feel."
-              : vibe === "Professional"
-              ? "convey credibility and professionalism, ideal for consulting firms or any business where trust is paramount."
-              : vibe === "Creative"
-              ? "are unique, inspiring creativity, ideal for design studios, tech innovators, or any business that prides itself on thinking outside the box."
-              : vibe === "Sophisticated"
-              ? "embody sophistication and elegance, perfect for luxury brands, exclusive clubs, or high-end service industries."
-              : ""
-          }
-        ${bio ? `Keep in mind the client's focus on ` + bio : ""}.
-        ${exclude}`;
-
-        // console.log({ prompt });
-
-        tempGeneratedDomains = "";
-        countDomainAvailability = 0;
-        setGeneratedBios("");
-
-        const response = await fetch(isGPT ? "/api/openai" : "/api/mistral", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            prompt,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(response.statusText);
+        Please craft domain names that ${
+          vibe === "Friendly"
+            ? "feel relaxed and welcoming, suitable for personal blogs, small businesses, or customer-oriented services that emphasize a community feel."
+            : vibe === "Professional"
+            ? "convey credibility and professionalism, ideal for consulting firms or any business where trust is paramount."
+            : vibe === "Creative"
+            ? "are unique, inspiring creativity, ideal for design studios, tech innovators, or any business that prides itself on thinking outside the box."
+            : vibe === "Sophisticated"
+            ? "embody sophistication and elegance, perfect for luxury brands, exclusive clubs, or high-end service industries."
+            : ""
         }
+      ${bio ? `Keep in mind the client's focus on ` + bio : ""}.`;
 
-        // This data is a ReadableStream
-        const data = response.body;
-        if (!data) {
-          return;
-        }
+      // console.log({ prompt });
 
-        const onParseGPT = (event: ParsedEvent | ReconnectInterval) => {
-          if (event.type === "event") {
-            const data = event.data;
-            try {
-              const text = JSON.parse(data).text ?? "";
-              tempGeneratedDomains += text; // Update the temporary variable
-              setGeneratedBios((prev) => prev + text);
-            } catch (e) {
-              console.error(e);
-            }
-          }
-        };
+      const response = await fetch(isGPT ? "/api/openai" : "/api/mistral", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt,
+        }),
+      });
 
-        const onParseMistral = (event: ParsedEvent | ReconnectInterval) => {
-          if (event.type === "event") {
-            const data = event.data;
-            try {
-              const text = JSON.parse(data).choices[0].text ?? "";
-              setGeneratedBios((prev) => prev + text);
-            } catch (e) {
-              console.error(e);
-            }
-          }
-        };
-
-        const onParse = isGPT ? onParseGPT : onParseMistral;
-
-        // https://web.dev/streams/#the-getreader-and-read-methods
-        const reader = data.getReader();
-        const decoder = new TextDecoder();
-        const parser = createParser(onParse);
-        let done = false;
-        while (!done) {
-          const { value, done: doneReading } = await reader.read();
-          done = doneReading;
-          const chunkValue = decoder.decode(value);
-          parser.feed(chunkValue);
-        }
-
-        // const domainNamesText = "domain1.com\ndomain2.net\ndomain3.org";
-        const domainNamesText = tempGeneratedDomains
-          .split("\n") // Split the string by newline to create an array
-          .map((domain) => domain.replace(/^\d+\.\s*/, ""))
-          .filter((domain) => domain);
-
-        countDomainAvailability = await checkAvailability(domainNamesText);
-
-        if (countDomainAvailability > 0) {
-          break;
-        } else {
-          if (!admin) break;
-          else if (countSearch > COUNT_ITERATIONS_SEARCH_DOMAINS)
-            exclude += ", ";
-          else exclude = "Exclude: ";
-          exclude += domainNamesText.join(", ");
-          setCountSearch((prevCount: number) => prevCount - 1);
-        }
+      if (!response.ok) {
+        throw new Error(response.statusText);
       }
-      while(countSearch > COUNT_ITERATIONS_SEARCH_DOMAINS);
+
+      // This data is a ReadableStream
+      const data = response.body;
+      if (!data) {
+        return;
+      }
+
+      const onParseGPT = (event: ParsedEvent | ReconnectInterval) => {
+        if (event.type === "event") {
+          const data = event.data;
+          try {
+            const text = JSON.parse(data).text ?? "";
+            tempGeneratedDomains += text; // Update the temporary variable
+            setGeneratedBios((prev) => prev + text);
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      };
+
+      const onParseMistral = (event: ParsedEvent | ReconnectInterval) => {
+        if (event.type === "event") {
+          const data = event.data;
+          try {
+            const text = JSON.parse(data).choices[0].text ?? "";
+            setGeneratedBios((prev) => prev + text);
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      };
+
+      const onParse = isGPT ? onParseGPT : onParseMistral;
+
+      // https://web.dev/streams/#the-getreader-and-read-methods
+      const reader = data.getReader();
+      const decoder = new TextDecoder();
+      const parser = createParser(onParse);
+      let done = false;
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        const chunkValue = decoder.decode(value);
+        parser.feed(chunkValue);
+      }
+
+      const tempDomainNamesText = tempGeneratedDomains
+        .split("\n") // Split the string by newline to create an array
+        .map((domain) => domain.replace(/^\d+\.\s*/, ""))
+        .filter((domain) => domain);
+
+      tempDomainNamesText.map((domain)=>{ domainNames.push({domain})});  
+
     } catch (error: any) {
       throw new Error(error);
     }
 
-    return {
-      'textdomain': tempGeneratedDomains,
-      'countdomainavailability': countDomainAvailability
-    }    
+    return domainNames;
   }
 
   const generateDom = async (e: any) => {
@@ -377,7 +251,7 @@ const Home: NextPage = () => {
 
     try {
 
-      const result = await searchDomain();
+      const resultDomainFounded = await searchDomain();
 
       // This code runs after the try and catch blocks, regardless of the outcome
       setLoading(false); // Always stop the loading indicator when done
@@ -390,7 +264,7 @@ const Home: NextPage = () => {
         user_prompt: bio,
         vibe: vibe,
         credits: credits,
-        domains_generated: result?.textdomain,
+        domains_generated: resultDomainFounded,
       });
 
       // In case the user signs out while on the page.
@@ -405,12 +279,20 @@ const Home: NextPage = () => {
         return;
       }
       
-      const shouldDeductCredits = !admin || (result?.countdomainavailability ?? 0) > 0;
-      
-      if (shouldDeductCredits) {
+      if (credits > 0) {
         setCredits((prevCredits: number) => prevCredits - 1);
         await setUserByEmail(credits - 1, email);
-      }      
+      }
+
+      if(resultDomainFounded) {
+        //if(admin) {
+          const DomainsWithRate = await getDomainNamesWithRate(resultDomainFounded);
+          setDomainFounded(DomainsWithRate);
+        //}
+        //else {
+        //  setDomainFounded(resultDomainFounded);
+        //}      
+      } else setDomainFounded([]);
 
       setNumberDomainsCreated(numberDomainsCreated + 3);
       scrollToBios();
@@ -470,16 +352,16 @@ const Home: NextPage = () => {
     }
   };
 
-  const getDomainNamesWithRate = async (availableDomains: DomainInfo[]) => {
+  const getDomainNamesWithRate = async (foundedomain: DomainInfo[]) => {
     
-    if (availableDomains.length === 0) return availableDomains;
+    if (foundedomain.length === 0) return foundedomain;
     
-    let resultAvailableDomains = [...availableDomains];
+    let resultDomainsRate = [...foundedomain];
     
-    const domainListText = availableDomains
+    const domainListText = foundedomain
       .map((item, index) => `${index + 1}. ${item.domain}`)
       .join('\n');
-  
+        
     const prompt = `Rate the following domain names based on three key criteria: Memorability, Simplicity, and Brevity. Each category should be scored on a scale from 0 to 10, where 0 indicates very poor and 10 means excellent. It also provides a average score. I don't need a summary at the end. If result is one domain, add domain.
       Domain Names to Rate:
       ${domainListText}`;
@@ -543,13 +425,13 @@ const Home: NextPage = () => {
       let jsonRate = null;
       try {
         jsonRate = convertTextRateToJson(dataRate);
-        resultAvailableDomains = addRateToDomainInfo(resultAvailableDomains, jsonRate)
+        resultDomainsRate = addRateToDomainInfo(resultDomainsRate, jsonRate)        
       } catch (error) {
         console.log('Error: ', error);
       }
     }    
   
-    return resultAvailableDomains.slice(0, COUNT_SHOW_DOMAINS_AVAILABILITY);
+    return resultDomainsRate;
   }
 
   // Handler function to track the event when the button is clicked
@@ -706,7 +588,7 @@ const Home: NextPage = () => {
         <hr className="h-px bg-gray-700 border-1 dark:bg-gray-700" />
         {!loading && user && (
           <div className="space-y-10 my-10">
-            {generatedBios && availability.length > 0 && (
+            {generatedBios && (
               <>
                 <div>
                   <h2
@@ -717,7 +599,7 @@ const Home: NextPage = () => {
                   </h2>
                 </div>
                 <div>
-                  <TableDomain rows={availability} admin={admin} />
+                  <TableDomain rows={domainfounded.slice(0, countShowDomain)} admin={admin} />
                 </div>
               </>
             )}
