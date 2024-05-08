@@ -256,7 +256,6 @@ const Home: NextPage = () => {
       const resultDomainFounded = await searchDomain();
 
       // This code runs after the try and catch blocks, regardless of the outcome
-      setLoading(false); // Always stop the loading indicator when done
 
       // aqui iba lo tomar los dominios encontrados
 
@@ -296,6 +295,8 @@ const Home: NextPage = () => {
         //}      
       }
 
+      setLoading(false); // Always stop the loading indicator when done
+            
       setNumberDomainsCreated(numberDomainsCreated + 3);
       scrollToBios();
 
