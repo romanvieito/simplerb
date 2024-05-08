@@ -296,18 +296,19 @@ const Home: NextPage = () => {
       }
 
       setLoading(false); // Always stop the loading indicator when done
-            
+
       setNumberDomainsCreated(numberDomainsCreated + 3);
       scrollToBios();
 
     } catch (error) {
+
+      setLoading(false);
+      
       // Log the error or display an error message to the user
       console.error("An error occurred:", error);
       toast.error(
         "An error occurred while processing your request. Please try again."
       );
-    } finally {
-
     }
   };
 
