@@ -1,6 +1,7 @@
 // At the top of your file, define the interface
 export interface DomainInfo {
     domain: string;
+    available?: number;
     error?: string;
     rate?: number;    
 }
@@ -8,6 +9,7 @@ export interface DomainInfo {
 export interface DomainInfoArray {
     rows: DomainInfo[];
     admin: boolean;
+    functionDomainFounded?: any;
 }
 
 export interface DomainInfoItem {

@@ -223,6 +223,8 @@ const Home: NextPage = () => {
   const generateDom = async (e: any) => {
     e.preventDefault();    
 
+    setDomainFounded([]);
+
     // Mixpanel tracking for button click
     mixpanel.track("Find Domain Click", {
       // You can add properties to the event as needed
@@ -292,7 +294,7 @@ const Home: NextPage = () => {
         //else {
         //  setDomainFounded(resultDomainFounded);
         //}      
-      } else setDomainFounded([]);
+      }
 
       setNumberDomainsCreated(numberDomainsCreated + 3);
       scrollToBios();
@@ -588,7 +590,7 @@ const Home: NextPage = () => {
         <hr className="h-px bg-gray-700 border-1 dark:bg-gray-700" />
         {!loading && user && (
           <div className="space-y-10 my-10">
-            {generatedBios && (
+            {generatedBios && domainfounded.length > 0 && (
               <>
                 <div>
                   <h2
@@ -599,7 +601,7 @@ const Home: NextPage = () => {
                   </h2>
                 </div>
                 <div>
-                  <TableDomain rows={domainfounded.slice(0, countShowDomain)} admin={admin} />
+                  <TableDomain rows={domainfounded.slice(0, countShowDomain)} admin={admin} functionDomainFounded={setDomainFounded}/>
                 </div>
               </>
             )}

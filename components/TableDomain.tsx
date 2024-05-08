@@ -1,16 +1,14 @@
-import { DomainInfoArray, DomainInfoItem } from "../utils/Definitions";
+import { DomainInfo, DomainInfoArray, DomainInfoItem } from "../utils/Definitions";
 import { Toaster, toast } from "react-hot-toast";
 import mixpanel from "../utils/mixpanel-config";
 import React, { useState } from 'react';
-import { Table, TableHead, TableBody, TableCell, TableContainer, TableRow, Paper, TablePagination, Tooltip } from '@mui/material';
+import { Table, TableHead, TableBody, TableCell, TableContainer, TableRow, Paper, TablePagination, Tooltip, Switch } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
-import { Favorite } from "@mui/icons-material";
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -24,22 +22,42 @@ const style = {
   p: 2,
 };
 
-const checkAvailability = async (domain: string) => {
-  toast(
-    (t) => (
-      <div>
-        Check Availability for <b>{domain}</b> coming soon
-      </div>
-    ),
-    {
-      icon: "🔍",
+const checkAvailability = async (domain: string) => {  
+  try {    
+    const response = await fetch("/api/check-availability", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ domains: [domain] }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.statusText}`);
     }
-  );
-  // Mixpanel tracking for button click
-  mixpanel.track("Buy domain", {
-    // You can add properties to the event as needed
-    domain: domain,
-  });
+
+    const data = await response.json();
+    
+    if(!data) return -1;
+
+    mixpanel.track("Checked availability successful", {
+      // You can add properties to the event as needed
+      domain: data[0].domain,
+      available: data[0].available
+    });
+
+    if(data[0].available) return 1;
+    
+    return 2;
+  } catch (error: any) {
+    mixpanel.track("Checked availability with error", {
+      // You can add properties to the event as needed
+      domain: domain,
+      available: undefined,
+      error: error
+    });    
+    throw new Error(error);
+  }
 };
 
 const checkBuyDomain = async (domain: string) => {
@@ -107,19 +125,85 @@ const CellDomain: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
     );  
 };
 
-const CellCheckAvailability: React.FC<DomainInfoItem> = ({ dinfo }) => {  
+const CellResultAvailability: React.FC<DomainInfoItem> = ({ dinfo }) => {
+  return (
+    <>
+      {dinfo.available === 1 ? <span> 👑</span> : dinfo.available === 2 ? <span> ❌</span> : <span> ❓</span>} 
+    </>
+  );  
+};
+
+const CellCheckAvailability = ({ domain, domains, functiondf } : { domain : DomainInfo, domains: DomainInfo[], functiondf: any }) => {  
+  const [isLoading, setIsLoading] = useState(false);    
   return (
     <IconButton aria-label="toggle visibility">
       <Tooltip
         title={
           <div>
             <p>Click me to check availability</p>
+            <p><span>❓</span>: By define</p>
+            <p><span>👑</span>: Availability</p>
+            <p><span>❌</span>: Not availability</p>
           </div>
         }
       >
-        <VisibilityIcon onClick={() =>
-            checkAvailability(getCleanDomainName(dinfo))
-        }/>
+        <IconButton 
+            onClick={async () => {
+              setIsLoading(true);
+              try {
+                const result = await checkAvailability(domain.domain);
+                setIsLoading(false);
+                if(result === -1) {
+                  toast(
+                    (t) => (
+                      <div>
+                        <span>Failed get data</span>
+                      </div>
+                    ),
+                    {
+                      icon: "🔴",
+                      duration: 5000,
+                    }
+                  );
+                } else {
+                  toast(
+                    (t) => (
+                      <div>
+                        { result === 1 ? <>Domain available</> : <>Domain not available</>}
+                      </div>
+                    ),
+                    {
+                      icon: result === 1 ? "👑" : "❌",
+                      duration: 5000,
+                    }
+                  );             
+                  const updateDomain = [...domains];
+                  updateDomain.forEach(elem => {
+                    if (elem.domain === domain.domain) {
+                        elem.available = result;
+                    }
+                  });
+                  functiondf(updateDomain);
+                } 
+              } catch (error: any) {
+                toast(
+                  (t) => (
+                    <div>
+                      <span>{error}</span>
+                    </div>
+                  ),
+                  {
+                    icon: "🔴",
+                    duration: 5000,
+                  }
+                );            
+              }          
+            }} 
+            disabled={isLoading}
+            color="primary"
+        >
+          <VisibilityIcon />
+        </IconButton>
       </Tooltip>      
     </IconButton>
   )
@@ -177,7 +261,7 @@ const CellCheckSocials: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
     )
 };
 
-const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin }) => {
+const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, functionDomainFounded }) => {
 
   const [open, setOpen] = React.useState(false);
   const handleOpen = () => setOpen(true);
@@ -223,7 +307,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin }) => {
               </TableCell> */}
               <TableCell align="center">
                 Rating{" "}
-                {!admin ? (
+                {/*!admin ? (
                   <>
                     <Tooltip
                       title={
@@ -235,7 +319,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin }) => {
                       <span className="info-icon cursor-pointer">&#x24D8;</span>
                     </Tooltip>
                   </>
-                ) : (
+                ) : */(
                   <>
                     <Tooltip
                       title={
@@ -325,8 +409,9 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin }) => {
                 <TableRow key={index}>
                   <TableCell component="th" scope="row">
                     <section style={{ display: 'flex', alignItems: 'center' }}>
-                    <CellDomain dinfo={row} admin={admin} />
-                    <CellCheckAvailability dinfo={row} />
+                      <CellDomain dinfo={row} admin={admin} />
+                      <CellCheckAvailability domain={row} domains={rows} functiondf={functionDomainFounded}/>
+                      <CellResultAvailability dinfo={row}/>
                     </section>
                     <CellBuyDomain dinfo={row} admin={admin} />
                     <CellCheckSocials dinfo={row} admin={admin} />
