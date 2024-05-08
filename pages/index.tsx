@@ -240,7 +240,13 @@ const Home: NextPage = () => {
         .map((domain) => domain.replace(/^\d+\.\s*/, ""))
         .filter((domain) => domain);
 
-      tempDomainNamesText.map((domain)=>{ domainNames.push({domain, available: undefined})});  
+      tempDomainNamesText.map((domain)=>{ 
+        domainNames.push({
+          domain, 
+          available: undefined,
+          favorite: undefined
+        })
+      });  
 
     } catch (error: any) {
       throw new Error(error);

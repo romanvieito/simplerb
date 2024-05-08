@@ -11,6 +11,8 @@ import {
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import StarIcon from '@mui/icons-material/Star';
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -133,6 +135,30 @@ const CellResultAvailability: React.FC<DomainInfoItem> = ({ dinfo }) => {
   return (
     <>
       {dinfo.available===undefined ? <span></span> : dinfo.available ? <span> ✔</span> : <span> ❌</span>} 
+    </>
+  );  
+};
+
+const CellFavorite = ({ domain, domains, functiondf } : { domain : DomainInfo, domains: DomainInfo[], functiondf: any }) => {  
+  return (
+    <>
+    <IconButton 
+      onClick={()=>{
+        const updateDomain = [...domains];
+        updateDomain.forEach(elem => {
+          if (elem.domain === domain.domain) {
+              if(elem.favorite === undefined || !elem.favorite)
+                elem.favorite = true;
+              else if(elem.favorite)
+                elem.favorite = false;
+          }
+        });
+        functiondf(updateDomain);
+        saveDomainFounded(updateDomain);        
+      }} 
+      aria-label="add to favorites">
+      {domain.favorite ? <StarIcon color="primary" /> : <StarBorderIcon />}
+    </IconButton>    
     </>
   );  
 };
@@ -440,6 +466,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, functionDomainFou
                       <CellDomain dinfo={row} admin={admin} />
                       <CellCheckAvailability domain={row} domains={rows} functiondf={functionDomainFounded}/>
                       <CellResultAvailability dinfo={row}/>
+                      <CellFavorite domain={row} domains={rows} functiondf={functionDomainFounded}/>
                     </section>
                     <CellBuyDomain dinfo={row} admin={admin} />
                     <CellCheckSocials dinfo={row} admin={admin} />

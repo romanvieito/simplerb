@@ -2,6 +2,7 @@
 export interface DomainInfo {
     domain: string;
     available?: boolean;
+    favorite?: boolean;
     error?: string;
     rate?: number;    
 }
