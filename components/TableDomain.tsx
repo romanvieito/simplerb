@@ -128,7 +128,7 @@ const CellDomain: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
 const CellResultAvailability: React.FC<DomainInfoItem> = ({ dinfo }) => {
   return (
     <>
-      {dinfo.available === 1 ? <span> 👑</span> : dinfo.available === 2 ? <span> ❌</span> : <span> ❓</span>} 
+      {dinfo.available === 1 ? <span> ✔</span> : dinfo.available === 2 ? <span> ❌</span> : <span></span>} 
     </>
   );  
 };
@@ -140,10 +140,9 @@ const CellCheckAvailability = ({ domain, domains, functiondf } : { domain : Doma
       <Tooltip
         title={
           <div>
-            <p>Click me to check availability</p>
-            <p><span>❓</span>: By define</p>
-            <p><span>👑</span>: Availability</p>
-            <p><span>❌</span>: Not availability</p>
+            <p>Check domain availability</p>
+            <p><span>✔</span>: Available</p>
+            <p><span>❌</span>: Not available</p>
           </div>
         }
       >
@@ -157,7 +156,7 @@ const CellCheckAvailability = ({ domain, domains, functiondf } : { domain : Doma
                   toast(
                     (t) => (
                       <div>
-                        <span>Failed get data</span>
+                        <span>Failed to get data. Let's try again</span>
                       </div>
                     ),
                     {
@@ -173,7 +172,7 @@ const CellCheckAvailability = ({ domain, domains, functiondf } : { domain : Doma
                       </div>
                     ),
                     {
-                      icon: result === 1 ? "👑" : "❌",
+                      icon: result === 1 ? "✔" : "❌",
                       duration: 5000,
                     }
                   );             
@@ -324,7 +323,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, functionDomainFou
                     <Tooltip
                       title={
                         <div>
-                          <p>Click me to see information</p>
+                          <p>Click to learn about domain rating</p>
                         </div>
                       }
                     >
