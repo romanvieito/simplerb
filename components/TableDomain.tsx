@@ -20,6 +20,8 @@ const style = {
   border: '1px #000',
   boxShadow: 24,
   p: 2,
+  maxHeight: '90vh', // Establece la altura máxima del contenedor
+  overflow: 'auto'   // Activa el desplazamiento automático  
 };
 
 const checkAvailability = async (domain: string) => {  
