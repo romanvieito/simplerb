@@ -2,7 +2,7 @@ import { DomainInfo, DomainInfoArray, DomainInfoItem } from "../utils/Definition
 import { Toaster, toast } from "react-hot-toast";
 import mixpanel from "../utils/mixpanel-config";
 import React, { useState } from 'react';
-import { Table, TableHead, TableBody, TableCell, TableContainer, TableRow, Paper, TablePagination, Tooltip, Switch } from '@mui/material';
+import { Table, TableHead, TableBody, TableCell, TableContainer, TableRow, Paper, TablePagination, Tooltip, Switch, Button } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import {
@@ -233,14 +233,16 @@ const CellBuyDomain: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
     return (
         admin ? 
         <>
-        <button disabled={!dinfo.available}
-            onClick={() =>
-            checkBuyDomain(getCleanDomainName(dinfo))
-            }
-            className="ml-1 my-1 bg-black hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
-        >
-            Buy
-        </button>
+        <Tooltip title={!dinfo.available ? "Check its availability to buy it" : ""} disableHoverListener={dinfo.available}>
+          <span> {/* El span es necesario porque Tooltip no funciona con elementos deshabilitados directamente */}
+          <Button
+              disabled={!dinfo.available}
+              onClick={() => checkBuyDomain(getCleanDomainName(dinfo))}
+              variant="contained"
+              color="primary"
+            >Buy</Button>            
+          </span>
+        </Tooltip>        
         </> : 
         <>
         </>
