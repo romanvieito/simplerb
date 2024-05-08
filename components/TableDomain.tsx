@@ -214,27 +214,27 @@ const CellCheckAvailability = ({ domain, domains, functiondf } : { domain : Doma
 };
 
 const CellRate: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
-  /*return (
+    /*return (
       admin ? 
       <>
         <span className="text-lg font-medium mr-4 flex-1 hover:underline">{dinfo.rate}</span>
       </> : 
       <>*
       </>
-  )*/
-  return (
+    )*/
+    return (
       <>
         <span className="text-lg font-medium mr-4 flex-1 hover:underline">{dinfo.rate}</span>
       </>
-  )  
+    )  
 };
 
 const CellBuyDomain: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
-    return (
+    /*return (
         admin ? 
         <>
         <Tooltip title={!dinfo.available ? "Check its availability to buy it" : ""} disableHoverListener={dinfo.available}>
-          <span> {/* El span es necesario porque Tooltip no funciona con elementos deshabilitados directamente */}
+          <span>
           <Button
               disabled={!dinfo.available}
               onClick={() => checkBuyDomain(getCleanDomainName(dinfo))}
@@ -246,11 +246,23 @@ const CellBuyDomain: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
         </> : 
         <>
         </>
+    )*/
+    return (
+      <Tooltip title={!dinfo.available ? "Check its availability to buy it" : ""} disableHoverListener={dinfo.available}>
+      <span>
+      <Button
+          disabled={!dinfo.available}
+          onClick={() => checkBuyDomain(getCleanDomainName(dinfo))}
+          variant="contained"
+          color="primary"
+        >Buy</Button>            
+      </span>
+    </Tooltip>      
     )
 };
 
 const CellCheckSocials: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
-    return (
+    /*return (
         admin ? 
         <>
         <button
@@ -264,7 +276,17 @@ const CellCheckSocials: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
         </> : 
         <>
         </>
-    )
+    )*/
+    return (
+      <button
+          onClick={() =>
+              checkSocialNetworks(getCleanDomainName(dinfo))
+          }
+          className="ml-4 bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+      >
+          Check Socials
+      </button>
+    )    
 };
 
 const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, functionDomainFounded }) => {
