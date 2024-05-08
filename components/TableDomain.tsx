@@ -5,7 +5,9 @@ import React, { useState } from 'react';
 import { Table, TableHead, TableBody, TableCell, TableContainer, TableRow, Paper, TablePagination, Tooltip, Switch } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-
+import {
+  saveDomainFounded,
+} from "../utils/LocalStorage";
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
@@ -185,6 +187,7 @@ const CellCheckAvailability = ({ domain, domains, functiondf } : { domain : Doma
                     }
                   });
                   functiondf(updateDomain);
+                  saveDomainFounded(updateDomain);
                 } 
               } catch (error: any) {
                 toast(

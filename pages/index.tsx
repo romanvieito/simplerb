@@ -3,7 +3,7 @@ import Head from "next/head";
 import Image from "next/image";
 import { useRef, useState, useEffect } from "react";
 import { Toaster, toast } from "react-hot-toast";
-import DropDown, { VibeType } from "../components/DropDown";
+import DropDown from "../components/DropDown";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import LoadingDots from "../components/LoadingDots";
@@ -11,7 +11,15 @@ import { Tooltip } from "@mui/material";
 import { 
   COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN, 
   COUNT_DOMAINS_TO_SEARCH_YES_ADMIN,
-  DomainInfo } from "../utils/Definitions";
+  DomainInfo, VibeType } from "../utils/Definitions";
+
+import {
+  getBio,
+  getVibe,
+  getDomainFounded,
+  saveSearch,
+  resetSearch
+} from "../utils/LocalStorage";
 
 import {
   createParser,
@@ -26,6 +34,7 @@ import TableDomain from "../components/TableDomain";
 
 import mixpanel from "../utils/mixpanel-config";
 import { convertTextRateToJson, addRateToDomainInfo } from "../utils/TextRate";
+import { reset } from "mixpanel-browser";
 
 type Domain = string;
 
@@ -47,7 +56,7 @@ const Home: NextPage = () => {
   const [domainfounded, setDomainFounded] = useState<DomainInfo[]>([]);
 
   // Get the user from clerk
-  const { isLoaded, user } = useUser();
+  const { isLoaded, user, isSignedIn } = useUser();
   const { openSignIn } = useClerk();
 
   // Function to fetch user credits by email
@@ -78,11 +87,31 @@ const Home: NextPage = () => {
       fetchCredits(user.emailAddresses[0].emailAddress || "");
       // Set this to a unique identifier for the user performing the event.
       mixpanel.identify(user.emailAddresses[0].emailAddress);
+      
+      // here loading localstorage
+      setBio(() => {
+        const bioFromStorage = getBio();
+        return bioFromStorage ?? "";
+      });      
+      setVibe(() => {
+        const vibeFromStorage = getVibe();
+        return vibeFromStorage ?? 'Professional'
+      });
+      setDomainFounded(() => {
+        const dfFromStorage = getDomainFounded();
+        return dfFromStorage ?? []
+      });
     } else {
       setBio("");
       setVibe("Professional");
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!isSignedIn && isSignedIn!==undefined) {
+      resetSearch();
+    }
+  }, [isSignedIn]);
 
   const scrollToBios = () => {
     if (bioRef.current !== null) {
@@ -253,7 +282,7 @@ const Home: NextPage = () => {
 
     try {
 
-      const resultDomainFounded = await searchDomain();
+      let resultDomainFounded = await searchDomain();
 
       // This code runs after the try and catch blocks, regardless of the outcome
 
@@ -287,13 +316,15 @@ const Home: NextPage = () => {
 
       if(resultDomainFounded) {
         //if(admin) {
-          const DomainsWithRate = await getDomainNamesWithRate(resultDomainFounded);
-          setDomainFounded(DomainsWithRate);
+          resultDomainFounded = await getDomainNamesWithRate(resultDomainFounded);
+          setDomainFounded(resultDomainFounded);
         //}
         //else {
         //  setDomainFounded(resultDomainFounded);
         //}      
-      }
+
+        saveSearch(bio, vibe, resultDomainFounded);
+      }      
 
       setLoading(false); // Always stop the loading indicator when done
 
@@ -592,7 +623,7 @@ const Home: NextPage = () => {
         <hr className="h-px bg-gray-700 border-1 dark:bg-gray-700" />
         {!loading && user && (
           <div className="space-y-10 my-10">
-            {generatedBios && domainfounded.length > 0 && (
+            {/*generatedBios && */domainfounded.length > 0 && (
               <>
                 <div>
                   <h2

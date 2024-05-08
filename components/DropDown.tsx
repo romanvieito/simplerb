@@ -6,11 +6,11 @@ import {
 } from '@heroicons/react/20/solid';
 import { Fragment } from 'react';
 
+import { VibeType } from '../utils/Definitions';
+
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
 }
-
-export type VibeType = 'Professional' | 'Friendly' | 'Sophisticated' | 'Creative';
 
 interface DropDownProps {
   vibe: VibeType;

@@ -25,6 +25,8 @@ export interface DomainRate {
     averageScore: string;
  }
 
+ export type VibeType = 'Professional' | 'Friendly' | 'Sophisticated' | 'Creative';
+ 
  export const COUNT_DOMAINS_TO_SEARCH_YES_ADMIN = 5;
 
  export const COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN = 5;
