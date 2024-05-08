@@ -1,7 +1,7 @@
 // At the top of your file, define the interface
 export interface DomainInfo {
     domain: string;
-    available?: number;
+    available?: boolean;
     error?: string;
     rate?: number;    
 }

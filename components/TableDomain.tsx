@@ -50,9 +50,9 @@ const checkAvailability = async (domain: string) => {
       available: data[0].available
     });
 
-    if(data[0].available) return 1;
+    if(data[0].available) return true;
     
-    return 2;
+    return false;
   } catch (error: any) {
     mixpanel.track("Checked availability with error", {
       // You can add properties to the event as needed
@@ -132,7 +132,7 @@ const CellDomain: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
 const CellResultAvailability: React.FC<DomainInfoItem> = ({ dinfo }) => {
   return (
     <>
-      {dinfo.available === 1 ? <span> ✔</span> : dinfo.available === 2 ? <span> ❌</span> : <span></span>} 
+      {dinfo.available===undefined ? <span></span> : dinfo.available ? <span> ✔</span> : <span> ❌</span>} 
     </>
   );  
 };
@@ -172,11 +172,11 @@ const CellCheckAvailability = ({ domain, domains, functiondf } : { domain : Doma
                   toast(
                     (t) => (
                       <div>
-                        { result === 1 ? <>Domain available</> : <>Domain not available</>}
+                        { result ? <>Domain available</> : <>Domain not available</>}
                       </div>
                     ),
                     {
-                      icon: result === 1 ? "✔" : "❌",
+                      icon: result ? "✔" : "❌",
                       duration: 5000,
                     }
                   );             
@@ -233,7 +233,7 @@ const CellBuyDomain: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
     return (
         admin ? 
         <>
-        <button
+        <button disabled={!dinfo.available}
             onClick={() =>
             checkBuyDomain(getCleanDomainName(dinfo))
             }
