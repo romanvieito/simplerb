@@ -207,44 +207,44 @@ const CellResultAvailability: React.FC<DomainInfoItem> = ({ dinfo }) => {
 const CellFavorite = ({ domain, domains, functiondf, user } : { domain : DomainInfo, domains: DomainInfo[], functiondf: any, user: any }) => {  
   const [isLoading, setIsLoading] = useState(false);
   return (
-    <>
-    <IconButton
-      disabled={isLoading} 
-      onClick={()=>{
-        const updateDomain = [...domains];
-        updateDomain.forEach(async (elem) => {
-          if (elem.domain === domain.domain) {
-              if(elem.favorite === undefined || !elem.favorite)
-                elem.favorite = true;
-              else if(elem.favorite)
-                elem.favorite = false;            
-              try {
-                setIsLoading(true);
-                await checkUserDomainFavorite(domain, user);
-                setIsLoading(false);
-              } catch (error: any) {
-                toast(
-                  (t) => (
-                    <div>
-                      <span>{error}</span>
-                    </div>
-                  ),
-                  {
-                    icon: "🔴",
-                    duration: 5000,
-                  }
-                );                
-                return;
-              }
-          }
-        });
-        functiondf(updateDomain);
-        saveDomainFounded(updateDomain);        
-      }} 
-      aria-label="add to favorites">
-      {domain.favorite ? <FavoriteIcon color="primary" /> : <FavoriteBorderIcon />}
-    </IconButton>    
-    </>
+    <Tooltip title={!domain.favorite ? "Mask a favorite" : "Unmark as favorite"} disableHoverListener={domain.available}>
+      <IconButton
+        disabled={isLoading} 
+        onClick={()=>{
+          const updateDomain = [...domains];
+          updateDomain.forEach(async (elem) => {
+            if (elem.domain === domain.domain) {
+                if(elem.favorite === undefined || !elem.favorite)
+                  elem.favorite = true;
+                else if(elem.favorite)
+                  elem.favorite = false;            
+                try {
+                  setIsLoading(true);
+                  await checkUserDomainFavorite(domain, user);
+                  setIsLoading(false);
+                } catch (error: any) {
+                  toast(
+                    (t) => (
+                      <div>
+                        <span>{error}</span>
+                      </div>
+                    ),
+                    {
+                      icon: "🔴",
+                      duration: 5000,
+                    }
+                  );                
+                  return;
+                }
+            }
+          });
+          functiondf(updateDomain);
+          saveDomainFounded(updateDomain);        
+        }} 
+        aria-label="add to favorites">
+        {domain.favorite ? <FavoriteIcon color="primary" /> : <FavoriteBorderIcon />}
+      </IconButton>
+    </Tooltip>    
   );  
 };
 
