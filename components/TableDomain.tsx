@@ -11,8 +11,9 @@ import {
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
-import StarIcon from '@mui/icons-material/Star';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import { useUser } from "@clerk/nextjs";
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -63,6 +64,70 @@ const checkAvailability = async (domain: string) => {
       error: error
     });    
     throw new Error(error);
+  }
+};
+
+const checkUserDomainFavorite = async (domain: DomainInfo, user: any) => {  
+
+  const email = user?.emailAddresses[0].emailAddress;
+
+  try {
+    const resp1 = await fetch(`/api/getUser?email=${email}`);
+    if (!resp1.ok) {
+      throw new Error("Network response was not ok");
+    }
+
+    const userData = await resp1.json();
+
+    const namedomain = domain.domain;
+    const available = domain.available;
+    const favorite = domain.favorite;
+    const rate = domain.rate;
+    const users_id = userData.user.rows[0].id;
+
+    const data = {
+      namedomain,
+      available,
+      favorite,
+      rate,
+      users_id
+    };
+
+    const resp2 = await fetch('/api/user-domainfavorite', {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!resp2.ok) {
+      throw new Error(
+        "Network response was not ok. Failed to set users domain favorite"
+      );
+    }    
+    toast(
+      (t) => (
+        <div>
+          { favorite ? <>Check favorite</> : <>Uncheck favorite</>}
+        </div>
+      ),
+      {
+        icon: favorite ? "❤️" : "🖤",
+        duration: 5000,
+      }
+    );    
+    mixpanel.track("Checked domain favorite", {
+      domain: namedomain,
+      favorite: favorite
+    });
+  } catch (error) {
+    console.error("Error checking domain favorite:", error);
+    mixpanel.track("Checked domain favorite with error", {
+      domain: domain.domain,
+      favorite: domain.favorite,
+      error: error
+    });    
   }
 };
 
@@ -139,25 +204,45 @@ const CellResultAvailability: React.FC<DomainInfoItem> = ({ dinfo }) => {
   );  
 };
 
-const CellFavorite = ({ domain, domains, functiondf } : { domain : DomainInfo, domains: DomainInfo[], functiondf: any }) => {  
+const CellFavorite = ({ domain, domains, functiondf, user } : { domain : DomainInfo, domains: DomainInfo[], functiondf: any, user: any }) => {  
+  const [isLoading, setIsLoading] = useState(false);
   return (
     <>
-    <IconButton 
+    <IconButton
+      disabled={isLoading} 
       onClick={()=>{
         const updateDomain = [...domains];
-        updateDomain.forEach(elem => {
+        updateDomain.forEach(async (elem) => {
           if (elem.domain === domain.domain) {
               if(elem.favorite === undefined || !elem.favorite)
                 elem.favorite = true;
               else if(elem.favorite)
-                elem.favorite = false;
+                elem.favorite = false;            
+              try {
+                setIsLoading(true);
+                await checkUserDomainFavorite(domain, user);
+                setIsLoading(false);
+              } catch (error: any) {
+                toast(
+                  (t) => (
+                    <div>
+                      <span>{error}</span>
+                    </div>
+                  ),
+                  {
+                    icon: "🔴",
+                    duration: 5000,
+                  }
+                );                
+                return;
+              }
           }
         });
         functiondf(updateDomain);
         saveDomainFounded(updateDomain);        
       }} 
       aria-label="add to favorites">
-      {domain.favorite ? <StarIcon color="primary" /> : <StarBorderIcon />}
+      {domain.favorite ? <FavoriteIcon color="primary" /> : <FavoriteBorderIcon />}
     </IconButton>    
     </>
   );  
@@ -176,64 +261,66 @@ const CellCheckAvailability = ({ domain, domains, functiondf } : { domain : Doma
           </div>
         }
       >
-        <IconButton 
-            onClick={async () => {
-              setIsLoading(true);
-              try {
-                const result = await checkAvailability(domain.domain);
-                setIsLoading(false);
-                if(result === -1) {
+        <span>
+          <IconButton 
+              onClick={async () => {
+                setIsLoading(true);
+                try {
+                  const result = await checkAvailability(domain.domain);
+                  setIsLoading(false);
+                  if(result === -1) {
+                    toast(
+                      (t) => (
+                        <div>
+                          <span>Failed to get data. Let's try again</span>
+                        </div>
+                      ),
+                      {
+                        icon: "🔴",
+                        duration: 5000,
+                      }
+                    );
+                  } else {
+                    toast(
+                      (t) => (
+                        <div>
+                          { result ? <>Domain available</> : <>Domain not available</>}
+                        </div>
+                      ),
+                      {
+                        icon: result ? "✔" : "❌",
+                        duration: 5000,
+                      }
+                    );             
+                    const updateDomain = [...domains];
+                    updateDomain.forEach(elem => {
+                      if (elem.domain === domain.domain) {
+                          elem.available = result;
+                      }
+                    });
+                    functiondf(updateDomain);
+                    saveDomainFounded(updateDomain);
+                  } 
+                } catch (error: any) {
                   toast(
                     (t) => (
                       <div>
-                        <span>Failed to get data. Let's try again</span>
+                        <span>{error}</span>
                       </div>
                     ),
                     {
                       icon: "🔴",
                       duration: 5000,
                     }
-                  );
-                } else {
-                  toast(
-                    (t) => (
-                      <div>
-                        { result ? <>Domain available</> : <>Domain not available</>}
-                      </div>
-                    ),
-                    {
-                      icon: result ? "✔" : "❌",
-                      duration: 5000,
-                    }
-                  );             
-                  const updateDomain = [...domains];
-                  updateDomain.forEach(elem => {
-                    if (elem.domain === domain.domain) {
-                        elem.available = result;
-                    }
-                  });
-                  functiondf(updateDomain);
-                  saveDomainFounded(updateDomain);
-                } 
-              } catch (error: any) {
-                toast(
-                  (t) => (
-                    <div>
-                      <span>{error}</span>
-                    </div>
-                  ),
-                  {
-                    icon: "🔴",
-                    duration: 5000,
-                  }
-                );            
-              }          
-            }} 
-            disabled={isLoading}
-            color="primary"
-        >
-          <VisibilityIcon />
-        </IconButton>
+                  );            
+                }          
+              }} 
+              disabled={isLoading}
+              color="primary"
+          >
+            <VisibilityIcon />
+          </IconButton>
+        </span>
       </Tooltip>      
     </IconButton>
   )
@@ -316,6 +403,8 @@ const CellCheckSocials: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
 };
 
 const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, functionDomainFounded }) => {
+  
+  const { user } = useUser();
 
   const [open, setOpen] = React.useState(false);
   const handleOpen = () => setOpen(true);
@@ -466,7 +555,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, functionDomainFou
                       <CellDomain dinfo={row} admin={admin} />
                       <CellCheckAvailability domain={row} domains={rows} functiondf={functionDomainFounded}/>
                       <CellResultAvailability dinfo={row}/>
-                      <CellFavorite domain={row} domains={rows} functiondf={functionDomainFounded}/>
+                      <CellFavorite domain={row} domains={rows} functiondf={functionDomainFounded} user={user}/>
                     </section>
                     <CellBuyDomain dinfo={row} admin={admin} />
                     <CellCheckSocials dinfo={row} admin={admin} />
