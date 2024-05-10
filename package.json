@@ -23,6 +23,7 @@
     "eventsource-parser": "^0.0.5",
     "git": "^0.1.5",
     "inngest": "^3.16.1",
+    "mailtrap": "^3.3.0",
     "micro": "^10.0.1",
     "micro-cors": "^0.1.1",
     "mixpanel-browser": "^2.49.0",

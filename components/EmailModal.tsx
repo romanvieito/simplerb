@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button, TextField, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import MailService from '../utils/MailService';
+import { Toaster, toast } from "react-hot-toast";
 
 interface EmailModalProps {
   open: boolean;
@@ -24,20 +24,31 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, userauth }) => {
   };
 
   const handleSendEmail = async () => {
-
-    const nameTo = userauth.fullName;
-    const emailTo = userauth.emailAddresses[0].emailAddress;
-    const subject = `Feedback of simbrerB by ${userauth.fullName} ${userauth.emailAddresses[0].emailAddress}`;
+    if(textemail === '') {
+      toast(
+        (t) => (
+          <div>
+            <span>Please write us something</span>
+          </div>
+        ),
+        {
+          icon: "🔴",
+          duration: 2500,
+        }
+      );      
+      return;
+    }
+    const username = userauth.fullName;
+    const useremail = userauth.emailAddresses[0].emailAddress;
+    const subject = `Feedback`;
     const content = textemail;
-
     const data = {
-      nameTo,
-      emailTo,
+      username,
+      useremail,
       subject,
       content
     };
-
-    const response = await fetch('/api/mail-sendgrid', {
+    const response = await fetch('/api/mail-mailtrap', {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -46,27 +57,41 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, userauth }) => {
     });
 
     if (!response.ok) {
-      console.log(
-        "Network response was not ok. Failed to set users domain favorite"
+      toast(
+        (t) => (
+          <div>
+            <span>Failed to send email</span>
+          </div>
+        ),
+        {
+          icon: "🔴",
+          duration: 5000,
+        }
       );
+      return;         
     }
 
     const result = await response.json();
 
-    console.log(result);
+    toast(
+      (t) => (
+        <div>
+          <span>{
+            result.data ? 
+            <>
+              <p>Mail send successfully</p>
+              <p>Thank you so much</p>
+            </> : 
+            <p>Fail send email</p>}
+          </span>
+        </div>
+      ),
+      {
+        icon: result.data ? "🟢" : "🔴",
+        duration: 5000,
+      }
+    );
 
-    try {      
-      /*await mailService.sendEmail(
-        'romanvieito@gmail.com',
-        userauth.emailAddresses[0].emailAddress,
-        'Feedback of simprebr',
-        textemail,
-        '<strong>Este es el contenido en HTML del correo.</strong>'
-      );*/
-    } catch (error) {
-      console.error('No se pudo enviar el correo:', error);
-      return;
-    }
     onClose();
   };
 
@@ -77,13 +102,13 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, userauth }) => {
         fullWidth={true}
         maxWidth="md"            
     >
-      <DialogTitle>Feedback</DialogTitle>
+      <DialogTitle>Your feedback</DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
           margin="dense"
           id="email"
-          label=""
+          label="Tell us ..."
           type="email"
           fullWidth
           variant="standard"
