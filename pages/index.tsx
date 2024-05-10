@@ -647,7 +647,7 @@ const Home: NextPage = () => {
           </div>
         )}
       </main>
-      <Footer />
+      <Footer isauth={isSignedIn} userauth={user}/>
     </div>
   );
 };
