@@ -208,6 +208,7 @@ const CellFavorite = ({ domain, domains, functiondf, user } : { domain : DomainI
   const [isLoading, setIsLoading] = useState(false);
   return (
     <Tooltip title={!domain.favorite ? "Mask a favorite" : "Unmark as favorite"} disableHoverListener={domain.available}>
+      <span>
       <IconButton
         disabled={isLoading} 
         onClick={()=>{
@@ -244,6 +245,7 @@ const CellFavorite = ({ domain, domains, functiondf, user } : { domain : DomainI
         aria-label="add to favorites">
         {domain.favorite ? <FavoriteIcon color="primary" /> : <FavoriteBorderIcon />}
       </IconButton>
+      </span>
     </Tooltip>    
   );  
 };
