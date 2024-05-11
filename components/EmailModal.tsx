@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Button, TextField, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import { Toaster, toast } from "react-hot-toast";
+import LoadingButton from '@mui/lab/LoadingButton';
+import SendIcon from '@mui/icons-material/Send';
 
 interface EmailModalProps {
   open: boolean;
@@ -8,11 +10,10 @@ interface EmailModalProps {
   userauth: any
 }
 
-//const mailService = new MailService(process.env.SENDGRID_API_KEY ?? '');
-
 const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, userauth }) => {
   const [textemail, setTextEmail] = useState<string>('');
-  
+  const [loading, setLoading] = React.useState(false);
+
   useEffect(() => {
     if (open) {
       setTextEmail('');
@@ -48,6 +49,7 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, userauth }) => {
       subject,
       content
     };
+    setLoading(true);
     const response = await fetch('/api/mail-mailtrap', {
       method: "POST",
       headers: {
@@ -55,7 +57,7 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, userauth }) => {
       },
       body: JSON.stringify(data),
     });
-
+    setLoading(false);  
     if (!response.ok) {
       toast(
         (t) => (
@@ -119,8 +121,16 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, userauth }) => {
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSendEmail}>Send</Button>
+        <Button onClick={onClose} variant="outlined">Cancel</Button>
+        <LoadingButton
+          onClick={handleSendEmail}
+          endIcon={<SendIcon />}
+          loading={loading}
+          loadingPosition="end"
+          variant="outlined"
+        >
+          <span>Send</span>
+        </LoadingButton>
       </DialogActions>
     </Dialog>
   );
