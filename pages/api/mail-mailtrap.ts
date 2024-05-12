@@ -4,7 +4,7 @@ const API_URL = 'https://send.api.mailtrap.io/api/send';
 const API_TOKEN = process.env.MAILTRAP_API_KEY ?? '';
 
 const sender = {
-    email: "mailtrap@demomailtrap.com",
+    email: "mailtrap@simplerb.com",
     name: "Simplebr",
 };
 
@@ -14,8 +14,14 @@ const recipients = {
 };
 
 const cc = {
+  v1: {
     email: 'romanvieito@gmail.com',
     name: 'Alberto Roman Vieito'
+  },
+  v2: {
+    email: 'alber@front10.com',
+    name: 'Alberto Roman Vieito'
+  }
 };
 
 export default async function handler (
@@ -76,12 +82,17 @@ export default async function handler (
         // Con el cc
         // Demo domains can only be used to send emails to account owners. 
         // You can only send testing emails to your own email address.
-        /*"cc": [
+        // Con el dominio verificado en mailtrap.io debe resolverse el problema
+        "cc": [
           {
-            "email": cc.email,
-            "name": cc.name
+            "email": cc.v1.email,
+            "name": cc.v1.name
+          },
+          {
+            "email": cc.v2.email,
+            "name": cc.v2.name
           }
-        ],*/
+        ],
         "from": {
           "email": sender.email,
           "name": sender.name
