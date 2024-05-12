@@ -3,12 +3,8 @@ import { Button, TextField, Dialog, DialogActions, DialogContent, DialogTitle } 
 import { Toaster, toast } from "react-hot-toast";
 import LoadingButton from '@mui/lab/LoadingButton';
 import SendIcon from '@mui/icons-material/Send';
-
-interface EmailModalProps {
-  open: boolean;
-  onClose: () => void;
-  userauth: any
-}
+import mixpanel from "../utils/mixpanel-config";
+import { EmailModalProps } from "../utils/Definitions";
 
 const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, userauth }) => {
   const [textemail, setTextEmail] = useState<string>('');
@@ -58,11 +54,15 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, userauth }) => {
       body: JSON.stringify(data),
     });
     setLoading(false);  
+
     if (!response.ok) {
+      mixpanel.track("Send feedback by mail", {
+        message: "Response failed to send email",
+      });
       toast(
         (t) => (
           <div>
-            <span>Failed to send email</span>
+            <span>Response failed to send email</span>
           </div>
         ),
         {
@@ -75,6 +75,10 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, userauth }) => {
 
     const result = await response.json();
 
+    mixpanel.track("Send feedback by mail", {
+      message: result.data ? "Mail send successfully" : "Data failed to send email",
+    });
+
     toast(
       (t) => (
         <div>
@@ -84,7 +88,7 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, userauth }) => {
               <p>Mail send successfully</p>
               <p>Thank you so much</p>
             </> : 
-            <p>Fail send email</p>}
+            <p>Data Failed to send email</p>}
           </span>
         </div>
       ),

@@ -24,10 +24,16 @@ export interface DomainRate {
     simplicity: number;
     brevity: number;
     averageScore: string;
- }
+}
 
- export type VibeType = 'Professional' | 'Friendly' | 'Sophisticated' | 'Creative';
- 
- export const COUNT_DOMAINS_TO_SEARCH_YES_ADMIN = 5;
+export interface EmailModalProps {
+    open: boolean;
+    onClose: () => void;
+    userauth: any
+}
 
- export const COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN = 5;
+export type VibeType = 'Professional' | 'Friendly' | 'Sophisticated' | 'Creative';
+
+export const COUNT_DOMAINS_TO_SEARCH_YES_ADMIN = 5;
+
+export const COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN = 5;
