@@ -432,7 +432,7 @@ const CellCheckSocials: React.FC<DomainInfoItem> = ({ dinfo, admin, email, cr, f
           }}
           variant="contained"
           color="primary"
-        >CheckSocials</Button>            
+        >Check Socials</Button>            
       </span>
     </Tooltip>
     )    
