@@ -1,18 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Button, TextField, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import MailService from '../utils/MailService';
-
-interface EmailModalProps {
-  open: boolean;
-  onClose: () => void;
-  userauth: any
-}
-
-//const mailService = new MailService(process.env.SENDGRID_API_KEY ?? '');
+import { Toaster, toast } from "react-hot-toast";
+import LoadingButton from '@mui/lab/LoadingButton';
+import SendIcon from '@mui/icons-material/Send';
+import mixpanel from "../utils/mixpanel-config";
+import { EmailModalProps } from "../utils/Definitions";
 
 const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, userauth }) => {
   const [textemail, setTextEmail] = useState<string>('');
-  
+  const [loading, setLoading] = React.useState(false);
+
   useEffect(() => {
     if (open) {
       setTextEmail('');
@@ -24,49 +21,83 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, userauth }) => {
   };
 
   const handleSendEmail = async () => {
-
-    const nameTo = userauth.fullName;
-    const emailTo = userauth.emailAddresses[0].emailAddress;
-    const subject = `Feedback of simbrerB by ${userauth.fullName} ${userauth.emailAddresses[0].emailAddress}`;
+    if(textemail === '') {
+      toast(
+        (t) => (
+          <div>
+            <span>Please write us something</span>
+          </div>
+        ),
+        {
+          icon: "🔴",
+          duration: 2500,
+        }
+      );      
+      return;
+    }
+    const username = userauth.fullName;
+    const useremail = userauth.emailAddresses[0].emailAddress;
+    const subject = `Feedback`;
     const content = textemail;
-
     const data = {
-      nameTo,
-      emailTo,
+      username,
+      useremail,
       subject,
       content
     };
-
-    const response = await fetch('/api/mail-sendgrid', {
+    setLoading(true);
+    const response = await fetch('/api/mail-mailtrap', {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
     });
+    setLoading(false);  
 
     if (!response.ok) {
-      console.log(
-        "Network response was not ok. Failed to set users domain favorite"
+      mixpanel.track("Send feedback by mail", {
+        message: "Response failed to send email",
+      });
+      toast(
+        (t) => (
+          <div>
+            <span>Response failed to send email</span>
+          </div>
+        ),
+        {
+          icon: "🔴",
+          duration: 5000,
+        }
       );
+      return;         
     }
 
     const result = await response.json();
 
-    console.log(result);
+    mixpanel.track("Send feedback by mail", {
+      message: result.data ? "Mail send successfully" : "Data failed to send email",
+    });
 
-    try {      
-      /*await mailService.sendEmail(
-        'romanvieito@gmail.com',
-        userauth.emailAddresses[0].emailAddress,
-        'Feedback of simprebr',
-        textemail,
-        '<strong>Este es el contenido en HTML del correo.</strong>'
-      );*/
-    } catch (error) {
-      console.error('No se pudo enviar el correo:', error);
-      return;
-    }
+    toast(
+      (t) => (
+        <div>
+          <span>{
+            result.data ? 
+            <>
+              <p>Mail send successfully</p>
+              <p>Thank you so much</p>
+            </> : 
+            <p>Data Failed to send email</p>}
+          </span>
+        </div>
+      ),
+      {
+        icon: result.data ? "🟢" : "🔴",
+        duration: 5000,
+      }
+    );
+
     onClose();
   };
 
@@ -77,13 +108,13 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, userauth }) => {
         fullWidth={true}
         maxWidth="md"            
     >
-      <DialogTitle>Feedback</DialogTitle>
+      <DialogTitle>Your feedback</DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
           margin="dense"
           id="email"
-          label=""
+          label="Tell us ..."
           type="email"
           fullWidth
           variant="standard"
@@ -94,8 +125,16 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, userauth }) => {
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSendEmail}>Send</Button>
+        <Button onClick={onClose} variant="outlined">Cancel</Button>
+        <LoadingButton
+          onClick={handleSendEmail}
+          endIcon={<SendIcon />}
+          loading={loading}
+          loadingPosition="end"
+          variant="outlined"
+        >
+          <span>Send</span>
+        </LoadingButton>
       </DialogActions>
     </Dialog>
   );

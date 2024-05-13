@@ -10,12 +10,18 @@ export interface DomainInfo {
 export interface DomainInfoArray {
     rows: DomainInfo[];
     admin: boolean;
+    email: string;
     functionDomainFounded?: any;
+    cred?: number; 
+    functionCred?: any;    
 }
 
 export interface DomainInfoItem {
     dinfo: DomainInfo;
     admin?: boolean;
+    email?: string;
+    cr?: number;
+    functioncr?: any;
 }
 
 export interface DomainRate {
@@ -24,10 +30,16 @@ export interface DomainRate {
     simplicity: number;
     brevity: number;
     averageScore: string;
- }
+}
 
- export type VibeType = 'Professional' | 'Friendly' | 'Sophisticated' | 'Creative';
- 
- export const COUNT_DOMAINS_TO_SEARCH_YES_ADMIN = 5;
+export interface EmailModalProps {
+    open: boolean;
+    onClose: () => void;
+    userauth: any
+}
 
- export const COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN = 5;
+export type VibeType = 'Professional' | 'Friendly' | 'Sophisticated' | 'Creative';
+
+export const COUNT_DOMAINS_TO_SEARCH_YES_ADMIN = 5;
+
+export const COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN = 5;
