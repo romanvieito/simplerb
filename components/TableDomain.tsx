@@ -597,10 +597,12 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, email, functionDo
                         <CellBuyDomain dinfo={row} admin={admin} email={email} cr={cred} functioncr={functionCred}/>
                         <CellCheckSocials dinfo={row} admin={admin} email={email} cr={cred} functioncr={functionCred}/>
                       </Box>                      
-                      </> :
+                      </> : 
+                      row.available === undefined ?
                       <>
                         <CellCheckAvailability domain={row} domains={rows} functiondf={functionDomainFounded}/>
-                      </>
+                      </> :
+                      <></>      
                     }
                   </TableCell>
                   <TableCell align="center">
