@@ -313,12 +313,7 @@ const Home: NextPage = () => {
 
       if (!userData || userData.rows[0].credits <= 0) {
         return;
-      }
-      
-      if (credits > 0) {
-        setCredits((prevCredits: number) => prevCredits - 1);
-        await setUserByEmail(credits - 1, email);
-      }
+      }      
 
       if(resultDomainFounded) {
         //if(admin) {
@@ -357,36 +352,6 @@ const Home: NextPage = () => {
       }
       const userData = await response.json();
       return userData.user;
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      // Handle errors as needed
-    }
-  };
-
-  const setUserByEmail = async (credits: number, email: string) => {
-    try {
-      const payload = {
-        credits,
-        // other fields to update...
-      };
-
-      const response = await fetch(`/api/editUser?email=${email}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          "Network response was not ok. Failed to set user by email"
-        );
-      }
-
-      const updatedUserData = await response.json();
-      // Do something with the response, such as returning it or setting state.
-      return updatedUserData;
     } catch (error) {
       console.error("Error fetching user:", error);
       // Handle errors as needed
@@ -640,7 +605,7 @@ const Home: NextPage = () => {
                   </h2>
                 </div>
                 <div>
-                  <TableDomain rows={domainfounded.slice(0, countShowDomain)} admin={admin} functionDomainFounded={setDomainFounded}/>
+                  <TableDomain rows={domainfounded.slice(0, countShowDomain)} admin={admin} email={user.emailAddresses[0].emailAddress} functionDomainFounded={setDomainFounded} cred={credits} functionCred={setCredits}/>
                 </div>
               </>
             )}

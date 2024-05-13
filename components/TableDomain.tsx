@@ -4,7 +4,6 @@ import mixpanel from "../utils/mixpanel-config";
 import React, { useState } from 'react';
 import { Table, TableHead, TableBody, TableCell, TableContainer, TableRow, Paper, TablePagination, Tooltip, Switch, Button } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import {
   saveDomainFounded,
 } from "../utils/LocalStorage";
@@ -13,7 +12,6 @@ import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import { useUser } from "@clerk/nextjs";
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -27,6 +25,35 @@ const style = {
   p: 2,
   maxHeight: '90vh', // Establece la altura máxima del contenedor
   overflow: 'auto'   // Activa el desplazamiento automático  
+};
+
+const setUserByEmail = async (credits: number, email: string) => {
+  try {
+    const payload = {
+      credits,
+      // other fields to update...
+    };
+
+    const response = await fetch(`/api/editUser?email=${email}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        "Network response was not ok. Failed to set user by email"
+      );
+    }
+
+    const updatedUserData = await response.json();
+    // Do something with the response, such as returning it or setting state.
+    return updatedUserData;
+  } catch (error: any) {
+    throw new Error(error);    
+  }
 };
 
 const checkAvailability = async (domain: string) => {  
@@ -67,9 +94,7 @@ const checkAvailability = async (domain: string) => {
   }
 };
 
-const checkUserDomainFavorite = async (domain: DomainInfo, user: any) => {  
-
-  const email = user?.emailAddresses[0].emailAddress;
+const checkUserDomainFavorite = async (domain: DomainInfo, email: string) => {  
 
   try {
     const resp1 = await fetch(`/api/getUser?email=${email}`);
@@ -131,42 +156,6 @@ const checkUserDomainFavorite = async (domain: DomainInfo, user: any) => {
   }
 };
 
-const checkBuyDomain = async (domain: string) => {
-    toast(
-      (t) => (
-        <div>
-          Buy domain for <b>{domain}</b> coming soon
-        </div>
-      ),
-      {
-        icon: "🔍",
-      }
-    );
-    // Mixpanel tracking for button click
-    mixpanel.track("Buy domain", {
-      // You can add properties to the event as needed
-      domain: domain,
-    });
-};
-
-const checkSocialNetworks = async (domain: string) => {
-    toast(
-      (t) => (
-        <div>
-          Checking social networks for <b>{domain}</b> coming soon
-        </div>
-      ),
-      {
-        icon: "🔍",
-      }
-    );
-    // Mixpanel tracking for button click
-    mixpanel.track("Check Socials", {
-      // You can add properties to the event as needed
-      domain: domain,
-    });
-};
-
 const getCleanDomainName = (dinfo: any) => {
     return dinfo.domain.replace(
         /^\d+\.\s*/,
@@ -204,7 +193,7 @@ const CellResultAvailability: React.FC<DomainInfoItem> = ({ dinfo }) => {
   );  
 };
 
-const CellFavorite = ({ domain, domains, functiondf, user } : { domain : DomainInfo, domains: DomainInfo[], functiondf: any, user: any }) => {  
+const CellFavorite = ({ domain, domains, functiondf, email } : { domain : DomainInfo, domains: DomainInfo[], functiondf: any, email: string }) => {  
   const [isLoading, setIsLoading] = useState(false);
   return (
     <Tooltip title={!domain.favorite ? "Mask a favorite" : "Unmark as favorite"} disableHoverListener={domain.available}>
@@ -221,7 +210,7 @@ const CellFavorite = ({ domain, domains, functiondf, user } : { domain : DomainI
                   elem.favorite = false;            
                 try {
                   setIsLoading(true);
-                  await checkUserDomainFavorite(domain, user);
+                  await checkUserDomainFavorite(domain, email);
                   setIsLoading(false);
                 } catch (error: any) {
                   toast(
@@ -253,78 +242,76 @@ const CellFavorite = ({ domain, domains, functiondf, user } : { domain : DomainI
 const CellCheckAvailability = ({ domain, domains, functiondf } : { domain : DomainInfo, domains: DomainInfo[], functiondf: any }) => {  
   const [isLoading, setIsLoading] = useState(false);    
   return (
-    <IconButton aria-label="toggle visibility">
-      <Tooltip
-        title={
-          <div>
-            <p>Check domain availability</p>
-            <p><span>✔</span>: Available</p>
-            <p><span>❌</span>: Not available</p>
-          </div>
-        }
-      >
-        <span>
-          <IconButton 
-              onClick={async () => {
-                setIsLoading(true);
-                try {
-                  const result = await checkAvailability(domain.domain);
-                  setIsLoading(false);
-                  if(result === -1) {
-                    toast(
-                      (t) => (
-                        <div>
-                          <span>Failed to get data. Let's try again</span>
-                        </div>
-                      ),
-                      {
-                        icon: "🔴",
-                        duration: 5000,
-                      }
-                    );
-                  } else {
-                    toast(
-                      (t) => (
-                        <div>
-                          { result ? <>Domain available</> : <>Domain not available</>}
-                        </div>
-                      ),
-                      {
-                        icon: result ? "✔" : "❌",
-                        duration: 5000,
-                      }
-                    );             
-                    const updateDomain = [...domains];
-                    updateDomain.forEach(elem => {
-                      if (elem.domain === domain.domain) {
-                          elem.available = result;
-                      }
-                    });
-                    functiondf(updateDomain);
-                    saveDomainFounded(updateDomain);
-                  } 
-                } catch (error: any) {
-                  toast(
-                    (t) => (
-                      <div>
-                        <span>{error}</span>
-                      </div>
-                    ),
-                    {
-                      icon: "🔴",
-                      duration: 5000,
-                    }
-                  );            
-                }          
-              }} 
-              disabled={isLoading}
-              color="primary"
+    <Tooltip
+      title={
+        <div>
+          <p>Check domain availability</p>
+          <p><span>✔</span>: Available</p>
+          <p><span>❌</span>: Not available</p>
+        </div>
+      }
+    >
+      <span>
+        <Button 
+          variant="contained" 
+          size="small"
+          onClick={async () => {
+            setIsLoading(true);
+            try {
+              const result = await checkAvailability(domain.domain);
+              setIsLoading(false);
+              if(result === -1) {
+                toast(
+                  (t) => (
+                    <div>
+                      <span>Failed to get data. Let's try again</span>
+                    </div>
+                  ),
+                  {
+                    icon: "🔴",
+                    duration: 5000,
+                  }
+                );
+              } else {
+                toast(
+                  (t) => (
+                    <div>
+                      { result ? <>Domain available</> : <>Domain not available</>}
+                    </div>
+                  ),
+                  {
+                    icon: result ? "✔" : "❌",
+                    duration: 5000,
+                  }
+                );             
+                const updateDomain = [...domains];
+                updateDomain.forEach(elem => {
+                  if (elem.domain === domain.domain) {
+                      elem.available = result;
+                  }
+                });
+                functiondf(updateDomain);
+                saveDomainFounded(updateDomain);
+              } 
+            } catch (error: any) {
+              toast(
+                (t) => (
+                  <div>
+                    <span>{error}</span>
+                  </div>
+                ),
+                {
+                  icon: "🔴",
+                  duration: 5000,
+                }
+              );            
+            }          
+          }}            
           >
-            <VisibilityIcon />
-          </IconButton>
-        </span>
-      </Tooltip>      
-    </IconButton>
+          Check availability
+        </Button>          
+      </span>
+    </Tooltip>      
   )
 };
 
@@ -332,7 +319,6 @@ const CellRate: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
     /*return (
       admin ? 
       <>
-        <span className="text-lg font-medium mr-4 flex-1 hover:underline">{dinfo.rate}</span>
       </> : 
       <>*
       </>
@@ -344,20 +330,10 @@ const CellRate: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
     )  
 };
 
-const CellBuyDomain: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
+const CellBuyDomain: React.FC<DomainInfoItem> = ({ dinfo, admin, email, cr, functioncr }) => {
     /*return (
         admin ? 
-        <>
-        <Tooltip title={!dinfo.available ? "Check its availability to buy it" : ""} disableHoverListener={dinfo.available}>
-          <span>
-          <Button
-              disabled={!dinfo.available}
-              onClick={() => checkBuyDomain(getCleanDomainName(dinfo))}
-              variant="contained"
-              color="primary"
-            >Buy</Button>            
-          </span>
-        </Tooltip>        
+        <>      
         </> : 
         <>
         </>
@@ -367,7 +343,39 @@ const CellBuyDomain: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
       <span>
       <Button
           disabled={!dinfo.available}
-          onClick={() => checkBuyDomain(getCleanDomainName(dinfo))}
+          onClick={async () => {
+            const d = getCleanDomainName(dinfo);            
+            if(cr! > 0) {
+              functioncr((prevCredits: number) => prevCredits - 1);
+              try {
+                await setUserByEmail(cr! - 1, email!);
+                toast(
+                  (t) => (
+                    <div>
+                      Buy domain for <b>{d}</b> coming soon
+                    </div>
+                  ),
+                  {
+                    icon: "🔍",
+                  }
+                );
+                mixpanel.track("Buy domain", {
+                  domain: d,
+                });                                
+              } catch (error: any) {
+                toast(
+                  (t) => (
+                    <div>
+                      Error<b>{error}</b>
+                    </div>
+                  ),
+                  {
+                    icon: "🔴",
+                  }
+                );                
+              }                  
+            }
+          }}
           variant="contained"
           color="primary"
         >Buy</Button>            
@@ -376,38 +384,62 @@ const CellBuyDomain: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
     )
 };
 
-const CellCheckSocials: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
+const CellCheckSocials: React.FC<DomainInfoItem> = ({ dinfo, admin, email, cr, functioncr }) => {
     /*return (
         admin ? 
         <>
-        <button
-            onClick={() =>
-                checkSocialNetworks(getCleanDomainName(dinfo))
-            }
-            className="ml-4 bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
-        >
-            Check Socials
-        </button>
         </> : 
         <>
         </>
     )*/
     return (
-      <button
-          onClick={() =>
-              checkSocialNetworks(getCleanDomainName(dinfo))
-          }
-          className="ml-4 bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
-      >
-          Check Socials
-      </button>
+      <Tooltip title={!dinfo.available ? "Check its availability to buy it" : ""} disableHoverListener={dinfo.available}>
+      <span>
+      <Button
+          disabled={!dinfo.available}
+          onClick={async () => {
+            const d = getCleanDomainName(dinfo);
+            if(cr! > 0) {
+              functioncr((prevCredits: number) => prevCredits - 1);
+              try {
+                await setUserByEmail(cr! - 1, email!);
+                toast(
+                  (t) => (
+                    <div>
+                      Checking social networks for <b>{d}</b> coming soon
+                    </div>
+                  ),
+                  {
+                    icon: "🔍",
+                  }
+                );
+                mixpanel.track("Check Socials", {
+                  domain: d,
+                });                                
+              } catch (error: any) {
+                toast(
+                  (t) => (
+                    <div>
+                      Error<b>{error}</b>
+                    </div>
+                  ),
+                  {
+                    icon: "🔴",
+                  }
+                );                
+              }                  
+            }
+          }}
+          variant="contained"
+          color="primary"
+        >CheckSocials</Button>            
+      </span>
+    </Tooltip>
     )    
 };
 
-const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, functionDomainFounded }) => {
+const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, email, functionDomainFounded, cred, functionCred }) => {
   
-  const { user } = useUser();
-
   const [open, setOpen] = React.useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -555,12 +587,21 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, functionDomainFou
                   <TableCell component="th" scope="row">
                     <section style={{ display: 'flex', alignItems: 'center' }}>
                       <CellDomain dinfo={row} admin={admin} />
-                      <CellCheckAvailability domain={row} domains={rows} functiondf={functionDomainFounded}/>
+                      <CellFavorite domain={row} domains={rows} functiondf={functionDomainFounded} email={email}/>                      
                       <CellResultAvailability dinfo={row}/>
-                      <CellFavorite domain={row} domains={rows} functiondf={functionDomainFounded} user={user}/>
                     </section>
-                    <CellBuyDomain dinfo={row} admin={admin} />
-                    <CellCheckSocials dinfo={row} admin={admin} />
+                    {
+                      row.available ? 
+                      <>
+                      <Box display="flex" justifyContent="space-between">
+                        <CellBuyDomain dinfo={row} admin={admin} email={email} cr={cred} functioncr={functionCred}/>
+                        <CellCheckSocials dinfo={row} admin={admin} email={email} cr={cred} functioncr={functionCred}/>
+                      </Box>                      
+                      </> :
+                      <>
+                        <CellCheckAvailability domain={row} domains={rows} functiondf={functionDomainFounded}/>
+                      </>
+                    }
                   </TableCell>
                   <TableCell align="center">
                     <CellRate dinfo={row} admin={admin} />

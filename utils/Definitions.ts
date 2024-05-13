@@ -10,12 +10,18 @@ export interface DomainInfo {
 export interface DomainInfoArray {
     rows: DomainInfo[];
     admin: boolean;
+    email: string;
     functionDomainFounded?: any;
+    cred?: number; 
+    functionCred?: any;    
 }
 
 export interface DomainInfoItem {
     dinfo: DomainInfo;
     admin?: boolean;
+    email?: string;
+    cr?: number;
+    functioncr?: any;
 }
 
 export interface DomainRate {
