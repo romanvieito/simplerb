@@ -55,12 +55,14 @@ export default function Footer({ isauth, userauth } : { isauth : any, userauth: 
         {
           isauth ? 
           <>            
-            <Button
-              variant="contained"  
-              startIcon={<EmailIcon />}
+            <button
+              className="bg-black text-white py-3 px-6 rounded-md shadow hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-opacity-50"  
+              
               onClick={handleOpenModal}>
-                Feedback
-            </Button>
+                <i className="fas fa-comment"></i>
+                <EmailIcon />{" "}
+                <span>Feedback</span>
+            </button>
           </> : 
           <></>
         }

@@ -253,7 +253,7 @@ const CellCheckAvailability = ({ domain, domains, functiondf } : { domain : Doma
     >
       <span>
         <button 
-          className="bg-black text-white py-3 px-6 rounded-md shadow hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-opacity-50"
+          className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
           onClick={async () => {
             setIsLoading(true);
             try {
@@ -341,7 +341,7 @@ const CellBuyDomain: React.FC<DomainInfoItem> = ({ dinfo, admin, email, cr, func
       <Tooltip title={!dinfo.available ? "Check its availability to buy it" : ""} disableHoverListener={dinfo.available}>
       <span>
       <button
-          className="bg-black text-white py-3 px-6 rounded-md shadow hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-opacity-50"          
+          className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
           disabled={!dinfo.available}
           onClick={async () => {
             const d = getCleanDomainName(dinfo);            
@@ -394,7 +394,7 @@ const CellCheckSocials: React.FC<DomainInfoItem> = ({ dinfo, admin, email, cr, f
       <Tooltip title={!dinfo.available ? "Check its availability to buy it" : ""} disableHoverListener={dinfo.available}>
       <span>
       <button
-          className="bg-gray-300 text-black py-3 px-6 border border-gray-400 rounded-md shadow hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50"
+          className="bg-gray-400 rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-gray-300 w-full"
           disabled={!dinfo.available}
           onClick={async () => {
             const d = getCleanDomainName(dinfo);
@@ -581,8 +581,8 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, email, functionDo
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((row, index) => (
                 <TableRow key={index}>
-                  <TableCell component="th" scope="row">
-                    <section style={{ display: 'flex', alignItems: 'center' }}>
+                  <TableCell component="th" scope="row">                  
+                    <section style={{ display: 'flex', alignItems: 'center', marginTop: '8px' }}>
                       <CellDomain dinfo={row} admin={admin} />
                       <CellFavorite domain={row} domains={rows} functiondf={functionDomainFounded} email={email}/>                      
                       <CellResultAvailability dinfo={row}/>
@@ -590,10 +590,10 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, email, functionDo
                     {
                       row.available ? 
                       <>
-                      <Box display="flex" justifyContent="space-between">
-                        <CellBuyDomain dinfo={row} admin={admin} email={email} cr={cred} functioncr={functionCred}/>
-                        <CellCheckSocials dinfo={row} admin={admin} email={email} cr={cred} functioncr={functionCred}/>
-                      </Box>                      
+                      <Box display="flex" justifyContent="flex-start" style={{ marginTop: '8px' }}>
+                        <div style={{ marginRight: "16px" }}><CellBuyDomain dinfo={row} admin={admin} email={email} cr={cred} functioncr={functionCred}/></div>
+                        <CellCheckSocials dinfo={row} admin={admin} email={email} cr={cred} functioncr={functionCred}/>    
+                      </Box>              
                       </> : 
                       row.available === undefined ?
                       <>
