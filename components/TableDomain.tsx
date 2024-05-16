@@ -196,7 +196,7 @@ const CellResultAvailability: React.FC<DomainInfoItem> = ({ dinfo }) => {
 const CellFavorite = ({ domain, domains, functiondf, email } : { domain : DomainInfo, domains: DomainInfo[], functiondf: any, email: string }) => {  
   const [isLoading, setIsLoading] = useState(false);
   return (
-    <Tooltip title={!domain.favorite ? "Mask a favorite" : "Unmark as favorite"} disableHoverListener={domain.available}>
+    <Tooltip title={!domain.favorite ? "Mask a favorite" : "Unmark as favorite"}>
       <span>
       <IconButton
         disabled={isLoading} 
@@ -253,7 +253,7 @@ const CellCheckAvailability = ({ domain, domains, functiondf } : { domain : Doma
     >
       <span>
         <button 
-          className="bg-black text-white py-3 px-6 rounded-md shadow hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-opacity-50"
+          className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-black/80 w-full"
           onClick={async () => {
             setIsLoading(true);
             try {
@@ -341,7 +341,7 @@ const CellBuyDomain: React.FC<DomainInfoItem> = ({ dinfo, admin, email, cr, func
       <Tooltip title={!dinfo.available ? "Check its availability to buy it" : ""} disableHoverListener={dinfo.available}>
       <span>
       <button
-          className="bg-black text-white py-3 px-6 rounded-md shadow hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-opacity-50"          
+          className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-black/80 w-full"
           disabled={!dinfo.available}
           onClick={async () => {
             const d = getCleanDomainName(dinfo);            
@@ -394,7 +394,7 @@ const CellCheckSocials: React.FC<DomainInfoItem> = ({ dinfo, admin, email, cr, f
       <Tooltip title={!dinfo.available ? "Check its availability to buy it" : ""} disableHoverListener={dinfo.available}>
       <span>
       <button
-          className="bg-gray-300 text-black py-3 px-6 border border-gray-400 rounded-md shadow hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50"
+          className="bg-gray-400 rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-gray-300 w-full"
           disabled={!dinfo.available}
           onClick={async () => {
             const d = getCleanDomainName(dinfo);
@@ -590,10 +590,10 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, email, functionDo
                     {
                       row.available ? 
                       <>
-                      <Box display="flex" justifyContent="space-between">
-                        <CellBuyDomain dinfo={row} admin={admin} email={email} cr={cred} functioncr={functionCred}/>
-                        <CellCheckSocials dinfo={row} admin={admin} email={email} cr={cred} functioncr={functionCred}/>
-                      </Box>                      
+                      <Box display="flex" justifyContent="flex-start">
+                        <div style={{ marginRight: "16px" }}><CellBuyDomain dinfo={row} admin={admin} email={email} cr={cred} functioncr={functionCred}/></div>
+                        <CellCheckSocials dinfo={row} admin={admin} email={email} cr={cred} functioncr={functionCred}/>    
+                      </Box>              
                       </> : 
                       row.available === undefined ?
                       <>
