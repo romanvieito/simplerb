@@ -4,7 +4,10 @@ export interface DomainInfo {
     available?: boolean;
     favorite?: boolean;
     error?: string;
-    rate?: number;    
+    memorability?: number,
+    simplicity?: number,
+    brevity?: number,    
+    rate?: number;
 }
 
 export interface DomainInfoArray {

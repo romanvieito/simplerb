@@ -185,7 +185,7 @@ const CellDomain: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
     );  
 };
 
-const CellResultAvailability: React.FC<DomainInfoItem> = ({ dinfo }) => {
+const SpanResultAvailability: React.FC<DomainInfoItem> = ({ dinfo }) => {
   return (
     <>
       {dinfo.available===undefined ? <span></span> : dinfo.available ? <span> ✔</span> : <span> ❌</span>} 
@@ -239,7 +239,32 @@ const CellFavorite = ({ domain, domains, functiondf, email } : { domain : Domain
   );  
 };
 
-const CellCheckAvailability = ({ domain, domains, functiondf } : { domain : DomainInfo, domains: DomainInfo[], functiondf: any }) => {  
+const CellRate: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
+    /*return (
+      admin ? 
+      <>
+      </> : 
+      <>*
+      </>
+    )*/
+    return (
+      <>
+        <Tooltip
+          title={
+            <div>
+              <p>Rating details</p>
+              <p><span>Memorability</span>: {dinfo.memorability}</p>
+              <p><span>Simplicity</span>: {dinfo.simplicity}</p>
+              <p><span>Brevity</span>: {dinfo.brevity}</p>
+            </div>
+          }>
+          <span className="text-lg font-medium mr-4 flex-1 hover:underline">{dinfo.rate}</span>
+        </Tooltip>              
+      </>
+    )  
+};
+
+const ButtonCheckAvailability = ({ domain, domains, functiondf } : { domain : DomainInfo, domains: DomainInfo[], functiondf: any }) => {  
   const [isLoading, setIsLoading] = useState(false);    
   return (
     <Tooltip
@@ -314,22 +339,7 @@ const CellCheckAvailability = ({ domain, domains, functiondf } : { domain : Doma
   )
 };
 
-const CellRate: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
-    /*return (
-      admin ? 
-      <>
-      </> : 
-      <>*
-      </>
-    )*/
-    return (
-      <>
-        <span className="text-lg font-medium mr-4 flex-1 hover:underline">{dinfo.rate}</span>
-      </>
-    )  
-};
-
-const CellBuyDomain: React.FC<DomainInfoItem> = ({ dinfo, admin, email, cr, functioncr }) => {
+const ButtonBuyDomain: React.FC<DomainInfoItem> = ({ dinfo, admin, email, cr, functioncr }) => {
     /*return (
         admin ? 
         <>      
@@ -341,7 +351,7 @@ const CellBuyDomain: React.FC<DomainInfoItem> = ({ dinfo, admin, email, cr, func
       <Tooltip title={!dinfo.available ? "Check its availability to buy it" : ""} disableHoverListener={dinfo.available}>
       <span>
       <button
-          className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-black/80 w-full"
+          className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-gray-300 hover:text-black w-full"
           disabled={!dinfo.available}
           onClick={async () => {
             const d = getCleanDomainName(dinfo);            
@@ -382,7 +392,7 @@ const CellBuyDomain: React.FC<DomainInfoItem> = ({ dinfo, admin, email, cr, func
     )
 };
 
-const CellCheckSocials: React.FC<DomainInfoItem> = ({ dinfo, admin, email, cr, functioncr }) => {
+const ButtonCheckSocials: React.FC<DomainInfoItem> = ({ dinfo, admin, email, cr, functioncr }) => {
     /*return (
         admin ? 
         <>
@@ -394,7 +404,7 @@ const CellCheckSocials: React.FC<DomainInfoItem> = ({ dinfo, admin, email, cr, f
       <Tooltip title={!dinfo.available ? "Check its availability to buy it" : ""} disableHoverListener={dinfo.available}>
       <span>
       <button
-          className="bg-gray-400 rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-gray-300 w-full"
+          className="bg-white border border-black rounded-xl text-black font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-gray-300 w-full"
           disabled={!dinfo.available}
           onClick={async () => {
             const d = getCleanDomainName(dinfo);
@@ -585,19 +595,19 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, email, functionDo
                     <section style={{ display: 'flex', alignItems: 'center' }}>
                       <CellDomain dinfo={row} admin={admin} />
                       <CellFavorite domain={row} domains={rows} functiondf={functionDomainFounded} email={email}/>                      
-                      <CellResultAvailability dinfo={row}/>
+                      <SpanResultAvailability dinfo={row}/>
                     </section>
                     {
                       row.available ? 
                       <>
                       <Box display="flex" justifyContent="flex-start">
-                        <div style={{ marginRight: "16px" }}><CellBuyDomain dinfo={row} admin={admin} email={email} cr={cred} functioncr={functionCred}/></div>
-                        <CellCheckSocials dinfo={row} admin={admin} email={email} cr={cred} functioncr={functionCred}/>    
+                        <div style={{ marginRight: "16px" }}><ButtonBuyDomain dinfo={row} admin={admin} email={email} cr={cred} functioncr={functionCred}/></div>
+                        <ButtonCheckSocials dinfo={row} admin={admin} email={email} cr={cred} functioncr={functionCred}/>    
                       </Box>              
                       </> : 
                       row.available === undefined ?
                       <>
-                        <CellCheckAvailability domain={row} domains={rows} functiondf={functionDomainFounded}/>
+                        <ButtonCheckAvailability domain={row} domains={rows} functiondf={functionDomainFounded}/>
                       </> :
                       <></>      
                     }
