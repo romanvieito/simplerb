@@ -278,7 +278,7 @@ const ButtonCheckAvailability = ({ domain, domains, functiondf } : { domain : Do
     >
       <span>
         <button 
-          className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-black/80 w-full"
+          className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-gray-300 hover:text-black w-full"
           onClick={async () => {
             setIsLoading(true);
             try {
