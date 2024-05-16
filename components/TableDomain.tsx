@@ -252,9 +252,8 @@ const CellCheckAvailability = ({ domain, domains, functiondf } : { domain : Doma
       }
     >
       <span>
-        <Button 
-          variant="contained" 
-          size="small"
+        <button 
+          className="bg-black text-white py-3 px-6 rounded-md shadow hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-opacity-50"
           onClick={async () => {
             setIsLoading(true);
             try {
@@ -309,7 +308,7 @@ const CellCheckAvailability = ({ domain, domains, functiondf } : { domain : Doma
           }}            
           >
           Check availability
-        </Button>          
+        </button>          
       </span>
     </Tooltip>      
   )
@@ -341,7 +340,8 @@ const CellBuyDomain: React.FC<DomainInfoItem> = ({ dinfo, admin, email, cr, func
     return (
       <Tooltip title={!dinfo.available ? "Check its availability to buy it" : ""} disableHoverListener={dinfo.available}>
       <span>
-      <Button
+      <button
+          className="bg-black text-white py-3 px-6 rounded-md shadow hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-800 focus:ring-opacity-50"          
           disabled={!dinfo.available}
           onClick={async () => {
             const d = getCleanDomainName(dinfo);            
@@ -376,9 +376,7 @@ const CellBuyDomain: React.FC<DomainInfoItem> = ({ dinfo, admin, email, cr, func
               }                  
             }
           }}
-          variant="contained"
-          color="primary"
-        >Buy</Button>            
+        >Buy</button>            
       </span>
     </Tooltip>      
     )
@@ -395,7 +393,8 @@ const CellCheckSocials: React.FC<DomainInfoItem> = ({ dinfo, admin, email, cr, f
     return (
       <Tooltip title={!dinfo.available ? "Check its availability to buy it" : ""} disableHoverListener={dinfo.available}>
       <span>
-      <Button
+      <button
+          className="bg-gray-300 text-black py-3 px-6 border border-gray-400 rounded-md shadow hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50"
           disabled={!dinfo.available}
           onClick={async () => {
             const d = getCleanDomainName(dinfo);
@@ -430,9 +429,7 @@ const CellCheckSocials: React.FC<DomainInfoItem> = ({ dinfo, admin, email, cr, f
               }                  
             }
           }}
-          variant="contained"
-          color="primary"
-        >Check Socials</Button>            
+        >Check Socials</button>            
       </span>
     </Tooltip>
     )    
