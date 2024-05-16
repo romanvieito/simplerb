@@ -27,15 +27,24 @@ export function convertTextRateToJson(data: string): DomainRate[] {
 
 export function addRateToDomainInfo(jsonA: DomainInfo[], jsonB: DomainRate[]): DomainInfo[] {
     // Create a map to store the averageScore with the domain name as the key
-    const scoresMap = new Map<string, number>();
+    const scoresMap = new Map<string, any>();
     jsonB.forEach(item => {
-        scoresMap.set(item.domain, parseFloat(item.averageScore));
+        const rate = {
+            memorability: item.memorability,
+            simplicity: item.simplicity,
+            brevity: item.brevity,
+            average: parseFloat(item.averageScore)
+        }
+        scoresMap.set(item.domain, rate);
     });
 
     // Iterate through jsonA and add the 'rate' key if the domain is found in the scoresMap
     jsonA.forEach(item => {
         if (scoresMap.has(item.domain)) {
-            item.rate = scoresMap.get(item.domain);
+            item.memorability = scoresMap.get(item.domain).memorability;
+            item.simplicity = scoresMap.get(item.domain).simplicity;
+            item.brevity = scoresMap.get(item.domain).brevity;
+            item.rate = scoresMap.get(item.domain).average;
         }
     });
 
