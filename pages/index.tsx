@@ -173,6 +173,8 @@ const Home: NextPage = () => {
             : ""
         }
       ${bio ? `Keep in mind the client's focus on ` + bio : ""}.`;
+      const ptemp = 0.7;
+      const ptop = 1;
 
       // console.log({ prompt });
 
@@ -183,6 +185,8 @@ const Home: NextPage = () => {
         },
         body: JSON.stringify({
           prompt,
+          ptemp,
+          ptop
         }),
       });
 
@@ -370,8 +374,10 @@ const Home: NextPage = () => {
         
     const prompt = `Rate the following domain names based on three key criteria: Memorability, Simplicity, and Brevity. Each category should be scored on a scale from 0 to 10, where 0 indicates very poor and 10 means excellent. It also provides a average score. I don't need a summary at the end. If result is one domain, add domain.
       Domain Names to Rate:
-      ${domainListText}`;
- 
+      ${domainListText}`;    
+    const ptemp = 0.7;
+    const ptop = 1;
+
     const response = await fetch(isGPT ? "/api/openai" : "/api/mistral", {
         method: "POST",
         headers: {
@@ -379,6 +385,8 @@ const Home: NextPage = () => {
         },
         body: JSON.stringify({
           prompt,
+          ptemp,
+          ptop          
         }),
     });
   
