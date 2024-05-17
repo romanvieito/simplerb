@@ -11,7 +11,7 @@ import { Tooltip } from "@mui/material";
 import { 
   COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN, 
   COUNT_DOMAINS_TO_SEARCH_YES_ADMIN,
-  DomainInfo, VibeType } from "../utils/Definitions";
+  DomainInfo, VibeType, ptemp, ptop } from "../utils/Definitions";
 
 import {
   getBio,
@@ -173,8 +173,6 @@ const Home: NextPage = () => {
             : ""
         }
       ${bio ? `Keep in mind the client's focus on ` + bio : ""}.`;
-      const ptemp = 0.7;
-      const ptop = 1;
 
       // console.log({ prompt });
 
@@ -374,9 +372,7 @@ const Home: NextPage = () => {
         
     const prompt = `Rate the following domain names based on three key criteria: Memorability, Simplicity, and Brevity. Each category should be scored on a scale from 0 to 10, where 0 indicates very poor and 10 means excellent. It also provides a average score. I don't need a summary at the end. If result is one domain, add domain.
       Domain Names to Rate:
-      ${domainListText}`;    
-    const ptemp = 0.7;
-    const ptop = 1;
+      ${domainListText}`;
 
     const response = await fetch(isGPT ? "/api/openai" : "/api/mistral", {
         method: "POST",
