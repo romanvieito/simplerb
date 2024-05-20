@@ -58,7 +58,7 @@ const setUserByEmail = async (credits: number, email: string) => {
 
 const checkAvailability = async (domain: string) => {  
   try {    
-    const response = await fetch("/api/check-availability", { //"/api/check-availability-godaddy"
+    const response = await fetch("/api/check-availability-godaddy", { //"/api/check-availability-godaddy"
       method: "POST",
       headers: {
         "Content-Type": "application/json",
