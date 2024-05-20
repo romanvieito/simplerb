@@ -9,19 +9,24 @@ export const config = {
 };
 
 const handler = async (req: Request): Promise<Response> => {
-  const { prompt } = (await req.json()) as {
+  const { prompt, ptemp, ptop } = (await req.json()) as {
     prompt?: string;
+    ptemp?: number;
+    ptop?: number;    
   };
 
   if (!prompt) {
     return new Response('No prompt in the request', { status: 400 });
   }
 
+  const temperature = (typeof ptemp === 'number') ? ptemp : 0;
+  const top_p = (typeof ptop === 'number') ? ptop : 0;
+
   const payload: OpenAIStreamPayload = {
     model: 'gpt-3.5-turbo',
     messages: [{ role: 'user', content: prompt }],
-    temperature: 0.7,
-    top_p: 1,
+    temperature: temperature,
+    top_p: top_p,
     frequency_penalty: 0,
     presence_penalty: 0,
     max_tokens: 200,

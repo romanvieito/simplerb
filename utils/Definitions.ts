@@ -46,3 +46,9 @@ export type VibeType = 'Professional' | 'Friendly' | 'Sophisticated' | 'Creative
 export const COUNT_DOMAINS_TO_SEARCH_YES_ADMIN = 5;
 
 export const COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN = 5;
+
+// Parametros de openai
+
+export const ptemp = 0.7;
+
+export const ptop = 1;
