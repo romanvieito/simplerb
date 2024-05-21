@@ -57,7 +57,24 @@ const setUserByEmail = async (credits: number, email: string) => {
 };
 
 const checkAvailability = async (domain: string) => {  
+
   try {    
+
+    /*const response0 = await fetch("/api/get-tlds-godaddy", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      }
+    });
+
+    if (!response0.ok) {
+      throw new Error(`Error: ${response0.statusText}`);
+    }
+
+    const data0 = await response0.json();
+
+    console.log('tlds-domains', data0);*/
+
     const response = await fetch("/api/check-availability-godaddy", { //"/api/check-availability-godaddy"
       method: "POST",
       headers: {
@@ -72,7 +89,7 @@ const checkAvailability = async (domain: string) => {
 
     const data = await response.json();
 
-    console.log('data-check-availability', data);
+    //console.log('data-check-availability', data);
     
     if(!data) return -1;
 
