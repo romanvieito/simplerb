@@ -54,7 +54,6 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import Paper from '@mui/material/Paper';
-import Typography from '@mui/material/Typography';
 
 type Domain = string;
 
@@ -92,13 +91,17 @@ const Home: NextPage = () => {
   const [valueTabViteProf, setValueTabViteProf] = useState('1');
   const handleTabViteProfChange = (event: any, newValue: string) => {
     setValueTabViteProf(newValue);
-  };  
+  };
+  // Keywords  
   const [vpContains, setVpContains] = useState("");
   const [vpStartsWith, setVpStartsWith] = useState("");
   const [vpEndsWith, setVpEndsWith] = useState("");
   const [vpSimilarToThisDomainName, setVpSimilarToThisDomainName] = useState("");  
-  const [vpExtLeft, setVpExtLeft] = useState<string[]>(['Item 1', 'Item 2', 'Item 3', 'Item 4']);
-  const [vpExtRight, setVpExtRight] = useState<string[]>(['Item 5', 'Item 6', 'Item 7', 'Item 8']);
+  const handleClearKeyWords = () => {
+  };
+  // Extensions  
+  const [vpExtLeft, setVpExtLeft] = useState<string[]>([]);
+  const [vpExtRight, setVpExtRight] = useState<string[]>([]);
   const [vpExtChecked, setVpExtChecked] = useState<string[]>([]);
   const vpExtLeftChecked = vp_intersection(vpExtChecked, vpExtLeft);
   const vpExtRightChecked = vp_intersection(vpExtChecked, vpExtRight);
@@ -160,16 +163,45 @@ const Home: NextPage = () => {
     </Paper>
   );
   const filteredExtRight = vpExtRight.filter(item => item.toLowerCase().includes(filterExtRight.toLowerCase()));  
+
+  const fetchTldsDomains = async () => {
+    let tldsDomains = [];
+    try {
+      const response = await fetch("/api/get-tlds-godaddy", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`Error: ${response.statusText}`);
+      }
+      const data = await response.json();
+      for(const elem of data){
+        tldsDomains.push(elem.name);
+      }
+      setVpExtRight(tldsDomains);
+    } catch (error) {
+      console.error("Failed to fetch tlds domains:", error);
+    } finally {
+    }
+  };  
+  // Characters
   const [vpTransform, setVpTransform] = useState({
     vpHiremecom: false,
     vpFlickercom: false,
     vpToolcom: false,
   });
+  const handleClearExtensions = () => {
+  };  
   const handleVpTransformChange = (event: any) => {
     setVpTransform({
       ...vpTransform,
       [event.target.name]: event.target.checked,
     });
+  };
+  const { vpHiremecom, vpFlickercom, vpToolcom } = vpTransform;    
+  const handleClearCharacters = () => {
   };  
   //-----------------------------------------------------------------------------------------
   
@@ -215,9 +247,12 @@ const Home: NextPage = () => {
         const dfFromStorage = getDomainFounded();
         return dfFromStorage ?? []
       });
+      // Call vite professional aditionals
+      fetchTldsDomains();
     } else {
       setBio("");
       setVibe("Professional");
+      // Call vite professional aditionals
     }
   }, [user]);
 
@@ -581,8 +616,6 @@ const Home: NextPage = () => {
     }
   };
 
-  const { vpHiremecom, vpFlickercom, vpToolcom } = vpTransform;
-
   return (
     <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
       <Head>
@@ -684,7 +717,7 @@ const Home: NextPage = () => {
                       alignItems: 'flex-start',
                     }}
                     >
-                    <Button size="small" startIcon={<ClearIcon />} id="clear-keywords">
+                    <Button size="small" startIcon={<ClearIcon />} id="clear-keywords" onClick={handleClearKeyWords}>
                       Clear Filter
                     </Button>                      
                     <Box mb={2} sx={{ width: '100%' }}>
@@ -738,7 +771,7 @@ const Home: NextPage = () => {
                       alignItems: 'flex-start',
                     }}
                     >
-                    <Button size="small" startIcon={<ClearIcon />} id="clear-extensions">
+                    <Button size="small" startIcon={<ClearIcon />} id="clear-extensions" onClick={handleClearExtensions}>
                       Clear Filter
                     </Button>
                   </Box>               
@@ -823,7 +856,7 @@ const Home: NextPage = () => {
                       alignItems: 'flex-start',
                     }}
                     >
-                    <Button size="small" startIcon={<ClearIcon />} id="clear-characters">
+                    <Button size="small" startIcon={<ClearIcon />} id="clear-characters" onClick={handleClearCharacters}>
                       Clear Filter
                     </Button>
                   </Box>                  

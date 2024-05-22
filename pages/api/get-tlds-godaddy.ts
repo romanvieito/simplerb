@@ -27,7 +27,6 @@ export default async function handler(
         type: elem.type
       });      
     }
-    console.log('tlds', data);
   }
 
   res.status(200).json(tldsResults);
