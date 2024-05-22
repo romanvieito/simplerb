@@ -92,20 +92,27 @@ const Home: NextPage = () => {
   const handleTabViteProfChange = (event: any, newValue: string) => {
     setValueTabViteProf(newValue);
   };
+
   // Keywords  
   const [vpContains, setVpContains] = useState("");
   const [vpStartsWith, setVpStartsWith] = useState("");
   const [vpEndsWith, setVpEndsWith] = useState("");
   const [vpSimilarToThisDomainName, setVpSimilarToThisDomainName] = useState("");  
   const handleClearKeyWords = () => {
+    setVpContains("");
+    setVpStartsWith("");
+    setVpEndsWith("");
+    setVpSimilarToThisDomainName("");
   };
+
   // Extensions  
   const [vpExtLeft, setVpExtLeft] = useState<string[]>([]);
   const [vpExtRight, setVpExtRight] = useState<string[]>([]);
   const [vpExtChecked, setVpExtChecked] = useState<string[]>([]);
+  const [filterExtRight, setFilterExtRight] = useState('');  
+  const [vpTldsDomains, setVpTldsDomains] = useState<string[]>([]);  
   const vpExtLeftChecked = vp_intersection(vpExtChecked, vpExtLeft);
   const vpExtRightChecked = vp_intersection(vpExtChecked, vpExtRight);
-  const [filterExtRight, setFilterExtRight] = useState('');
   const handleToggle = (value: string) => () => {
     const currentIndex = vpExtChecked.indexOf(value);
     const newChecked = [...vpExtChecked];
@@ -163,7 +170,6 @@ const Home: NextPage = () => {
     </Paper>
   );
   const filteredExtRight = vpExtRight.filter(item => item.toLowerCase().includes(filterExtRight.toLowerCase()));  
-
   const fetchTldsDomains = async () => {
     let tldsDomains = [];
     try {
@@ -180,20 +186,28 @@ const Home: NextPage = () => {
       for(const elem of data){
         tldsDomains.push(elem.name);
       }
+      setVpTldsDomains(tldsDomains);
       setVpExtRight(tldsDomains);
     } catch (error) {
       console.error("Failed to fetch tlds domains:", error);
     } finally {
     }
-  };  
+  };
+  const handleClearExtensions = () => {
+    setVpExtLeft([]);
+    setVpExtRight([...vpTldsDomains])
+    setVpExtChecked([]);
+    setFilterExtRight("");    
+  };    
+
   // Characters
   const [vpTransform, setVpTransform] = useState({
     vpHiremecom: false,
     vpFlickercom: false,
     vpToolcom: false,
   });
-  const handleClearExtensions = () => {
-  };  
+  const [vpMinlength, setVpMinlength] = useState(0);
+  const [vpMaxlength, setVpMaxlength] = useState(0);    
   const handleVpTransformChange = (event: any) => {
     setVpTransform({
       ...vpTransform,
@@ -202,6 +216,13 @@ const Home: NextPage = () => {
   };
   const { vpHiremecom, vpFlickercom, vpToolcom } = vpTransform;    
   const handleClearCharacters = () => {
+    setVpTransform({
+      vpHiremecom: false,
+      vpFlickercom: false,
+      vpToolcom: false,
+    });
+    setVpMinlength(0);
+    setVpMaxlength(0);
   };  
   //-----------------------------------------------------------------------------------------
   
@@ -924,6 +945,8 @@ const Home: NextPage = () => {
                         InputLabelProps={{
                           shrink: true,
                         }}
+                        value={vpMinlength}
+                        onChange={(e) => setVpMinlength(parseInt(e.target.value, 10))}
                       />
                       <TextField
                         id="vpMaxlength"
@@ -933,6 +956,8 @@ const Home: NextPage = () => {
                         InputLabelProps={{
                           shrink: true,
                         }}
+                        value={vpMaxlength}
+                        onChange={(e) => setVpMaxlength(parseInt(e.target.value, 10))}
                       />
                     </div>
                   </Box>                  
