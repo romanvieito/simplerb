@@ -93,17 +93,10 @@ const Home: NextPage = () => {
   const handleTabViteProfChange = (event: any, newValue: string) => {
     setValueTabViteProf(newValue);
   };  
-  const [vptransform, setVptransform] = useState({
-    hiremecom: false,
-    flickercom: false,
-    toolcom: false,
-  });
-  const handleVpTransformChange = (event: any) => {
-    setVptransform({
-      ...vptransform,
-      [event.target.name]: event.target.checked,
-    });
-  };
+  const [vpContains, setVpContains] = useState("");
+  const [vpStartsWith, setVpStartsWith] = useState("");
+  const [vpEndsWith, setVpEndsWith] = useState("");
+  const [vpSimilarToThisDomainName, setVpSimilarToThisDomainName] = useState("");  
   const [vpExtLeft, setVpExtLeft] = useState<string[]>(['Item 1', 'Item 2', 'Item 3', 'Item 4']);
   const [vpExtRight, setVpExtRight] = useState<string[]>(['Item 5', 'Item 6', 'Item 7', 'Item 8']);
   const [vpExtChecked, setVpExtChecked] = useState<string[]>([]);
@@ -167,6 +160,17 @@ const Home: NextPage = () => {
     </Paper>
   );
   const filteredExtRight = vpExtRight.filter(item => item.toLowerCase().includes(filterExtRight.toLowerCase()));  
+  const [vpTransform, setVpTransform] = useState({
+    vpHiremecom: false,
+    vpFlickercom: false,
+    vpToolcom: false,
+  });
+  const handleVpTransformChange = (event: any) => {
+    setVpTransform({
+      ...vpTransform,
+      [event.target.name]: event.target.checked,
+    });
+  };  
   //-----------------------------------------------------------------------------------------
   
   // Function to fetch user credits by email
@@ -577,7 +581,7 @@ const Home: NextPage = () => {
     }
   };
 
-  const { hiremecom, flickercom, toolcom } = vptransform;
+  const { vpHiremecom, vpFlickercom, vpToolcom } = vpTransform;
 
   return (
     <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
@@ -680,89 +684,149 @@ const Home: NextPage = () => {
                       alignItems: 'flex-start',
                     }}
                     >
-                    <Button size="small" startIcon={<ClearIcon />}>
+                    <Button size="small" startIcon={<ClearIcon />} id="clear-keywords">
                       Clear Filter
                     </Button>                      
-                    <Box mb={2} sx={{ width: '100%' }}><TextField fullWidth label="Contains" id="KeyWContains" variant="standard" /></Box>
-                    <Box mb={2} sx={{ width: '100%' }}><TextField fullWidth label="Starts with" id="KeyWStartsWith" variant="standard" /></Box>
-                    <Box mb={2} sx={{ width: '100%' }}><TextField fullWidth label="Ends with" id="KeyWEndsWith" variant="standard" /></Box>
-                    <Box mb={2} sx={{ width: '100%' }}><TextField fullWidth label="Similar to this domain name" id="KeyWSimilarToThisDomainName" variant="standard" /></Box>
+                    <Box mb={2} sx={{ width: '100%' }}>
+                      <TextField 
+                        fullWidth 
+                        label="Contains" 
+                        id="vpContains" 
+                        variant="standard"
+                        value={vpContains}
+                        onChange={(e) => setVpContains(e.target.value)}                        
+                      />
+                    </Box>
+                    <Box mb={2} sx={{ width: '100%' }}>
+                      <TextField 
+                        fullWidth 
+                        label="Starts with" 
+                        id="vpStartsWith" 
+                        variant="standard" 
+                        value={vpStartsWith}
+                        onChange={(e) => setVpStartsWith(e.target.value)}                        
+                      />
+                    </Box>
+                    <Box mb={2} sx={{ width: '100%' }}>
+                      <TextField 
+                        fullWidth 
+                        label="Ends with" 
+                        id="vpEndsWith" 
+                        variant="standard"
+                        value={vpEndsWith}
+                        onChange={(e) => setVpEndsWith(e.target.value)}
+                      />
+                    </Box>
+                    <Box mb={2} sx={{ width: '100%' }}>
+                      <TextField 
+                        fullWidth 
+                        label="Similar to this domain name" 
+                        id="vpSimilarToThisDomainName" 
+                        variant="standard" 
+                        value={vpSimilarToThisDomainName}
+                        onChange={(e) => setVpSimilarToThisDomainName(e.target.value)}                        
+                      />
+                    </Box>
                   </Box>                  
                 </TabPanel>
                 <TabPanel value="2">            
-                <Grid container spacing={2} justifyContent="center" alignItems="center">
-                  <Grid direction="column">
-                    <Grid item sx={{ height: '70px', display: 'flex', alignItems: 'flex-end' }}> 
-                      Selected
-                    </Grid>
-                    <Grid item sx={{ height: '250px' }}>
-                      {customList(vpExtLeft)}
-                    </Grid>
-                  </Grid>
-                  <Grid item>
-                    <Grid container direction="column" alignItems="center">
-                      <Button
-                        sx={{ my: 0.5 }}
-                        variant="outlined"
-                        size="small"
-                        onClick={handleVpExtAllRight}
-                        disabled={vpExtLeft.length === 0}
-                        aria-label="move all right"
-                      >
-                        ≫
-                      </Button>
-                      <Button
-                        sx={{ my: 0.5 }}
-                        variant="outlined"
-                        size="small"
-                        onClick={handleVpExtCheckedRight}
-                        disabled={vpExtLeftChecked.length === 0}
-                        aria-label="move selected right"
-                      >
-                        &gt;
-                      </Button>
-                      <Button
-                        sx={{ my: 0.5 }}
-                        variant="outlined"
-                        size="small"
-                        onClick={handleVpExtCheckedLeft}
-                        disabled={vpExtRightChecked.length === 0}
-                        aria-label="move selected left"
-                      >
-                        &lt;
-                      </Button>
-                      <Button
-                        sx={{ my: 0.5 }}
-                        variant="outlined"
-                        size="small"
-                        onClick={handleVpExtAllLeft}
-                        disabled={vpExtRight.length === 0}
-                        aria-label="move all left"
-                      >
-                        ≪
-                      </Button>
-                    </Grid>
-                  </Grid>
-                  <Grid item>
-                    <Grid direction="column">
-                      <Grid item sx={{ height: '50px' }}> 
-                        <TextField
-                          id="ext-search"
-                          label="Filter to select..."
-                          variant="standard"
-                          value={filterExtRight}
-                          onChange={(e) => setFilterExtRight(e.target.value)}
-                          sx={{ width: 200, height: 50, marginBottom: 1 }}
-                        />                                             
+                  <Box
+                    sx={{
+                      maxWidth: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                    }}
+                    >
+                    <Button size="small" startIcon={<ClearIcon />} id="clear-extensions">
+                      Clear Filter
+                    </Button>
+                  </Box>               
+                  <Grid container spacing={2} justifyContent="center" alignItems="center">
+                    <Grid>
+                      <Grid item sx={{ height: '70px', display: 'flex', alignItems: 'flex-end' }}>                       
+                        Selected
                       </Grid>
-                      <Grid item sx={{ height: '250px' }}>                        
-                        {customList(filteredExtRight)}
+                      <Grid item sx={{ height: '250px' }}>
+                        {customList(vpExtLeft)}
                       </Grid>
-                    </Grid>                                        
+                    </Grid>
+                    <Grid item>
+                      <Grid container direction="column" alignItems="center">
+                        <Button
+                          sx={{ my: 0.5 }}
+                          variant="outlined"
+                          size="small"
+                          onClick={handleVpExtAllRight}
+                          disabled={vpExtLeft.length === 0}
+                          aria-label="move all right"
+                        >
+                          ≫
+                        </Button>
+                        <Button
+                          sx={{ my: 0.5 }}
+                          variant="outlined"
+                          size="small"
+                          onClick={handleVpExtCheckedRight}
+                          disabled={vpExtLeftChecked.length === 0}
+                          aria-label="move selected right"
+                        >
+                          &gt;
+                        </Button>
+                        <Button
+                          sx={{ my: 0.5 }}
+                          variant="outlined"
+                          size="small"
+                          onClick={handleVpExtCheckedLeft}
+                          disabled={vpExtRightChecked.length === 0}
+                          aria-label="move selected left"
+                        >
+                          &lt;
+                        </Button>
+                        <Button
+                          sx={{ my: 0.5 }}
+                          variant="outlined"
+                          size="small"
+                          onClick={handleVpExtAllLeft}
+                          disabled={vpExtRight.length === 0}
+                          aria-label="move all left"
+                        >
+                          ≪
+                        </Button>
+                      </Grid>
+                    </Grid>
+                    <Grid item>
+                      <Grid>
+                        <Grid item sx={{ height: '50px' }}> 
+                          <TextField
+                            id="ext-search"
+                            label="Filter to select..."
+                            variant="standard"
+                            value={filterExtRight}
+                            onChange={(e) => setFilterExtRight(e.target.value)}
+                            sx={{ width: 200, height: 50, marginBottom: 1 }}
+                          />                                             
+                        </Grid>
+                        <Grid item sx={{ height: '250px' }}>                        
+                          {customList(filteredExtRight)}
+                        </Grid>
+                      </Grid>                                        
+                    </Grid>                  
                   </Grid>                  
-                </Grid>                  
                 </TabPanel>
                 <TabPanel value="3">
+                  <Box
+                    sx={{
+                      maxWidth: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                    }}
+                    >
+                    <Button size="small" startIcon={<ClearIcon />} id="clear-characters">
+                      Clear Filter
+                    </Button>
+                  </Box>                  
                   <Box sx={{ display: 'flex' }}>
                     <FormControl sx={{ m: 2 }} component="fieldset" variant="standard">
                       <FormLabel component="legend" style={{ textAlign: 'left' }}>Transform{" "}
@@ -791,19 +855,19 @@ const Home: NextPage = () => {
                       <FormGroup>
                         <FormControlLabel
                           control={
-                            <Checkbox checked={hiremecom} onChange={handleVpTransformChange} name="hiremecom" />
+                            <Checkbox checked={vpHiremecom} onChange={handleVpTransformChange} name="vpHiremecom" />
                           }
                           label="Use Domain Hacks"
                         />
                         <FormControlLabel
                           control={
-                            <Checkbox checked={flickercom} onChange={handleVpTransformChange} name="flickercom" />
+                            <Checkbox checked={vpFlickercom} onChange={handleVpTransformChange} name="vpFlickercom" />
                           }
                           label="Drop Last Vowel"
                         />
                         <FormControlLabel
                           control={
-                            <Checkbox checked={toolcom} onChange={handleVpTransformChange} name="toolcom" />
+                            <Checkbox checked={vpToolcom} onChange={handleVpTransformChange} name="vpToolcom" />
                           }
                           label="Pluralize Nouns"
                         />
@@ -820,7 +884,7 @@ const Home: NextPage = () => {
                   >
                     <div>
                       <TextField
-                        id="CharaMinlength"
+                        id="vpMinlength"
                         label="Min length"
                         type="number"
                         variant="standard"
@@ -829,7 +893,7 @@ const Home: NextPage = () => {
                         }}
                       />
                       <TextField
-                        id="CharaMaxlength"
+                        id="vpMaxlength"
                         label="Max length"
                         type="number"
                         variant="standard"
