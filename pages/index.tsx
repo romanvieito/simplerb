@@ -34,9 +34,37 @@ import TableDomain from "../components/TableDomain";
 
 import mixpanel from "../utils/mixpanel-config";
 import { convertTextRateToJson, addRateToDomainInfo } from "../utils/TextRate";
-import { reset } from "mixpanel-browser";
+
+import Box from '@mui/material/Box';
+import Tab from '@mui/material/Tab';
+import TabContext from '@mui/lab/TabContext';
+import TabList from '@mui/lab/TabList';
+import TabPanel from '@mui/lab/TabPanel';
+import TextField from '@mui/material/TextField';
+import ClearIcon from '@mui/icons-material/Clear';
+import Button from '@mui/material/Button';
+import FormLabel from '@mui/material/FormLabel';
+import FormControl from '@mui/material/FormControl';
+import FormGroup from '@mui/material/FormGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
+import Grid from '@mui/material/Grid';
+import List from '@mui/material/List';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemText from '@mui/material/ListItemText';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
 
 type Domain = string;
+
+function vp_not(a: string[], b: string[]) {
+  return a.filter((value) => b.indexOf(value) === -1);
+}
+
+function vp_intersection(a: string[], b: string[]) {
+  return a.filter((value) => b.indexOf(value) !== -1);
+}
 
 const Home: NextPage = () => {
   const [loading, setLoading] = useState(false);
@@ -59,6 +87,88 @@ const Home: NextPage = () => {
   const { isLoaded, user, isSignedIn } = useUser();
   const { openSignIn } = useClerk();
 
+  // About Tab Vite Professional
+  //-----------------------------------------------------------------------------------------
+  const [valueTabViteProf, setValueTabViteProf] = useState('1');
+  const handleTabViteProfChange = (event: any, newValue: string) => {
+    setValueTabViteProf(newValue);
+  };  
+  const [vptransform, setVptransform] = useState({
+    hiremecom: false,
+    flickercom: false,
+    toolcom: false,
+  });
+  const handleVpTransformChange = (event: any) => {
+    setVptransform({
+      ...vptransform,
+      [event.target.name]: event.target.checked,
+    });
+  };
+  const [vpExtLeft, setVpExtLeft] = useState<string[]>(['Item 1', 'Item 2', 'Item 3', 'Item 4']);
+  const [vpExtRight, setVpExtRight] = useState<string[]>(['Item 5', 'Item 6', 'Item 7', 'Item 8']);
+  const [vpExtChecked, setVpExtChecked] = useState<string[]>([]);
+  const vpExtLeftChecked = vp_intersection(vpExtChecked, vpExtLeft);
+  const vpExtRightChecked = vp_intersection(vpExtChecked, vpExtRight);
+  const [filterExtRight, setFilterExtRight] = useState('');
+  const handleToggle = (value: string) => () => {
+    const currentIndex = vpExtChecked.indexOf(value);
+    const newChecked = [...vpExtChecked];
+    if (currentIndex === -1) {
+      newChecked.push(value);
+    } else {
+      newChecked.splice(currentIndex, 1);
+    }
+    setVpExtChecked(newChecked);
+  };
+  const handleVpExtCheckedRight = () => {
+    setVpExtRight(vpExtRight.concat(vpExtLeftChecked));
+    setVpExtLeft(vp_not(vpExtLeft, vpExtLeftChecked));
+    setVpExtChecked(vp_not(vpExtChecked, vpExtLeftChecked));
+  };
+  const handleVpExtCheckedLeft = () => {
+    setVpExtLeft(vpExtLeft.concat(vpExtRightChecked));
+    setVpExtRight(vp_not(vpExtRight, vpExtRightChecked));
+    setVpExtChecked(vp_not(vpExtChecked, vpExtRightChecked));
+  };
+  const handleVpExtAllRight = () => {
+    setVpExtRight(vpExtRight.concat(vpExtLeft));
+    setVpExtLeft([]);
+  };
+  const handleVpExtAllLeft = () => {
+    setVpExtLeft(vpExtLeft.concat(vpExtRight));
+    setVpExtRight([]);
+  };
+  const customList = (items: string[]) => (
+    <Paper sx={{ width: 200, height: 230, overflow: 'auto' }}>
+      <List dense component="div" role="list">
+        {items.map((value: string) => {
+          const labelId = `transfer-list-item-${value}-label`;
+          return (
+            <ListItemButton
+              key={value}
+              role="listitem"
+              onClick={handleToggle(value)}
+            >
+              <ListItemIcon>
+                <Checkbox
+                  checked={vpExtChecked.indexOf(value) !== -1}
+                  tabIndex={-1}
+                  disableRipple
+                  inputProps={{
+                    'aria-labelledby': labelId,
+                  }}
+                />
+              </ListItemIcon>
+              <ListItemText id={labelId} primary={value} />
+            </ListItemButton>
+          );
+        })}
+      </List>
+    </Paper>
+  );
+  const filteredExtRight = vpExtRight.filter(item => item.toLowerCase().includes(filterExtRight.toLowerCase()));  
+  //-----------------------------------------------------------------------------------------
+  
   // Function to fetch user credits by email
   const fetchCredits = async (email: string) => {
     try {
@@ -467,6 +577,8 @@ const Home: NextPage = () => {
     }
   };
 
+  const { hiremecom, flickercom, toolcom } = vptransform;
+
   return (
     <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
       <Head>
@@ -547,6 +659,191 @@ const Home: NextPage = () => {
           </div>
           <div className="block">
             <DropDown vibe={vibe} setVibe={(newVibe) => setVibe(newVibe)} />
+            {
+            vibe === 'Professional' ?
+            <>
+            <Box sx={{ width: '100%', typography: 'body1' }}>
+              <TabContext value={valueTabViteProf}>
+                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                  <TabList onChange={handleTabViteProfChange} aria-label="Options for vite professional">
+                    <Tab label="Keywords" value="1" />
+                    <Tab label="Extensions" value="2" />
+                    <Tab label="Characters" value="3" />
+                  </TabList>
+                </Box>
+                <TabPanel value="1">
+                  <Box
+                    sx={{
+                      maxWidth: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                    }}
+                    >
+                    <Button size="small" startIcon={<ClearIcon />}>
+                      Clear Filter
+                    </Button>                      
+                    <Box mb={2} sx={{ width: '100%' }}><TextField fullWidth label="Contains" id="KeyWContains" variant="standard" /></Box>
+                    <Box mb={2} sx={{ width: '100%' }}><TextField fullWidth label="Starts with" id="KeyWStartsWith" variant="standard" /></Box>
+                    <Box mb={2} sx={{ width: '100%' }}><TextField fullWidth label="Ends with" id="KeyWEndsWith" variant="standard" /></Box>
+                    <Box mb={2} sx={{ width: '100%' }}><TextField fullWidth label="Similar to this domain name" id="KeyWSimilarToThisDomainName" variant="standard" /></Box>
+                  </Box>                  
+                </TabPanel>
+                <TabPanel value="2">            
+                <Grid container spacing={2} justifyContent="center" alignItems="center">
+                  <Grid direction="column">
+                    <Grid item sx={{ height: '70px', display: 'flex', alignItems: 'flex-end' }}> 
+                      Selected
+                    </Grid>
+                    <Grid item sx={{ height: '250px' }}>
+                      {customList(vpExtLeft)}
+                    </Grid>
+                  </Grid>
+                  <Grid item>
+                    <Grid container direction="column" alignItems="center">
+                      <Button
+                        sx={{ my: 0.5 }}
+                        variant="outlined"
+                        size="small"
+                        onClick={handleVpExtAllRight}
+                        disabled={vpExtLeft.length === 0}
+                        aria-label="move all right"
+                      >
+                        ≫
+                      </Button>
+                      <Button
+                        sx={{ my: 0.5 }}
+                        variant="outlined"
+                        size="small"
+                        onClick={handleVpExtCheckedRight}
+                        disabled={vpExtLeftChecked.length === 0}
+                        aria-label="move selected right"
+                      >
+                        &gt;
+                      </Button>
+                      <Button
+                        sx={{ my: 0.5 }}
+                        variant="outlined"
+                        size="small"
+                        onClick={handleVpExtCheckedLeft}
+                        disabled={vpExtRightChecked.length === 0}
+                        aria-label="move selected left"
+                      >
+                        &lt;
+                      </Button>
+                      <Button
+                        sx={{ my: 0.5 }}
+                        variant="outlined"
+                        size="small"
+                        onClick={handleVpExtAllLeft}
+                        disabled={vpExtRight.length === 0}
+                        aria-label="move all left"
+                      >
+                        ≪
+                      </Button>
+                    </Grid>
+                  </Grid>
+                  <Grid item>
+                    <Grid direction="column">
+                      <Grid item sx={{ height: '50px' }}> 
+                        <TextField
+                          id="ext-search"
+                          label="Filter to select..."
+                          variant="standard"
+                          value={filterExtRight}
+                          onChange={(e) => setFilterExtRight(e.target.value)}
+                          sx={{ width: 200, height: 50, marginBottom: 1 }}
+                        />                                             
+                      </Grid>
+                      <Grid item sx={{ height: '250px' }}>                        
+                        {customList(filteredExtRight)}
+                      </Grid>
+                    </Grid>                                        
+                  </Grid>                  
+                </Grid>                  
+                </TabPanel>
+                <TabPanel value="3">
+                  <Box sx={{ display: 'flex' }}>
+                    <FormControl sx={{ m: 2 }} component="fieldset" variant="standard">
+                      <FormLabel component="legend" style={{ textAlign: 'left' }}>Transform{" "}
+                        <Tooltip
+                          title={
+                            <div>
+                              <p>
+                                Include results that transform your keywords.
+                              </p>				  
+                              <p>
+                                {" "}
+                                <b>Domain Hacks</b>: hireme.com &rarr; hire.me
+                              </p>
+                              <p>
+                                <b>Drop Last Vowel</b>: flicker.com &rarr; flickr.com
+                              </p>
+                              <p>
+                                <b>Pluralize Nouns</b>: tool.com &rarr; tools.com
+                              </p>
+                            </div>
+                          }
+                        >
+                          <span className="info-icon cursor-pointer">&#x24D8;</span>
+                        </Tooltip>
+                      </FormLabel>
+                      <FormGroup>
+                        <FormControlLabel
+                          control={
+                            <Checkbox checked={hiremecom} onChange={handleVpTransformChange} name="hiremecom" />
+                          }
+                          label="Use Domain Hacks"
+                        />
+                        <FormControlLabel
+                          control={
+                            <Checkbox checked={flickercom} onChange={handleVpTransformChange} name="flickercom" />
+                          }
+                          label="Drop Last Vowel"
+                        />
+                        <FormControlLabel
+                          control={
+                            <Checkbox checked={toolcom} onChange={handleVpTransformChange} name="toolcom" />
+                          }
+                          label="Pluralize Nouns"
+                        />
+                      </FormGroup>
+                    </FormControl>
+                  </Box>
+                  <Box
+                    component="form"
+                    sx={{
+                      '& .MuiTextField-root': { m: 1, width: '25ch' },
+                    }}
+                    noValidate
+                    autoComplete="off"
+                  >
+                    <div>
+                      <TextField
+                        id="CharaMinlength"
+                        label="Min length"
+                        type="number"
+                        variant="standard"
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                      />
+                      <TextField
+                        id="CharaMaxlength"
+                        label="Max length"
+                        type="number"
+                        variant="standard"
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                      />
+                    </div>
+                  </Box>                  
+                </TabPanel>
+              </TabContext>
+            </Box>            
+            </>:<></>
+            }            
           </div>
 
           {!loading && (
