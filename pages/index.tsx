@@ -11,7 +11,7 @@ import { Tooltip } from "@mui/material";
 import { 
   COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN, 
   COUNT_DOMAINS_TO_SEARCH_YES_ADMIN,
-  DomainInfo, VibeType, ptemp, ptop } from "../utils/Definitions";
+  DomainInfo, VibeType, ptemp, ptop, default_extensions } from "../utils/Definitions";
 
 import {
   getBio,
@@ -32,7 +32,11 @@ import {
   getVpTldsDomains,
   getVpTransform,
   getVpMinlength,
-  getVpMaxlength,  
+  getVpMaxlength,
+  saveVpTabIndex,
+  saveVpKeywords,
+  saveVpExtensions,
+  saveVpCharacters,   
 } from "../utils/LocalStorage";
 
 import {
@@ -56,6 +60,7 @@ import TabList from '@mui/lab/TabList';
 import TabPanel from '@mui/lab/TabPanel';
 import TextField from '@mui/material/TextField';
 import ClearIcon from '@mui/icons-material/Clear';
+import DownloadIcon from '@mui/icons-material/Download';
 import Button from '@mui/material/Button';
 import FormLabel from '@mui/material/FormLabel';
 import FormControl from '@mui/material/FormControl';
@@ -67,6 +72,7 @@ import List from '@mui/material/List';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
+import LoadingButton from '@mui/lab/LoadingButton';
 import Paper from '@mui/material/Paper';
 
 type Domain = string;
@@ -124,7 +130,8 @@ const Home: NextPage = () => {
   const [vpExtRight, setVpExtRight] = useState<string[]>([]);
   const [vpExtChecked, setVpExtChecked] = useState<string[]>([]);
   const [vpFilterExtRight, setVpFilterExtRight] = useState('');  
-  const [vpTldsDomains, setVpTldsDomains] = useState<string[]>([]);  
+  const [vpTldsDomains, setVpTldsDomains] = useState<string[]>([]);
+  const [vpLoadingTldsDomains, setVpLoadingTldsDomains] = useState(false);
   const vpExtLeftChecked = vp_intersection(vpExtChecked, vpExtLeft);
   const vpExtRightChecked = vp_intersection(vpExtChecked, vpExtRight);
   const handleToggle = (value: string) => () => {
@@ -183,43 +190,42 @@ const Home: NextPage = () => {
       </List>
     </Paper>
   );
-  const vpFilteredExtRight = vpExtRight.filter(item => item.toLowerCase().includes(vpFilterExtRight.toLowerCase()));  
-  const loadTldsDomainExtRight = async () => {
-    let tldsDomains = [];
-    const tlds = getVpTldsDomains();
-    if(tlds) {
-      setVpTldsDomains(tlds);
-    } else {
-      try {
-        const response = await fetch("/api/get-tlds-godaddy", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          }
-        });
-        if (!response.ok) {
-          throw new Error(`Error: ${response.statusText}`);
+  const vpFilteredExtRight = vpExtRight.filter(item => item.toLowerCase().includes(vpFilterExtRight.toLowerCase()));
+  const handleLoadMoreExtensions = async () => {    
+    try {
+      let tldsDomains = [];
+      setVpLoadingTldsDomains(true);
+      const response = await fetch("/api/get-tlds-godaddy", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
         }
-        const data = await response.json();
-        for(const elem of data){
-          tldsDomains.push(elem.name);
-        }
-      } catch (error) {
-        console.error("Failed to fetch tlds domains:", error);
-      } finally {
+      });
+      if (!response.ok) {
+        throw new Error(`Error: ${response.statusText}`);
       }
+
+      const data = await response.json();
+      
+      setVpLoadingTldsDomains(false);      
+      
+      for(const elem of data){
+        tldsDomains.push(elem.name);
+      }
+      
+      setVpExtLeft(default_extensions);
+      setVpExtRight(vp_not(tldsDomains, default_extensions));
       setVpTldsDomains(tldsDomains);
+      setVpFilterExtRight('');
+    } catch (error) {
+      setVpLoadingTldsDomains(false);
+      console.error("Failed to fetch tlds domains:", error);
+    } finally {
     }
-    const vpextr = getVpExtRight();
-    if(vpextr) {
-      setVpExtRight(vpextr);
-    } else {
-      setVpExtRight(tldsDomains);
-    }
-  }; 
+  };  
   const handleClearExtensions = () => {
-    setVpExtLeft([]);
-    setVpExtRight([...vpTldsDomains])
+    setVpExtLeft(default_extensions);
+    setVpExtRight([])
     setVpExtChecked([]);
     setVpFilterExtRight("");    
   };    
@@ -295,7 +301,6 @@ const Home: NextPage = () => {
       
       // About Tab Vite Professional
       //-----------------------------------------------------------------------------------------
-      //-----------------------------------------------------------------------------------------
       // TabIndex
       setVpTabIndex(() => {
         const vpti = getVpTabIndex();
@@ -321,9 +326,12 @@ const Home: NextPage = () => {
       // Extensions     
       setVpExtLeft(() => {
         const vpextl = getVpExtLeft();
-        return vpextl ?? [];
+        return vpextl ?? default_extensions;
       });
-      loadTldsDomainExtRight();
+      setVpExtRight(() => {
+        const vpextr = getVpExtRight();
+        return vpextr ?? [];
+      });
       setVpExtChecked(() => {
         const vpextc = getVpExtChecked();
         return vpextc ?? [];
@@ -332,6 +340,10 @@ const Home: NextPage = () => {
         const vpextf = getVpFilterExtRight();
         return vpextf ?? "";
       });
+      setVpTldsDomains(() => {
+        const tlds = getVpTldsDomains();
+        return tlds ?? [];
+      });      
       // Characters
       setVpTransform(() => {
         const vpt = getVpTransform();
@@ -567,6 +579,14 @@ const Home: NextPage = () => {
       }      
 
       saveBioVite(bio, vibe);
+
+      // About Tab Vite Professional
+      //-----------------------------------------------------------------------------------------
+      saveVpTabIndex(vpTabIndex);
+      saveVpKeywords(vpContains, vpStartsWith, vpEndsWith, vpSimilarToThisDomainName);
+      saveVpExtensions(vpExtLeft, vpExtRight, vpExtChecked, vpFilterExtRight, vpTldsDomains);
+      saveVpCharacters(vpTransform, vpMinlength, vpMaxlength);
+      //-----------------------------------------------------------------------------------------
 
       if(resultDomainFounded) {
         //if(admin) {
@@ -868,13 +888,22 @@ const Home: NextPage = () => {
                     sx={{
                       maxWidth: '100%',
                       display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
+                      flexDirection: 'row',
+                      alignItems: 'center',
                     }}
                     >
-                    <Button size="small" startIcon={<ClearIcon />} id="clear-extensions" onClick={handleClearExtensions}>
+                    <Button size="small" startIcon={<ClearIcon />} id="clear-extensions" onClick={handleClearExtensions} sx={{ marginRight: 2 }}>
                       Clear Filter
                     </Button>
+                    <LoadingButton
+                      onClick={handleLoadMoreExtensions}
+                      startIcon={<DownloadIcon />}
+                      loading={vpLoadingTldsDomains}
+                      loadingPosition="start"
+                      size="small" 
+                    >
+                      <span>Load more extensions</span>
+                    </LoadingButton>
                   </Box>               
                   <Grid container spacing={2} justifyContent="center" alignItems="center">
                     <Grid>

@@ -33,6 +33,20 @@ export const resetSearch = () => {
     window.localStorage.removeItem('bio')
     window.localStorage.removeItem('vibe')
     window.localStorage.removeItem('domainfounded')
+
+    window.localStorage.removeItem('vpTabIndex');
+    window.localStorage.removeItem('vpContains');
+    window.localStorage.removeItem('vpStartsWith');
+    window.localStorage.removeItem('vpEndsWith');
+    window.localStorage.removeItem('vpSimilarToThisDomainName');    
+    window.localStorage.removeItem('vpExtLeft');
+    window.localStorage.removeItem('vpExtRight');
+    window.localStorage.removeItem('vpExtChecked');
+    window.localStorage.removeItem('vpFilterExtRight');
+    window.localStorage.removeItem('vpTldsDomains');    
+    window.localStorage.removeItem('vpTransform');
+    window.localStorage.removeItem('vpMinlength');
+    window.localStorage.removeItem('vpMaxlength');    
 }
 
   // About Tab Vite Professional

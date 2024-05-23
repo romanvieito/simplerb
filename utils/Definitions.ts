@@ -49,6 +49,8 @@ export interface VpTransform {
     vpToolcom: boolean;
 }
 
+export const default_extensions = ['com', 'co', 'info', 'net', 'org'];
+
 export const COUNT_DOMAINS_TO_SEARCH_YES_ADMIN = 5;
 
 export const COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN = 5;
