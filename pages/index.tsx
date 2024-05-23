@@ -19,7 +19,20 @@ import {
   getDomainFounded,
   saveBioVite,
   saveDomainFounded,
-  resetSearch
+  resetSearch,
+  getVpTabIndex,
+  getVpContains,
+  getVpStartsWith,
+  getVpEndsWith,
+  getVpSimilarToThisDomainName,
+  getVpExtLeft,
+  getVpExtRight,
+  getVpExtChecked,
+  getVpFilterExtRight,
+  getVpTldsDomains,
+  getVpTransform,
+  getVpMinlength,
+  getVpMaxlength,  
 } from "../utils/LocalStorage";
 
 import {
@@ -171,29 +184,39 @@ const Home: NextPage = () => {
     </Paper>
   );
   const vpFilteredExtRight = vpExtRight.filter(item => item.toLowerCase().includes(vpFilterExtRight.toLowerCase()));  
-  const fetchTldsDomains = async () => {
+  const loadTldsDomainExtRight = async () => {
     let tldsDomains = [];
-    try {
-      const response = await fetch("/api/get-tlds-godaddy", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
+    const tlds = getVpTldsDomains();
+    if(tlds) {
+      setVpTldsDomains(tlds);
+    } else {
+      try {
+        const response = await fetch("/api/get-tlds-godaddy", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          }
+        });
+        if (!response.ok) {
+          throw new Error(`Error: ${response.statusText}`);
         }
-      });
-      if (!response.ok) {
-        throw new Error(`Error: ${response.statusText}`);
-      }
-      const data = await response.json();
-      for(const elem of data){
-        tldsDomains.push(elem.name);
+        const data = await response.json();
+        for(const elem of data){
+          tldsDomains.push(elem.name);
+        }
+      } catch (error) {
+        console.error("Failed to fetch tlds domains:", error);
+      } finally {
       }
       setVpTldsDomains(tldsDomains);
-      setVpExtRight(tldsDomains);
-    } catch (error) {
-      console.error("Failed to fetch tlds domains:", error);
-    } finally {
     }
-  };
+    const vpextr = getVpExtRight();
+    if(vpextr) {
+      setVpExtRight(vpextr);
+    } else {
+      setVpExtRight(tldsDomains);
+    }
+  }; 
   const handleClearExtensions = () => {
     setVpExtLeft([]);
     setVpExtRight([...vpTldsDomains])
@@ -207,8 +230,8 @@ const Home: NextPage = () => {
     vpFlickercom: false,
     vpToolcom: false,
   });
-  const [vpMinlength, setVpMinlength] = useState(0);
-  const [vpMaxlength, setVpMaxlength] = useState(0);    
+  const [vpMinlength, setVpMinlength] = useState<number>(0);
+  const [vpMaxlength, setVpMaxlength] = useState<number>(0);    
   const handleVpTransformChange = (event: any) => {
     setVpTransform({
       ...vpTransform,
@@ -269,12 +292,67 @@ const Home: NextPage = () => {
         const dfFromStorage = getDomainFounded();
         return dfFromStorage ?? []
       });
-      // Call vite professional aditionals
-      fetchTldsDomains();
+      
+      // About Tab Vite Professional
+      //-----------------------------------------------------------------------------------------
+      //-----------------------------------------------------------------------------------------
+      // TabIndex
+      setVpTabIndex(() => {
+        const vpti = getVpTabIndex();
+        return vpti ?? "1";
+      });      
+      // Keywords   
+      setVpContains(() => {
+        const vpc = getVpContains();
+        return vpc ?? "";
+      });
+      setVpStartsWith(() => {
+        const vpst = getVpStartsWith();
+        return vpst ?? "";
+      });
+      setVpEndsWith(() => {
+        const vpe = getVpEndsWith();
+        return vpe ?? "";
+      });
+      setVpSimilarToThisDomainName(() => {
+        const vpsi = getVpSimilarToThisDomainName();
+        return vpsi ?? "";
+      });
+      // Extensions     
+      setVpExtLeft(() => {
+        const vpextl = getVpExtLeft();
+        return vpextl ?? [];
+      });
+      loadTldsDomainExtRight();
+      setVpExtChecked(() => {
+        const vpextc = getVpExtChecked();
+        return vpextc ?? [];
+      });
+      setVpFilterExtRight(() => {
+        const vpextf = getVpFilterExtRight();
+        return vpextf ?? "";
+      });
+      // Characters
+      setVpTransform(() => {
+        const vpt = getVpTransform();
+        return vpt ?? {
+          vpHiremecom: false,
+          vpFlickercom: false,
+          vpToolcom: false,
+        };
+      });
+      setVpMinlength(() => {
+        const vpmin = getVpMinlength();
+        return vpmin ? parseInt(vpmin) : 0;
+      });
+      setVpMaxlength(() => {
+        const vpmax = getVpMaxlength();
+        return vpmax ? parseInt(vpmax) : 0;
+      });                  
+      //-----------------------------------------------------------------------------------------
     } else {
       setBio("");
       setVibe("Professional");
-      // Call vite professional aditionals
     }
   }, [user]);
 

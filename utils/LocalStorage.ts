@@ -38,7 +38,7 @@ export const resetSearch = () => {
   // About Tab Vite Professional
   //-----------------------------------------------------------------------------------------
   // Tab index
-  export const getVpValueTabViteProf = () => {
+  export const getVpTabIndex = () => {
     return window.localStorage.getItem('vpTabIndex')
   }
   export const saveVpTabIndex = (a: any) => {
@@ -97,7 +97,7 @@ export const resetSearch = () => {
     }
     return null;    
   }
-  export const saveExtensions = (a: string[], b: string[], c: string[], d: any, e: string[]) => {
+  export const saveVpExtensions = (a: string[], b: string[], c: string[], d: any, e: string[]) => {
     window.localStorage.setItem('vpExtLeft', JSON.stringify(a));
     window.localStorage.setItem('vpExtRight', JSON.stringify(b));
     window.localStorage.setItem('vpExtChecked', JSON.stringify(c));
@@ -119,7 +119,7 @@ export const resetSearch = () => {
   export const getVpMaxlength = () => {
     return window.localStorage.getItem('vpMaxlength')
   }  
-  export const save = (a: VpTransform, b: any, c: any) => {
+  export const saveVpCharacters = (a: VpTransform, b: any, c: any) => {
     window.localStorage.setItem('vpTransform', JSON.stringify(a));
     window.localStorage.setItem('vpMinlength', b);
     window.localStorage.setItem('vpMaxlength', c);    
