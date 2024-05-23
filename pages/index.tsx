@@ -17,7 +17,8 @@ import {
   getBio,
   getVibe,
   getDomainFounded,
-  saveSearch,
+  saveBioVite,
+  saveDomainFounded,
   resetSearch
 } from "../utils/LocalStorage";
 
@@ -88,9 +89,9 @@ const Home: NextPage = () => {
 
   // About Tab Vite Professional
   //-----------------------------------------------------------------------------------------
-  const [valueTabViteProf, setValueTabViteProf] = useState('1');
-  const handleTabViteProfChange = (event: any, newValue: string) => {
-    setValueTabViteProf(newValue);
+  const [vpTabIndex, setVpTabIndex] = useState('1');
+  const handleVpTabIndexChange = (event: any, newValue: string) => {
+    setVpTabIndex(newValue);
   };
 
   // Keywords  
@@ -109,7 +110,7 @@ const Home: NextPage = () => {
   const [vpExtLeft, setVpExtLeft] = useState<string[]>([]);
   const [vpExtRight, setVpExtRight] = useState<string[]>([]);
   const [vpExtChecked, setVpExtChecked] = useState<string[]>([]);
-  const [filterExtRight, setFilterExtRight] = useState('');  
+  const [vpFilterExtRight, setVpFilterExtRight] = useState('');  
   const [vpTldsDomains, setVpTldsDomains] = useState<string[]>([]);  
   const vpExtLeftChecked = vp_intersection(vpExtChecked, vpExtLeft);
   const vpExtRightChecked = vp_intersection(vpExtChecked, vpExtRight);
@@ -169,7 +170,7 @@ const Home: NextPage = () => {
       </List>
     </Paper>
   );
-  const filteredExtRight = vpExtRight.filter(item => item.toLowerCase().includes(filterExtRight.toLowerCase()));  
+  const vpFilteredExtRight = vpExtRight.filter(item => item.toLowerCase().includes(vpFilterExtRight.toLowerCase()));  
   const fetchTldsDomains = async () => {
     let tldsDomains = [];
     try {
@@ -197,7 +198,7 @@ const Home: NextPage = () => {
     setVpExtLeft([]);
     setVpExtRight([...vpTldsDomains])
     setVpExtChecked([]);
-    setFilterExtRight("");    
+    setVpFilterExtRight("");    
   };    
 
   // Characters
@@ -487,6 +488,8 @@ const Home: NextPage = () => {
         return;
       }      
 
+      saveBioVite(bio, vibe);
+
       if(resultDomainFounded) {
         //if(admin) {
           resultDomainFounded = await getDomainNamesWithRate(resultDomainFounded);
@@ -495,8 +498,7 @@ const Home: NextPage = () => {
         //else {
         //  setDomainFounded(resultDomainFounded);
         //}      
-
-        saveSearch(bio, vibe, resultDomainFounded);
+        saveDomainFounded(resultDomainFounded);
       }      
 
       setLoading(false); // Always stop the loading indicator when done
@@ -721,9 +723,9 @@ const Home: NextPage = () => {
             vibe === 'Professional' ?
             <>
             <Box sx={{ width: '100%', typography: 'body1' }}>
-              <TabContext value={valueTabViteProf}>
+              <TabContext value={vpTabIndex}>
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                  <TabList onChange={handleTabViteProfChange} aria-label="Options for vite professional">
+                  <TabList onChange={handleVpTabIndexChange} aria-label="Options for vite professional">
                     <Tab label="Keywords" value="1" />
                     <Tab label="Extensions" value="2" />
                     <Tab label="Characters" value="3" />
@@ -856,13 +858,13 @@ const Home: NextPage = () => {
                             id="ext-search"
                             label="Filter to select..."
                             variant="standard"
-                            value={filterExtRight}
-                            onChange={(e) => setFilterExtRight(e.target.value)}
+                            value={vpFilterExtRight}
+                            onChange={(e) => setVpFilterExtRight(e.target.value)}
                             sx={{ width: 200, height: 50, marginBottom: 1 }}
                           />                                             
                         </Grid>
                         <Grid item sx={{ height: '250px' }}>                        
-                          {customList(filteredExtRight)}
+                          {customList(vpFilteredExtRight)}
                         </Grid>
                       </Grid>                                        
                     </Grid>                  
