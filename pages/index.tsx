@@ -11,14 +11,32 @@ import { Tooltip } from "@mui/material";
 import { 
   COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN, 
   COUNT_DOMAINS_TO_SEARCH_YES_ADMIN,
-  DomainInfo, VibeType, ptemp, ptop } from "../utils/Definitions";
+  DomainInfo, VibeType, ptemp, ptop, default_extensions } from "../utils/Definitions";
 
 import {
   getBio,
   getVibe,
   getDomainFounded,
-  saveSearch,
-  resetSearch
+  saveBioVite,
+  saveDomainFounded,
+  resetSearch,
+  getVpTabIndex,
+  getVpContains,
+  getVpStartsWith,
+  getVpEndsWith,
+  getVpSimilarToThisDomainName,
+  getVpExtLeft,
+  getVpExtRight,
+  getVpExtChecked,
+  getVpFilterExtRight,
+  getVpTldsDomains,
+  getVpTransform,
+  getVpMinlength,
+  getVpMaxlength,
+  saveVpTabIndex,
+  saveVpKeywords,
+  saveVpExtensions,
+  saveVpCharacters,   
 } from "../utils/LocalStorage";
 
 import {
@@ -34,9 +52,38 @@ import TableDomain from "../components/TableDomain";
 
 import mixpanel from "../utils/mixpanel-config";
 import { convertTextRateToJson, addRateToDomainInfo } from "../utils/TextRate";
-import { reset } from "mixpanel-browser";
+
+import Box from '@mui/material/Box';
+import Tab from '@mui/material/Tab';
+import TabContext from '@mui/lab/TabContext';
+import TabList from '@mui/lab/TabList';
+import TabPanel from '@mui/lab/TabPanel';
+import TextField from '@mui/material/TextField';
+import ClearIcon from '@mui/icons-material/Clear';
+import DownloadIcon from '@mui/icons-material/Download';
+import Button from '@mui/material/Button';
+import FormLabel from '@mui/material/FormLabel';
+import FormControl from '@mui/material/FormControl';
+import FormGroup from '@mui/material/FormGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
+import Grid from '@mui/material/Grid';
+import List from '@mui/material/List';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemText from '@mui/material/ListItemText';
+import LoadingButton from '@mui/lab/LoadingButton';
+import Paper from '@mui/material/Paper';
 
 type Domain = string;
+
+function vp_not(a: string[], b: string[]) {
+  return a.filter((value) => b.indexOf(value) === -1);
+}
+
+function vp_intersection(a: string[], b: string[]) {
+  return a.filter((value) => b.indexOf(value) !== -1);
+}
 
 const Home: NextPage = () => {
   const [loading, setLoading] = useState(false);
@@ -59,6 +106,156 @@ const Home: NextPage = () => {
   const { isLoaded, user, isSignedIn } = useUser();
   const { openSignIn } = useClerk();
 
+  // About Tab Vite Professional
+  //-----------------------------------------------------------------------------------------
+  const [vpTabIndex, setVpTabIndex] = useState('1');
+  const handleVpTabIndexChange = (event: any, newValue: string) => {
+    setVpTabIndex(newValue);
+  };
+
+  // Keywords  
+  const [vpContains, setVpContains] = useState("");
+  const [vpStartsWith, setVpStartsWith] = useState("");
+  const [vpEndsWith, setVpEndsWith] = useState("");
+  const [vpSimilarToThisDomainName, setVpSimilarToThisDomainName] = useState("");  
+  const handleClearKeyWords = () => {
+    setVpContains("");
+    setVpStartsWith("");
+    setVpEndsWith("");
+    setVpSimilarToThisDomainName("");
+  };
+
+  // Extensions  
+  const [vpExtLeft, setVpExtLeft] = useState<string[]>([]);
+  const [vpExtRight, setVpExtRight] = useState<string[]>([]);
+  const [vpExtChecked, setVpExtChecked] = useState<string[]>([]);
+  const [vpFilterExtRight, setVpFilterExtRight] = useState('');  
+  const [vpTldsDomains, setVpTldsDomains] = useState<string[]>([]);
+  const [vpLoadingTldsDomains, setVpLoadingTldsDomains] = useState(false);
+  const vpExtLeftChecked = vp_intersection(vpExtChecked, vpExtLeft);
+  const vpExtRightChecked = vp_intersection(vpExtChecked, vpExtRight);
+  const handleToggle = (value: string) => () => {
+    const currentIndex = vpExtChecked.indexOf(value);
+    const newChecked = [...vpExtChecked];
+    if (currentIndex === -1) {
+      newChecked.push(value);
+    } else {
+      newChecked.splice(currentIndex, 1);
+    }
+    setVpExtChecked(newChecked);
+  };
+  const handleVpExtCheckedRight = () => {
+    setVpExtRight(vpExtRight.concat(vpExtLeftChecked));
+    setVpExtLeft(vp_not(vpExtLeft, vpExtLeftChecked));
+    setVpExtChecked(vp_not(vpExtChecked, vpExtLeftChecked));
+  };
+  const handleVpExtCheckedLeft = () => {
+    setVpExtLeft(vpExtLeft.concat(vpExtRightChecked));
+    setVpExtRight(vp_not(vpExtRight, vpExtRightChecked));
+    setVpExtChecked(vp_not(vpExtChecked, vpExtRightChecked));
+  };
+  const handleVpExtAllRight = () => {
+    setVpExtRight(vpExtRight.concat(vpExtLeft));
+    setVpExtLeft([]);
+  };
+  const handleVpExtAllLeft = () => {
+    setVpExtLeft(vpExtLeft.concat(vpExtRight));
+    setVpExtRight([]);
+  };
+  const customList = (items: string[]) => (
+    <Paper sx={{ width: 200, height: 230, overflow: 'auto' }}>
+      <List dense component="div" role="list">
+        {items.map((value: string) => {
+          const labelId = `transfer-list-item-${value}-label`;
+          return (
+            <ListItemButton
+              key={value}
+              role="listitem"
+              onClick={handleToggle(value)}
+            >
+              <ListItemIcon>
+                <Checkbox
+                  checked={vpExtChecked.indexOf(value) !== -1}
+                  tabIndex={-1}
+                  disableRipple
+                  inputProps={{
+                    'aria-labelledby': labelId,
+                  }}
+                />
+              </ListItemIcon>
+              <ListItemText id={labelId} primary={value} />
+            </ListItemButton>
+          );
+        })}
+      </List>
+    </Paper>
+  );
+  const vpFilteredExtRight = vpExtRight.filter(item => item.toLowerCase().includes(vpFilterExtRight.toLowerCase()));
+  const handleLoadMoreExtensions = async () => {    
+    try {
+      let tldsDomains = [];
+      setVpLoadingTldsDomains(true);
+      const response = await fetch("/api/get-tlds-godaddy", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`Error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      setVpLoadingTldsDomains(false);      
+      
+      for(const elem of data){
+        tldsDomains.push(elem.name);
+      }
+      
+      setVpExtLeft(default_extensions);
+      setVpExtRight(vp_not(tldsDomains, default_extensions));
+      setVpTldsDomains(tldsDomains);
+      setVpFilterExtRight('');
+    } catch (error) {
+      setVpLoadingTldsDomains(false);
+      console.error("Failed to fetch tlds domains:", error);
+    } finally {
+    }
+  };  
+  const handleClearExtensions = () => {
+    setVpExtLeft(default_extensions);
+    setVpExtRight([])
+    setVpExtChecked([]);
+    setVpFilterExtRight("");    
+  };    
+
+  // Characters
+  const [vpTransform, setVpTransform] = useState({
+    vpHiremecom: false,
+    vpFlickercom: false,
+    vpToolcom: false,
+  });
+  const [vpMinlength, setVpMinlength] = useState<number>(0);
+  const [vpMaxlength, setVpMaxlength] = useState<number>(0);    
+  const handleVpTransformChange = (event: any) => {
+    setVpTransform({
+      ...vpTransform,
+      [event.target.name]: event.target.checked,
+    });
+  };
+  const { vpHiremecom, vpFlickercom, vpToolcom } = vpTransform;    
+  const handleClearCharacters = () => {
+    setVpTransform({
+      vpHiremecom: false,
+      vpFlickercom: false,
+      vpToolcom: false,
+    });
+    setVpMinlength(0);
+    setVpMaxlength(0);
+  };  
+  //-----------------------------------------------------------------------------------------
+  
   // Function to fetch user credits by email
   const fetchCredits = async (email: string) => {
     try {
@@ -101,6 +298,70 @@ const Home: NextPage = () => {
         const dfFromStorage = getDomainFounded();
         return dfFromStorage ?? []
       });
+      
+      // About Tab Vite Professional
+      //-----------------------------------------------------------------------------------------
+      // TabIndex
+      setVpTabIndex(() => {
+        const vpti = getVpTabIndex();
+        return vpti ?? "1";
+      });      
+      // Keywords   
+      setVpContains(() => {
+        const vpc = getVpContains();
+        return vpc ?? "";
+      });
+      setVpStartsWith(() => {
+        const vpst = getVpStartsWith();
+        return vpst ?? "";
+      });
+      setVpEndsWith(() => {
+        const vpe = getVpEndsWith();
+        return vpe ?? "";
+      });
+      setVpSimilarToThisDomainName(() => {
+        const vpsi = getVpSimilarToThisDomainName();
+        return vpsi ?? "";
+      });
+      // Extensions     
+      setVpExtLeft(() => {
+        const vpextl = getVpExtLeft();
+        return vpextl ?? default_extensions;
+      });
+      setVpExtRight(() => {
+        const vpextr = getVpExtRight();
+        return vpextr ?? [];
+      });
+      setVpExtChecked(() => {
+        const vpextc = getVpExtChecked();
+        return vpextc ?? [];
+      });
+      setVpFilterExtRight(() => {
+        const vpextf = getVpFilterExtRight();
+        return vpextf ?? "";
+      });
+      setVpTldsDomains(() => {
+        const tlds = getVpTldsDomains();
+        return tlds ?? [];
+      });      
+      // Characters
+      setVpTransform(() => {
+        const vpt = getVpTransform();
+        return vpt ?? {
+          vpHiremecom: false,
+          vpFlickercom: false,
+          vpToolcom: false,
+        };
+      });
+      setVpMinlength(() => {
+        const vpmin = getVpMinlength();
+        return vpmin ? parseInt(vpmin) : 0;
+      });
+      setVpMaxlength(() => {
+        const vpmax = getVpMaxlength();
+        return vpmax ? parseInt(vpmax) : 0;
+      });                  
+      //-----------------------------------------------------------------------------------------
     } else {
       setBio("");
       setVibe("Professional");
@@ -139,6 +400,57 @@ const Home: NextPage = () => {
     setGeneratedBios("");
 
     try {
+      // keywords
+      let prompt_keywords = '';
+      const conditions_keywords = [
+        vpContains && `that contain ${vpContains}`,
+        vpStartsWith && `that start with ${vpStartsWith}`,
+        vpEndsWith && `that end with ${vpEndsWith}`,
+        vpSimilarToThisDomainName && `similar to ${vpSimilarToThisDomainName}`
+      ].filter(Boolean);
+      if (conditions_keywords.length > 1) {
+        const lastCondition = conditions_keywords.pop();
+        prompt_keywords = `Generate domain names ${conditions_keywords.join(', ')} and ${lastCondition}. `;
+      } else {
+        prompt_keywords = `Generate domain names ${conditions_keywords[0]}. `;
+      }
+
+      // Extensions
+      let prompt_extensions = '';
+      if(vpExtLeft.length > 0) prompt_extensions = `Make sure to generate domain names using these extensions: ${vpExtLeft.join(', ')}. `;
+
+      // Characters
+      let prompt_character = '';
+      const conditions_character = [
+        vpHiremecom && `use domain hacks like in hireme.com → hire.me`,
+        vpFlickercom && `drop last vowel of the domain name like in flicker.com → flickr.com`,
+        vpToolcom && `pluralize nouns like in tool.com → tools.com`
+      ].filter(Boolean);      
+      if (conditions_character.length > 1) {
+        const lastCondition = conditions_character.pop();
+        prompt_character = `Try to ${conditions_character.join(', ')} and ${lastCondition}. `;
+      } else {
+        prompt_character = `Try to ${conditions_character[0]}. `;
+      }
+
+      // Characters Min Max Length
+      let prompt_minmax = '';
+      const conditions_minmax = [
+        vpMinlength && `min length: ${vpMinlength} characters`,
+        vpMaxlength && `max length: ${vpMaxlength} characters`
+      ].filter(Boolean);
+      if (conditions_minmax.length > 1) {
+        const lastCondition = conditions_minmax.pop();
+        prompt_minmax = `Character length does not include the domain extension (i.e. .com), make sure ${conditions_minmax[0]} and ${lastCondition}. `;
+      } else {
+        prompt_minmax = `Character length does not include the domain extension (i.e. .com), make sure ${conditions_minmax[0]}. `;
+      }
+
+      console.log('prompt_keywords', prompt_keywords);
+      console.log('prompt_extensions', prompt_extensions);
+      console.log('prompt_character', prompt_character);
+      console.log('prompt_minmax', prompt_minmax);
+
       const prompt = `
         Role: You are Seth Godin, tasked with creating domain names. ${
           bio ? `Client's input: ` + bio : ""
@@ -172,7 +484,15 @@ const Home: NextPage = () => {
             ? "embody sophistication and elegance, perfect for luxury brands, exclusive clubs, or high-end service industries."
             : ""
         }
-      ${bio ? `Keep in mind the client's focus on ` + bio : ""}.`;
+      ${(bio || 
+        prompt_keywords || 
+        prompt_extensions ||
+        prompt_character ||
+        prompt_minmax) ? `Keep in mind the client's focus on ` + (bio + 
+                                                                  prompt_keywords +
+                                                                  prompt_extensions +
+                                                                  prompt_minmax +
+                                                                  prompt_character) : ""}.`;
 
       // console.log({ prompt });
 
@@ -317,6 +637,16 @@ const Home: NextPage = () => {
         return;
       }      
 
+      saveBioVite(bio, vibe);
+
+      // About Tab Vite Professional
+      //-----------------------------------------------------------------------------------------
+      saveVpTabIndex(vpTabIndex);
+      saveVpKeywords(vpContains, vpStartsWith, vpEndsWith, vpSimilarToThisDomainName);
+      saveVpExtensions(vpExtLeft, vpExtRight, vpExtChecked, vpFilterExtRight, vpTldsDomains);
+      saveVpCharacters(vpTransform, vpMinlength, vpMaxlength);
+      //-----------------------------------------------------------------------------------------
+
       if(resultDomainFounded) {
         //if(admin) {
           resultDomainFounded = await getDomainNamesWithRate(resultDomainFounded);
@@ -325,8 +655,7 @@ const Home: NextPage = () => {
         //else {
         //  setDomainFounded(resultDomainFounded);
         //}      
-
-        saveSearch(bio, vibe, resultDomainFounded);
+        saveDomainFounded(resultDomainFounded);
       }      
 
       setLoading(false); // Always stop the loading indicator when done
@@ -547,6 +876,264 @@ const Home: NextPage = () => {
           </div>
           <div className="block">
             <DropDown vibe={vibe} setVibe={(newVibe) => setVibe(newVibe)} />
+            {
+            vibe === 'Professional' ?
+            <>
+            <Box sx={{ width: '100%', typography: 'body1' }}>
+              <TabContext value={vpTabIndex}>
+                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                  <TabList onChange={handleVpTabIndexChange} aria-label="Options for vite professional">
+                    <Tab label="Keywords" value="1" />
+                    <Tab label="Extensions" value="2" />
+                    <Tab label="Characters" value="3" />
+                  </TabList>
+                </Box>
+                <TabPanel value="1">
+                  <Box
+                    sx={{
+                      maxWidth: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                    }}
+                    >
+                    <Button size="small" startIcon={<ClearIcon />} id="clear-keywords" onClick={handleClearKeyWords}>
+                      Clear Filter
+                    </Button>                      
+                    <Box mb={2} sx={{ width: '100%' }}>
+                      <TextField 
+                        fullWidth 
+                        label="Contains" 
+                        id="vpContains" 
+                        variant="standard"
+                        value={vpContains}
+                        onChange={(e) => setVpContains(e.target.value)}                        
+                      />
+                    </Box>
+                    <Box mb={2} sx={{ width: '100%' }}>
+                      <TextField 
+                        fullWidth 
+                        label="Starts with" 
+                        id="vpStartsWith" 
+                        variant="standard" 
+                        value={vpStartsWith}
+                        onChange={(e) => setVpStartsWith(e.target.value)}                        
+                      />
+                    </Box>
+                    <Box mb={2} sx={{ width: '100%' }}>
+                      <TextField 
+                        fullWidth 
+                        label="Ends with" 
+                        id="vpEndsWith" 
+                        variant="standard"
+                        value={vpEndsWith}
+                        onChange={(e) => setVpEndsWith(e.target.value)}
+                      />
+                    </Box>
+                    <Box mb={2} sx={{ width: '100%' }}>
+                      <TextField 
+                        fullWidth 
+                        label="Similar to this domain name" 
+                        id="vpSimilarToThisDomainName" 
+                        variant="standard" 
+                        value={vpSimilarToThisDomainName}
+                        onChange={(e) => setVpSimilarToThisDomainName(e.target.value)}                        
+                      />
+                    </Box>
+                  </Box>                  
+                </TabPanel>
+                <TabPanel value="2">            
+                  <Box
+                    sx={{
+                      maxWidth: '100%',
+                      display: 'flex',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                    }}
+                    >
+                    <Button size="small" startIcon={<ClearIcon />} id="clear-extensions" onClick={handleClearExtensions} sx={{ marginRight: 2 }}>
+                      Clear Filter
+                    </Button>
+                    <LoadingButton
+                      onClick={handleLoadMoreExtensions}
+                      startIcon={<DownloadIcon />}
+                      loading={vpLoadingTldsDomains}
+                      loadingPosition="start"
+                      size="small" 
+                    >
+                      <span>Load more extensions</span>
+                    </LoadingButton>
+                  </Box>               
+                  <Grid container spacing={2} justifyContent="center" alignItems="center">
+                    <Grid>
+                      <Grid item sx={{ height: '70px', display: 'flex', alignItems: 'flex-end' }}>                       
+                        Selected
+                      </Grid>
+                      <Grid item sx={{ height: '250px' }}>
+                        {customList(vpExtLeft)}
+                      </Grid>
+                    </Grid>
+                    <Grid item>
+                      <Grid container direction="column" alignItems="center">
+                        <Button
+                          sx={{ my: 0.5 }}
+                          variant="outlined"
+                          size="small"
+                          onClick={handleVpExtAllRight}
+                          disabled={vpExtLeft.length === 0}
+                          aria-label="move all right"
+                        >
+                          ≫
+                        </Button>
+                        <Button
+                          sx={{ my: 0.5 }}
+                          variant="outlined"
+                          size="small"
+                          onClick={handleVpExtCheckedRight}
+                          disabled={vpExtLeftChecked.length === 0}
+                          aria-label="move selected right"
+                        >
+                          &gt;
+                        </Button>
+                        <Button
+                          sx={{ my: 0.5 }}
+                          variant="outlined"
+                          size="small"
+                          onClick={handleVpExtCheckedLeft}
+                          disabled={vpExtRightChecked.length === 0}
+                          aria-label="move selected left"
+                        >
+                          &lt;
+                        </Button>
+                        <Button
+                          sx={{ my: 0.5 }}
+                          variant="outlined"
+                          size="small"
+                          onClick={handleVpExtAllLeft}
+                          disabled={vpExtRight.length === 0}
+                          aria-label="move all left"
+                        >
+                          ≪
+                        </Button>
+                      </Grid>
+                    </Grid>
+                    <Grid item>
+                      <Grid>
+                        <Grid item sx={{ height: '50px' }}> 
+                          <TextField
+                            id="ext-search"
+                            label="Filter to select..."
+                            variant="standard"
+                            value={vpFilterExtRight}
+                            onChange={(e) => setVpFilterExtRight(e.target.value)}
+                            sx={{ width: 200, height: 50, marginBottom: 1 }}
+                          />                                             
+                        </Grid>
+                        <Grid item sx={{ height: '250px' }}>                        
+                          {customList(vpFilteredExtRight)}
+                        </Grid>
+                      </Grid>                                        
+                    </Grid>                  
+                  </Grid>                  
+                </TabPanel>
+                <TabPanel value="3">
+                  <Box
+                    sx={{
+                      maxWidth: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                    }}
+                    >
+                    <Button size="small" startIcon={<ClearIcon />} id="clear-characters" onClick={handleClearCharacters}>
+                      Clear Filter
+                    </Button>
+                  </Box>                  
+                  <Box sx={{ display: 'flex' }}>
+                    <FormControl sx={{ m: 2 }} component="fieldset" variant="standard">
+                      <FormLabel component="legend" style={{ textAlign: 'left' }}>Transform{" "}
+                        <Tooltip
+                          title={
+                            <div>
+                              <p>
+                                Include results that transform your keywords.
+                              </p>				  
+                              <p>
+                                {" "}
+                                <b>Domain Hacks</b>: hireme.com &rarr; hire.me
+                              </p>
+                              <p>
+                                <b>Drop Last Vowel</b>: flicker.com &rarr; flickr.com
+                              </p>
+                              <p>
+                                <b>Pluralize Nouns</b>: tool.com &rarr; tools.com
+                              </p>
+                            </div>
+                          }
+                        >
+                          <span className="info-icon cursor-pointer">&#x24D8;</span>
+                        </Tooltip>
+                      </FormLabel>
+                      <FormGroup>
+                        <FormControlLabel
+                          control={
+                            <Checkbox checked={vpHiremecom} onChange={handleVpTransformChange} name="vpHiremecom" />
+                          }
+                          label="Use Domain Hacks"
+                        />
+                        <FormControlLabel
+                          control={
+                            <Checkbox checked={vpFlickercom} onChange={handleVpTransformChange} name="vpFlickercom" />
+                          }
+                          label="Drop Last Vowel"
+                        />
+                        <FormControlLabel
+                          control={
+                            <Checkbox checked={vpToolcom} onChange={handleVpTransformChange} name="vpToolcom" />
+                          }
+                          label="Pluralize Nouns"
+                        />
+                      </FormGroup>
+                    </FormControl>
+                  </Box>
+                  <Box
+                    component="form"
+                    sx={{
+                      '& .MuiTextField-root': { m: 1, width: '25ch' },
+                    }}
+                    noValidate
+                    autoComplete="off"
+                  >
+                    <div>
+                      <TextField
+                        id="vpMinlength"
+                        label="Min length"
+                        type="number"
+                        variant="standard"
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                        value={vpMinlength}
+                        onChange={(e) => setVpMinlength(parseInt(e.target.value, 10))}
+                      />
+                      <TextField
+                        id="vpMaxlength"
+                        label="Max length"
+                        type="number"
+                        variant="standard"
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                        value={vpMaxlength}
+                        onChange={(e) => setVpMaxlength(parseInt(e.target.value, 10))}
+                      />
+                    </div>
+                  </Box>                  
+                </TabPanel>
+              </TabContext>
+            </Box>            
+            </>:<></>
+            }            
           </div>
 
           {!loading && (
