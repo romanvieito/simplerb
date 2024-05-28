@@ -400,6 +400,57 @@ const Home: NextPage = () => {
     setGeneratedBios("");
 
     try {
+      // keywords
+      let prompt_keywords = '';
+      const conditions_keywords = [
+        vpContains && `that contain ${vpContains}`,
+        vpStartsWith && `that start with ${vpStartsWith}`,
+        vpEndsWith && `that end with ${vpEndsWith}`,
+        vpSimilarToThisDomainName && `similar to ${vpSimilarToThisDomainName}`
+      ].filter(Boolean);
+      if (conditions_keywords.length > 1) {
+        const lastCondition = conditions_keywords.pop();
+        prompt_keywords = `Generate domain names ${conditions_keywords.join(', ')} and ${lastCondition}. `;
+      } else {
+        prompt_keywords = `Generate domain names ${conditions_keywords[0]}. `;
+      }
+
+      // Extensions
+      let prompt_extensions = '';
+      if(vpExtLeft.length > 0) prompt_extensions = `Make sure to generate domain names using these extensions: ${vpExtLeft.join(', ')}. `;
+
+      // Characters
+      let prompt_character = '';
+      const conditions_character = [
+        vpHiremecom && `use domain hacks like in hireme.com → hire.me`,
+        vpFlickercom && `drop last vowel of the domain name like in flicker.com → flickr.com`,
+        vpToolcom && `pluralize nouns like in tool.com → tools.com`
+      ].filter(Boolean);      
+      if (conditions_character.length > 1) {
+        const lastCondition = conditions_character.pop();
+        prompt_character = `Try to ${conditions_character.join(', ')} and ${lastCondition}. `;
+      } else {
+        prompt_character = `Try to ${conditions_character[0]}. `;
+      }
+
+      // Characters Min Max Length
+      let prompt_minmax = '';
+      const conditions_minmax = [
+        vpMinlength && `min length: ${vpMinlength} characters`,
+        vpMaxlength && `max length: ${vpMaxlength} characters`
+      ].filter(Boolean);
+      if (conditions_minmax.length > 1) {
+        const lastCondition = conditions_minmax.pop();
+        prompt_minmax = `Character length does not include the domain extension (i.e. .com), make sure ${conditions_minmax[0]} and ${lastCondition}. `;
+      } else {
+        prompt_minmax = `Character length does not include the domain extension (i.e. .com), make sure ${conditions_minmax[0]}. `;
+      }
+
+      console.log('prompt_keywords', prompt_keywords);
+      console.log('prompt_extensions', prompt_extensions);
+      console.log('prompt_character', prompt_character);
+      console.log('prompt_minmax', prompt_minmax);
+
       const prompt = `
         Role: You are Seth Godin, tasked with creating domain names. ${
           bio ? `Client's input: ` + bio : ""
@@ -433,7 +484,15 @@ const Home: NextPage = () => {
             ? "embody sophistication and elegance, perfect for luxury brands, exclusive clubs, or high-end service industries."
             : ""
         }
-      ${bio ? `Keep in mind the client's focus on ` + bio : ""}.`;
+      ${(bio || 
+        prompt_keywords || 
+        prompt_extensions ||
+        prompt_character ||
+        prompt_minmax) ? `Keep in mind the client's focus on ` + (bio + 
+                                                                  prompt_keywords +
+                                                                  prompt_extensions +
+                                                                  prompt_minmax +
+                                                                  prompt_character) : ""}.`;
 
       // console.log({ prompt });
 

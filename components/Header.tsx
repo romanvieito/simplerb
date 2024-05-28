@@ -97,13 +97,13 @@ const handleBuyCreditsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
             component="a"
             href="/"
             sx={{
-              mr: 2,
               display: { xs: 'none', md: 'flex' },
               fontFamily: 'monospace',
               fontWeight: 700,
               letterSpacing: '.3rem',
               color: 'inherit',
               textDecoration: 'none',
+              mr: 2,              
             }}
           >
             <h1 className="sm:text-3xl text-2xl font-bold ml-2 tracking-tight">

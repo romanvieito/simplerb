@@ -23,7 +23,7 @@ export default async function handler(
     const data = await response.json();
     for(const elem of data) {
       tldsResults.push({
-        name: elem.name,
+        name: "."+elem.name,
         type: elem.type
       });      
     }
