@@ -331,11 +331,17 @@ const Home: NextPage = () => {
     } else {
       setBio("");
       setVibe("Professional");
+      handleClearKeyWords();
+      handleClearExtensions();
+      handleClearCharacters();      
     }
   }, [user]);
 
   useEffect(() => {
     if (!isSignedIn && isSignedIn!==undefined) {
+      handleClearKeyWords();
+      handleClearExtensions();
+      handleClearCharacters();
       resetSearch();
     }
   }, [isSignedIn]);
@@ -366,6 +372,11 @@ const Home: NextPage = () => {
     setGeneratedBios("");
 
     try {
+
+      // Extensions
+      let prompt_extensions = '';
+      if(vpExtChecked.length > 0) prompt_extensions = `Make sure to generate domain names using these extensions: ${vpExtChecked.join(', ')}. `;
+
       // keywords
       let prompt_keywords = '';
       const conditions_keywords = [
@@ -380,10 +391,6 @@ const Home: NextPage = () => {
       } else {
         prompt_keywords = `Generate domain names ${conditions_keywords[0]}. `;
       }
-
-      // Extensions
-      let prompt_extensions = '';
-      if(vpExtChecked.length > 0) prompt_extensions = `Make sure to generate domain names using these extensions: ${vpExtChecked.join(', ')}. `;
 
       // Characters
       let prompt_character = '';
@@ -412,10 +419,10 @@ const Home: NextPage = () => {
         prompt_minmax = `Character length does not include the domain extension (i.e. .com), make sure ${conditions_minmax[0]}. `;
       }
 
-      console.log('prompt_keywords', prompt_keywords);
-      console.log('prompt_extensions', prompt_extensions);
+      /*console.log('prompt_extensions', prompt_extensions);
+      console.log('prompt_keywords', prompt_keywords);      
       console.log('prompt_character', prompt_character);
-      console.log('prompt_minmax', prompt_minmax);
+      console.log('prompt_minmax', prompt_minmax);*/
 
       const prompt = `
         Role: You are Seth Godin, tasked with creating domain names. ${
@@ -451,12 +458,12 @@ const Home: NextPage = () => {
             : ""
         }
       ${(bio || 
-        prompt_keywords || 
         prompt_extensions ||
+        prompt_keywords || 
         prompt_character ||
-        prompt_minmax) ? `Keep in mind the client's focus on ` + (bio + 
-                                                                  prompt_keywords +
+        prompt_minmax) ? `Keep in mind the client's focus on ` + (bio +                                                                   
                                                                   prompt_extensions +
+                                                                  prompt_keywords +
                                                                   prompt_minmax +
                                                                   prompt_character) : ""}.`;
 
@@ -666,7 +673,7 @@ const Home: NextPage = () => {
       .join('\n');
         
     const prompt = `Rate the following domain names based on three key criteria: Memorability, Simplicity, and Brevity. Each category should be scored on a scale from 0 to 10, where 0 indicates very poor and 10 means excellent. It also provides a average score. I don't need a summary at the end. If result is one domain, add domain.
-      Domain Names to Rate:
+    Domain Names to Rate:
       ${domainListText}`;
 
     const response = await fetch(isGPT ? "/api/openai" : "/api/mistral", {
@@ -728,7 +735,7 @@ const Home: NextPage = () => {
       }      
 
       let jsonRate = null;
-      try {
+      try {console.log('dataRate', dataRate);
         jsonRate = convertTextRateToJson(dataRate);
         resultDomainsRate = addRateToDomainInfo(resultDomainsRate, jsonRate)        
       } catch (error) {
@@ -846,12 +853,53 @@ const Home: NextPage = () => {
               <TabContext value={vpTabIndex}>
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                   <TabList onChange={handleVpTabIndexChange} aria-label="Options for vite professional">
-                    <Tab label="Keywords" value="1" />
-                    <Tab label="Extensions" value="2" />
+                    <Tab label="Extensions" value="1" />
+                    <Tab label="Keywords" value="2" />
                     <Tab label="Characters" value="3" />
                   </TabList>
                 </Box>
-                <TabPanel value="1">
+                <TabPanel value="1">            
+                  <Box
+                    sx={{
+                      maxWidth: '100%',
+                      display: 'flex',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                    }}
+                    >
+                    <Button size="small" startIcon={<ClearIcon />} id="clear-extensions" onClick={handleClearExtensions} sx={{ marginRight: 2 }}>
+                      Clear Filter
+                    </Button>
+                    <LoadingButton
+                      onClick={handleLoadMoreExtensions}
+                      startIcon={<DownloadIcon />}
+                      loading={vpLoadingTldsDomains}
+                      loadingPosition="start"
+                      size="small" 
+                    >
+                      <span>Load more extensions</span>
+                    </LoadingButton>
+                  </Box>
+                  <TextField
+                    fullWidth
+                    id="ext-search"
+                    label="Filter..."
+                    variant="standard"
+                    value={vpFilterExtLeft}
+                    onChange={(e) => setVpFilterExtLeft(e.target.value)}
+                    sx={{ height: 50, marginBottom: 1 }}
+                  />
+                  <Box
+                    sx={{
+                      maxWidth: '100%',
+                      display: 'flex',
+                      flexDirection: 'row',
+                      alignItems: 'left',
+                    }}
+                    >Check to select</Box>                  
+                  {customList(vpFilteredExtLeft)}                
+                </TabPanel>
+                <TabPanel value="2">
                   <Box
                     sx={{
                       maxWidth: '100%',
@@ -904,48 +952,7 @@ const Home: NextPage = () => {
                       />
                     </Box>
                   </Box>                  
-                </TabPanel>
-                <TabPanel value="2">            
-                  <Box
-                    sx={{
-                      maxWidth: '100%',
-                      display: 'flex',
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                    }}
-                    >
-                    <Button size="small" startIcon={<ClearIcon />} id="clear-extensions" onClick={handleClearExtensions} sx={{ marginRight: 2 }}>
-                      Clear Filter
-                    </Button>
-                    <LoadingButton
-                      onClick={handleLoadMoreExtensions}
-                      startIcon={<DownloadIcon />}
-                      loading={vpLoadingTldsDomains}
-                      loadingPosition="start"
-                      size="small" 
-                    >
-                      <span>Load more extensions</span>
-                    </LoadingButton>
-                  </Box>
-                  <TextField
-                    fullWidth
-                    id="ext-search"
-                    label="Filter..."
-                    variant="standard"
-                    value={vpFilterExtLeft}
-                    onChange={(e) => setVpFilterExtLeft(e.target.value)}
-                    sx={{ height: 50, marginBottom: 1 }}
-                  />
-                  <Box
-                    sx={{
-                      maxWidth: '100%',
-                      display: 'flex',
-                      flexDirection: 'row',
-                      alignItems: 'left',
-                    }}
-                    >Check to select</Box>                  
-                  {customList(vpFilteredExtLeft)}                
-                </TabPanel>
+                </TabPanel>                
                 <TabPanel value="3">
                   <Box
                     sx={{
@@ -1068,9 +1075,6 @@ const Home: NextPage = () => {
                   </>
                 ) : (
                   <>
-                    <span className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full">
-                      Waiting to load credits
-                    </span>
                   </>
                 )}
               </SignedIn>
