@@ -40,10 +40,8 @@ export const resetSearch = () => {
     window.localStorage.removeItem('vpEndsWith');
     window.localStorage.removeItem('vpSimilarToThisDomainName');    
     window.localStorage.removeItem('vpExtLeft');
-    window.localStorage.removeItem('vpExtRight');
     window.localStorage.removeItem('vpExtChecked');
-    window.localStorage.removeItem('vpFilterExtRight');
-    window.localStorage.removeItem('vpTldsDomains');    
+    window.localStorage.removeItem('vpFilterExtLeft');   
     window.localStorage.removeItem('vpTransform');
     window.localStorage.removeItem('vpMinlength');
     window.localStorage.removeItem('vpMaxlength');    
@@ -87,13 +85,6 @@ export const resetSearch = () => {
     }
     return null;    
   }
-  export const getVpExtRight = (): string[] | null => {
-    const store = window.localStorage.getItem('vpExtRight');
-    if (store) {
-        return JSON.parse(store) as string[];
-    }
-    return null;    
-  }
   export const getVpExtChecked = (): string[] | null => {
     const store = window.localStorage.getItem('vpExtChecked');
     if (store) {
@@ -101,22 +92,13 @@ export const resetSearch = () => {
     }
     return null;    
   }    
-  export const getVpFilterExtRight = () => {
-    return window.localStorage.getItem('vpFilterExtRight')
+  export const getVpFilterExtLeft = (): string | null => {
+    return window.localStorage.getItem('vpFilterExtLeft');
   }  
-  export const getVpTldsDomains = (): string[] | null => {
-    const store = window.localStorage.getItem('vpTldsDomains');
-    if (store) {
-        return JSON.parse(store) as string[];
-    }
-    return null;    
-  }
-  export const saveVpExtensions = (a: string[], b: string[], c: string[], d: any, e: string[]) => {
+  export const saveVpExtensions = (a: string[], c: string[], d: any) => {
     window.localStorage.setItem('vpExtLeft', JSON.stringify(a));
-    window.localStorage.setItem('vpExtRight', JSON.stringify(b));
     window.localStorage.setItem('vpExtChecked', JSON.stringify(c));
-    window.localStorage.setItem('vpFilterExtRight', d);
-    window.localStorage.setItem('vpTldsDomains', JSON.stringify(e));
+    window.localStorage.setItem('vpFilterExtLeft', d);
   }
 
   // Characters  

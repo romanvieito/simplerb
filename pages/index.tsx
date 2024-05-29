@@ -26,10 +26,8 @@ import {
   getVpEndsWith,
   getVpSimilarToThisDomainName,
   getVpExtLeft,
-  getVpExtRight,
   getVpExtChecked,
-  getVpFilterExtRight,
-  getVpTldsDomains,
+  getVpFilterExtLeft,
   getVpTransform,
   getVpMinlength,
   getVpMaxlength,
@@ -127,13 +125,9 @@ const Home: NextPage = () => {
 
   // Extensions  
   const [vpExtLeft, setVpExtLeft] = useState<string[]>([]);
-  const [vpExtRight, setVpExtRight] = useState<string[]>([]);
   const [vpExtChecked, setVpExtChecked] = useState<string[]>([]);
-  const [vpFilterExtRight, setVpFilterExtRight] = useState('');  
-  const [vpTldsDomains, setVpTldsDomains] = useState<string[]>([]);
+  const [vpFilterExtLeft, setVpFilterExtLeft] = useState('');
   const [vpLoadingTldsDomains, setVpLoadingTldsDomains] = useState(false);
-  const vpExtLeftChecked = vp_intersection(vpExtChecked, vpExtLeft);
-  const vpExtRightChecked = vp_intersection(vpExtChecked, vpExtRight);
   const handleToggle = (value: string) => () => {
     const currentIndex = vpExtChecked.indexOf(value);
     const newChecked = [...vpExtChecked];
@@ -144,27 +138,10 @@ const Home: NextPage = () => {
     }
     setVpExtChecked(newChecked);
   };
-  const handleVpExtCheckedRight = () => {
-    setVpExtRight(vpExtRight.concat(vpExtLeftChecked));
-    setVpExtLeft(vp_not(vpExtLeft, vpExtLeftChecked));
-    setVpExtChecked(vp_not(vpExtChecked, vpExtLeftChecked));
-  };
-  const handleVpExtCheckedLeft = () => {
-    setVpExtLeft(vpExtLeft.concat(vpExtRightChecked));
-    setVpExtRight(vp_not(vpExtRight, vpExtRightChecked));
-    setVpExtChecked(vp_not(vpExtChecked, vpExtRightChecked));
-  };
-  const handleVpExtAllRight = () => {
-    setVpExtRight(vpExtRight.concat(vpExtLeft));
-    setVpExtLeft([]);
-  };
-  const handleVpExtAllLeft = () => {
-    setVpExtLeft(vpExtLeft.concat(vpExtRight));
-    setVpExtRight([]);
-  };
+
   const customList = (items: string[]) => (
-    <Paper sx={{ width: 200, height: 230, overflow: 'auto' }}>
-      <List dense component="div" role="list">
+    <Box sx={{width: '100%', bgcolor: 'background.paper', height: 250, overflowY: 'auto'}}>
+      <List>
         {items.map((value: string) => {
           const labelId = `transfer-list-item-${value}-label`;
           return (
@@ -188,9 +165,9 @@ const Home: NextPage = () => {
           );
         })}
       </List>
-    </Paper>
+    </Box>
   );
-  const vpFilteredExtRight = vpExtRight.filter(item => item.toLowerCase().includes(vpFilterExtRight.toLowerCase()));
+  const vpFilteredExtLeft = vpExtLeft.filter(item => item.toLowerCase().includes(vpFilterExtLeft.toLowerCase()));
   const handleLoadMoreExtensions = async () => {    
     try {
       let tldsDomains = [];
@@ -213,10 +190,8 @@ const Home: NextPage = () => {
         tldsDomains.push(elem.name);
       }
       
-      setVpExtLeft(default_extensions);
-      setVpExtRight(vp_not(tldsDomains, default_extensions));
-      setVpTldsDomains(tldsDomains);
-      setVpFilterExtRight('');
+      setVpExtLeft(vp_not(tldsDomains, default_extensions));
+      setVpFilterExtLeft('');
     } catch (error) {
       setVpLoadingTldsDomains(false);
       console.error("Failed to fetch tlds domains:", error);
@@ -225,9 +200,8 @@ const Home: NextPage = () => {
   };  
   const handleClearExtensions = () => {
     setVpExtLeft(default_extensions);
-    setVpExtRight([])
     setVpExtChecked([]);
-    setVpFilterExtRight("");    
+    setVpFilterExtLeft("");    
   };    
 
   // Characters
@@ -328,22 +302,14 @@ const Home: NextPage = () => {
         const vpextl = getVpExtLeft();
         return vpextl ?? default_extensions;
       });
-      setVpExtRight(() => {
-        const vpextr = getVpExtRight();
-        return vpextr ?? [];
-      });
       setVpExtChecked(() => {
         const vpextc = getVpExtChecked();
         return vpextc ?? [];
       });
-      setVpFilterExtRight(() => {
-        const vpextf = getVpFilterExtRight();
+      setVpFilterExtLeft(() => {
+        const vpextf = getVpFilterExtLeft();
         return vpextf ?? "";
-      });
-      setVpTldsDomains(() => {
-        const tlds = getVpTldsDomains();
-        return tlds ?? [];
-      });      
+      });     
       // Characters
       setVpTransform(() => {
         const vpt = getVpTransform();
@@ -417,7 +383,7 @@ const Home: NextPage = () => {
 
       // Extensions
       let prompt_extensions = '';
-      if(vpExtLeft.length > 0) prompt_extensions = `Make sure to generate domain names using these extensions: ${vpExtLeft.join(', ')}. `;
+      if(vpExtChecked.length > 0) prompt_extensions = `Make sure to generate domain names using these extensions: ${vpExtChecked.join(', ')}. `;
 
       // Characters
       let prompt_character = '';
@@ -643,7 +609,7 @@ const Home: NextPage = () => {
       //-----------------------------------------------------------------------------------------
       saveVpTabIndex(vpTabIndex);
       saveVpKeywords(vpContains, vpStartsWith, vpEndsWith, vpSimilarToThisDomainName);
-      saveVpExtensions(vpExtLeft, vpExtRight, vpExtChecked, vpFilterExtRight, vpTldsDomains);
+      saveVpExtensions(vpExtLeft, vpExtChecked, vpFilterExtLeft);
       saveVpCharacters(vpTransform, vpMinlength, vpMaxlength);
       //-----------------------------------------------------------------------------------------
 
@@ -876,9 +842,6 @@ const Home: NextPage = () => {
           </div>
           <div className="block">
             <DropDown vibe={vibe} setVibe={(newVibe) => setVibe(newVibe)} />
-            {
-            vibe === 'Professional' ?
-            <>
             <Box sx={{ width: '100%', typography: 'body1' }}>
               <TabContext value={vpTabIndex}>
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -963,78 +926,25 @@ const Home: NextPage = () => {
                     >
                       <span>Load more extensions</span>
                     </LoadingButton>
-                  </Box>               
-                  <Grid container spacing={2} justifyContent="center" alignItems="center">
-                    <Grid>
-                      <Grid item sx={{ height: '70px', display: 'flex', alignItems: 'flex-end' }}>                       
-                        Selected
-                      </Grid>
-                      <Grid item sx={{ height: '250px' }}>
-                        {customList(vpExtLeft)}
-                      </Grid>
-                    </Grid>
-                    <Grid item>
-                      <Grid container direction="column" alignItems="center">
-                        <Button
-                          sx={{ my: 0.5 }}
-                          variant="outlined"
-                          size="small"
-                          onClick={handleVpExtAllRight}
-                          disabled={vpExtLeft.length === 0}
-                          aria-label="move all right"
-                        >
-                          ≫
-                        </Button>
-                        <Button
-                          sx={{ my: 0.5 }}
-                          variant="outlined"
-                          size="small"
-                          onClick={handleVpExtCheckedRight}
-                          disabled={vpExtLeftChecked.length === 0}
-                          aria-label="move selected right"
-                        >
-                          &gt;
-                        </Button>
-                        <Button
-                          sx={{ my: 0.5 }}
-                          variant="outlined"
-                          size="small"
-                          onClick={handleVpExtCheckedLeft}
-                          disabled={vpExtRightChecked.length === 0}
-                          aria-label="move selected left"
-                        >
-                          &lt;
-                        </Button>
-                        <Button
-                          sx={{ my: 0.5 }}
-                          variant="outlined"
-                          size="small"
-                          onClick={handleVpExtAllLeft}
-                          disabled={vpExtRight.length === 0}
-                          aria-label="move all left"
-                        >
-                          ≪
-                        </Button>
-                      </Grid>
-                    </Grid>
-                    <Grid item>
-                      <Grid>
-                        <Grid item sx={{ height: '50px' }}> 
-                          <TextField
-                            id="ext-search"
-                            label="Filter to select..."
-                            variant="standard"
-                            value={vpFilterExtRight}
-                            onChange={(e) => setVpFilterExtRight(e.target.value)}
-                            sx={{ width: 200, height: 50, marginBottom: 1 }}
-                          />                                             
-                        </Grid>
-                        <Grid item sx={{ height: '250px' }}>                        
-                          {customList(vpFilteredExtRight)}
-                        </Grid>
-                      </Grid>                                        
-                    </Grid>                  
-                  </Grid>                  
+                  </Box>
+                  <TextField
+                    fullWidth
+                    id="ext-search"
+                    label="Filter..."
+                    variant="standard"
+                    value={vpFilterExtLeft}
+                    onChange={(e) => setVpFilterExtLeft(e.target.value)}
+                    sx={{ height: 50, marginBottom: 1 }}
+                  />
+                  <Box
+                    sx={{
+                      maxWidth: '100%',
+                      display: 'flex',
+                      flexDirection: 'row',
+                      alignItems: 'left',
+                    }}
+                    >Check to select</Box>                  
+                  {customList(vpFilteredExtLeft)}                
                 </TabPanel>
                 <TabPanel value="3">
                   <Box
@@ -1132,8 +1042,6 @@ const Home: NextPage = () => {
                 </TabPanel>
               </TabContext>
             </Box>            
-            </>:<></>
-            }            
           </div>
 
           {!loading && (
