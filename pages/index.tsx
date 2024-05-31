@@ -49,7 +49,10 @@ import { stringGenerateCountDomain } from "../utils/StringGenerateCountDomain";
 import TableDomain from "../components/TableDomain";
 
 import mixpanel from "../utils/mixpanel-config";
-import { convertTextRateToJson, addRateToDomainInfo } from "../utils/TextRate";
+import { 
+  convertTextRateToJson, 
+  addRateToDomainInfo, 
+  saveInDataBaseDomainRate } from "../utils/TextRate";
 
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
@@ -622,7 +625,7 @@ const Home: NextPage = () => {
 
       if(resultDomainFounded) {
         //if(admin) {
-          resultDomainFounded = await getDomainNamesWithRate(resultDomainFounded);
+          resultDomainFounded = await getDomainNamesWithRate(resultDomainFounded, userData.rows[0].id);
           setDomainFounded(resultDomainFounded);
         //}
         //else {
@@ -662,7 +665,7 @@ const Home: NextPage = () => {
     }
   };
 
-  const getDomainNamesWithRate = async (foundedomain: DomainInfo[]) => {
+  const getDomainNamesWithRate = async (foundedomain: DomainInfo[], user_id: string) => {
     
     if (foundedomain.length === 0) return foundedomain;
     
@@ -735,9 +738,10 @@ const Home: NextPage = () => {
       }      
 
       let jsonRate = null;
-      try {console.log('dataRate', dataRate);
+      try {
         jsonRate = convertTextRateToJson(dataRate);
-        resultDomainsRate = addRateToDomainInfo(resultDomainsRate, jsonRate)        
+        resultDomainsRate = addRateToDomainInfo(resultDomainsRate, jsonRate);
+        await saveInDataBaseDomainRate(resultDomainsRate, user_id);
       } catch (error) {
         console.log('Error: ', error);
       }

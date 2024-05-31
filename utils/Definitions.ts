@@ -60,3 +60,7 @@ export const COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN = 5;
 export const ptemp = 0.7;
 
 export const ptop = 1;
+
+// Rate limit to save in database
+
+export const value_rate_for_save = 8;
