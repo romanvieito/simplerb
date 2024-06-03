@@ -1,4 +1,4 @@
-import { DomainInfo, DomainRate } from "./Definitions";
+import { DomainInfo, DomainRate, value_rate_for_save } from "./Definitions";
 
 export function convertTextRateToJson(data: string): DomainRate[] {
     const dr: DomainRate[] = [];
@@ -57,4 +57,39 @@ export function addRateToDomainInfo(jsonA: DomainInfo[], jsonB: DomainRate[]): D
     });
 
     return jsonA;
+}
+
+export async function saveInDataBaseDomainRate(resultDomainsRate: DomainInfo[], user_id: string) {
+    try {
+        for(const elem of resultDomainsRate) {
+            if(elem.rate! >= value_rate_for_save) {
+                const namedomain = elem.domain;
+                const available = elem.available;
+                const rate = elem.rate;
+        
+                const data = {
+                    namedomain,
+                    available,
+                    rate,
+                    user_id
+                };
+    
+                const resp = await fetch('/api/user-domainrating', {
+                    method: "PUT",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(data),
+                });
+    
+                if (!resp.ok) {
+                    throw new Error(
+                      "Network response was not ok. Failed to save domain rating"
+                    );
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Error saving domain rating:", error);    
+    }
 }
