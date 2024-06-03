@@ -68,13 +68,11 @@ import FormControl from '@mui/material/FormControl';
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
-import Grid from '@mui/material/Grid';
 import List from '@mui/material/List';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import LoadingButton from '@mui/lab/LoadingButton';
-import Paper from '@mui/material/Paper';
 
 type Domain = string;
 
@@ -415,11 +413,14 @@ const Home: NextPage = () => {
         vpMinlength && `min length: ${vpMinlength} characters`,
         vpMaxlength && `max length: ${vpMaxlength} characters`
       ].filter(Boolean);
-      if (conditions_minmax.length > 1) {
-        const lastCondition = conditions_minmax.pop();
-        prompt_minmax = `Character length does not include the domain extension (i.e. .com), make sure ${conditions_minmax[0]} and ${lastCondition}. `;
-      } else {
-        prompt_minmax = `Character length does not include the domain extension (i.e. .com), make sure ${conditions_minmax[0]}. `;
+      switch (conditions_minmax.length) {
+        case 2:
+          const lastCondition = conditions_minmax.pop();
+          prompt_minmax = `Character length does not include the domain extension (i.e. .com), make sure ${conditions_minmax[0]} and ${lastCondition}. `;          
+          break;
+        case 1:
+          prompt_minmax = `Character length does not include the domain extension (i.e. .com), make sure ${conditions_minmax[0]}. `;          
+          break;      
       }
 
       /*console.log('prompt_extensions', prompt_extensions);
@@ -470,7 +471,7 @@ const Home: NextPage = () => {
                                                                   prompt_minmax +
                                                                   prompt_character) : ""}.`;
 
-      // console.log({ prompt });
+      //console.log({ prompt });
 
       const response = await fetch(isGPT ? "/api/openai" : "/api/mistral", {
         method: "POST",
@@ -851,210 +852,214 @@ const Home: NextPage = () => {
               </Tooltip>
             </p>
           </div>
-          <div className="block">
-            <DropDown vibe={vibe} setVibe={(newVibe) => setVibe(newVibe)} />
-            <Box sx={{ width: '100%', typography: 'body1' }}>
-              <TabContext value={vpTabIndex}>
-                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                  <TabList onChange={handleVpTabIndexChange} aria-label="Options for vite professional">
-                    <Tab label="Extensions" value="1" />
-                    <Tab label="Keywords" value="2" />
-                    <Tab label="Characters" value="3" />
-                  </TabList>
-                </Box>
-                <TabPanel value="1">            
-                  <Box
-                    sx={{
-                      maxWidth: '100%',
-                      display: 'flex',
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                    }}
-                    >
-                    <Button size="small" startIcon={<ClearIcon />} id="clear-extensions" onClick={handleClearExtensions} sx={{ marginRight: 2 }}>
-                      Clear Filter
-                    </Button>
-                    <LoadingButton
-                      onClick={handleLoadMoreExtensions}
-                      startIcon={<DownloadIcon />}
-                      loading={vpLoadingTldsDomains}
-                      loadingPosition="start"
-                      size="small" 
-                    >
-                      <span>Load more extensions</span>
-                    </LoadingButton>
+          {
+            isSignedIn && 
+            <>
+            <div className="block">
+              <DropDown vibe={vibe} setVibe={(newVibe) => setVibe(newVibe)} />
+              <Box sx={{ width: '100%', typography: 'body1' }}>
+                <TabContext value={vpTabIndex}>
+                  <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                    <TabList onChange={handleVpTabIndexChange} aria-label="Options for vite professional">
+                      <Tab label="Extensions" value="1" />
+                      <Tab label="Keywords" value="2" />
+                      <Tab label="Characters" value="3" />
+                    </TabList>
                   </Box>
-                  <TextField
-                    fullWidth
-                    id="ext-search"
-                    label="Filter..."
-                    variant="standard"
-                    value={vpFilterExtLeft}
-                    onChange={(e) => setVpFilterExtLeft(e.target.value)}
-                    sx={{ height: 50, marginBottom: 1 }}
-                  />
-                  <Box
-                    sx={{
-                      maxWidth: '100%',
-                      display: 'flex',
-                      flexDirection: 'row',
-                      alignItems: 'left',
-                    }}
-                    >Check to select</Box>                  
-                  {customList(vpFilteredExtLeft)}                
-                </TabPanel>
-                <TabPanel value="2">
-                  <Box
-                    sx={{
-                      maxWidth: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                    }}
+                  <TabPanel value="1">            
+                    <Box
+                      sx={{
+                        maxWidth: '100%',
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                      }}
+                      >
+                      <Button size="small" startIcon={<ClearIcon />} id="clear-extensions" onClick={handleClearExtensions} sx={{ marginRight: 2 }}>
+                        Clear Filter
+                      </Button>
+                      <LoadingButton
+                        onClick={handleLoadMoreExtensions}
+                        startIcon={<DownloadIcon />}
+                        loading={vpLoadingTldsDomains}
+                        loadingPosition="start"
+                        size="small" 
+                      >
+                        <span>Load more extensions</span>
+                      </LoadingButton>
+                    </Box>
+                    <TextField
+                      fullWidth
+                      id="ext-search"
+                      label="Filter..."
+                      variant="standard"
+                      value={vpFilterExtLeft}
+                      onChange={(e) => setVpFilterExtLeft(e.target.value)}
+                      sx={{ height: 50, marginBottom: 1 }}
+                    />
+                    <Box
+                      sx={{
+                        maxWidth: '100%',
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'left',
+                      }}
+                      >Check to select</Box>                  
+                    {customList(vpFilteredExtLeft)}                
+                  </TabPanel>
+                  <TabPanel value="2">
+                    <Box
+                      sx={{
+                        maxWidth: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                      }}
+                      >
+                      <Button size="small" startIcon={<ClearIcon />} id="clear-keywords" onClick={handleClearKeyWords}>
+                        Clear Filter
+                      </Button>                      
+                      <Box mb={2} sx={{ width: '100%' }}>
+                        <TextField 
+                          fullWidth 
+                          label="Contains" 
+                          id="vpContains" 
+                          variant="standard"
+                          value={vpContains}
+                          onChange={(e) => setVpContains(e.target.value)}                        
+                        />
+                      </Box>
+                      <Box mb={2} sx={{ width: '100%' }}>
+                        <TextField 
+                          fullWidth 
+                          label="Starts with" 
+                          id="vpStartsWith" 
+                          variant="standard" 
+                          value={vpStartsWith}
+                          onChange={(e) => setVpStartsWith(e.target.value)}                        
+                        />
+                      </Box>
+                      <Box mb={2} sx={{ width: '100%' }}>
+                        <TextField 
+                          fullWidth 
+                          label="Ends with" 
+                          id="vpEndsWith" 
+                          variant="standard"
+                          value={vpEndsWith}
+                          onChange={(e) => setVpEndsWith(e.target.value)}
+                        />
+                      </Box>
+                      <Box mb={2} sx={{ width: '100%' }}>
+                        <TextField 
+                          fullWidth 
+                          label="Similar to this domain name" 
+                          id="vpSimilarToThisDomainName" 
+                          variant="standard" 
+                          value={vpSimilarToThisDomainName}
+                          onChange={(e) => setVpSimilarToThisDomainName(e.target.value)}                        
+                        />
+                      </Box>
+                    </Box>                  
+                  </TabPanel>                
+                  <TabPanel value="3">
+                    <Box
+                      sx={{
+                        maxWidth: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                      }}
+                      >
+                      <Button size="small" startIcon={<ClearIcon />} id="clear-characters" onClick={handleClearCharacters}>
+                        Clear Filter
+                      </Button>
+                    </Box>                  
+                    <Box sx={{ display: 'flex' }}>
+                      <FormControl sx={{ m: 2 }} component="fieldset" variant="standard">
+                        <FormLabel component="legend" style={{ textAlign: 'left' }}>Transform{" "}
+                          <Tooltip
+                            title={
+                              <div>
+                                <p>
+                                  Include results that transform your keywords.
+                                </p>				  
+                                <p>
+                                  {" "}
+                                  <b>Domain Hacks</b>: hireme.com &rarr; hire.me
+                                </p>
+                                <p>
+                                  <b>Drop Last Vowel</b>: flicker.com &rarr; flickr.com
+                                </p>
+                                <p>
+                                  <b>Pluralize Nouns</b>: tool.com &rarr; tools.com
+                                </p>
+                              </div>
+                            }
+                          >
+                            <span className="info-icon cursor-pointer">&#x24D8;</span>
+                          </Tooltip>
+                        </FormLabel>
+                        <FormGroup>
+                          <FormControlLabel
+                            control={
+                              <Checkbox checked={vpHiremecom} onChange={handleVpTransformChange} name="vpHiremecom" />
+                            }
+                            label="Use Domain Hacks"
+                          />
+                          <FormControlLabel
+                            control={
+                              <Checkbox checked={vpFlickercom} onChange={handleVpTransformChange} name="vpFlickercom" />
+                            }
+                            label="Drop Last Vowel"
+                          />
+                          <FormControlLabel
+                            control={
+                              <Checkbox checked={vpToolcom} onChange={handleVpTransformChange} name="vpToolcom" />
+                            }
+                            label="Pluralize Nouns"
+                          />
+                        </FormGroup>
+                      </FormControl>
+                    </Box>
+                    <Box
+                      component="form"
+                      sx={{
+                        '& .MuiTextField-root': { m: 1, width: '25ch' },
+                      }}
+                      noValidate
+                      autoComplete="off"
                     >
-                    <Button size="small" startIcon={<ClearIcon />} id="clear-keywords" onClick={handleClearKeyWords}>
-                      Clear Filter
-                    </Button>                      
-                    <Box mb={2} sx={{ width: '100%' }}>
-                      <TextField 
-                        fullWidth 
-                        label="Contains" 
-                        id="vpContains" 
-                        variant="standard"
-                        value={vpContains}
-                        onChange={(e) => setVpContains(e.target.value)}                        
-                      />
-                    </Box>
-                    <Box mb={2} sx={{ width: '100%' }}>
-                      <TextField 
-                        fullWidth 
-                        label="Starts with" 
-                        id="vpStartsWith" 
-                        variant="standard" 
-                        value={vpStartsWith}
-                        onChange={(e) => setVpStartsWith(e.target.value)}                        
-                      />
-                    </Box>
-                    <Box mb={2} sx={{ width: '100%' }}>
-                      <TextField 
-                        fullWidth 
-                        label="Ends with" 
-                        id="vpEndsWith" 
-                        variant="standard"
-                        value={vpEndsWith}
-                        onChange={(e) => setVpEndsWith(e.target.value)}
-                      />
-                    </Box>
-                    <Box mb={2} sx={{ width: '100%' }}>
-                      <TextField 
-                        fullWidth 
-                        label="Similar to this domain name" 
-                        id="vpSimilarToThisDomainName" 
-                        variant="standard" 
-                        value={vpSimilarToThisDomainName}
-                        onChange={(e) => setVpSimilarToThisDomainName(e.target.value)}                        
-                      />
-                    </Box>
-                  </Box>                  
-                </TabPanel>                
-                <TabPanel value="3">
-                  <Box
-                    sx={{
-                      maxWidth: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                    }}
-                    >
-                    <Button size="small" startIcon={<ClearIcon />} id="clear-characters" onClick={handleClearCharacters}>
-                      Clear Filter
-                    </Button>
-                  </Box>                  
-                  <Box sx={{ display: 'flex' }}>
-                    <FormControl sx={{ m: 2 }} component="fieldset" variant="standard">
-                      <FormLabel component="legend" style={{ textAlign: 'left' }}>Transform{" "}
-                        <Tooltip
-                          title={
-                            <div>
-                              <p>
-                                Include results that transform your keywords.
-                              </p>				  
-                              <p>
-                                {" "}
-                                <b>Domain Hacks</b>: hireme.com &rarr; hire.me
-                              </p>
-                              <p>
-                                <b>Drop Last Vowel</b>: flicker.com &rarr; flickr.com
-                              </p>
-                              <p>
-                                <b>Pluralize Nouns</b>: tool.com &rarr; tools.com
-                              </p>
-                            </div>
-                          }
-                        >
-                          <span className="info-icon cursor-pointer">&#x24D8;</span>
-                        </Tooltip>
-                      </FormLabel>
-                      <FormGroup>
-                        <FormControlLabel
-                          control={
-                            <Checkbox checked={vpHiremecom} onChange={handleVpTransformChange} name="vpHiremecom" />
-                          }
-                          label="Use Domain Hacks"
+                      <div>
+                        <TextField
+                          id="vpMinlength"
+                          label="Min length"
+                          type="number"
+                          variant="standard"
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          value={vpMinlength}
+                          onChange={(e) => setVpMinlength(parseInt(e.target.value, 10))}
                         />
-                        <FormControlLabel
-                          control={
-                            <Checkbox checked={vpFlickercom} onChange={handleVpTransformChange} name="vpFlickercom" />
-                          }
-                          label="Drop Last Vowel"
+                        <TextField
+                          id="vpMaxlength"
+                          label="Max length"
+                          type="number"
+                          variant="standard"
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          value={vpMaxlength}
+                          onChange={(e) => setVpMaxlength(parseInt(e.target.value, 10))}
                         />
-                        <FormControlLabel
-                          control={
-                            <Checkbox checked={vpToolcom} onChange={handleVpTransformChange} name="vpToolcom" />
-                          }
-                          label="Pluralize Nouns"
-                        />
-                      </FormGroup>
-                    </FormControl>
-                  </Box>
-                  <Box
-                    component="form"
-                    sx={{
-                      '& .MuiTextField-root': { m: 1, width: '25ch' },
-                    }}
-                    noValidate
-                    autoComplete="off"
-                  >
-                    <div>
-                      <TextField
-                        id="vpMinlength"
-                        label="Min length"
-                        type="number"
-                        variant="standard"
-                        InputLabelProps={{
-                          shrink: true,
-                        }}
-                        value={vpMinlength}
-                        onChange={(e) => setVpMinlength(parseInt(e.target.value, 10))}
-                      />
-                      <TextField
-                        id="vpMaxlength"
-                        label="Max length"
-                        type="number"
-                        variant="standard"
-                        InputLabelProps={{
-                          shrink: true,
-                        }}
-                        value={vpMaxlength}
-                        onChange={(e) => setVpMaxlength(parseInt(e.target.value, 10))}
-                      />
-                    </div>
-                  </Box>                  
-                </TabPanel>
-              </TabContext>
-            </Box>            
-          </div>
-
+                      </div>
+                    </Box>                  
+                  </TabPanel>
+                </TabContext>
+              </Box>            
+            </div>            
+            </>
+          }
           {!loading && (
             <div>
               <SignedOut>
