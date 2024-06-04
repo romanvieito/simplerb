@@ -1124,7 +1124,7 @@ const Home: NextPage = () => {
           </div>
         )}
       </main>
-      <Footer isauth={isSignedIn} userauth={user}/>
+      <Footer/>
     </div>
   );
 };
