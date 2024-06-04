@@ -1,7 +1,7 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import Image from "next/image";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useContext } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import DropDown from "../components/DropDown";
 import Footer from "../components/Footer";
@@ -73,6 +73,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import LoadingButton from '@mui/lab/LoadingButton';
+import SBRContext from "../context/SBRContext";
 
 type Domain = string;
 
@@ -92,8 +93,11 @@ const Home: NextPage = () => {
   const [numberDomainsCreated, setNumberDomainsCreated] = useState<number>(0); //Solo cuenta domains creados en el cliente en esta "session"
   const [isGPT, setIsGPT] = useState(true);
 
-  const [credits, setCredits] = useState<any>(null);
-  const [admin, setAdmin] = useState<boolean>(false);
+  const context = useContext(SBRContext);
+  if (!context) {
+    throw new Error('SBRContext must be used within a SBRProvider');
+  }
+  const { credits, setCredits, admin, setAdmin } = context;  
 
   const bioRef = useRef<null | HTMLDivElement>(null);
 
@@ -229,37 +233,12 @@ const Home: NextPage = () => {
     setVpMinlength(0);
     setVpMaxlength(0);
   };  
-  //-----------------------------------------------------------------------------------------
-  
-  // Function to fetch user credits by email
-  const fetchCredits = async (email: string) => {
-    try {
-      let userData = undefined;
-      while(true) {
-        const response = await fetch(`/api/getUser?email=${email}`);
-        if (!response.ok) {
-          throw new Error(
-            "Network response was not ok. Failed to get user email"
-          );
-        }
-        userData = await response.json();
-        if (userData.user.rows.length > 0) break;
-      }
-      setCredits(userData.user.rows[0].credits);
-      setAdmin(userData.user.rows[0].admin);
-    } catch (error) {
-      console.error("Failed to fetch user credits:", error);
-    } finally {
-    }
-  };
+  //-----------------------------------------------------------------------------------------  
 
   // useEffect to fetch credits when user object becomes available
   useEffect(() => {
     if (isLoaded && user) {
-      fetchCredits(user.emailAddresses[0].emailAddress || "");
-      // Set this to a unique identifier for the user performing the event.
-      mixpanel.identify(user.emailAddresses[0].emailAddress);
-      
+
       // here loading localstorage
       setBio(() => {
         const bioFromStorage = getBio();
@@ -781,7 +760,7 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Header credits={credits} />
+      <Header/>
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
         <h1 className="sm:text-6xl text-4xl max-w-[708px] font-bold text-slate-900">
           Pinpoint your next domain using AI
