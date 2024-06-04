@@ -2,8 +2,11 @@ import Link from "next/link";
 import EmailIcon from '@mui/icons-material/Email';
 import { useState } from "react";
 import EmailModal from "./EmailModal";
+import { useUser } from "@clerk/nextjs";
 
-export default function Footer({ isauth, userauth } : { isauth : any, userauth: any}) {
+export default function Footer() {
+
+  const {isLoaded, user, isSignedIn } = useUser();
   const [modalOpen, setModalOpen] = useState(false);
 
   const handleOpenModal = () => {
@@ -29,7 +32,7 @@ export default function Footer({ isauth, userauth } : { isauth : any, userauth: 
       </div>
       <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 items-center">
         {
-          isauth ? 
+          isLoaded && isSignedIn ? 
           <>
             <button
               className="bg-white border border-black rounded-xl text-black font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-gray-300 w-full"
@@ -42,7 +45,7 @@ export default function Footer({ isauth, userauth } : { isauth : any, userauth: 
           </> : 
           null
         }
-        <EmailModal open={modalOpen} onClose={handleCloseModal} userauth={userauth} />                
+        <EmailModal open={modalOpen} onClose={handleCloseModal} userauth={user} />                
         {" "}
         <Link
           href="https://www.linkedin.com/in/yainery-bolanos-515084132/"

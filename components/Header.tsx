@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button, Tooltip, Box } from "@mui/material";
-import { useClerk, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { useClerk, SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
 import styles from "./Header.module.css";
 import mixpanel from "mixpanel-browser";
 
@@ -13,9 +13,19 @@ import MenuIcon from '@mui/icons-material/Menu';
 import Container from '@mui/material/Container';
 import MenuItem from '@mui/material/MenuItem';
 import { createTheme, ThemeProvider, styled } from '@mui/material/styles';
-import { useState } from "react";
+import { useState, useEffect, useContext } from "react";
+import SBRContext from "../context/SBRContext";
 
-const pages = ['Website Generator', 'Ads Generator'];
+const pages = [{
+  name: 'Domain', 
+  link: '/domain'
+}, {
+  name: 'Website Generator', 
+  link: '/web'
+}, {
+  name: 'Ads Generator', 
+  link: '/ads'
+}];
 
 interface HeaderProps {
   credits: number;
@@ -39,8 +49,10 @@ const ButtonMenu = styled(Button)({
   textTransform: 'none',
 });
 
-export default function Header({ credits }: HeaderProps): JSX.Element {
+export default function Header(/*{ credits }: HeaderProps*/): JSX.Element {
+
   const { openSignIn } = useClerk();
+  const { isLoaded, user, isSignedIn } = useUser();
 
   const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);
 
@@ -52,28 +64,65 @@ export default function Header({ credits }: HeaderProps): JSX.Element {
     setAnchorElNav(null);
   };
 
-// Handler function to track the event when the button is clicked
-const handleBuyCreditsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-  // Prevent the form from submitting traditionally
-  event.preventDefault();
-  mixpanel.track("Buy Credits Click", {
-    credits: credits,
-  });
+  // Handler function to track the event when the button is clicked
+  const handleBuyCreditsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    // Prevent the form from submitting traditionally
+    event.preventDefault();
+    mixpanel.track("Buy Credits Click", {
+      credits: credits,
+    });
   
     // The Google Ads event snippet
     window.gtag && window.gtag('event', 'conversion', {
       'send_to': '16510475658/ZCyECJS9tqYZEIq758A9', // Your conversion ID and conversion label
-  });
+    });
 
-  // Safely access the form and submit it
-  const form = event.currentTarget.form;
-  if (form) {
-    form.submit();
-  } else {
-    // Handle the case where for some reason the form isn't available
-    console.error("Form not found");
+    // Safely access the form and submit it
+    const form = event.currentTarget.form;
+    if (form) {
+      form.submit();
+    } else {
+      // Handle the case where for some reason the form isn't available
+      console.error("Form not found");
+    }
+  };
+
+  const context = useContext(SBRContext);
+  if (!context) {
+    throw new Error('SBRContext must be used within a SBRProvider');
   }
-};
+  const { credits, setCredits, admin, setAdmin } = context;
+
+  // Function to fetch user credits by email
+  const fetchCredits = async (email: string) => {
+    try {
+      let userData = undefined;
+      while(true) {
+        const response = await fetch(`/api/getUser?email=${email}`);
+        if (!response.ok) {
+          throw new Error(
+            "Network response was not ok. Failed to get user email"
+          );
+        }
+        userData = await response.json();
+        if (userData.user.rows.length > 0) break;
+      }
+      setCredits(userData.user.rows[0].credits);
+      setAdmin(userData.user.rows[0].admin);
+    } catch (error) {
+      console.error("Failed to fetch user credits:", error);
+    } finally {
+    }
+  };
+
+  useEffect(() => {
+    if (isLoaded && user) {
+      fetchCredits(user.emailAddresses[0].emailAddress || "");
+      // Set this to a unique identifier for the user performing the event.
+      mixpanel.identify(user.emailAddresses[0].emailAddress);     
+    } else {  
+    }
+  }, [user]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -141,8 +190,14 @@ const handleBuyCreditsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
                 }}
               >
                 {pages.map((page) => (
-                  <MenuItem key={page} onClick={handleCloseNavMenu}>
-                    <Typography textAlign="center">{page}</Typography>
+                  <MenuItem key={page.name}>
+                    <ButtonMenu
+                      key={page.name}
+                      href={page.link}
+                      sx={{ my: 0.5, color: 'black', display: 'block' }}
+                    >
+                      {page.name}
+                    </ButtonMenu>                    
                   </MenuItem>
                 ))}
               </Menu>
@@ -163,11 +218,11 @@ const handleBuyCreditsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
             <SignedIn>
             {pages.map((page) => (
               <ButtonMenu
-                key={page}
-                onClick={handleCloseNavMenu}
-                sx={{ my: 2, color: 'black', display: 'block' }}
+                key={page.name}
+                href={page.link}
+                sx={{ my: 2.5, color: 'black', display: 'block' }}
               >
-                {page}
+                {page.name}
               </ButtonMenu>
             ))}
             </SignedIn>
