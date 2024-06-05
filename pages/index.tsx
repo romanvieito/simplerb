@@ -654,8 +654,8 @@ const Home: NextPage = () => {
     const domainListText = foundedomain
       .map((item, index) => `${index + 1}. ${item.domain}`)
       .join('\n');
-        
-    const prompt = `Rate the following domain names based on three key criteria: Memorability, Simplicity, and Brevity. Each category should be scored on a scale from 0 to 10, where 0 indicates very poor and 10 means excellent. It also provides a average score. I don't need a summary at the end. If result is one domain, add domain.
+
+    const prompt = `Rate the following domain names based on three key criteria: Memorability, Simplicity, and Brevity. Each category should be scored on a scale from 0 to 10, where 0 indicates very poor and 10 means excellent.
     Domain Names to Rate:
       ${domainListText}`;
 
