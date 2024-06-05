@@ -16,6 +16,10 @@ import { createTheme, ThemeProvider, styled } from '@mui/material/styles';
 import { useState, useEffect, useContext } from "react";
 import SBRContext from "../context/SBRContext";
 
+import {
+  resetSearch,
+} from "../utils/LocalStorage";
+
 const pages = [{
   name: 'Domain', 
   link: '/domain'
@@ -123,6 +127,12 @@ export default function Header(/*{ credits }: HeaderProps*/): JSX.Element {
     } else {  
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!isSignedIn && isSignedIn!==undefined) {
+      resetSearch();
+    }
+  }, [isSignedIn]);
 
   return (
     <ThemeProvider theme={theme}>
