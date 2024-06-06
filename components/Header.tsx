@@ -16,6 +16,10 @@ import { createTheme, ThemeProvider, styled } from '@mui/material/styles';
 import { useState, useEffect, useContext } from "react";
 import SBRContext from "../context/SBRContext";
 
+import {
+  resetSearch,
+} from "../utils/LocalStorage";
+
 const pages = [{
   name: 'Domain', 
   link: '/domain'
@@ -91,7 +95,16 @@ export default function Header(/*{ credits }: HeaderProps*/): JSX.Element {
   if (!context) {
     throw new Error('SBRContext must be used within a SBRProvider');
   }
-  const { credits, setCredits, admin, setAdmin } = context;
+  const { 
+    credits, 
+    setCredits, 
+    admin, 
+    setAdmin,
+    subsTplan, 
+    setSubsTplan, 
+    subsCancel, 
+    setSubsCancel    
+   } = context;
 
   // Function to fetch user credits by email
   const fetchCredits = async (email: string) => {
@@ -109,6 +122,8 @@ export default function Header(/*{ credits }: HeaderProps*/): JSX.Element {
       }
       setCredits(userData.user.rows[0].credits);
       setAdmin(userData.user.rows[0].admin);
+      setSubsTplan(userData.user.rows[0].subs_tplan);
+      setSubsCancel(userData.user.rows[0].subs_cancel);
     } catch (error) {
       console.error("Failed to fetch user credits:", error);
     } finally {
@@ -123,6 +138,12 @@ export default function Header(/*{ credits }: HeaderProps*/): JSX.Element {
     } else {  
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!isSignedIn && isSignedIn!==undefined) {
+      resetSearch();
+    }
+  }, [isSignedIn]);
 
   return (
     <ThemeProvider theme={theme}>
