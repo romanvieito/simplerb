@@ -9,7 +9,7 @@ import Toolbar from '@mui/material/Toolbar';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Menu from '@mui/material/Menu';
-import MenuIcon from '@mui/icons-material/Menu';
+import MenuIcon from '@mui/icons-material/List';
 import Container from '@mui/material/Container';
 import MenuItem from '@mui/material/MenuItem';
 import { createTheme, ThemeProvider, styled } from '@mui/material/styles';
@@ -150,7 +150,7 @@ export default function Header(/*{ credits }: HeaderProps*/): JSX.Element {
     <AppBar position="static">
       <Container maxWidth="xl">
         <Toolbar disableGutters>
-          <Box
+          {/* <Box
             component="img"
             alt="header text"
             src="/write.svg"
@@ -160,14 +160,14 @@ export default function Header(/*{ credits }: HeaderProps*/): JSX.Element {
               height: { xs: '2rem', sm: '2.25rem' }, // Correspondiente a h-8 y sm:h-9
               mr: 2,
             }}
-          />
+          /> */}
           <Typography
             variant="h6"
             noWrap
             component="a"
             href="/"
             sx={{
-              display: { xs: 'none', md: 'flex' },
+              display: { md: 'flex' },
               fontFamily: 'monospace',
               fontWeight: 700,
               letterSpacing: '.3rem',
@@ -224,7 +224,7 @@ export default function Header(/*{ credits }: HeaderProps*/): JSX.Element {
               </Menu>
             </SignedIn>
           </Box>          
-          <Box
+          {/* <Box
             component="img"
             alt="header text"
             src="/write.svg"
@@ -234,7 +234,7 @@ export default function Header(/*{ credits }: HeaderProps*/): JSX.Element {
               height: { xs: '2rem', sm: '2.25rem' }, // Correspondiente a h-8 y sm:h-9
               mr: 2,
             }}
-          />          
+          />           */}
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
             <SignedIn>
             {pages.map((page) => (
@@ -257,12 +257,6 @@ export default function Header(/*{ credits }: HeaderProps*/): JSX.Element {
               alignItems: 'center', // Opcional, para centrar los elementos en la columna
             }}>
             <SignedIn>
-              <Tooltip title="Get 30 credits for $3.00, with each credit revealing 3 unique domain suggestions.">
-                <p className="py-1 pl-1 sm:px-4 text-slate-500 text-sm my-2 hover:scale-105 transition duration-300 ease-in-out">
-                  Credits:<b>{credits}</b>{" "}
-                  <span className="cursor-pointer">&#x24D8;</span>
-                </p>
-              </Tooltip>
               <form action="/api/checkout_sessions" method="POST">
                 <Button
                   size="small"
@@ -271,7 +265,7 @@ export default function Header(/*{ credits }: HeaderProps*/): JSX.Element {
                   role="link"
                   onClick={handleBuyCreditsClick}
                 >
-                  Buy Credits
+                  Become a Member
                 </Button>
               </form>
               <div className={styles.headerItem}>
