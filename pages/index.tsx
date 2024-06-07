@@ -3,7 +3,7 @@ import Head from "next/head";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import Image from "next/image";
-import { Tooltip } from "@mui/material";
+import { Button, Tooltip } from "@mui/material";
 import styles from "../components/CardsPricing.module.css";
 import { useContext } from "react";
 import SBRContext from "../context/SBRContext";
@@ -70,6 +70,29 @@ const Home: NextPage = () => {
       }
     }
   }
+
+  // Handler function to track the event when the button is clicked
+  const handleSubsStarterCreatorClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    // Prevent the form from submitting traditionally
+    event.preventDefault();
+    mixpanel.track("Subscription", {
+      plan_subscription: 'STARTER',
+    });
+  
+    // The Google Ads event snippet
+    window.gtag && window.gtag('event', 'conversion', {
+      'send_to': '16510475658/ZCyECJS9tqYZEIq758A9', // Your conversion ID and conversion label
+    });
+
+    // Safely access the form and submit it
+    const form = event.currentTarget.form;
+    if (form) {
+      form.submit();
+    } else {
+      // Handle the case where for some reason the form isn't available
+      console.error("Form not found");
+    }
+  };
 
   const handleSubscriptionStarterClick = (event: React.MouseEvent<HTMLButtonElement>) => { 
     if (!isLoaded || !user) {
@@ -231,9 +254,24 @@ const Home: NextPage = () => {
               {
                 subsTplan !== 'STARTER' ? 
                 <>
-                  <div className={styles.cardAction}>
-                    <button type="button" onClick={handleSubscriptionStarterClick}>To take</button>
-                  </div>
+                  {
+                    (!isLoaded || !user) ? 
+                    <div className={styles.cardAction}>
+                     <button type="button" onClick={()=>openSignIn()}>To take</button>
+                    </div> 
+                    : 
+                    <div className={styles.cardAction}>
+                      <form action="/api/checkout_sessions" method="POST">
+                        <input type="hidden" name="tipo" value={subsTplan}/>
+                        <button
+                          type="submit"
+                          onClick={handleSubsStarterCreatorClick}
+                        >
+                          To take
+                        </button>
+                      </form>
+                    </div>
+                  }
                 </>
                 :
                 <>               
@@ -277,9 +315,24 @@ const Home: NextPage = () => {
               {
                 subsTplan !== 'CREATOR' ? 
                 <>
-                  <div className={styles.cardAction}>
-                    <button type="button" onClick={handleSubscriptionCreatorClick}>To take</button>
-                  </div>
+                  {
+                    (!isLoaded || !user) ? 
+                    <div className={styles.cardAction}>
+                     <button type="button" onClick={()=>openSignIn()}>To take</button>
+                    </div> 
+                    : 
+                    <div className={styles.cardAction}>
+                      <form action="/api/checkout_sessions" method="POST">
+                        <input type="hidden" name="tipo" value={subsTplan}/>
+                        <button
+                          type="submit"
+                          onClick={handleSubsStarterCreatorClick}
+                        >
+                          To take
+                        </button>
+                      </form>
+                    </div>
+                  }
                 </>
                 :
                 <>                
