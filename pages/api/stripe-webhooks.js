@@ -82,9 +82,22 @@ const webhookHandler = async (req, res) => {
       case 'checkout.session.completed': {
         const session = event.data.object;
         console.log(session);
+
+        const tipo = session.metadata.productType;
+        const userEmail = session.customer_details.email;
+
+        try {
+          // Update user's credits in the database
+          await sql`UPDATE users SET subs_tplan=${tipo}, subs_cancel = true WHERE email = ${userEmail}`;
+          console.log(`Subscription updated for user: ${userEmail}`);
+        } catch (error) {
+          console.error('Failed to update subscription:', error);
+          // Handle error appropriately
+        }
+
         // Here you might want to retrieve additional information if needed,
         // for example, user's email or ID associated with the session
-        const userEmail = session.customer_details.email; // Assuming you have email
+        /*const userEmail = session.customer_details.email; // Assuming you have email
         
         const userCreditsToAdd = 30; // Implement this based on your logic
         // const userCreditsToAdd = calculateCreditsFromAmount(session.amount_total); // Implement this based on your logic
@@ -96,7 +109,7 @@ const webhookHandler = async (req, res) => {
         } catch (error) {
           console.error('Failed to update credits:', error);
           // Handle error appropriately
-        }
+        }*/
         break;
       }
       case 'customer.updated': {

@@ -75,9 +75,6 @@ const Home: NextPage = () => {
   const handleSubsStarterCreatorClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     // Prevent the form from submitting traditionally
     event.preventDefault();
-    mixpanel.track("Subscription", {
-      plan_subscription: 'STARTER',
-    });
   
     // The Google Ads event snippet
     window.gtag && window.gtag('event', 'conversion', {
@@ -86,31 +83,19 @@ const Home: NextPage = () => {
 
     // Safely access the form and submit it
     const form = event.currentTarget.form;
+
     if (form) {
+      const formData = new FormData(form); // Crea un objeto FormData con los datos del formulario
+      const tipo = formData.get('tipo');
+      mixpanel.track("Subscription", {
+        plan_subscription: tipo?.toString(),
+      });
       form.submit();
     } else {
       // Handle the case where for some reason the form isn't available
       console.error("Form not found");
     }
   };
-
-  const handleSubscriptionStarterClick = (event: React.MouseEvent<HTMLButtonElement>) => { 
-    if (!isLoaded || !user) {
-      openSignIn();
-    } else {
-      setMessage('Starter for coming soon');
-      setOpenSuccess(true);          
-    }    
-  }
-  
-  const handleSubscriptionCreatorClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    if (!isLoaded || !user) {
-      openSignIn();
-    } else {
-      setMessage('Creator for coming soon');
-      setOpenSuccess(true);          
-    }     
-  }  
 
   return (
     <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">

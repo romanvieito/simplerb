@@ -69,13 +69,34 @@ export default function Header(): JSX.Element {
   };
 
   // Handler function to track the event when the button is clicked
-  const handleBuyCreditsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  /*const handleBuyCreditsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     // Prevent the form from submitting traditionally
     event.preventDefault();
     mixpanel.track("Buy Credits Click", {
       credits: credits,
     });
   
+    // The Google Ads event snippet
+    window.gtag && window.gtag('event', 'conversion', {
+      'send_to': '16510475658/ZCyECJS9tqYZEIq758A9', // Your conversion ID and conversion label
+    });
+
+    // Safely access the form and submit it
+    const form = event.currentTarget.form;
+    if (form) {
+      form.submit();
+    } else {
+      // Handle the case where for some reason the form isn't available
+      console.error("Form not found");
+    }
+  };*/
+
+  const handleSubsStarterClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    // Prevent the form from submitting traditionally
+    event.preventDefault();
+    mixpanel.track("Subscription", {
+      plan_subscription: 'STARTER',
+    });  
     // The Google Ads event snippet
     window.gtag && window.gtag('event', 'conversion', {
       'send_to': '16510475658/ZCyECJS9tqYZEIq758A9', // Your conversion ID and conversion label
@@ -260,13 +281,14 @@ export default function Header(): JSX.Element {
             }}>
             <SignedIn>
                 <form action="/api/checkout_sessions" method="POST">
+                  <input type="hidden" name="tipo" value='STARTER'/>
                   <Button
                     size="small"
                     type="submit"
                     variant="contained"
                     role="link"
                     disabled={subsTplan ? true : false}
-                    onClick={handleBuyCreditsClick}
+                    onClick={handleSubsStarterClick}
                   >
                     Become a member
                   </Button>

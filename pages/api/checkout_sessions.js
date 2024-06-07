@@ -29,6 +29,9 @@ export default async function handler(req, res) {
         success_url: `${req.headers.origin}/?success=true`,
         cancel_url: `${req.headers.origin}/?canceled=true`,
         automatic_tax: {enabled: true},
+        metadata: {
+          productType: tipo  
+        },        
       });
       res.redirect(303, session.url);
     } catch (err) {
