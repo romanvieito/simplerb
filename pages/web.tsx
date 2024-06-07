@@ -15,7 +15,7 @@ const WebPage = () => {
       <Header/>
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
         <h1 className="sm:text-6xl text-4xl max-w-[708px] font-bold text-slate-900">
-          Web
+          Website Generator (coming soon)
         </h1>        
       </main>
       <Footer/>      
