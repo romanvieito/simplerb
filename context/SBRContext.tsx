@@ -6,7 +6,7 @@ interface SBRContextProps {
   admin: boolean;
   setAdmin: (value: boolean) => void;
   subsTplan: string;
-  setSubsTplan: (value: boolean) => void;
+  setSubsTplan: (value: string) => void;
   subsCancel: boolean;
   setSubsCancel: (value: boolean) => void;      
 }
@@ -20,7 +20,7 @@ interface SBRProviderProps  {
 export const SBRProvider: FC<SBRProviderProps> = ({ children }) => {
   const [credits, setCredits] = useState<any>(null);
   const [admin, setAdmin] = useState<boolean>(false);  
-  const [subsTplan, setSubsTplan] = useState<any>(null);
+  const [subsTplan, setSubsTplan] = useState<string>('');
   const [subsCancel, setSubsCancel] = useState<boolean>(false);  
 
   return (
