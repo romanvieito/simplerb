@@ -287,7 +287,7 @@ export default function Header(): JSX.Element {
                     type="submit"
                     variant="contained"
                     role="link"
-                    disabled={subsTplan ? true : false}
+                    disabled={(subsTplan && subsTplan !== 'FREE') ? true : false}
                     onClick={handleSubsStarterClick}
                   >
                     Become a member
