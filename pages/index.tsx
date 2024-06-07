@@ -26,8 +26,8 @@ const Home: NextPage = () => {
   }
   const { subsTplan, setSubsTplan, setSubsCancel } = context;
   
-  let plan_free: boolean, plan_starter: boolean, plan_creator: boolean;  
-  plan_free = plan_starter = plan_creator = false;
+  let plan_free: any, plan_starter: any, plan_creator: any;  
+  plan_free = plan_starter = plan_creator = undefined;
 
   switch (subsTplan) {
     case 'FREE':
@@ -191,7 +191,11 @@ const Home: NextPage = () => {
             </div>
             <SignedIn>
               {
-                plan_free ? 
+                plan_free === undefined ? 
+                <>
+                </>
+                : 
+                plan_free ?
                 <>
                   <div className={styles.cardTitle}>
                     <h3>subscribed</h3>
@@ -240,6 +244,10 @@ const Home: NextPage = () => {
             </div>
             <SignedIn>
               {
+                plan_starter === undefined ? 
+                <>
+                </>
+                :                 
                 plan_starter ? 
                 <>               
                   <div className={styles.cardTitle}>
@@ -288,6 +296,10 @@ const Home: NextPage = () => {
             </div>
             <SignedIn>
               {
+                plan_creator === undefined ? 
+                <>
+                </>
+                :                 
                 plan_creator ? 
                 <>                
                   <div className={styles.cardTitle}>

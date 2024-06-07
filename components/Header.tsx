@@ -271,32 +271,26 @@ export default function Header(/*{ credits }: HeaderProps*/): JSX.Element {
               alignItems: 'center', // Opcional, para centrar los elementos en la columna
             }}>
             <SignedIn>
-              <Tooltip
-                title={
-                  <div>
-                    <p>CLICK ME TO CANCEL SUBSCRIPTION</p>
-                  </div>
-                }>
-                {/*
-                <form action="/api/checkout_sessions" method="POST">
-                  <Button
-                    size="small"
-                    type="submit"
-                    variant="contained"
-                    role="link"
-                    onClick={handleBuyCreditsClick}
-                  >
-                    {subsTplan}
-                  </Button>
-                </form>
-                */}     
-                  <Button
-                    size="small"
-                    variant="contained"
-                    onClick={()=>setConfirmCancelSubsOpen(true)}
-                  >{subsTplan}
-                  </Button>                                
-              </Tooltip>
+              {
+                subsTplan ?
+                <>
+                  <Tooltip
+                    title={
+                      <div>
+                        <p>CLICK ME TO CANCEL SUBSCRIPTION</p>
+                      </div>
+                    }>     
+                      <Button
+                        size="small"
+                        variant="contained"
+                        onClick={()=>setConfirmCancelSubsOpen(true)}
+                      >{subsTplan}
+                      </Button>                                
+                  </Tooltip>                
+                </>
+                :
+                <>Loading subscription...</> 
+              }
               <div className={styles.headerItem}>
                 <UserButton userProfileUrl="/user" afterSignOutUrl="/" />
               </div>
