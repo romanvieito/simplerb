@@ -20,13 +20,6 @@ import {
   resetSearch,
 } from "../utils/LocalStorage";
 
-import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle
-} from "@mui/material";
-
 const pages = [{
   name: 'Domain', 
   link: '/domain'
@@ -60,8 +53,7 @@ const ButtonMenu = styled(Button)({
   textTransform: 'none',
 });
 
-export default function Header(/*{ credits }: HeaderProps*/): JSX.Element {
-
+export default function Header(): JSX.Element {
 
   const { openSignIn } = useClerk();
   const { isLoaded, user, isSignedIn } = useUser();
@@ -74,12 +66,6 @@ export default function Header(/*{ credits }: HeaderProps*/): JSX.Element {
 
   const handleCloseNavMenu = () => {
     setAnchorElNav(null);
-  };
-
-  const [confirmCancelSubsOpen, setConfirmCancelSubsOpen] = useState<boolean>(false);
-
-  const handleConfirmCancelSubsClose = () => {
-    setConfirmCancelSubsOpen(false);
   };
 
   // Handler function to track the event when the button is clicked
@@ -155,6 +141,8 @@ export default function Header(/*{ credits }: HeaderProps*/): JSX.Element {
 
   useEffect(() => {
     if (!isSignedIn && isSignedIn!==undefined) {
+      setSubsTplan(null);
+      setSubsCancel(null);
       resetSearch();
     }
   }, [isSignedIn]);
@@ -271,26 +259,18 @@ export default function Header(/*{ credits }: HeaderProps*/): JSX.Element {
               alignItems: 'center', // Opcional, para centrar los elementos en la columna
             }}>
             <SignedIn>
-              {
-                subsTplan ?
-                <>
-                  <Tooltip
-                    title={
-                      <div>
-                        <p>CLICK ME TO CANCEL SUBSCRIPTION</p>
-                      </div>
-                    }>     
-                      <Button
-                        size="small"
-                        variant="contained"
-                        onClick={()=>setConfirmCancelSubsOpen(true)}
-                      >{subsTplan}
-                      </Button>                                
-                  </Tooltip>                
-                </>
-                :
-                <>Loading subscription...</> 
-              }
+                <form action="/api/checkout_sessions" method="POST">
+                  <Button
+                    size="small"
+                    type="submit"
+                    variant="contained"
+                    role="link"
+                    disabled={subsTplan ? true : false}
+                    onClick={handleBuyCreditsClick}
+                  >
+                    Become a member
+                  </Button>
+                </form>
               <div className={styles.headerItem}>
                 <UserButton userProfileUrl="/user" afterSignOutUrl="/" />
               </div>
@@ -301,25 +281,7 @@ export default function Header(/*{ credits }: HeaderProps*/): JSX.Element {
                   Sign in / up
                 </a>
               </div>
-            </SignedOut>
-            <Dialog open={confirmCancelSubsOpen} onClose={handleConfirmCancelSubsClose}>
-              <DialogTitle>
-                <Typography variant="h5">Cancel subscription</Typography>
-              </DialogTitle>
-              <DialogContent>
-                <Typography variant="subtitle1">
-                  Are you sure you want to continue?
-                </Typography>
-              </DialogContent>
-              <DialogActions>
-                <form action="/api/checkout_sessions" method="POST">
-                  <Button type="submit" variant="contained" color="success" role="link" onClick={handleBuyCreditsClick}>
-                    Yes
-                  </Button>                  
-                </form>                
-                <Button variant="contained" onClick={handleConfirmCancelSubsClose}>No</Button>
-              </DialogActions>
-            </Dialog>                        
+            </SignedOut>                        
           </Box>
         </Toolbar>
       </Container>
