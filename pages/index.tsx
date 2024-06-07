@@ -7,13 +7,14 @@ import { Tooltip } from "@mui/material";
 import styles from "../components/CardsPricing.module.css";
 import { useContext } from "react";
 import SBRContext from "../context/SBRContext";
-import { SignedIn, SignedOut, useUser } from "@clerk/nextjs";
+import { useClerk, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
 import Snackbar from '@mui/joy/Snackbar';
 import type { NextPage } from "next";
 import mixpanel from "../utils/mixpanel-config";
 
 const Home: NextPage = () => {
 
+  const { openSignIn } = useClerk();
   const [openSuccess, setOpenSuccess] = useState(false);
   const [openDanger, setOpenDanger] = useState(false);
   const [message, setMessage] = useState('');
@@ -25,73 +26,67 @@ const Home: NextPage = () => {
     throw new Error('SBRContext must be used within a SBRProvider');
   }
   const { subsTplan, setSubsTplan, setSubsCancel } = context;
-  
-  let plan_free: any, plan_starter: any, plan_creator: any;  
-  plan_free = plan_starter = plan_creator = undefined;
-
-  switch (subsTplan) {
-    case 'FREE':
-      plan_free = true;
-      break;
-    case 'STARTER':
-      plan_starter = true;
-      break;
-    case 'CREATOR':
-      plan_creator = true;
-      break;
-  }
 
   const handleSubscriptionFreeClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
     if (!isLoaded || !user) {
-      return null;
-    }    
-    try {      
-      const email = user.emailAddresses[0].emailAddress;
-      const substplan = 'FREE';
-      const subscancel = false;
-
-      const data = {
-        substplan,
-        subscancel
-      };
-
-      const resp = await fetch(`/api/user-subscription?email=${email}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+      openSignIn();
+    } else {
+      try {      
+        const email = user.emailAddresses[0].emailAddress;
+        const substplan = 'FREE';
+        const subscancel = false;
   
-      if (!resp.ok) {
-        setMessage("Network response was not ok. Failed to set users subscription");
-        setOpenDanger(true);
-      } else {
-        setMessage("FREE subscription success");
-        setOpenSuccess(true);
-        setSubsTplan('FREE');
-        setSubsCancel(false);
-        mixpanel.track("Subscription", {
+        const data = {
+          substplan,
+          subscancel
+        };
+  
+        const resp = await fetch(`/api/user-subscription?email=${email}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
+    
+        if (!resp.ok) {
+          setMessage("Network response was not ok. Failed to set users subscription");
+          setOpenDanger(true);
+        } else {
+          setMessage("FREE subscription success");
+          setOpenSuccess(true);
+          setSubsTplan('FREE');
+          setSubsCancel(false);
+          mixpanel.track("Subscription", {
+            plan_subscription: 'FREE',
+          });
+        }
+      } catch (error) {
+        console.error("Subscription with error: ", error);
+        mixpanel.track("Subscription with error", {
           plan_subscription: 'FREE',
+          error: error
         });
       }
-    } catch (error) {
-      console.error("Subscription with error: ", error);
-      mixpanel.track("Subscription with error", {
-        plan_subscription: 'FREE',
-        error: error
-      });
     }
   }
 
   const handleSubscriptionStarterClick = (event: React.MouseEvent<HTMLButtonElement>) => { 
-    setMessage('Starter for coming soon');
-    setOpenSuccess(true);    
+    if (!isLoaded || !user) {
+      openSignIn();
+    } else {
+      setMessage('Starter for coming soon');
+      setOpenSuccess(true);          
+    }    
   }
   
-  const handleSubscriptionCreatorClick = (event: React.MouseEvent<HTMLButtonElement>) => { 
-    setMessage('Creator for coming soon');
-    setOpenSuccess(true);    
+  const handleSubscriptionCreatorClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (!isLoaded || !user) {
+      openSignIn();
+    } else {
+      setMessage('Creator for coming soon');
+      setOpenSuccess(true);          
+    }     
   }  
 
   return (
@@ -160,9 +155,6 @@ const Home: NextPage = () => {
 
         <div className={styles.pricingTitle}>
           <h2 className="font-medium">Plans built for creators and businesses
-          <SignedOut>
-            <br/>You need login to enable plans buttons
-          </SignedOut>
           </h2>
         </div>
 
@@ -188,27 +180,21 @@ const Home: NextPage = () => {
                 </li>
                 <li className={styles.ok}>See domain rating</li>
               </ul>
-            </div>
-            <SignedIn>
+            </div>            
               {
-                plan_free === undefined ? 
-                <>
-                </>
-                : 
-                plan_free ?
-                <>
-                  <div className={styles.cardTitle}>
-                    <h3>subscribed</h3>
-                  </div>                                
-                </>
-                :
+                subsTplan !== 'FREE' ? 
                 <>
                   <div className={styles.cardAction}>
                     <button type="button" onClick={handleSubscriptionFreeClick}>To take</button>
                   </div>                
                 </>
+                :
+                <>
+                  <div className={styles.cardTitle}>
+                    <h3>subscribed</h3>
+                  </div>                                
+                </>
               }
-            </SignedIn>
           </div>
 
           <div className={`${styles.card} ${styles.popular}`}>
@@ -242,26 +228,20 @@ const Home: NextPage = () => {
                 <li className={styles.ok}>Premium features*</li>
               </ul>
             </div>
-            <SignedIn>
               {
-                plan_starter === undefined ? 
-                <>
-                </>
-                :                 
-                plan_starter ? 
-                <>               
-                  <div className={styles.cardTitle}>
-                    <h3>subscribed</h3>
-                  </div>                 
-                </>
-                :
+                subsTplan !== 'STARTER' ? 
                 <>
                   <div className={styles.cardAction}>
                     <button type="button" onClick={handleSubscriptionStarterClick}>To take</button>
                   </div>
                 </>
-              }              
-            </SignedIn>            
+                :
+                <>               
+                  <div className={styles.cardTitle}>
+                    <h3>subscribed</h3>
+                  </div>                 
+                </>
+              }                       
           </div>
 
           <div className={styles.card}>
@@ -294,26 +274,20 @@ const Home: NextPage = () => {
                 <li className={styles.ok}>Premium features*</li>
               </ul>
             </div>
-            <SignedIn>
               {
-                plan_creator === undefined ? 
-                <>
-                </>
-                :                 
-                plan_creator ? 
-                <>                
-                  <div className={styles.cardTitle}>
-                    <h3>subscribed</h3>
-                  </div>                
-                </>
-                :
+                subsTplan !== 'CREATOR' ? 
                 <>
                   <div className={styles.cardAction}>
                     <button type="button" onClick={handleSubscriptionCreatorClick}>To take</button>
                   </div>
                 </>
+                :
+                <>                
+                  <div className={styles.cardTitle}>
+                    <h3>subscribed</h3>
+                  </div>                
+                </>
               }                            
-            </SignedIn>            
           </div>
         </div>
 
