@@ -5,10 +5,10 @@ interface SBRContextProps {
   setCredits: (value: any) => void;
   admin: boolean;
   setAdmin: (value: boolean) => void;
-  subsTplan: string;
-  setSubsTplan: (value: boolean) => void;
-  subsCancel: boolean;
-  setSubsCancel: (value: boolean) => void;      
+  subsTplan: any;
+  setSubsTplan: (value: any) => void;
+  subsCancel: any;
+  setSubsCancel: (value: any) => void;      
 }
 
 const SBRContext = createContext<SBRContextProps | undefined>(undefined);
@@ -20,8 +20,8 @@ interface SBRProviderProps  {
 export const SBRProvider: FC<SBRProviderProps> = ({ children }) => {
   const [credits, setCredits] = useState<any>(null);
   const [admin, setAdmin] = useState<boolean>(false);  
-  const [subsTplan, setSubsTplan] = useState<any>(null);
-  const [subsCancel, setSubsCancel] = useState<boolean>(false);  
+  const [subsTplan, setSubsTplan] = useState<any>(undefined);
+  const [subsCancel, setSubsCancel] = useState<any>(undefined);  
 
   return (
     <SBRContext.Provider value={{ credits, 

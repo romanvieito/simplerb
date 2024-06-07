@@ -1,16 +1,99 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Head from "next/head";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import Image from "next/image";
 import { Tooltip } from "@mui/material";
 import styles from "../components/CardsPricing.module.css";
-
-import { SignedIn } from "@clerk/nextjs";
-
+import { useContext } from "react";
+import SBRContext from "../context/SBRContext";
+import { SignedIn, SignedOut, useUser } from "@clerk/nextjs";
+import Snackbar from '@mui/joy/Snackbar';
 import type { NextPage } from "next";
+import mixpanel from "../utils/mixpanel-config";
 
 const Home: NextPage = () => {
+
+  const [openSuccess, setOpenSuccess] = useState(false);
+  const [openDanger, setOpenDanger] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const { isLoaded, user } = useUser();
+
+  const context = useContext(SBRContext);
+  if (!context) {
+    throw new Error('SBRContext must be used within a SBRProvider');
+  }
+  const { subsTplan, setSubsTplan, setSubsCancel } = context;
+  
+  let plan_free: any, plan_starter: any, plan_creator: any;  
+  plan_free = plan_starter = plan_creator = undefined;
+
+  switch (subsTplan) {
+    case 'FREE':
+      plan_free = true;
+      break;
+    case 'STARTER':
+      plan_starter = true;
+      break;
+    case 'CREATOR':
+      plan_creator = true;
+      break;
+  }
+
+  const handleSubscriptionFreeClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (!isLoaded || !user) {
+      return null;
+    }    
+    try {      
+      const email = user.emailAddresses[0].emailAddress;
+      const substplan = 'FREE';
+      const subscancel = false;
+
+      const data = {
+        substplan,
+        subscancel
+      };
+
+      const resp = await fetch(`/api/user-subscription?email=${email}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+  
+      if (!resp.ok) {
+        setMessage("Network response was not ok. Failed to set users subscription");
+        setOpenDanger(true);
+      } else {
+        setMessage("FREE subscription success");
+        setOpenSuccess(true);
+        setSubsTplan('FREE');
+        setSubsCancel(false);
+        mixpanel.track("Subscription", {
+          plan_subscription: 'FREE',
+        });
+      }
+    } catch (error) {
+      console.error("Subscription with error: ", error);
+      mixpanel.track("Subscription with error", {
+        plan_subscription: 'FREE',
+        error: error
+      });
+    }
+  }
+
+  const handleSubscriptionStarterClick = (event: React.MouseEvent<HTMLButtonElement>) => { 
+    setMessage('Starter for coming soon');
+    setOpenSuccess(true);    
+  }
+  
+  const handleSubscriptionCreatorClick = (event: React.MouseEvent<HTMLButtonElement>) => { 
+    setMessage('Creator for coming soon');
+    setOpenSuccess(true);    
+  }  
+
   return (
     <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
       <Head>
@@ -76,7 +159,11 @@ const Home: NextPage = () => {
         </div>
 
         <div className={styles.pricingTitle}>
-          <h2 className="font-medium">Plans built for creators and businesses</h2>
+          <h2 className="font-medium">Plans built for creators and businesses
+          <SignedOut>
+            <br/>You need login to enable plans buttons
+          </SignedOut>
+          </h2>
         </div>
 
         <div className={styles.wrapperCard}>
@@ -102,9 +189,26 @@ const Home: NextPage = () => {
                 <li className={styles.ok}>See domain rating</li>
               </ul>
             </div>
-            <div className={styles.cardAction}>
-              <button type="button">Get Free</button>
-            </div>
+            <SignedIn>
+              {
+                plan_free === undefined ? 
+                <>
+                </>
+                : 
+                plan_free ?
+                <>
+                  <div className={styles.cardTitle}>
+                    <h3>subscribed</h3>
+                  </div>                                
+                </>
+                :
+                <>
+                  <div className={styles.cardAction}>
+                    <button type="button" onClick={handleSubscriptionFreeClick}>To take</button>
+                  </div>                
+                </>
+              }
+            </SignedIn>
           </div>
 
           <div className={`${styles.card} ${styles.popular}`}>
@@ -138,9 +242,26 @@ const Home: NextPage = () => {
                 <li className={styles.ok}>Premium features*</li>
               </ul>
             </div>
-            <div className={styles.cardAction}>
-              <button type="button">Start today</button>
-            </div>
+            <SignedIn>
+              {
+                plan_starter === undefined ? 
+                <>
+                </>
+                :                 
+                plan_starter ? 
+                <>               
+                  <div className={styles.cardTitle}>
+                    <h3>subscribed</h3>
+                  </div>                 
+                </>
+                :
+                <>
+                  <div className={styles.cardAction}>
+                    <button type="button" onClick={handleSubscriptionStarterClick}>To take</button>
+                  </div>
+                </>
+              }              
+            </SignedIn>            
           </div>
 
           <div className={styles.card}>
@@ -173,11 +294,55 @@ const Home: NextPage = () => {
                 <li className={styles.ok}>Premium features*</li>
               </ul>
             </div>
-            <div className={styles.cardAction}>
-              <button type="button">Start today</button>
-            </div>
+            <SignedIn>
+              {
+                plan_creator === undefined ? 
+                <>
+                </>
+                :                 
+                plan_creator ? 
+                <>                
+                  <div className={styles.cardTitle}>
+                    <h3>subscribed</h3>
+                  </div>                
+                </>
+                :
+                <>
+                  <div className={styles.cardAction}>
+                    <button type="button" onClick={handleSubscriptionCreatorClick}>To take</button>
+                  </div>
+                </>
+              }                            
+            </SignedIn>            
           </div>
         </div>
+
+        <Snackbar
+          autoHideDuration={3000}
+          anchorOrigin={{ 
+            vertical: 'top', 
+            horizontal: 'center' 
+          }}
+          open={openSuccess}
+          variant="soft"
+          color='success'
+          onClose={() => setOpenSuccess(false)}
+        >
+          {message}
+        </Snackbar>
+        <Snackbar
+          autoHideDuration={2500}
+          anchorOrigin={{ 
+            vertical: 'top', 
+            horizontal: 'center' 
+          }}
+          open={openDanger}
+          variant="soft"
+          color='danger'
+          onClose={() => setOpenDanger(false)}
+        >
+          {message}
+        </Snackbar>        
       </main>
       <Footer />
     </div>
