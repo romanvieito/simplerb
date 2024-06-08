@@ -162,7 +162,7 @@ const Home: NextPage = () => {
         </div> */}
 
         <div className={styles.pricingTitle}>
-          <h2 className="font-medium">
+          <h2 className="mt-12 font-medium" style={{ fontSize: 30 }}>
             Plans built for creators and businesses
           </h2>
         </div>
