@@ -48,7 +48,7 @@ export default function Footer() {
         <EmailModal open={modalOpen} onClose={handleCloseModal} userauth={user} />                
         {" "}
         <Link
-          href="https://www.linkedin.com/in/yainery-bolanos-515084132/"
+          href="https://www.linkedin.com/in/yaibolanos"
           className="group"
           target="_blank"
           aria-label="Yai on Linkedin"
