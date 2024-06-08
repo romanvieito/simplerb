@@ -200,7 +200,7 @@ export default function Header(): JSX.Element {
             <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
               <SignedIn>
                 <Button
-                style={{textTransform: 'none', color: 'black'}}
+                  style={{ textTransform: "none", color: "black" }}
                   id="tools-button"
                   aria-controls="basic-menu"
                   aria-haspopup="true"
@@ -279,6 +279,7 @@ export default function Header(): JSX.Element {
                 <form action="/api/checkout_sessions" method="POST">
                   <input type="hidden" name="tipo" value="STARTER" />
                   <Button
+                    style={{ textTransform: "none" }}
                     size="small"
                     type="submit"
                     variant="contained"
@@ -286,22 +287,22 @@ export default function Header(): JSX.Element {
                     disabled={subsTplan && subsTplan !== "FREE" ? true : false}
                     onClick={handleSubsStarterClick}
                   >
-                    Become a member
+                    Become a Member
                   </Button>
                 </form>
-                <div className={styles.headerItem}>
+                <Box className="ml-2">
                   <UserButton userProfileUrl="/user" afterSignOutUrl="/" />
-                </div>
+                </Box>
               </SignedIn>
               <SignedOut>
-                <div className={styles.headerItem}>
+                <Box>
                   <a
                     onClick={() => openSignIn()}
                     className="bg-black cursor-pointer rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
                   >
                     Sign in / up
                   </a>
-                </div>
+                </Box>
               </SignedOut>
             </Box>
           </Toolbar>
