@@ -155,11 +155,11 @@ const Home: NextPage = () => {
           </div>
         </SignedOut>
 
-        <div className={styles.pricingTitle}>
+        {/* <div className={styles.pricingTitle}>
           <h2 className="font-medium mb-10">
             Or You Can Generate Your Website and/or Google Ads
           </h2>
-        </div>
+        </div> */}
 
         <div className={styles.pricingTitle}>
           <h2 className="font-medium">
