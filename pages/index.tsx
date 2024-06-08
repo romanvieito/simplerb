@@ -193,7 +193,7 @@ const Home: NextPage = () => {
                 subsTplan !== 'FREE' ? 
                 <>
                   <div className={styles.cardAction}>
-                    <button type="button" onClick={handleSubscriptionFreeClick}>To take</button>
+                    <button type="button" onClick={handleSubscriptionFreeClick}>Get free</button>
                   </div>                
                 </>
                 :
@@ -242,7 +242,7 @@ const Home: NextPage = () => {
                   {
                     (!isLoaded || !user) ? 
                     <div className={styles.cardAction}>
-                     <button type="button" onClick={()=>openSignIn()}>To take</button>
+                     <button type="button" onClick={()=>openSignIn()}>Get starter</button>
                     </div> 
                     : 
                     <div className={styles.cardAction}>
@@ -252,7 +252,7 @@ const Home: NextPage = () => {
                           type="submit"
                           onClick={handleSubsStarterCreatorClick}
                         >
-                          To take
+                          Get starter
                         </button>
                       </form>
                     </div>
@@ -303,7 +303,7 @@ const Home: NextPage = () => {
                   {
                     (!isLoaded || !user) ? 
                     <div className={styles.cardAction}>
-                     <button type="button" onClick={()=>openSignIn()}>To take</button>
+                     <button type="button" onClick={()=>openSignIn()}>Get creator</button>
                     </div> 
                     : 
                     <div className={styles.cardAction}>
@@ -313,7 +313,7 @@ const Home: NextPage = () => {
                           type="submit"
                           onClick={handleSubsStarterCreatorClick}
                         >
-                          To take
+                          Get creator
                         </button>
                       </form>
                     </div>
