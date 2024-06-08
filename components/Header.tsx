@@ -190,14 +190,10 @@ export default function Header(): JSX.Element {
               href="/"
               sx={{
                 display: { md: "flex" },
-                fontFamily: "monospace",
                 fontWeight: 700,
-                letterSpacing: ".3rem",
-                color: "inherit",
-                textDecoration: "none",
               }}
             >
-              <h1 className="sm:text-3xl text-2xl font-bold ml-2 tracking-tight">
+              <h1 className="sm:text-3xl text-2xl font-bold mr-2 tracking-tight">
                 simplerB
               </h1>
             </Typography>
