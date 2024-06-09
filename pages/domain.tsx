@@ -760,7 +760,7 @@ const DomainPage: NextPage = () => {
       <Header/>
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
         <h1 className="sm:text-6xl text-4xl max-w-[708px] font-bold text-slate-900">
-          Pinpoint your next domain using AI
+          Domain Generator
         </h1>
         {/* <b>{numberDomainsCreated}</b> domains names generated */}
         {/* <div className="mt-7">
@@ -833,7 +833,7 @@ const DomainPage: NextPage = () => {
             <>
             <div className="block">
               <DropDown vibe={vibe} setVibe={(newVibe) => setVibe(newVibe)} />
-              <Box sx={{ width: '100%', typography: 'body1' }}>
+              <Box className="mt-8" sx={{ width: '100%', typography: 'body1' }}>
                 <TabContext value={vpTabIndex}>
                   <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                     <TabList onChange={handleVpTabIndexChange} aria-label="Options for vite professional">
