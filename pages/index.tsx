@@ -109,7 +109,11 @@ const Home: NextPage = () => {
           Generate your business with AI
         </h1>
 
-        <div className="max-w-xl w-full">
+        <h2 className="mt-3">
+          Effortlessly launch your new business with AI-powered tools that generate your domain name, build your website, and create Google Ads.
+        </h2>
+
+        {/* <div className="max-w-xl w-full">
           <div className="flex mt-10 items-center space-x-3">
             <Image
               src="/1-black.png"
@@ -142,15 +146,15 @@ const Home: NextPage = () => {
               "Enter Your Business or Hobby. E.g., Boutique Coffee Shop, Personal Fitness"
             }
           />
-        </div>
+        </div> */}
 
         <SignedOut>
-          <div className="mb-4">
+          <div className="my-4">
             <a
               onClick={() => openSignIn()}
               className="bg-black cursor-pointer rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
             >
-              Sign in / up
+              Start Business
             </a>
           </div>
         </SignedOut>
@@ -163,7 +167,7 @@ const Home: NextPage = () => {
 
         <div className={styles.pricingTitle}>
           <h2 className="mt-12 font-medium" style={{ fontSize: 30 }}>
-            Plans built for creators and businesses
+            A perfect fit for creators and businesses owners
           </h2>
         </div>
 
