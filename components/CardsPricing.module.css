@@ -2,7 +2,7 @@
 .wrapperCard {
     display: flex;
     flex-wrap: wrap;
-    margin: 40px auto;
+    margin: 20px auto;
 }
 
 .card {
@@ -216,5 +216,10 @@
 @media (max-width: 768px) {
     .card {
         flex: 1 1 calc(100% - 16px);
+        margin: 32px;
+    }
+
+    .pricingTitle{
+        margin-top: 42px;
     }
 }

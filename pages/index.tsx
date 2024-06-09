@@ -126,7 +126,7 @@ const Home: NextPage = () => {
           Generate your business with AI
         </h1>
 
-        <h2 className="mt-3">
+        <h2 className="mt-3" style={{ color: "rgba(0, 0, 0, 0.6)" }}>
           Effortlessly launch your new business with AI-powered tools that
           generate your domain name, build your website, and create Google Ads.
         </h2>
