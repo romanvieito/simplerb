@@ -3,7 +3,7 @@ import Head from "next/head";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import Image from "next/image";
-import { Button, Tooltip } from "@mui/material";
+import { Box, Button, Tooltip } from "@mui/material";
 import styles from "../components/CardsPricing.module.css";
 import { useContext } from "react";
 import SBRContext from "../context/SBRContext";
@@ -12,7 +12,24 @@ import Snackbar from '@mui/joy/Snackbar';
 import type { NextPage } from "next";
 import mixpanel from "../utils/mixpanel-config";
 
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardContent from '@mui/material/CardContent';
+import Typography from '@mui/material/Typography';
+
+
 const Home: NextPage = () => {
+
+  const pages = [{
+    name: 'Domain', 
+    link: '/domain'
+  }, {
+    name: 'Website Generator', 
+    link: '/web'
+  }, {
+    name: 'Ads Generator', 
+    link: '/ads'
+  }];
 
   const { openSignIn } = useClerk();
   const [openSuccess, setOpenSuccess] = useState(false);
@@ -110,8 +127,39 @@ const Home: NextPage = () => {
         </h1>
 
         <h2 className="mt-3">
-          Effortlessly launch your new business with AI-powered tools that generate your domain name, build your website, and create Google Ads.
+          Effortlessly launch your new business with AI-powered tools that
+          generate your domain name, build your website, and create Google Ads.
         </h2>
+
+        <Box className="mt-7">
+          <Card sx={{ minWidth: 275 }}>
+            <CardContent>
+              {/* <Typography
+                sx={{ fontSize: 14 }}
+                color="text.secondary"
+                gutterBottom
+              >
+                Simple, memorable, and impactful
+              </Typography> */}
+              <Typography variant="h5" component="div">
+                Domain Name Generator
+              </Typography>
+              {/* <Typography sx={{ mb: 1.5 }} color="text.secondary">
+              Simple, memorable, and impactful
+              </Typography> */}
+              <Typography className="pt-4" variant="body2">
+                Create the perfect domain for your business
+                <br />
+                {'"Simple, memorable, and impactful."'}
+              </Typography>
+            </CardContent>
+            <CardActions>
+              <Button size="small" key={pages[0].name} href={pages[0].link}>
+                Learn More
+              </Button>
+            </CardActions>
+          </Card>
+        </Box>
 
         {/* <div className="max-w-xl w-full">
           <div className="flex mt-10 items-center space-x-3">
@@ -149,7 +197,7 @@ const Home: NextPage = () => {
         </div> */}
 
         <SignedOut>
-          <div className="my-4">
+          <div className="mt-8">
             <a
               onClick={() => openSignIn()}
               className="bg-black cursor-pointer rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
