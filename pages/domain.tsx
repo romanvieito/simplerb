@@ -516,11 +516,6 @@ const DomainPage: NextPage = () => {
   const generateDom = async (e: any) => {
     e.preventDefault();
     setDomainFounded([]);
-    mixpanel.track("Find Domain Click", {
-      user_prompt: bio,
-      vibe: vibe,
-      credits: credits,
-    });
 
     if (credits <= 0) {
       toast(

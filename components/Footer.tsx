@@ -4,6 +4,7 @@ import EmailIcon from '@mui/icons-material/Email';
 import { useState } from "react";
 import EmailModal from "./EmailModal";
 import { useUser } from "@clerk/nextjs";
+import mixpanel from "mixpanel-browser";
 
 export default function Footer() {
 
@@ -11,6 +12,8 @@ export default function Footer() {
   const [modalOpen, setModalOpen] = useState(false);
 
   const handleOpenModal = () => {
+    mixpanel.track("Feedback Click", {
+    });  
     setModalOpen(true);
   };
 
