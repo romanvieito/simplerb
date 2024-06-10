@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Box } from "@mui/material";
 import EmailIcon from '@mui/icons-material/Email';
 import { useState } from "react";
 import EmailModal from "./EmailModal";
@@ -18,8 +19,8 @@ export default function Footer() {
   };
 
   return (
-    <footer className="text-center w-full border-t flex flex-col sm:flex-row justify-between items-center p-4 space-y-4 sm:space-y-0">
-      <div>
+    <footer className="text-center w-full border-t flex sm:flex-row justify-between items-center p-4 ">
+      <Box>
         Made with ♥️ by{" "}
         <a
           href="https://adaved.com/"
@@ -29,26 +30,29 @@ export default function Footer() {
         >
           yai{" "}
         </a>
-      </div>
-      <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 items-center">
+      </Box>
+      <Box className="flex items-center">
         {
           isLoaded && isSignedIn ? 
           <>
-            <button
-              className="bg-white border border-black rounded-xl text-black font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-gray-300 w-full"
+          <div className="mr-3">
+             <button
+              className="bg-white border border-black rounded-md text-black font-medium px-4 py-2 hover:bg-gray-300 w-full"
               onClick={handleOpenModal}
             >
               <i className="fas fa-comment"></i>
               <EmailIcon />{" "}
               <span>Feedback</span>
             </button>
+          </div>
           </> : 
           null
         }
-        <EmailModal open={modalOpen} onClose={handleCloseModal} userauth={user} />                
+        <div className="">
+          <EmailModal open={modalOpen} onClose={handleCloseModal} userauth={user} />                
         {" "}
         <Link
-          href="https://www.linkedin.com/in/yainery-bolanos-515084132/"
+          href="https://www.linkedin.com/in/yaibolanos"
           className="group"
           target="_blank"
           aria-label="Yai on Linkedin"
@@ -67,7 +71,9 @@ export default function Footer() {
             ></path>
           </svg>
         </Link>
-      </div>
+        </div>
+        
+      </Box>
     </footer>
   );
 }

@@ -1,20 +1,22 @@
-import React from 'react';
+import React, { useRef, useState, useEffect, useContext } from "react";
 import Head from "next/head";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
-
-import type { NextPage } from "next";
+import { NextPage } from "next";
 import Image from "next/image";
-import { useRef, useState, useEffect, useContext } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import DropDown from "../components/DropDown";
 import LoadingDots from "../components/LoadingDots";
 import { Tooltip } from "@mui/material";
-import { 
-  COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN, 
+import {
+  COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN,
   COUNT_DOMAINS_TO_SEARCH_YES_ADMIN,
-  DomainInfo, VibeType, ptemp, ptop, default_extensions } from "../utils/Definitions";
-
+  DomainInfo,
+  VibeType,
+  ptemp,
+  ptop,
+  default_extensions,
+} from "../utils/Definitions";
 import {
   getBio,
   getVibe,
@@ -35,44 +37,41 @@ import {
   saveVpTabIndex,
   saveVpKeywords,
   saveVpExtensions,
-  saveVpCharacters,   
+  saveVpCharacters,
 } from "../utils/LocalStorage";
-
 import {
   createParser,
   ParsedEvent,
   ReconnectInterval,
 } from "eventsource-parser";
 import { useClerk, SignedIn, useUser } from "@clerk/nextjs";
-
 import { stringGenerateCountDomain } from "../utils/StringGenerateCountDomain";
 import TableDomain from "../components/TableDomain";
-
 import mixpanel from "../utils/mixpanel-config";
-import { 
-  convertTextRateToJson, 
-  addRateToDomainInfo, 
-  saveInDataBaseDomainRate } from "../utils/TextRate";
-
-import Box from '@mui/material/Box';
-import Tab from '@mui/material/Tab';
-import TabContext from '@mui/lab/TabContext';
-import TabList from '@mui/lab/TabList';
-import TabPanel from '@mui/lab/TabPanel';
-import TextField from '@mui/material/TextField';
-import ClearIcon from '@mui/icons-material/Clear';
-import DownloadIcon from '@mui/icons-material/Download';
-import Button from '@mui/material/Button';
-import FormLabel from '@mui/material/FormLabel';
-import FormControl from '@mui/material/FormControl';
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import List from '@mui/material/List';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemText from '@mui/material/ListItemText';
-import LoadingButton from '@mui/lab/LoadingButton';
+import {
+  convertTextRateToJson,
+  addRateToDomainInfo,
+  saveInDataBaseDomainRate,
+} from "../utils/TextRate";
+import Box from "@mui/material/Box";
+import Tab from "@mui/material/Tab";
+import TabContext from "@mui/lab/TabContext";
+import TabList from "@mui/lab/TabList";
+import TabPanel from "@mui/lab/TabPanel";
+import TextField from "@mui/material/TextField";
+import ClearIcon from "@mui/icons-material/Clear";
+import DownloadIcon from "@mui/icons-material/Download";
+import Button from "@mui/material/Button";
+import FormLabel from "@mui/material/FormLabel";
+import FormControl from "@mui/material/FormControl";
+import FormGroup from "@mui/material/FormGroup";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Checkbox from "@mui/material/Checkbox";
+import List from "@mui/material/List";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemText from "@mui/material/ListItemText";
+import LoadingButton from "@mui/lab/LoadingButton";
 import SBRContext from "../context/SBRContext";
 
 function vp_not(a: string[], b: string[]) {
@@ -88,37 +87,33 @@ const DomainPage: NextPage = () => {
   const [bio, setBio] = useState("");
   const [vibe, setVibe] = useState<VibeType>("Professional");
   const [generatedBios, setGeneratedBios] = useState<String>("");
-  const [numberDomainsCreated, setNumberDomainsCreated] = useState<number>(0); //Solo cuenta domains creados en el cliente en esta "session"
+  const [numberDomainsCreated, setNumberDomainsCreated] = useState<number>(0);
   const [isGPT, setIsGPT] = useState(true);
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
 
   const context = useContext(SBRContext);
   if (!context) {
-    throw new Error('SBRContext must be used within a SBRProvider');
+    throw new Error("SBRContext must be used within a SBRProvider");
   }
-  const { credits, setCredits, admin, setAdmin } = context;  
+  const { credits, setCredits, admin, setAdmin } = context;
 
   const bioRef = useRef<null | HTMLDivElement>(null);
 
-  //States to validate disponibilidad del domain name
-  // const [domains, setDomains] = useState('');
   const [domainfounded, setDomainFounded] = useState<DomainInfo[]>([]);
 
-  // Get the user from clerk
   const { isLoaded, user, isSignedIn } = useUser();
   const { openSignIn } = useClerk();
 
-  // About Tab Vite Professional
-  //-----------------------------------------------------------------------------------------
-  const [vpTabIndex, setVpTabIndex] = useState('1');
+  const [vpTabIndex, setVpTabIndex] = useState("1");
   const handleVpTabIndexChange = (event: any, newValue: string) => {
     setVpTabIndex(newValue);
   };
 
-  // Keywords  
   const [vpContains, setVpContains] = useState("");
   const [vpStartsWith, setVpStartsWith] = useState("");
   const [vpEndsWith, setVpEndsWith] = useState("");
-  const [vpSimilarToThisDomainName, setVpSimilarToThisDomainName] = useState("");  
+  const [vpSimilarToThisDomainName, setVpSimilarToThisDomainName] =
+    useState("");
   const handleClearKeyWords = () => {
     setVpContains("");
     setVpStartsWith("");
@@ -126,10 +121,9 @@ const DomainPage: NextPage = () => {
     setVpSimilarToThisDomainName("");
   };
 
-  // Extensions  
   const [vpExtLeft, setVpExtLeft] = useState<string[]>([]);
   const [vpExtChecked, setVpExtChecked] = useState<string[]>([]);
-  const [vpFilterExtLeft, setVpFilterExtLeft] = useState('');
+  const [vpFilterExtLeft, setVpFilterExtLeft] = useState("");
   const [vpLoadingTldsDomains, setVpLoadingTldsDomains] = useState(false);
   const handleToggle = (value: string) => () => {
     const currentIndex = vpExtChecked.indexOf(value);
@@ -143,7 +137,14 @@ const DomainPage: NextPage = () => {
   };
 
   const customList = (items: string[]) => (
-    <Box sx={{width: '100%', bgcolor: 'background.paper', height: 250, overflowY: 'auto'}}>
+    <Box
+      sx={{
+        width: "100%",
+        bgcolor: "background.paper",
+        height: 250,
+        overflowY: "auto",
+      }}
+    >
       <List>
         {items.map((value: string) => {
           const labelId = `transfer-list-item-${value}-label`;
@@ -159,7 +160,7 @@ const DomainPage: NextPage = () => {
                   tabIndex={-1}
                   disableRipple
                   inputProps={{
-                    'aria-labelledby': labelId,
+                    "aria-labelledby": labelId,
                   }}
                 />
               </ListItemIcon>
@@ -170,8 +171,10 @@ const DomainPage: NextPage = () => {
       </List>
     </Box>
   );
-  const vpFilteredExtLeft = vpExtLeft.filter(item => item.toLowerCase().includes(vpFilterExtLeft.toLowerCase()));
-  const handleLoadMoreExtensions = async () => {    
+  const vpFilteredExtLeft = vpExtLeft.filter((item) =>
+    item.toLowerCase().includes(vpFilterExtLeft.toLowerCase())
+  );
+  const handleLoadMoreExtensions = async () => {
     try {
       let tldsDomains = [];
       setVpLoadingTldsDomains(true);
@@ -179,49 +182,48 @@ const DomainPage: NextPage = () => {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-        }
+        },
       });
       if (!response.ok) {
         throw new Error(`Error: ${response.statusText}`);
       }
 
       const data = await response.json();
-      
-      setVpLoadingTldsDomains(false);      
-      
-      for(const elem of data){
+
+      setVpLoadingTldsDomains(false);
+
+      for (const elem of data) {
         tldsDomains.push(elem.name);
       }
-      
+
       setVpExtLeft(vp_not(tldsDomains, default_extensions));
-      setVpFilterExtLeft('');
+      setVpFilterExtLeft("");
     } catch (error) {
       setVpLoadingTldsDomains(false);
       console.error("Failed to fetch tlds domains:", error);
     } finally {
     }
-  };  
+  };
   const handleClearExtensions = () => {
     setVpExtLeft(default_extensions);
     setVpExtChecked([]);
-    setVpFilterExtLeft("");    
-  };    
+    setVpFilterExtLeft("");
+  };
 
-  // Characters
   const [vpTransform, setVpTransform] = useState({
     vpHiremecom: false,
     vpFlickercom: false,
     vpToolcom: false,
   });
   const [vpMinlength, setVpMinlength] = useState<number>(0);
-  const [vpMaxlength, setVpMaxlength] = useState<number>(0);    
+  const [vpMaxlength, setVpMaxlength] = useState<number>(0);
   const handleVpTransformChange = (event: any) => {
     setVpTransform({
       ...vpTransform,
       [event.target.name]: event.target.checked,
     });
   };
-  const { vpHiremecom, vpFlickercom, vpToolcom } = vpTransform;    
+  const { vpHiremecom, vpFlickercom, vpToolcom } = vpTransform;
   const handleClearCharacters = () => {
     setVpTransform({
       vpHiremecom: false,
@@ -230,35 +232,26 @@ const DomainPage: NextPage = () => {
     });
     setVpMinlength(0);
     setVpMaxlength(0);
-  };  
-  //-----------------------------------------------------------------------------------------  
+  };
 
-  // useEffect to fetch credits when user object becomes available
   useEffect(() => {
     if (isLoaded && user) {
-
-      // here loading localstorage
       setBio(() => {
         const bioFromStorage = getBio();
         return bioFromStorage ?? "";
-      });      
+      });
       setVibe(() => {
         const vibeFromStorage = getVibe();
-        return vibeFromStorage ?? 'Professional'
+        return vibeFromStorage ?? "Professional";
       });
       setDomainFounded(() => {
         const dfFromStorage = getDomainFounded();
-        return dfFromStorage ?? []
+        return dfFromStorage ?? [];
       });
-      
-      // About Tab Vite Professional
-      //-----------------------------------------------------------------------------------------
-      // TabIndex
       setVpTabIndex(() => {
         const vpti = getVpTabIndex();
         return vpti ?? "1";
-      });      
-      // Keywords   
+      });
       setVpContains(() => {
         const vpc = getVpContains();
         return vpc ?? "";
@@ -275,7 +268,6 @@ const DomainPage: NextPage = () => {
         const vpsi = getVpSimilarToThisDomainName();
         return vpsi ?? "";
       });
-      // Extensions     
       setVpExtLeft(() => {
         const vpextl = getVpExtLeft();
         return vpextl ?? default_extensions;
@@ -287,15 +279,16 @@ const DomainPage: NextPage = () => {
       setVpFilterExtLeft(() => {
         const vpextf = getVpFilterExtLeft();
         return vpextf ?? "";
-      });     
-      // Characters
+      });
       setVpTransform(() => {
         const vpt = getVpTransform();
-        return vpt ?? {
-          vpHiremecom: false,
-          vpFlickercom: false,
-          vpToolcom: false,
-        };
+        return (
+          vpt ?? {
+            vpHiremecom: false,
+            vpFlickercom: false,
+            vpToolcom: false,
+          }
+        );
       });
       setVpMinlength(() => {
         const vpmin = getVpMinlength();
@@ -304,19 +297,18 @@ const DomainPage: NextPage = () => {
       setVpMaxlength(() => {
         const vpmax = getVpMaxlength();
         return vpmax ? parseInt(vpmax) : 0;
-      });                  
-      //-----------------------------------------------------------------------------------------
+      });
     } else {
       setBio("");
       setVibe("Professional");
       handleClearKeyWords();
       handleClearExtensions();
-      handleClearCharacters();      
+      handleClearCharacters();
     }
   }, [user]);
 
   useEffect(() => {
-    if (!isSignedIn && isSignedIn!==undefined) {
+    if (!isSignedIn && isSignedIn !== undefined) {
       handleClearKeyWords();
       handleClearExtensions();
       handleClearCharacters();
@@ -329,80 +321,71 @@ const DomainPage: NextPage = () => {
     }
   };
 
-  const countDomainToPrompt = admin ? 
-    stringGenerateCountDomain(COUNT_DOMAINS_TO_SEARCH_YES_ADMIN) : 
-    stringGenerateCountDomain(COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN);
+  const countDomainToPrompt = admin
+    ? stringGenerateCountDomain(COUNT_DOMAINS_TO_SEARCH_YES_ADMIN)
+    : stringGenerateCountDomain(COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN);
 
-  const countShowDomain = admin ? 
-    COUNT_DOMAINS_TO_SEARCH_YES_ADMIN : 
-    COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN;
-
-  // debugger;
-  // console.log({ generatedBios });
-  // console.log({ numberDomainsCreated });
+  const countShowDomain = admin
+    ? COUNT_DOMAINS_TO_SEARCH_YES_ADMIN
+    : COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN;
 
   const searchDomain = async () => {
-
     let tempGeneratedDomains = "";
     let domainNames: DomainInfo[] = [];
-
     setGeneratedBios("");
 
     try {
-
-      // Extensions
-      let prompt_extensions = '';
-      if(vpExtChecked.length > 0) prompt_extensions = `Make sure to generate domain names using these extensions: ${vpExtChecked.join(', ')}. `;
-
-      // keywords
-      let prompt_keywords = '';
+      let prompt_extensions = "";
+      if (vpExtChecked.length > 0)
+        prompt_extensions = `Make sure to generate domain names using these extensions: ${vpExtChecked.join(
+          ", "
+        )}. `;
+      let prompt_keywords = "";
       const conditions_keywords = [
         vpContains && `that contain ${vpContains}`,
         vpStartsWith && `that start with ${vpStartsWith}`,
         vpEndsWith && `that end with ${vpEndsWith}`,
-        vpSimilarToThisDomainName && `similar to ${vpSimilarToThisDomainName}`
+        vpSimilarToThisDomainName && `similar to ${vpSimilarToThisDomainName}`,
       ].filter(Boolean);
       if (conditions_keywords.length > 1) {
         const lastCondition = conditions_keywords.pop();
-        prompt_keywords = `Generate domain names ${conditions_keywords.join(', ')} and ${lastCondition}. `;
+        prompt_keywords = `Generate domain names ${conditions_keywords.join(
+          ", "
+        )} and ${lastCondition}. `;
       } else {
         prompt_keywords = `Generate domain names ${conditions_keywords[0]}. `;
       }
 
-      // Characters
-      let prompt_character = '';
+      let prompt_character = "";
       const conditions_character = [
         vpHiremecom && `use domain hacks like in hireme.com → hire.me`,
-        vpFlickercom && `drop last vowel of the domain name like in flicker.com → flickr.com`,
-        vpToolcom && `pluralize nouns like in tool.com → tools.com`
-      ].filter(Boolean);      
+        vpFlickercom &&
+          `drop last vowel of the domain name like in flicker.com → flickr.com`,
+        vpToolcom && `pluralize nouns like in tool.com → tools.com`,
+      ].filter(Boolean);
       if (conditions_character.length > 1) {
         const lastCondition = conditions_character.pop();
-        prompt_character = `Try to ${conditions_character.join(', ')} and ${lastCondition}. `;
+        prompt_character = `Try to ${conditions_character.join(
+          ", "
+        )} and ${lastCondition}. `;
       } else {
         prompt_character = `Try to ${conditions_character[0]}. `;
       }
 
-      // Characters Min Max Length
-      let prompt_minmax = '';
+      let prompt_minmax = "";
       const conditions_minmax = [
         vpMinlength && `min length: ${vpMinlength} characters`,
-        vpMaxlength && `max length: ${vpMaxlength} characters`
+        vpMaxlength && `max length: ${vpMaxlength} characters`,
       ].filter(Boolean);
       switch (conditions_minmax.length) {
         case 2:
           const lastCondition = conditions_minmax.pop();
-          prompt_minmax = `Character length does not include the domain extension (i.e. .com), make sure ${conditions_minmax[0]} and ${lastCondition}. `;          
+          prompt_minmax = `Character length does not include the domain extension (i.e. .com), make sure ${conditions_minmax[0]} and ${lastCondition}. `;
           break;
         case 1:
-          prompt_minmax = `Character length does not include the domain extension (i.e. .com), make sure ${conditions_minmax[0]}. `;          
-          break;      
+          prompt_minmax = `Character length does not include the domain extension (i.e. .com), make sure ${conditions_minmax[0]}. `;
+          break;
       }
-
-      /*console.log('prompt_extensions', prompt_extensions);
-      console.log('prompt_keywords', prompt_keywords);      
-      console.log('prompt_character', prompt_character);
-      console.log('prompt_minmax', prompt_minmax);*/
 
       const prompt = `
         Role: You are Seth Godin, tasked with creating domain names. ${
@@ -437,17 +420,20 @@ const DomainPage: NextPage = () => {
             ? "embody sophistication and elegance, perfect for luxury brands, exclusive clubs, or high-end service industries."
             : ""
         }
-      ${(bio || 
+      ${
+        bio ||
         prompt_extensions ||
-        prompt_keywords || 
+        prompt_keywords ||
         prompt_character ||
-        prompt_minmax) ? `Keep in mind the client's focus on ` + (bio +                                                                   
-                                                                  prompt_extensions +
-                                                                  prompt_keywords +
-                                                                  prompt_minmax +
-                                                                  prompt_character) : ""}.`;
-
-      //console.log({ prompt });
+        prompt_minmax
+          ? `Keep in mind the client's focus on ` +
+            (bio +
+              prompt_extensions +
+              prompt_keywords +
+              prompt_minmax +
+              prompt_character)
+          : ""
+      }.`;
 
       const response = await fetch(isGPT ? "/api/openai" : "/api/mistral", {
         method: "POST",
@@ -457,7 +443,7 @@ const DomainPage: NextPage = () => {
         body: JSON.stringify({
           prompt,
           ptemp,
-          ptop
+          ptop,
         }),
       });
 
@@ -465,7 +451,6 @@ const DomainPage: NextPage = () => {
         throw new Error(response.statusText);
       }
 
-      // This data is a ReadableStream
       const data = response.body;
       if (!data) {
         return;
@@ -476,7 +461,7 @@ const DomainPage: NextPage = () => {
           const data = event.data;
           try {
             const text = JSON.parse(data).text ?? "";
-            tempGeneratedDomains += text; // Update the temporary variable
+            tempGeneratedDomains += text;
             setGeneratedBios((prev) => prev + text);
           } catch (e) {
             console.error(e);
@@ -498,7 +483,6 @@ const DomainPage: NextPage = () => {
 
       const onParse = isGPT ? onParseGPT : onParseMistral;
 
-      // https://web.dev/streams/#the-getreader-and-read-methods
       const reader = data.getReader();
       const decoder = new TextDecoder();
       const parser = createParser(onParse);
@@ -511,39 +495,33 @@ const DomainPage: NextPage = () => {
       }
 
       const tempDomainNamesText = tempGeneratedDomains
-        .split("\n") // Split the string by newline to create an array
+        .split("\n")
         .map((domain) => domain.replace(/^\d+\.\s*/, ""))
         .filter((domain) => domain);
 
-      tempDomainNamesText.map((domain)=>{ 
+      tempDomainNamesText.map((domain) => {
         domainNames.push({
-          domain, 
+          domain,
           available: undefined,
-          favorite: undefined
-        })
-      });  
-
+          favorite: undefined,
+        });
+      });
     } catch (error: any) {
       throw new Error(error);
     }
 
     return domainNames;
-  }
+  };
 
   const generateDom = async (e: any) => {
-    e.preventDefault();    
-
+    e.preventDefault();
     setDomainFounded([]);
-
-    // Mixpanel tracking for button click
     mixpanel.track("Find Domain Click", {
-      // You can add properties to the event as needed
       user_prompt: bio,
       vibe: vibe,
       credits: credits,
     });
 
-    // Check if credits are 0
     if (credits <= 0) {
       toast(
         "You have no more credits left. Please buy credits to generate more domain names.",
@@ -556,71 +534,55 @@ const DomainPage: NextPage = () => {
           },
         }
       );
-      return; // Stop further execution
+      return;
     }
-    
+
     setLoading(true);
 
     try {
-
       let resultDomainFounded = await searchDomain();
-
-      // This code runs after the try and catch blocks, regardless of the outcome
-
-      // aqui iba lo tomar los dominios encontrados
-
-      // Mixpanel tracking for button click
       mixpanel.track("Domains Generated", {
-        // You can add properties to the event as needed
         user_prompt: bio,
         vibe: vibe,
         credits: credits,
         domains_generated: resultDomainFounded,
       });
 
-      // In case the user signs out while on the page.
       if (!isLoaded || !user) {
         return null;
       }
       const email = user.emailAddresses[0].emailAddress;
-      //Veamos si user tiene credits y decrementar
       const userData = await getUserByEmail(email);
 
       if (!userData || userData.rows[0].credits <= 0) {
         return;
-      }      
+      }
 
       saveBioVite(bio, vibe);
-
-      // About Tab Vite Professional
-      //-----------------------------------------------------------------------------------------
       saveVpTabIndex(vpTabIndex);
-      saveVpKeywords(vpContains, vpStartsWith, vpEndsWith, vpSimilarToThisDomainName);
+      saveVpKeywords(
+        vpContains,
+        vpStartsWith,
+        vpEndsWith,
+        vpSimilarToThisDomainName
+      );
       saveVpExtensions(vpExtLeft, vpExtChecked, vpFilterExtLeft);
       saveVpCharacters(vpTransform, vpMinlength, vpMaxlength);
-      //-----------------------------------------------------------------------------------------
 
-      if(resultDomainFounded) {
-        //if(admin) {
-          resultDomainFounded = await getDomainNamesWithRate(resultDomainFounded, userData.rows[0].id);
-          setDomainFounded(resultDomainFounded);
-        //}
-        //else {
-        //  setDomainFounded(resultDomainFounded);
-        //}      
+      if (resultDomainFounded) {
+        resultDomainFounded = await getDomainNamesWithRate(
+          resultDomainFounded,
+          userData.rows[0].id
+        );
+        setDomainFounded(resultDomainFounded);
         saveDomainFounded(resultDomainFounded);
-      }      
-
-      setLoading(false); // Always stop the loading indicator when done
-
-      setNumberDomainsCreated(numberDomainsCreated + 3);
-      scrollToBios();
-
-    } catch (error) {
+      }
 
       setLoading(false);
-      
-      // Log the error or display an error message to the user
+      setNumberDomainsCreated(numberDomainsCreated + 3);
+      scrollToBios();
+    } catch (error) {
+      setLoading(false);
       console.error("An error occurred:", error);
       toast.error(
         "An error occurred while processing your request. Please try again."
@@ -638,44 +600,42 @@ const DomainPage: NextPage = () => {
       return userData.user;
     } catch (error) {
       console.error("Error fetching user:", error);
-      // Handle errors as needed
     }
   };
 
-  const getDomainNamesWithRate = async (foundedomain: DomainInfo[], user_id: string) => {
-    
+  const getDomainNamesWithRate = async (
+    foundedomain: DomainInfo[],
+    user_id: string
+  ) => {
     if (foundedomain.length === 0) return foundedomain;
-    
     let resultDomainsRate = [...foundedomain];
-    
     const domainListText = foundedomain
       .map((item, index) => `${index + 1}. ${item.domain}`)
-      .join('\n');
+      .join("\n");
 
     const prompt = `Rate the following domain names based on three key criteria: Memorability, Simplicity, and Brevity. Each category should be scored on a scale from 0 to 10, where 0 indicates very poor and 10 means excellent.
     Domain Names to Rate:
       ${domainListText}`;
 
     const response = await fetch(isGPT ? "/api/openai" : "/api/mistral", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt,
-          ptemp,
-          ptop          
-        }),
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt,
+        ptemp,
+        ptop,
+      }),
     });
-  
+
     if (!response.ok) {
       throw new Error(response.statusText);
     }
-  
-    // This data is a ReadableStream
+
     const dataResponse = response.body;
     if (dataResponse) {
-      let dataRate = ""
+      let dataRate = "";
       const onParseGPT = (event: ParsedEvent | ReconnectInterval) => {
         if (event.type === "event") {
           const data = event.data;
@@ -702,7 +662,6 @@ const DomainPage: NextPage = () => {
 
       const onParse = isGPT ? onParseGPT : onParseMistral;
 
-      // https://web.dev/streams/#the-getreader-and-read-methods
       const reader = dataResponse.getReader();
       const decoder = new TextDecoder();
       const parser = createParser(onParse);
@@ -712,7 +671,7 @@ const DomainPage: NextPage = () => {
         done = doneReading;
         const chunkValue = decoder.decode(value);
         parser.feed(chunkValue);
-      }      
+      }
 
       let jsonRate = null;
       try {
@@ -720,32 +679,30 @@ const DomainPage: NextPage = () => {
         resultDomainsRate = addRateToDomainInfo(resultDomainsRate, jsonRate);
         await saveInDataBaseDomainRate(resultDomainsRate, user_id);
       } catch (error) {
-        console.log('Error: ', error);
+        console.log("Error: ", error);
       }
-    }    
-  
-    return resultDomainsRate;
-  }
+    }
 
-  // Handler function to track the event when the button is clicked
-  const handleBuyCreditsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    // Prevent the form from submitting traditionally
+    return resultDomainsRate;
+  };
+
+  const handleBuyCreditsClick = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
     event.preventDefault();
     mixpanel.track("Availability Btn Go Premium Click", {
       credits: credits,
     });
-    
-      // The Google Ads event snippet
-      window.gtag && window.gtag('event', 'conversion', {
-        'send_to': '16510475658/ZCyECJS9tqYZEIq758A9', // Your conversion ID and conversion label
-    });
 
-    // Safely access the form and submit it
+    window.gtag &&
+      window.gtag("event", "conversion", {
+        send_to: "16510475658/ZCyECJS9tqYZEIq758A9",
+      });
+
     const form = event.currentTarget.form;
     if (form) {
       form.submit();
     } else {
-      // Handle the case where for some reason the form isn't available
       console.error("Form not found");
     }
   };
@@ -757,15 +714,11 @@ const DomainPage: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Header/>
+      <Header />
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
         <h1 className="sm:text-6xl text-4xl max-w-[708px] font-bold text-slate-900">
-          Pinpoint your next domain using AI
+          Domain Generator
         </h1>
-        {/* <b>{numberDomainsCreated}</b> domains names generated */}
-        {/* <div className="mt-7">
-          <Toggle isGPT={isGPT} setIsGPT={setIsGPT} />
-        </div> */}
         <div className="max-w-xl w-full">
           <div className="flex mt-10 items-center space-x-3">
             <Image
@@ -810,16 +763,15 @@ const DomainPage: NextPage = () => {
                       <b>Professional</b> - Polished and formal.
                     </p>
                     <p>
-                      <b>Friendly</b> - Ideal for blogs and
-                      small businesses.
+                      <b>Friendly</b> - Ideal for blogs and small businesses.
                     </p>
                     <p>
                       <b>Creative</b> - Unique and memorable, for business
                       thinking outside the box.
                     </p>
                     <p>
-                      <b>Sophisticated</b> - High-end, for luxury
-                      brands and exclusive clubs.
+                      <b>Sophisticated</b> - High-end, for luxury brands and
+                      exclusive clubs.
                     </p>
                   </div>
                 }
@@ -828,229 +780,292 @@ const DomainPage: NextPage = () => {
               </Tooltip>
             </p>
           </div>
-          {
-            isSignedIn && 
+          {isSignedIn && (
             <>
-            <div className="block">
               <DropDown vibe={vibe} setVibe={(newVibe) => setVibe(newVibe)} />
-              <Box sx={{ width: '100%', typography: 'body1' }}>
-                <TabContext value={vpTabIndex}>
-                  <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                    <TabList onChange={handleVpTabIndexChange} aria-label="Options for vite professional">
-                      <Tab label="Extensions" value="1" />
-                      <Tab label="Keywords" value="2" />
-                      <Tab label="Characters" value="3" />
-                    </TabList>
-                  </Box>
-                  <TabPanel value="1">            
-                    <Box
-                      sx={{
-                        maxWidth: '100%',
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                      }}
+              <Button
+                size="small"
+                variant="text"
+                onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+                sx={{ marginTop: 3 }}
+              >
+                {showAdvancedSettings
+                  ? "Hide Advanced Settings"
+                  : "Show Advanced Settings"}
+              </Button>
+              {showAdvancedSettings && (
+                <Box
+                  sx={{ width: "100%", typography: "body1" }}
+                >
+                  <TabContext value={vpTabIndex}>
+                    <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+                      <TabList
+                        onChange={handleVpTabIndexChange}
+                        aria-label="Options for vite professional"
                       >
-                      <Button size="small" startIcon={<ClearIcon />} id="clear-extensions" onClick={handleClearExtensions} sx={{ marginRight: 2 }}>
-                        Clear Filter
-                      </Button>
-                      <LoadingButton
-                        onClick={handleLoadMoreExtensions}
-                        startIcon={<DownloadIcon />}
-                        loading={vpLoadingTldsDomains}
-                        loadingPosition="start"
-                        size="small" 
-                      >
-                        <span>Load more extensions</span>
-                      </LoadingButton>
+                        <Tab label="Extensions" value="1" />
+                        <Tab label="Keywords" value="2" />
+                        <Tab label="Characters" value="3" />
+                      </TabList>
                     </Box>
-                    <TextField
-                      fullWidth
-                      id="ext-search"
-                      label="Filter..."
-                      variant="standard"
-                      value={vpFilterExtLeft}
-                      onChange={(e) => setVpFilterExtLeft(e.target.value)}
-                      sx={{ height: 50, marginBottom: 1 }}
-                    />
-                    <Box
-                      sx={{
-                        maxWidth: '100%',
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'left',
-                      }}
-                      >Check to select</Box>                  
-                    {customList(vpFilteredExtLeft)}                
-                  </TabPanel>
-                  <TabPanel value="2">
-                    <Box
-                      sx={{
-                        maxWidth: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'flex-start',
-                      }}
+                    <TabPanel value="1">
+                      <Box
+                        sx={{
+                          maxWidth: "100%",
+                          display: "flex",
+                          flexDirection: "row",
+                          alignItems: "center",
+                        }}
                       >
-                      <Button size="small" startIcon={<ClearIcon />} id="clear-keywords" onClick={handleClearKeyWords}>
-                        Clear Filter
-                      </Button>                      
-                      <Box mb={2} sx={{ width: '100%' }}>
-                        <TextField 
-                          fullWidth 
-                          label="Contains" 
-                          id="vpContains" 
-                          variant="standard"
-                          value={vpContains}
-                          onChange={(e) => setVpContains(e.target.value)}                        
-                        />
+                        <Button
+                          size="small"
+                          startIcon={<ClearIcon />}
+                          id="clear-extensions"
+                          onClick={handleClearExtensions}
+                          sx={{ marginRight: 2 }}
+                        >
+                          Clear Filter
+                        </Button>
+                        <LoadingButton
+                          onClick={handleLoadMoreExtensions}
+                          startIcon={<DownloadIcon />}
+                          loading={vpLoadingTldsDomains}
+                          loadingPosition="start"
+                          size="small"
+                        >
+                          <span>Load more extensions</span>
+                        </LoadingButton>
                       </Box>
-                      <Box mb={2} sx={{ width: '100%' }}>
-                        <TextField 
-                          fullWidth 
-                          label="Starts with" 
-                          id="vpStartsWith" 
-                          variant="standard" 
-                          value={vpStartsWith}
-                          onChange={(e) => setVpStartsWith(e.target.value)}                        
-                        />
-                      </Box>
-                      <Box mb={2} sx={{ width: '100%' }}>
-                        <TextField 
-                          fullWidth 
-                          label="Ends with" 
-                          id="vpEndsWith" 
-                          variant="standard"
-                          value={vpEndsWith}
-                          onChange={(e) => setVpEndsWith(e.target.value)}
-                        />
-                      </Box>
-                      <Box mb={2} sx={{ width: '100%' }}>
-                        <TextField 
-                          fullWidth 
-                          label="Similar to this domain name" 
-                          id="vpSimilarToThisDomainName" 
-                          variant="standard" 
-                          value={vpSimilarToThisDomainName}
-                          onChange={(e) => setVpSimilarToThisDomainName(e.target.value)}                        
-                        />
-                      </Box>
-                    </Box>                  
-                  </TabPanel>                
-                  <TabPanel value="3">
-                    <Box
-                      sx={{
-                        maxWidth: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'flex-start',
-                      }}
+                      <TextField
+                        fullWidth
+                        id="ext-search"
+                        label="Filter..."
+                        variant="standard"
+                        value={vpFilterExtLeft}
+                        onChange={(e) => setVpFilterExtLeft(e.target.value)}
+                        sx={{ height: 50, marginBottom: 1 }}
+                      />
+                      <Box
+                        sx={{
+                          maxWidth: "100%",
+                          display: "flex",
+                          flexDirection: "row",
+                          alignItems: "left",
+                        }}
                       >
-                      <Button size="small" startIcon={<ClearIcon />} id="clear-characters" onClick={handleClearCharacters}>
-                        Clear Filter
-                      </Button>
-                    </Box>                  
-                    <Box sx={{ display: 'flex' }}>
-                      <FormControl sx={{ m: 2 }} component="fieldset" variant="standard">
-                        <FormLabel component="legend" style={{ textAlign: 'left' }}>Transform{" "}
-                          <Tooltip
-                            title={
-                              <div>
-                                <p>
-                                  Include results that transform your keywords.
-                                </p>				  
-                                <p>
-                                  {" "}
-                                  <b>Domain Hacks</b>: hireme.com &rarr; hire.me
-                                </p>
-                                <p>
-                                  <b>Drop Last Vowel</b>: flicker.com &rarr; flickr.com
-                                </p>
-                                <p>
-                                  <b>Pluralize Nouns</b>: tool.com &rarr; tools.com
-                                </p>
-                              </div>
+                        Check to select
+                      </Box>
+                      {customList(vpFilteredExtLeft)}
+                    </TabPanel>
+                    <TabPanel value="2">
+                      <Box
+                        sx={{
+                          maxWidth: "100%",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        <Button
+                          size="small"
+                          startIcon={<ClearIcon />}
+                          id="clear-keywords"
+                          onClick={handleClearKeyWords}
+                        >
+                          Clear Filter
+                        </Button>
+                        <Box mb={2} sx={{ width: "100%" }}>
+                          <TextField
+                            fullWidth
+                            label="Contains"
+                            id="vpContains"
+                            variant="standard"
+                            value={vpContains}
+                            onChange={(e) => setVpContains(e.target.value)}
+                          />
+                        </Box>
+                        <Box mb={2} sx={{ width: "100%" }}>
+                          <TextField
+                            fullWidth
+                            label="Starts with"
+                            id="vpStartsWith"
+                            variant="standard"
+                            value={vpStartsWith}
+                            onChange={(e) => setVpStartsWith(e.target.value)}
+                          />
+                        </Box>
+                        <Box mb={2} sx={{ width: "100%" }}>
+                          <TextField
+                            fullWidth
+                            label="Ends with"
+                            id="vpEndsWith"
+                            variant="standard"
+                            value={vpEndsWith}
+                            onChange={(e) => setVpEndsWith(e.target.value)}
+                          />
+                        </Box>
+                        <Box mb={2} sx={{ width: "100%" }}>
+                          <TextField
+                            fullWidth
+                            label="Similar to this domain name"
+                            id="vpSimilarToThisDomainName"
+                            variant="standard"
+                            value={vpSimilarToThisDomainName}
+                            onChange={(e) =>
+                              setVpSimilarToThisDomainName(e.target.value)
                             }
+                          />
+                        </Box>
+                      </Box>
+                    </TabPanel>
+                    <TabPanel value="3">
+                      <Box
+                        sx={{
+                          maxWidth: "100%",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        <Button
+                          size="small"
+                          startIcon={<ClearIcon />}
+                          id="clear-characters"
+                          onClick={handleClearCharacters}
+                        >
+                          Clear Filter
+                        </Button>
+                      </Box>
+                      <Box sx={{ display: "flex" }}>
+                        <FormControl
+                          sx={{ m: 2 }}
+                          component="fieldset"
+                          variant="standard"
+                        >
+                          <FormLabel
+                            component="legend"
+                            style={{ textAlign: "left" }}
                           >
-                            <span className="info-icon cursor-pointer">&#x24D8;</span>
-                          </Tooltip>
-                        </FormLabel>
-                        <FormGroup>
-                          <FormControlLabel
-                            control={
-                              <Checkbox checked={vpHiremecom} onChange={handleVpTransformChange} name="vpHiremecom" />
+                            Transform{" "}
+                            <Tooltip
+                              title={
+                                <div>
+                                  <p>
+                                    Include results that transform your
+                                    keywords.
+                                  </p>
+                                  <p>
+                                    {" "}
+                                    <b>Domain Hacks</b>: hireme.com &rarr;
+                                    hire.me
+                                  </p>
+                                  <p>
+                                    <b>Drop Last Vowel</b>: flicker.com &rarr;
+                                    flickr.com
+                                  </p>
+                                  <p>
+                                    <b>Pluralize Nouns</b>: tool.com &rarr;
+                                    tools.com
+                                  </p>
+                                </div>
+                              }
+                            >
+                              <span className="info-icon cursor-pointer">
+                                &#x24D8;
+                              </span>
+                            </Tooltip>
+                          </FormLabel>
+                          <FormGroup>
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  checked={vpHiremecom}
+                                  onChange={handleVpTransformChange}
+                                  name="vpHiremecom"
+                                />
+                              }
+                              label="Use Domain Hacks"
+                            />
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  checked={vpFlickercom}
+                                  onChange={handleVpTransformChange}
+                                  name="vpFlickercom"
+                                />
+                              }
+                              label="Drop Last Vowel"
+                            />
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  checked={vpToolcom}
+                                  onChange={handleVpTransformChange}
+                                  name="vpToolcom"
+                                />
+                              }
+                              label="Pluralize Nouns"
+                            />
+                          </FormGroup>
+                        </FormControl>
+                      </Box>
+                      <Box
+                        component="form"
+                        sx={{
+                          "& .MuiTextField-root": { m: 1, width: "25ch" },
+                        }}
+                        noValidate
+                        autoComplete="off"
+                      >
+                        <div>
+                          <TextField
+                            id="vpMinlength"
+                            label="Min length"
+                            type="number"
+                            variant="standard"
+                            InputLabelProps={{
+                              shrink: true,
+                            }}
+                            value={vpMinlength}
+                            onChange={(e) =>
+                              setVpMinlength(parseInt(e.target.value, 10))
                             }
-                            label="Use Domain Hacks"
                           />
-                          <FormControlLabel
-                            control={
-                              <Checkbox checked={vpFlickercom} onChange={handleVpTransformChange} name="vpFlickercom" />
+                          <TextField
+                            id="vpMaxlength"
+                            label="Max length"
+                            type="number"
+                            variant="standard"
+                            InputLabelProps={{
+                              shrink: true,
+                            }}
+                            value={vpMaxlength}
+                            onChange={(e) =>
+                              setVpMaxlength(parseInt(e.target.value, 10))
                             }
-                            label="Drop Last Vowel"
                           />
-                          <FormControlLabel
-                            control={
-                              <Checkbox checked={vpToolcom} onChange={handleVpTransformChange} name="vpToolcom" />
-                            }
-                            label="Pluralize Nouns"
-                          />
-                        </FormGroup>
-                      </FormControl>
-                    </Box>
-                    <Box
-                      component="form"
-                      sx={{
-                        '& .MuiTextField-root': { m: 1, width: '25ch' },
-                      }}
-                      noValidate
-                      autoComplete="off"
-                    >
-                      <div>
-                        <TextField
-                          id="vpMinlength"
-                          label="Min length"
-                          type="number"
-                          variant="standard"
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          value={vpMinlength}
-                          onChange={(e) => setVpMinlength(parseInt(e.target.value, 10))}
-                        />
-                        <TextField
-                          id="vpMaxlength"
-                          label="Max length"
-                          type="number"
-                          variant="standard"
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          value={vpMaxlength}
-                          onChange={(e) => setVpMaxlength(parseInt(e.target.value, 10))}
-                        />
-                      </div>
-                    </Box>                  
-                  </TabPanel>
-                </TabContext>
-              </Box>            
-            </div>            
+                        </div>
+                      </Box>
+                    </TabPanel>
+                  </TabContext>
+                </Box>
+              )}
             </>
-          }
+          )}
           {!loading && (
             <div>
               <SignedIn>
                 {credits !== null ? (
                   <>
                     <button
-                      className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+                      className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
                       onClick={(e) => generateDom(e)}
                     >
                       Find your domain &rarr;
                     </button>
                   </>
                 ) : (
-                  <>
-                  </>
+                  <></>
                 )}
               </SignedIn>
             </div>
@@ -1072,7 +1087,7 @@ const DomainPage: NextPage = () => {
         <hr className="h-px bg-gray-700 border-1 dark:bg-gray-700" />
         {!loading && user && (
           <div className="space-y-10 my-10">
-            {/*generatedBios && */domainfounded.length > 0 && (
+            {domainfounded.length > 0 && (
               <>
                 <div>
                   <h2
@@ -1083,14 +1098,21 @@ const DomainPage: NextPage = () => {
                   </h2>
                 </div>
                 <div>
-                  <TableDomain rows={domainfounded.slice(0, countShowDomain)} admin={admin} email={user.emailAddresses[0].emailAddress} functionDomainFounded={setDomainFounded} cred={credits} functionCred={setCredits}/>
+                  <TableDomain
+                    rows={domainfounded.slice(0, countShowDomain)}
+                    admin={admin}
+                    email={user.emailAddresses[0].emailAddress}
+                    functionDomainFounded={setDomainFounded}
+                    cred={credits}
+                    functionCred={setCredits}
+                  />
                 </div>
               </>
             )}
           </div>
         )}
       </main>
-      <Footer/>
+      <Footer />
     </div>
   );
 };

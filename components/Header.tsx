@@ -6,10 +6,9 @@ import mixpanel from "mixpanel-browser";
 
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Menu from '@mui/material/Menu';
-import MenuIcon from '@mui/icons-material/List';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import Container from '@mui/material/Container';
 import MenuItem from '@mui/material/MenuItem';
 import { createTheme, ThemeProvider, styled } from '@mui/material/styles';
@@ -68,33 +67,10 @@ export default function Header(): JSX.Element {
     setAnchorElNav(null);
   };
 
-  // Handler function to track the event when the button is clicked
-  /*const handleBuyCreditsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    // Prevent the form from submitting traditionally
-    event.preventDefault();
-    mixpanel.track("Buy Credits Click", {
-      credits: credits,
-    });
-  
-    // The Google Ads event snippet
-    window.gtag && window.gtag('event', 'conversion', {
-      'send_to': '16510475658/ZCyECJS9tqYZEIq758A9', // Your conversion ID and conversion label
-    });
-
-    // Safely access the form and submit it
-    const form = event.currentTarget.form;
-    if (form) {
-      form.submit();
-    } else {
-      // Handle the case where for some reason the form isn't available
-      console.error("Form not found");
-    }
-  };*/
-
   const handleSubsStarterClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     // Prevent the form from submitting traditionally
     event.preventDefault();
-    mixpanel.track("Subscription", {
+    mixpanel.track("Become a Member Click", {
       plan_subscription: 'STARTER',
     });  
     // The Google Ads event snippet
@@ -170,10 +146,10 @@ export default function Header(): JSX.Element {
 
   return (
     <ThemeProvider theme={theme}>
-    <AppBar position="static">
-      <Container maxWidth="xl">
-        <Toolbar disableGutters>
-          {/* <Box
+      <AppBar position="static">
+        <Container maxWidth="xl">
+          <Toolbar disableGutters>
+            {/* <Box
             component="img"
             alt="header text"
             src="/write.svg"
@@ -184,70 +160,66 @@ export default function Header(): JSX.Element {
               mr: 2,
             }}
           /> */}
-          <Typography
-            variant="h6"
-            noWrap
-            component="a"
-            href="/"
-            sx={{
-              display: { md: 'flex' },
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              letterSpacing: '.3rem',
-              color: 'inherit',
-              textDecoration: 'none',
-              mr: 2,              
-            }}
-          >
-            <h1 className="sm:text-3xl text-2xl font-bold ml-2 tracking-tight">
-              simplerB
-            </h1>
-          </Typography>          
-          <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
-            <SignedIn>
-              <IconButton
-                size="large"
-                aria-label="account of current user"
-                aria-controls="menu-appbar"
-                aria-haspopup="true"
-                onClick={handleOpenNavMenu}
-                color="inherit"
-              >
-                <MenuIcon />
-              </IconButton>
-              <Menu
-                id="menu-appbar"
-                anchorEl={anchorElNav}
-                anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'left',
-                }}
-                keepMounted
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'left',
-                }}
-                open={Boolean(anchorElNav)}
-                onClose={handleCloseNavMenu}
-                sx={{
-                  display: { xs: 'block', md: 'none' },
-                }}
-              >
-                {pages.map((page) => (
-                  <MenuItem key={page.name}>
-                    <ButtonMenu
-                      key={page.name}
-                      href={page.link}
-                      sx={{ my: 0.5, color: 'black', display: 'block' }}
-                    >
-                      {page.name}
-                    </ButtonMenu>                    
-                  </MenuItem>
-                ))}
-              </Menu>
-            </SignedIn>
-          </Box>          
-          {/* <Box
+            <Typography
+              variant="h6"
+              noWrap
+              component="a"
+              href="/"
+              sx={{
+                display: { md: "flex" },
+                fontWeight: 700,
+              }}
+            >
+              <h1 className="sm:text-3xl text-2xl font-bold mr-2 tracking-tight">
+                simplerB
+              </h1>
+            </Typography>
+            <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
+              <SignedIn>
+                <Button
+                  style={{ textTransform: "none", color: "black" }}
+                  id="tools-button"
+                  aria-controls="basic-menu"
+                  aria-haspopup="true"
+                  aria-expanded="true"
+                  onClick={handleOpenNavMenu}
+                  endIcon={<KeyboardArrowDownIcon />}
+                >
+                  Tools
+                </Button>
+                <Menu
+                  id="menu-appbar"
+                  anchorEl={anchorElNav}
+                  anchorOrigin={{
+                    vertical: "bottom",
+                    horizontal: "left",
+                  }}
+                  keepMounted
+                  transformOrigin={{
+                    vertical: "top",
+                    horizontal: "left",
+                  }}
+                  open={Boolean(anchorElNav)}
+                  onClose={handleCloseNavMenu}
+                  sx={{
+                    display: { xs: "block", md: "none" },
+                  }}
+                >
+                  {pages.map((page) => (
+                    <MenuItem key={page.name}>
+                      <ButtonMenu
+                        key={page.name}
+                        href={page.link}
+                        sx={{ my: 0.5, color: "black", display: "block" }}
+                      >
+                        {page.name}
+                      </ButtonMenu>
+                    </MenuItem>
+                  ))}
+                </Menu>
+              </SignedIn>
+            </Box>
+            {/* <Box
             component="img"
             alt="header text"
             src="/write.svg"
@@ -258,56 +230,60 @@ export default function Header(): JSX.Element {
               mr: 2,
             }}
           />           */}
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            <SignedIn>
-            {pages.map((page) => (
-              <ButtonMenu
-                key={page.name}
-                href={page.link}
-                sx={{ my: 2.5, color: 'black', display: 'block' }}
-              >
-                {page.name}
-              </ButtonMenu>
-            ))}
-            </SignedIn>
-          </Box>          
-          <Box       
-            sx={{
-              flexGrow: 0,
-              display: 'flex',
-              flexDirection: { xs: 'row', sm: 'row' }, // En pantallas pequeñas (xs), los elementos estarán en columna; en pantallas medianas y más grandes (sm), en fila.
-              gap: 1,
-              alignItems: 'center', // Opcional, para centrar los elementos en la columna
-            }}>
-            <SignedIn>
+            <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
+              <SignedIn>
+                {pages.map((page) => (
+                  <ButtonMenu
+                    key={page.name}
+                    href={page.link}
+                    sx={{ my: 2.5, color: "black", display: "block" }}
+                  >
+                    {page.name}
+                  </ButtonMenu>
+                ))}
+              </SignedIn>
+            </Box>
+            <Box
+              sx={{
+                flexGrow: 0,
+                display: "flex",
+                flexDirection: { xs: "row", sm: "row" }, // En pantallas pequeñas (xs), los elementos estarán en columna; en pantallas medianas y más grandes (sm), en fila.
+                gap: 1,
+                alignItems: "center", // Opcional, para centrar los elementos en la columna
+              }}
+            >
+              <SignedIn>
                 <form action="/api/checkout_sessions" method="POST">
-                  <input type="hidden" name="tipo" value='STARTER'/>
+                  <input type="hidden" name="tipo" value="STARTER" />
                   <Button
-                    size="small"
+                    style={{ textTransform: "none" }}
                     type="submit"
                     variant="contained"
                     role="link"
-                    disabled={(subsTplan && subsTplan !== 'FREE') ? true : false}
+                    disabled={subsTplan && subsTplan !== "FREE" ? true : false}
                     onClick={handleSubsStarterClick}
                   >
-                    Become a member
+                    Become a Member
                   </Button>
                 </form>
-              <div className={styles.headerItem}>
-                <UserButton userProfileUrl="/user" afterSignOutUrl="/" />
-              </div>
-            </SignedIn>
-            <SignedOut>
-              <div className={styles.headerItem} >
-                <a onClick={() => openSignIn()} className="bg-black cursor-pointer rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full">
-                  Sign in / up
-                </a>
-              </div>
-            </SignedOut>                        
-          </Box>
-        </Toolbar>
-      </Container>
-    </AppBar>
-    </ThemeProvider>    
+                <Box className="ml-2">
+                  <UserButton userProfileUrl="/user" afterSignOutUrl="/" />
+                </Box>
+              </SignedIn>
+              <SignedOut>
+                <Box>
+                  <a
+                    onClick={() => openSignIn()}
+                    className="bg-black cursor-pointer rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+                  >
+                    Sign in / up
+                  </a>
+                </Box>
+              </SignedOut>
+            </Box>
+          </Toolbar>
+        </Container>
+      </AppBar>
+    </ThemeProvider>
   );
 }
