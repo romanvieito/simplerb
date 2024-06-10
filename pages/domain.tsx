@@ -1058,7 +1058,7 @@ const DomainPage: NextPage = () => {
                 {credits !== null ? (
                   <>
                     <button
-                      className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+                      className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
                       onClick={(e) => generateDom(e)}
                     >
                       Find your domain &rarr;

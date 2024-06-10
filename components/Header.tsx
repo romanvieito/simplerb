@@ -280,7 +280,6 @@ export default function Header(): JSX.Element {
                   <input type="hidden" name="tipo" value="STARTER" />
                   <Button
                     style={{ textTransform: "none" }}
-                    size="small"
                     type="submit"
                     variant="contained"
                     role="link"
