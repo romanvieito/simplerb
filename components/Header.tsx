@@ -67,33 +67,10 @@ export default function Header(): JSX.Element {
     setAnchorElNav(null);
   };
 
-  // Handler function to track the event when the button is clicked
-  /*const handleBuyCreditsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    // Prevent the form from submitting traditionally
-    event.preventDefault();
-    mixpanel.track("Buy Credits Click", {
-      credits: credits,
-    });
-  
-    // The Google Ads event snippet
-    window.gtag && window.gtag('event', 'conversion', {
-      'send_to': '16510475658/ZCyECJS9tqYZEIq758A9', // Your conversion ID and conversion label
-    });
-
-    // Safely access the form and submit it
-    const form = event.currentTarget.form;
-    if (form) {
-      form.submit();
-    } else {
-      // Handle the case where for some reason the form isn't available
-      console.error("Form not found");
-    }
-  };*/
-
   const handleSubsStarterClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     // Prevent the form from submitting traditionally
     event.preventDefault();
-    mixpanel.track("Subscription", {
+    mixpanel.track("Become a Member Click", {
       plan_subscription: 'STARTER',
     });  
     // The Google Ads event snippet
