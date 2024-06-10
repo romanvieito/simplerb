@@ -541,6 +541,20 @@ const DomainPage: NextPage = () => {
         vibe: vibe,
         credits: credits,
         domains_generated: resultDomainFounded,
+        extensions: vpExtLeft.join(','),
+        keywords: {
+          'contains': vpContains,
+          'startswith': vpStartsWith,
+          'endswith': vpEndsWith,
+          'similartothisdomainname': vpSimilarToThisDomainName,
+        },
+        transform: {
+          'hiremecom': vpHiremecom,
+          'flickercom': vpFlickercom,
+          'toolcom': vpToolcom,
+          'minlength': vpMinlength,
+          'maxlength': vpMaxlength,
+        }
       });
 
       if (!isLoaded || !user) {
