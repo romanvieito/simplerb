@@ -241,22 +241,21 @@ const Home: NextPage = () => {
                 </li>
                 <li className={styles.ok}>See domain rating</li>
               </ul>
-            </div>
-            {subsTplan !== "FREE" ? (
-              <>
-                <div className={styles.cardAction}>
-                  <button type="button" onClick={handleSubscriptionFreeClick}>
-                    Get Free
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className={styles.cardTitle}>
-                  <h3>subscribed</h3>
-                </div>
-              </>
-            )}
+            </div>            
+              {
+                subsTplan !== 'FREE' ? 
+                <>
+                  <div className={styles.cardAction}>
+                    <button type="button" onClick={handleSubscriptionFreeClick}>Get free</button>
+                  </div>                
+                </>
+                :
+                <>
+                  <div className={styles.cardTitle}>
+                    <h3>subscribed</h3>
+                  </div>                                
+                </>
+              }
           </div>
 
           <div className={`${styles.card} ${styles.popular}`}>
@@ -290,35 +289,35 @@ const Home: NextPage = () => {
                 <li className={styles.ok}>Premium features*</li>
               </ul>
             </div>
-            {subsTplan !== "STARTER" ? (
-              <>
-                {!isLoaded || !user ? (
-                  <div className={styles.cardAction}>
-                    <button type="button" onClick={() => openSignIn()}>
-                      Get Starter
-                    </button>
-                  </div>
-                ) : (
-                  <div className={styles.cardAction}>
-                    <form action="/api/checkout_sessions" method="POST">
-                      <input type="hidden" name="tipo" value={subsTplan} />
-                      <button
-                        type="submit"
-                        onClick={handleSubsStarterCreatorClick}
-                      >
-                        Get Starter
-                      </button>
-                    </form>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <div className={styles.cardTitle}>
-                  <h3>subscribed</h3>
-                </div>
-              </>
-            )}
+              {
+                subsTplan !== 'STARTER' ? 
+                <>
+                  {
+                    (!isLoaded || !user) ? 
+                    <div className={styles.cardAction}>
+                     <button type="button" onClick={()=>openSignIn()}>Get starter</button>
+                    </div> 
+                    : 
+                    <div className={styles.cardAction}>
+                      <form action="/api/checkout_sessions" method="POST">
+                        <input type="hidden" name="tipo" value={subsTplan}/>
+                        <button
+                          type="submit"
+                          onClick={handleSubsStarterCreatorClick}
+                        >
+                          Get starter
+                        </button>
+                      </form>
+                    </div>
+                  }
+                </>
+                :
+                <>               
+                  <div className={styles.cardTitle}>
+                    <h3>subscribed</h3>
+                  </div>                 
+                </>
+              }
           </div>
 
           <div className={styles.card}>
@@ -351,35 +350,35 @@ const Home: NextPage = () => {
                 <li className={styles.ok}>Premium features*</li>
               </ul>
             </div>
-            {subsTplan !== "CREATOR" ? (
-              <>
-                {!isLoaded || !user ? (
-                  <div className={styles.cardAction}>
-                    <button type="button" onClick={() => openSignIn()}>
-                      Get Creator
-                    </button>
-                  </div>
-                ) : (
-                  <div className={styles.cardAction}>
-                    <form action="/api/checkout_sessions" method="POST">
-                      <input type="hidden" name="tipo" value={subsTplan} />
-                      <button
-                        type="submit"
-                        onClick={handleSubsStarterCreatorClick}
-                      >
-                        Get Creator
-                      </button>
-                    </form>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <div className={styles.cardTitle}>
-                  <h3>subscribed</h3>
-                </div>
-              </>
-            )}
+              {
+                subsTplan !== 'CREATOR' ? 
+                <>
+                  {
+                    (!isLoaded || !user) ? 
+                    <div className={styles.cardAction}>
+                     <button type="button" onClick={()=>openSignIn()}>Get creator</button>
+                    </div> 
+                    : 
+                    <div className={styles.cardAction}>
+                      <form action="/api/checkout_sessions" method="POST">
+                        <input type="hidden" name="tipo" value={subsTplan}/>
+                        <button
+                          type="submit"
+                          onClick={handleSubsStarterCreatorClick}
+                        >
+                          Get creator
+                        </button>
+                      </form>
+                    </div>
+                  }
+                </>
+                :
+                <>                
+                  <div className={styles.cardTitle}>
+                    <h3>subscribed</h3>
+                  </div>                
+                </>
+              }
           </div>
         </div>
 
