@@ -143,13 +143,13 @@ const Home: NextPage = () => {
                 Simple, memorable, and impactful
               </Typography> */}
                 <Typography variant="h5" component="div">
-                  Domain Name Generator
+                  Domain Generator
                 </Typography>
                 {/* <Typography sx={{ mb: 1.5 }} color="text.secondary">
               Simple, memorable, and impactful
               </Typography> */}
                 <Typography className="pt-4" variant="body2">
-                  Create the best domain for your business
+                  Create the best domain possible
                   <br />
                   {'"Simple, memorable, and impactful."'}
                 </Typography>
