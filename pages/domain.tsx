@@ -1070,7 +1070,7 @@ const DomainPage: NextPage = () => {
                       className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
                       onClick={(e) => generateDom(e)}
                     >
-                      Find your domain &rarr;
+                      Create your domain &rarr;
                     </button>
                   </>
                 ) : (
