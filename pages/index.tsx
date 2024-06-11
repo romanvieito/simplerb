@@ -155,7 +155,7 @@ const Home: NextPage = () => {
             </CardContent>
             <CardActions>
               <Button size="small" key={pages[0].name} href={pages[0].link}>
-                Learn More
+                Create Domain
               </Button>
             </CardActions>
           </Card>
