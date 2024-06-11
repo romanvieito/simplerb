@@ -541,7 +541,7 @@ const DomainPage: NextPage = () => {
         vibe: vibe,
         credits: credits,
         domains_generated: resultDomainFounded,
-        extensions: vpExtLeft.join(','),
+        extensions: vpExtChecked.join(','),
         keywords: {
           'contains': vpContains,
           'startswith': vpStartsWith,
