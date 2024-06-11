@@ -131,34 +131,94 @@ const Home: NextPage = () => {
           Ads, all done for you effortlessly!
         </h2>
 
-        <Box className="mt-7">
-          <Card sx={{ minWidth: 275 }}>
-            <CardContent>
-              {/* <Typography
+        <Box className="flex mt-7 flex-wrap justify-center">
+          <Box className="m-2" sx={{ width: { xs: '100%', sm: 'calc(50% - 16px)', md: 'calc(33% - 16px)' } }}>
+            <Card sx={{ minWidth: 275 }}>
+              <CardContent>
+                {/* <Typography
                 sx={{ fontSize: 14 }}
                 color="text.secondary"
                 gutterBottom
               >
                 Simple, memorable, and impactful
               </Typography> */}
-              <Typography variant="h5" component="div">
-                Domain Name Generator
-              </Typography>
-              {/* <Typography sx={{ mb: 1.5 }} color="text.secondary">
+                <Typography variant="h5" component="div">
+                  Domain Name Generator
+                </Typography>
+                {/* <Typography sx={{ mb: 1.5 }} color="text.secondary">
               Simple, memorable, and impactful
               </Typography> */}
-              <Typography className="pt-4" variant="body2">
-                Create the perfect domain for your business
-                <br />
-                {'"Simple, memorable, and impactful."'}
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button size="small" key={pages[0].name} href={pages[0].link}>
-                Create Domain
-              </Button>
-            </CardActions>
-          </Card>
+                <Typography className="pt-4" variant="body2">
+                  Create the best domain for your business
+                  <br />
+                  {'"Simple, memorable, and impactful."'}
+                </Typography>
+              </CardContent>
+              <CardActions className="justify-center">
+                <Button size="small" key={pages[0].name} href={pages[0].link}>
+                  Create Domain
+                </Button>
+              </CardActions>
+            </Card>
+          </Box>
+          <Box className="m-2" sx={{ width: { xs: '100%', sm: 'calc(50% - 16px)', md: 'calc(33% - 16px)' } }}>
+            <Card sx={{ minWidth: 275 }}>
+              <CardContent>
+                {/* <Typography
+                sx={{ fontSize: 14 }}
+                color="text.secondary"
+                gutterBottom
+              >
+                Simple, memorable, and impactful
+              </Typography> */}
+                <Typography variant="h5" component="div">
+                  Website Generator
+                </Typography>
+                {/* <Typography sx={{ mb: 1.5 }} color="text.secondary">
+              Simple, memorable, and impactful
+              </Typography> */}
+                <Typography className="pt-4" variant="body2">
+                  Create a website for your business
+                  <br />
+                  {'"Digital is more important than ever."'}
+                </Typography>
+              </CardContent>
+              <CardActions className="justify-center">
+                <Button size="small" key={pages[1].name} href={pages[1].link}>
+                  Create Website
+                </Button>
+              </CardActions>
+            </Card>
+          </Box>
+          <Box className="m-2" sx={{ width: { xs: '100%', sm: 'calc(50% - 16px)', md: 'calc(33% - 16px)' } }}>
+            <Card sx={{ minWidth: 275 }}>
+              <CardContent>
+                {/* <Typography
+                sx={{ fontSize: 14 }}
+                color="text.secondary"
+                gutterBottom
+              >
+                Simple, memorable, and impactful
+              </Typography> */}
+                <Typography variant="h5" component="div">
+                  Google Ads Generator
+                </Typography>
+                {/* <Typography sx={{ mb: 1.5 }} color="text.secondary">
+              Simple, memorable, and impactful
+              </Typography> */}
+                <Typography className="pt-4" variant="body2">
+                  Let people know about your business
+                  <br />
+                  {'"Unleash your business potential."'}
+                </Typography>
+              </CardContent>
+              <CardActions className="justify-center">
+                <Button size="small" key={pages[2].name} href={pages[2].link}>
+                  Create Ads
+                </Button>
+              </CardActions>
+            </Card>
+          </Box>
         </Box>
 
         {/* <div className="max-w-xl w-full">
