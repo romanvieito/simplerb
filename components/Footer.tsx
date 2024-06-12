@@ -52,7 +52,7 @@ export default function Footer() {
           null
         }
         <div className="">
-          <EmailModal open={modalOpen} onClose={handleCloseModal} userauth={user} />                
+          <EmailModal open={modalOpen} onClose={handleCloseModal} subjectType='feedback' />                
         {" "}
         <Link
           href="https://www.linkedin.com/in/yaibolanos"

@@ -1,8 +1,8 @@
 import { createContext, useState, ReactNode, FC } from 'react';
 
 interface SBRContextProps {
-  email: any;
-  setEmail: (value: any) => void;  
+  dataUser: any;
+  setDataUser: (value: any) => void;  
   credits: any;
   setCredits: (value: any) => void;
   admin: boolean;
@@ -20,15 +20,18 @@ interface SBRProviderProps  {
 }
 
 export const SBRProvider: FC<SBRProviderProps> = ({ children }) => {
-  const [email, setEmail] = useState<string>('anonymous@anonymous.com');  
+  const [dataUser, setDataUser] = useState<any>({
+    name: 'anonymous',
+    email: 'anonymous@anonymous.com'
+  });
   const [credits, setCredits] = useState<any>(null);
   const [admin, setAdmin] = useState<boolean>(false);    
   const [subsTplan, setSubsTplan] = useState<any>(undefined);
   const [subsCancel, setSubsCancel] = useState<any>(undefined);  
 
   return (
-    <SBRContext.Provider value={{ email, 
-                                  setEmail,
+    <SBRContext.Provider value={{ dataUser, 
+                                  setDataUser,
                                   credits, 
                                   setCredits, 
                                   admin, 
