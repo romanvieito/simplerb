@@ -29,14 +29,14 @@ const Home = () => {
 
   const [generatedSite, setGeneratedSite] = useState("");
 
-  const handleChange = (event) => {
+  const handleChange = (event: { target: { name: any; checked: any; }; }) => {
     setOptions({
       ...options,
       [event.target.name]: event.target.checked,
     });
   };
 
-  const generateWeb = (e) => {
+  const generateWeb = (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     // Hardcoded HTML for demo purposes
     const hardcodedHTML = `
