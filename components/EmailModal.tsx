@@ -1,14 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { Button, TextField, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import { Toaster, toast } from "react-hot-toast";
 import LoadingButton from '@mui/lab/LoadingButton';
 import SendIcon from '@mui/icons-material/Send';
 import mixpanel from "../utils/mixpanel-config";
 import { EmailModalProps } from "../utils/Definitions";
+import SBRContext from "../context/SBRContext";
 
-const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, userauth }) => {
+const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subject }) => {
   const [textemail, setTextEmail] = useState<string>('');
   const [loading, setLoading] = React.useState(false);
+
+  const context = useContext(SBRContext);
+  if (!context) {
+    throw new Error("SBRContext must be used within a SBRProvider");
+  }
+  const { dataUser } = context;
 
   useEffect(() => {
     if (open) {
@@ -35,9 +42,9 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, userauth }) => {
       );      
       return;
     }
-    const username = userauth.fullName;
-    const useremail = userauth.emailAddresses[0].emailAddress;
-    const subject = `Feedback`;
+    const username = dataUser.name;
+    const useremail = dataUser.email;
+    const subject = subject;
     const content = textemail;
     const data = {
       username,
@@ -56,7 +63,7 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, userauth }) => {
     setLoading(false);  
 
     if (!response.ok) {
-      mixpanel.track("Send feedback by mail", {
+      mixpanel.track(`Send ${subject} by mail`, {
         message: "Response failed to send email",
       });
       toast(
@@ -75,7 +82,7 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, userauth }) => {
 
     const result = await response.json();
 
-    mixpanel.track("Send feedback by mail", {
+    mixpanel.track(`Send ${subject} by mail`, {
       message: result.data ? "Mail send successfully" : "Data failed to send email",
     });
 
@@ -108,7 +115,7 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, userauth }) => {
         fullWidth={true}
         maxWidth="md"            
     >
-      <DialogTitle>Your feedback</DialogTitle>
+      <DialogTitle>Your {subject}</DialogTitle>
       <DialogContent>
         <TextField
           autoFocus

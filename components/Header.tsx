@@ -93,8 +93,8 @@ export default function Header(): JSX.Element {
     throw new Error('SBRContext must be used within a SBRProvider');
   }
   const { 
-    email, 
-    setEmail,    
+    dataUser, 
+    setDataUser,    
     credits, 
     setCredits, 
     admin, 
@@ -131,7 +131,10 @@ export default function Header(): JSX.Element {
 
   useEffect(() => {
     if (isLoaded && user) {
-      setEmail(user.emailAddresses[0].emailAddress);
+      setDataUser({
+        name: user.fullName,
+        email: user.emailAddresses[0].emailAddress 
+      });
       fetchCredits(user.emailAddresses[0].emailAddress || "");
       // Set this to a unique identifier for the user performing the event.
       mixpanel.identify(user.emailAddresses[0].emailAddress);     
