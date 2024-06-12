@@ -88,6 +88,11 @@ const Home: NextPage = () => {
     }
   }
 
+  const letsTalk = () => {
+    mixpanel.track("Lets Talk Click", {
+    });
+  };
+
   // Handler function to track the event when the button is clicked
   const handleSubsStarterCreatorClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     // Prevent the form from submitting traditionally
@@ -132,7 +137,16 @@ const Home: NextPage = () => {
         </h2>
 
         <Box className="flex mt-7 flex-wrap justify-center">
-          <Box className="m-2" sx={{ width: { xs: '100%', sm: 'calc(50% - 16px)', md: 'calc(33% - 16px)' } }}>
+          <Box
+            className="m-2"
+            sx={{
+              width: {
+                xs: "100%",
+                sm: "calc(50% - 16px)",
+                md: "calc(33% - 16px)",
+              },
+            }}
+          >
             <Card sx={{ minWidth: 275 }}>
               <CardContent>
                 {/* <Typography
@@ -161,7 +175,16 @@ const Home: NextPage = () => {
               </CardActions>
             </Card>
           </Box>
-          <Box className="m-2" sx={{ width: { xs: '100%', sm: 'calc(50% - 16px)', md: 'calc(33% - 16px)' } }}>
+          <Box
+            className="m-2"
+            sx={{
+              width: {
+                xs: "100%",
+                sm: "calc(50% - 16px)",
+                md: "calc(33% - 16px)",
+              },
+            }}
+          >
             <Card sx={{ minWidth: 275 }}>
               <CardContent>
                 {/* <Typography
@@ -190,7 +213,16 @@ const Home: NextPage = () => {
               </CardActions>
             </Card>
           </Box>
-          <Box className="m-2" sx={{ width: { xs: '100%', sm: 'calc(50% - 16px)', md: 'calc(33% - 16px)' } }}>
+          <Box
+            className="m-2"
+            sx={{
+              width: {
+                xs: "100%",
+                sm: "calc(50% - 16px)",
+                md: "calc(33% - 16px)",
+              },
+            }}
+          >
             <Card sx={{ minWidth: 275 }}>
               <CardContent>
                 {/* <Typography
@@ -381,7 +413,7 @@ const Home: NextPage = () => {
             )}
           </div>
 
-          <div className={styles.card}>
+          <Box className={styles.card}>
             <div className={styles.cardTitle}>
               <h3>Creator</h3>
               <span className={styles.off}>First month 50% off</span>
@@ -440,8 +472,33 @@ const Home: NextPage = () => {
                 </div>
               </>
             )}
-          </div>
+          </Box>
         </div>
+
+        <Box className="flex">
+          <div className={styles.card}>
+            <div className={styles.cardTitle}>
+              <p>Need more?</p>
+              <h3 className="mt-3">Custom Plans</h3>
+              <h4 className="mt-3">
+                For custom requirements and tailored services, contact us for
+                dedicated support and precise control over your needs.
+              </h4>
+            </div>
+            <div className={styles.cardAction} style={{ display: "flex", justifyContent: "center", width: "100%", marginTop:"30px" }}>
+              <button type="button" onClick={() => letsTalk()} style={{ width:"300px"}}>
+                Let's talk
+              </button>
+            </div>
+            <div className={styles.cardDescription}>
+              <ul>
+                <li className={styles.ok}>Custom Website Support</li>
+                <li className={styles.ok}>Custom Google Ads Support</li>
+                <li className={styles.ok}>Api Access (coming soon)</li>
+              </ul>
+            </div>
+          </div>
+        </Box>
 
         <Snackbar
           autoHideDuration={3000}
