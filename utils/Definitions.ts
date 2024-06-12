@@ -38,7 +38,7 @@ export interface DomainRate {
 export interface EmailModalProps {
     open: boolean;
     onClose: () => void;
-    subject: string
+    subjectType: string
 }
 
 export type VibeType = 'Professional' | 'Friendly' | 'Sophisticated' | 'Creative';

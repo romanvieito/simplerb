@@ -7,7 +7,7 @@ import mixpanel from "../utils/mixpanel-config";
 import { EmailModalProps } from "../utils/Definitions";
 import SBRContext from "../context/SBRContext";
 
-const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subject }) => {
+const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subjectType }) => {
   const [textemail, setTextEmail] = useState<string>('');
   const [loading, setLoading] = React.useState(false);
 
@@ -44,7 +44,7 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subject }) => {
     }
     const username = dataUser.name;
     const useremail = dataUser.email;
-    const subject = subject;
+    const subject = subjectType;
     const content = textemail;
     const data = {
       username,
@@ -63,7 +63,7 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subject }) => {
     setLoading(false);  
 
     if (!response.ok) {
-      mixpanel.track(`Send ${subject} by mail`, {
+      mixpanel.track(`Send ${subjectType} by mail`, {
         message: "Response failed to send email",
       });
       toast(
@@ -82,7 +82,7 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subject }) => {
 
     const result = await response.json();
 
-    mixpanel.track(`Send ${subject} by mail`, {
+    mixpanel.track(`Send ${subjectType} by mail`, {
       message: result.data ? "Mail send successfully" : "Data failed to send email",
     });
 
@@ -115,7 +115,7 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subject }) => {
         fullWidth={true}
         maxWidth="md"            
     >
-      <DialogTitle>Your {subject}</DialogTitle>
+      <DialogTitle>Your {subjectType}</DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
