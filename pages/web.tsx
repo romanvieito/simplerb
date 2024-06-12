@@ -12,6 +12,7 @@ import {
   FormLabel,
   Tooltip,
 } from "@mui/material";
+import mixpanel from "../utils/mixpanel-config";
 
 const Home = () => {
   const [textAboutMe, setTextAboutMe] = useState("");
@@ -68,6 +69,19 @@ const Home = () => {
       </html>
     `;
     setGeneratedSite(hardcodedHTML);
+
+    mixpanel.track("Web Generated", {
+      textAboutMe: textAboutMe,
+      textPortFolio: textPortFolio,
+      textContact: textContact,
+      textBlog: textBlog,
+      options: {
+        'aboutme': options.aboutme,
+        'portfolio': options.portfolio,
+        'contact': options.contact,
+        'blog': options.blog,
+      }
+    });
   };
 
   const downloadCode = () => {
@@ -77,6 +91,11 @@ const Home = () => {
     element.download = "generated_site.html";
     document.body.appendChild(element); // Required for this to work in FireFox
     element.click();
+
+    //TODO Code se corta, generatedSite es muy largo pa mixpanel
+    mixpanel.track("Download Web Code Button Click", {
+      generatedSite: generatedSite
+    });
   };
 
   return (
