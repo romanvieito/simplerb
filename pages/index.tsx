@@ -42,14 +42,13 @@ const Home: NextPage = () => {
   if (!context) {
     throw new Error('SBRContext must be used within a SBRProvider');
   }
-  const { subsTplan, setSubsTplan, setSubsCancel } = context;
+  const { email, subsTplan, setSubsTplan, setSubsCancel } = context;
 
   const handleSubscriptionFreeClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
     if (!isLoaded || !user) {
       openSignIn();
     } else {
       try {      
-        const email = user.emailAddresses[0].emailAddress;
         const substplan = 'FREE';
         const subscancel = false;
   
@@ -384,13 +383,13 @@ const Home: NextPage = () => {
             </div>
             {subsTplan !== "STARTER" ? (
               <>
-                {!isLoaded || !user ? (
+                {/*!isLoaded || !user ? (
                   <div className={styles.cardAction}>
                     <button type="button" onClick={() => openSignIn()}>
                       Get starter
                     </button>
                   </div>
-                ) : (
+                ) : */(
                   <div className={styles.cardAction}>
                     <form action="/api/checkout_sessions" method="POST">
                       <input type="hidden" name="tipo" value={subsTplan} />
@@ -445,13 +444,13 @@ const Home: NextPage = () => {
             </div>
             {subsTplan !== "CREATOR" ? (
               <>
-                {!isLoaded || !user ? (
+                {/*!isLoaded || !user ? (
                   <div className={styles.cardAction}>
                     <button type="button" onClick={() => openSignIn()}>
                       Get creator
                     </button>
                   </div>
-                ) : (
+                ) : */(
                   <div className={styles.cardAction}>
                     <form action="/api/checkout_sessions" method="POST">
                       <input type="hidden" name="tipo" value={subsTplan} />

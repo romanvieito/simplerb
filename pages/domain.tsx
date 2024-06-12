@@ -95,7 +95,7 @@ const DomainPage: NextPage = () => {
   if (!context) {
     throw new Error("SBRContext must be used within a SBRProvider");
   }
-  const { credits, setCredits, admin, setAdmin } = context;
+  const { email, credits, setCredits, admin, setAdmin } = context;
 
   const bioRef = useRef<null | HTMLDivElement>(null);
 
@@ -517,7 +517,7 @@ const DomainPage: NextPage = () => {
     e.preventDefault();
     setDomainFounded([]);
 
-    if (credits <= 0) {
+    /*if (credits <= 0) {
       toast(
         "You have no more credits left. Please buy credits to generate more domain names.",
         {
@@ -530,7 +530,7 @@ const DomainPage: NextPage = () => {
         }
       );
       return;
-    }
+    }*/
 
     setLoading(true);
 
@@ -557,15 +557,15 @@ const DomainPage: NextPage = () => {
         }
       });
 
-      if (!isLoaded || !user) {
+      /*if (!isLoaded || !user) {
         return null;
-      }
-      const email = user.emailAddresses[0].emailAddress;
+      }*/
+
       const userData = await getUserByEmail(email);
 
-      if (!userData || userData.rows[0].credits <= 0) {
+      /*if (!userData || userData.rows[0].credits <= 0) {
         return;
-      }
+      }*/
 
       saveBioVite(bio, vibe);
       saveVpTabIndex(vpTabIndex);
@@ -789,7 +789,7 @@ const DomainPage: NextPage = () => {
               </Tooltip>
             </p>
           </div>
-          {isSignedIn && (
+          {/*isSignedIn && */(
             <>
               <DropDown vibe={vibe} setVibe={(newVibe) => setVibe(newVibe)} />
               <Button
@@ -1061,7 +1061,7 @@ const DomainPage: NextPage = () => {
               )}
             </>
           )}
-          {!loading && (
+          {!loading && /*(
             <div>
               <SignedIn>
                 {credits !== null ? (
@@ -1078,7 +1078,14 @@ const DomainPage: NextPage = () => {
                 )}
               </SignedIn>
             </div>
-          )}
+          )*/
+          <button
+            className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+            onClick={(e) => generateDom(e)}
+          >
+            Create your domain &rarr;
+          </button>          
+          }
           {loading && (
             <button
               className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
@@ -1094,7 +1101,7 @@ const DomainPage: NextPage = () => {
           toastOptions={{ duration: 2000 }}
         />
         <hr className="h-px bg-gray-700 border-1 dark:bg-gray-700" />
-        {!loading && user && (
+        {/*!loading && user && */(
           <div className="space-y-10 my-10">
             {domainfounded.length > 0 && (
               <>
@@ -1110,7 +1117,7 @@ const DomainPage: NextPage = () => {
                   <TableDomain
                     rows={domainfounded.slice(0, countShowDomain)}
                     admin={admin}
-                    email={user.emailAddresses[0].emailAddress}
+                    email={email}
                     functionDomainFounded={setDomainFounded}
                     cred={credits}
                     functionCred={setCredits}
