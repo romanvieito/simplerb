@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Box, Button, Tooltip } from "@mui/material";
 import styles from "../components/CardsPricing.module.css";
 import { useContext } from "react";
+import EmailModal from "../components/EmailModal";
 import SBRContext from "../context/SBRContext";
 import { useClerk, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
 import Snackbar from '@mui/joy/Snackbar';
@@ -35,6 +36,8 @@ const Home: NextPage = () => {
   const [openSuccess, setOpenSuccess] = useState(false);
   const [openDanger, setOpenDanger] = useState(false);
   const [message, setMessage] = useState('');
+
+  const [modalOpenLetsTalk, setModalOpenLetsTalk] = useState(false);
 
   const { isLoaded, user } = useUser();
 
@@ -90,6 +93,11 @@ const Home: NextPage = () => {
   const letsTalk = () => {
     mixpanel.track("Lets Talk Click", {
     });
+    setModalOpenLetsTalk(true);
+  };
+
+  const handleCloseModalLetsTalk = () => {
+    setModalOpenLetsTalk(false);
   };
 
   // Handler function to track the event when the button is clicked
@@ -488,6 +496,7 @@ const Home: NextPage = () => {
               <button type="button" onClick={() => letsTalk()} style={{ width:"300px"}}>
                 Let's talk
               </button>
+              <EmailModal open={modalOpenLetsTalk} onClose={handleCloseModalLetsTalk} subjectType='custom requirements' />
             </div>
             <div className={styles.cardDescription}>
               <ul>
