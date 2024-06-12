@@ -70,6 +70,15 @@ const Home = () => {
     setGeneratedSite(hardcodedHTML);
   };
 
+  const downloadCode = () => {
+    const element = document.createElement("a");
+    const file = new Blob([generatedSite], { type: "text/html" });
+    element.href = URL.createObjectURL(file);
+    element.download = "generated_site.html";
+    document.body.appendChild(element); // Required for this to work in FireFox
+    element.click();
+  };
+
   return (
     <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
       <Head>
@@ -257,7 +266,7 @@ const Home = () => {
                 <FormHelperText></FormHelperText>
               </FormControl>
             </Box>
-            <Box >
+            <Box>
               <button
                 className="bg-black rounded-md text-white font-medium px-4 py-2 mt-2 hover:bg-black/80"
                 onClick={generateWeb}
@@ -276,8 +285,14 @@ const Home = () => {
            }}>
             {generatedSite && (
               <div>
-                <h2>Generated Website Preview:</h2>
+                <h2>Generated Website Preview</h2>
                 <div dangerouslySetInnerHTML={{ __html: generatedSite }} />
+                <button
+                  className="bg-gray-400 rounded-md text-white font-medium px-4 py-2 mt-2 hover:bg-gray-500"
+                  onClick={downloadCode}
+                >
+                  Download Code
+                </button>
               </div>
             )}
           </Box>
