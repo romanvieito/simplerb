@@ -93,6 +93,8 @@ export default function Header(): JSX.Element {
     throw new Error('SBRContext must be used within a SBRProvider');
   }
   const { 
+    email, 
+    setEmail,    
     credits, 
     setCredits, 
     admin, 
@@ -129,6 +131,7 @@ export default function Header(): JSX.Element {
 
   useEffect(() => {
     if (isLoaded && user) {
+      setEmail(user.emailAddresses[0].emailAddress);
       fetchCredits(user.emailAddresses[0].emailAddress || "");
       // Set this to a unique identifier for the user performing the event.
       mixpanel.identify(user.emailAddresses[0].emailAddress);     
@@ -175,49 +178,47 @@ export default function Header(): JSX.Element {
               </h1>
             </Typography>
             <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
-              <SignedIn>
-                <Button
-                  style={{ textTransform: "none", color: "black" }}
-                  id="tools-button"
-                  aria-controls="basic-menu"
-                  aria-haspopup="true"
-                  aria-expanded="true"
-                  onClick={handleOpenNavMenu}
-                  endIcon={<KeyboardArrowDownIcon />}
-                >
-                  Tools
-                </Button>
-                <Menu
-                  id="menu-appbar"
-                  anchorEl={anchorElNav}
-                  anchorOrigin={{
-                    vertical: "bottom",
-                    horizontal: "left",
-                  }}
-                  keepMounted
-                  transformOrigin={{
-                    vertical: "top",
-                    horizontal: "left",
-                  }}
-                  open={Boolean(anchorElNav)}
-                  onClose={handleCloseNavMenu}
-                  sx={{
-                    display: { xs: "block", md: "none" },
-                  }}
-                >
-                  {pages.map((page) => (
-                    <MenuItem key={page.name}>
-                      <ButtonMenu
-                        key={page.name}
-                        href={page.link}
-                        sx={{ my: 0.5, color: "black", display: "block" }}
-                      >
-                        {page.name}
-                      </ButtonMenu>
-                    </MenuItem>
-                  ))}
-                </Menu>
-              </SignedIn>
+              <Button
+                style={{ textTransform: "none", color: "black" }}
+                id="tools-button"
+                aria-controls="basic-menu"
+                aria-haspopup="true"
+                aria-expanded="true"
+                onClick={handleOpenNavMenu}
+                endIcon={<KeyboardArrowDownIcon />}
+              >
+                Tools
+              </Button>
+              <Menu
+                id="menu-appbar"
+                anchorEl={anchorElNav}
+                anchorOrigin={{
+                  vertical: "bottom",
+                  horizontal: "left",
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: "top",
+                  horizontal: "left",
+                }}
+                open={Boolean(anchorElNav)}
+                onClose={handleCloseNavMenu}
+                sx={{
+                  display: { xs: "block", md: "none" },
+                }}
+              >
+                {pages.map((page) => (
+                  <MenuItem key={page.name}>
+                    <ButtonMenu
+                      key={page.name}
+                      href={page.link}
+                      sx={{ my: 0.5, color: "black", display: "block" }}
+                    >
+                      {page.name}
+                    </ButtonMenu>
+                  </MenuItem>
+                ))}
+              </Menu>
             </Box>
             {/* <Box
             component="img"
@@ -231,7 +232,6 @@ export default function Header(): JSX.Element {
             }}
           />           */}
             <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
-              <SignedIn>
                 {pages.map((page) => (
                   <ButtonMenu
                     key={page.name}
@@ -241,7 +241,6 @@ export default function Header(): JSX.Element {
                     {page.name}
                   </ButtonMenu>
                 ))}
-              </SignedIn>
             </Box>
             <Box
               sx={{
