@@ -13,7 +13,7 @@ const WebPage = () => {
   const [textBlog, setTextBlog] = useState("");
 
   const [options, setOptions] = useState({
-    aboutme: false,
+    aboutme: true,
     portfolio: false,
     contact: false,
     blog: false
