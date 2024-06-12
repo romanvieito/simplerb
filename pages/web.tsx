@@ -3,14 +3,7 @@ import Head from "next/head";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 
-import { Tooltip } from "@mui/material";
-import FormLabel from '@mui/material/FormLabel';
-import FormControl from '@mui/material/FormControl';
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormHelperText from '@mui/material/FormHelperText';
-import Switch from '@mui/material/Switch';
-import TextareaAutosize from '@mui/material/TextareaAutosize';
+import { Box, Switch, FormControlLabel, FormHelperText, FormGroup, FormControl, FormLabel, Tooltip } from "@mui/material";
 
 const WebPage = () => {
 
@@ -43,8 +36,9 @@ const WebPage = () => {
       <Header />
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
         <h1 className="sm:text-6xl text-4xl max-w-[708px] font-bold text-slate-900">
-          Website Generator (coming soon)
+          Website Generator
         </h1>
+        
         <FormControl component="fieldset" variant="standard">
           <FormLabel component="legend"></FormLabel>
           <FormGroup>
