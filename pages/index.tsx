@@ -42,7 +42,7 @@ const Home: NextPage = () => {
   if (!context) {
     throw new Error('SBRContext must be used within a SBRProvider');
   }
-  const { email, subsTplan, setSubsTplan, setSubsCancel } = context;
+  const { dataUser, subsTplan, setSubsTplan, setSubsCancel } = context;
 
   const handleSubscriptionFreeClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
     if (!isLoaded || !user) {
@@ -57,7 +57,7 @@ const Home: NextPage = () => {
           subscancel
         };
   
-        const resp = await fetch(`/api/user-subscription?email=${email}`, {
+        const resp = await fetch(`/api/user-subscription?email=${dataUser.email}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",

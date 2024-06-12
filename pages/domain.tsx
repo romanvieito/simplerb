@@ -95,7 +95,7 @@ const DomainPage: NextPage = () => {
   if (!context) {
     throw new Error("SBRContext must be used within a SBRProvider");
   }
-  const { email, credits, setCredits, admin, setAdmin } = context;
+  const { dataUser, credits, setCredits, admin, setAdmin } = context;
 
   const bioRef = useRef<null | HTMLDivElement>(null);
 
@@ -561,7 +561,7 @@ const DomainPage: NextPage = () => {
         return null;
       }*/
 
-      const userData = await getUserByEmail(email);
+      const userData = await getUserByEmail(dataUser.email);
 
       /*if (!userData || userData.rows[0].credits <= 0) {
         return;
@@ -1117,7 +1117,7 @@ const DomainPage: NextPage = () => {
                   <TableDomain
                     rows={domainfounded.slice(0, countShowDomain)}
                     admin={admin}
-                    email={email}
+                    email={dataUser.email}
                     functionDomainFounded={setDomainFounded}
                     cred={credits}
                     functionCred={setCredits}
