@@ -1,12 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import Head from "next/head";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
+import {
+  Box,
+  Switch,
+  FormControlLabel,
+  FormHelperText,
+  FormGroup,
+  FormControl,
+  FormLabel,
+  Tooltip,
+} from "@mui/material";
 
-import { Box, Switch, FormControlLabel, FormHelperText, FormGroup, FormControl, FormLabel, Tooltip } from "@mui/material";
-
-const WebPage = () => {
-
+const Home = () => {
   const [textAboutMe, setTextAboutMe] = useState("");
   const [textPortFolio, setTextPortFolio] = useState("");
   const [textContact, setTextContact] = useState("");
@@ -16,30 +23,63 @@ const WebPage = () => {
     aboutme: true,
     portfolio: false,
     contact: false,
-    blog: false
+    blog: false,
   });
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const [generatedSite, setGeneratedSite] = useState("");
+
+  const handleChange = (event) => {
     setOptions({
       ...options,
       [event.target.name]: event.target.checked,
     });
   };
 
-  const generateWeb = async (e: any) => {
-    alert("Generate");
+  const generateWeb = (e) => {
+    e.preventDefault();
+    // Hardcoded HTML for demo purposes
+    const hardcodedHTML = `
+      <html>
+      <head><title>Generated Site</title></head>
+      <body>
+        <header><h1>Welcome to My Website</h1></header>
+        ${
+          options.aboutme
+            ? `<section><h2>About Me</h2><p>${textAboutMe}</p></section>`
+            : ""
+        }
+        ${
+          options.portfolio
+            ? `<section><h2>Portfolio</h2><p>${textPortFolio}</p></section>`
+            : ""
+        }
+        ${
+          options.contact
+            ? `<section><h2>Contact</h2><p>${textContact}</p></section>`
+            : ""
+        }
+        ${
+          options.blog
+            ? `<section><h2>Blog</h2><p>${textBlog}</p></section>`
+            : ""
+        }
+        <footer><p>Footer content here</p></footer>
+      </body>
+      </html>
+    `;
+    setGeneratedSite(hardcodedHTML);
   };
 
   return (
     <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
       <Head>
-        <title>Domain Generator</title>
+        <title>Website Generator</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <Header />
       <main className="flex flex-1 w-full flex-col px-4">
-        <h1 className="sm:text-3xl text-2xl text-center items-center font-bold text-slate-900">
+        <h1 className="sm:text-3xl mb-3 text-2xl text-center items-center font-bold text-slate-900">
           Website Generator
         </h1>
         <Box
@@ -47,7 +87,7 @@ const WebPage = () => {
             display: "flex",
           }}
         >
-          <Box sx={{ flexDirection: "column", order: 1 }}>
+          <Box sx={{ flexDirection: "column", order: 1, flexGrow: 1 }}>
             <Box>
               <FormControl component="fieldset" variant="standard">
                 <FormLabel component="legend"></FormLabel>
@@ -190,11 +230,11 @@ const WebPage = () => {
                     <>
                       <div className="flex mt-3 items-center space-x-3">
                         <p className="text-left font-medium">
-                          Enter And Idea For A Blog Post{" "}
+                          Enter An Idea For A Blog Post{" "}
                           <Tooltip
                             title={
                               <div>
-                                <p>Enter details to create you a blog post</p>
+                                <p>Enter details to create your blog post</p>
                               </div>
                             }
                           >
@@ -217,16 +257,30 @@ const WebPage = () => {
                 <FormHelperText></FormHelperText>
               </FormControl>
             </Box>
-            <Box>
+            <Box >
               <button
                 className="bg-black rounded-md text-white font-medium px-4 py-2 mt-2 hover:bg-black/80"
-                onClick={(e) => generateWeb(e)}
+                onClick={generateWeb}
               >
                 Create your web &rarr;
               </button>
             </Box>
           </Box>
-          <Box sx={{ order: 2 }}></Box>
+          <Box sx={{ order: 2,
+             color: (theme) => (theme.palette.mode === 'dark' ? 'grey.300' : 'grey.800'),
+             border: '1px solid',
+             borderColor: (theme) =>
+               theme.palette.mode === 'dark' ? 'grey.800' : 'grey.300',
+             borderRadius: 2,
+             flexGrow: 3
+           }}>
+            {generatedSite && (
+              <div>
+                <h2>Generated Website Preview:</h2>
+                <div dangerouslySetInnerHTML={{ __html: generatedSite }} />
+              </div>
+            )}
+          </Box>
         </Box>
       </main>
       <Footer />
@@ -234,4 +288,4 @@ const WebPage = () => {
   );
 };
 
-export default WebPage;
+export default Home;
