@@ -113,9 +113,17 @@ const Home = () => {
         <Box
           sx={{
             display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            gap: 2,
           }}
         >
-          <Box mr={1} sx={{ flexDirection: "column", order: 1, flexGrow: 1 }}>
+          <Box
+            sx={{
+              flexDirection: "column",
+              order: { xs: 1, sm: 1 },
+              flexGrow: 1,
+            }}
+          >
             <Box>
               <FormControl component="fieldset" variant="standard">
                 <FormLabel component="legend"></FormLabel>
@@ -294,14 +302,19 @@ const Home = () => {
               </button>
             </Box>
           </Box>
-          <Box sx={{ order: 2,
-             color: (theme) => (theme.palette.mode === 'dark' ? 'grey.300' : 'grey.800'),
-             border: '1px solid',
-             borderColor: (theme) =>
-               theme.palette.mode === 'dark' ? 'grey.800' : 'grey.300',
-             borderRadius: 2,
-             flexGrow: 3
-           }}>
+          <Box
+            sx={{
+              order: { xs: 2, sm: 2 },
+              color: (theme) =>
+                theme.palette.mode === "dark" ? "grey.300" : "grey.800",
+              border: "1px solid",
+              borderColor: (theme) =>
+                theme.palette.mode === "dark" ? "grey.800" : "grey.300",
+              borderRadius: 2,
+              flexGrow: 3,
+              mb: { xs: 2, sm: 0 },
+            }}
+          >
             {generatedSite && (
               <div>
                 <h2>Generated Website Preview</h2>
