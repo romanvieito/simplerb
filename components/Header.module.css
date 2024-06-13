@@ -1,26 +1,30 @@
 .header {
-    height: 100px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .signInButton {
-    cursor: pointer;
-    padding: 1rem;
-    background-color: #335bf1;
-    color: white;
-    border-radius: 0.375rem;
-  }
-  
-  .signInButton:hover {
-    opacity: 0.9;
-  }
-  
-  .homeButton {
-    cursor: pointer;
-    padding: 1rem;
-    color: #335bf1;
-    border-radius: 0.375rem;
-  }
-  
+  height: 100px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.signInButton {
+  cursor: pointer;
+  padding: 1rem;
+  background-color: #335bf1;
+  color: white;
+  border-radius: 0.375rem;
+}
+
+.signInButton:hover {
+  opacity: 0.9;
+}
+
+.homeButton {
+  cursor: pointer;
+  padding: 1rem;
+  color: #335bf1;
+  border-radius: 0.375rem;
+}
+
+/* Creo q aqui es q empieza el css, lo de arriba no se usa */
+.toolsButton span {
+  margin-left: 0px;
+}
