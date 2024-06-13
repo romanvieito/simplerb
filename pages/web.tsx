@@ -115,7 +115,7 @@ const Home = () => {
             display: "flex",
           }}
         >
-          <Box sx={{ flexDirection: "column", order: 1, flexGrow: 1 }}>
+          <Box mr={1} sx={{ flexDirection: "column", order: 1, flexGrow: 1 }}>
             <Box>
               <FormControl component="fieldset" variant="standard">
                 <FormLabel component="legend"></FormLabel>

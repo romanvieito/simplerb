@@ -20,13 +20,13 @@ import {
 } from "../utils/LocalStorage";
 
 const pages = [{
-  name: 'Domain', 
+  name: 'Domain Generator', 
   link: '/domain'
 }, {
   name: 'Website Generator', 
   link: '/web'
 }, {
-  name: 'Ads Generator', 
+  name: 'Google Ads Generator', 
   link: '/ads'
 }];
 
@@ -182,6 +182,7 @@ export default function Header(): JSX.Element {
             </Typography>
             <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
               <Button
+                className={styles.toolsButton}
                 style={{ textTransform: "none", color: "black" }}
                 id="tools-button"
                 aria-controls="basic-menu"
@@ -190,7 +191,7 @@ export default function Header(): JSX.Element {
                 onClick={handleOpenNavMenu}
                 endIcon={<KeyboardArrowDownIcon />}
               >
-                Tools
+                Generate
               </Button>
               <Menu
                 id="menu-appbar"
@@ -235,15 +236,15 @@ export default function Header(): JSX.Element {
             }}
           />           */}
             <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
-                {pages.map((page) => (
-                  <ButtonMenu
-                    key={page.name}
-                    href={page.link}
-                    sx={{ my: 2.5, color: "black", display: "block" }}
-                  >
-                    {page.name}
-                  </ButtonMenu>
-                ))}
+              {pages.map((page) => (
+                <ButtonMenu
+                  key={page.name}
+                  href={page.link}
+                  sx={{ my: 2.5, color: "black", display: "block" }}
+                >
+                  {page.name}
+                </ButtonMenu>
+              ))}
             </Box>
             <Box
               sx={{
@@ -259,6 +260,14 @@ export default function Header(): JSX.Element {
                   <input type="hidden" name="tipo" value="STARTER" />
                   <Button
                     style={{ textTransform: "none" }}
+                    sx={{
+                      "@media (max-width:600px)": {
+                        padding: 1 // Padding for screens sm and smaller
+                      },
+                      "@media (max-width:450px)": {
+                        padding: "3px" // Padding for screens sm and smaller
+                      },
+                    }}
                     type="submit"
                     variant="contained"
                     role="link"
@@ -268,7 +277,7 @@ export default function Header(): JSX.Element {
                     Become a Member
                   </Button>
                 </form>
-                <Box className="ml-2">
+                <Box>
                   <UserButton userProfileUrl="/user" afterSignOutUrl="/" />
                 </Box>
               </SignedIn>
