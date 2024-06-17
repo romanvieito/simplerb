@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import Head from "next/head";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
@@ -22,6 +22,7 @@ import {
   ptemp,
   ptop,
 } from "../utils/Definitions";
+import SBRContext from "../context/SBRContext";
 
 const Home = () => {
   const [textAboutMe, setTextAboutMe] = useState("");
@@ -38,6 +39,12 @@ const Home = () => {
 
   const [generatedSite, setGeneratedSite] = useState("");
 
+  const context = useContext(SBRContext);
+  if (!context) {
+    throw new Error("SBRContext must be used within a SBRProvider");
+  }
+  const { dataUser } = context;
+
   const handleChange = (event: { target: { name: any; checked: any; }; }) => {
     setOptions({
       ...options,
@@ -50,7 +57,22 @@ const Home = () => {
     
     let hardcodedHTML = '';
     //-------------------------------------------------------------------------------------------------
-    const prompt = ``;
+    const prompt = `Role:
+
+    I am ${dataUser.name}
+    Objective:
+    
+    Your mission is to create a personal webpage for me, all in a single file.
+    Details:
+    
+    - Content and Structure: Sections on the webpage: ${textAboutMe ? 'AboutMe' : ''} ${textPortFolio ? 'Portfolio' : ''} ${textContact ? 'Contact' : ''} ${textBlog ? 'Blog' : ''}
+    - Content Details: 
+    ${textAboutMe ? `This is the content of the "About Me" section: ${textAboutMe}` : ''}
+    ${textPortFolio ? `This is the content of the "Portfolio" section: ${textPortFolio}` : ''}
+    ${textContact ? `This is the content of the "Contact" section: ${textContact}` : ''}
+    ${textBlog ? `This is the content of the "Blog" section: ${textBlog}` : ''}`;
+    
+    //console.log('prompt', prompt);
     const isGPT = true;
     const response = await fetch(isGPT ? "/api/openai" : "/api/mistral", {
       method: "POST",
@@ -110,7 +132,7 @@ const Home = () => {
 
       try {
         hardcodedHTML = dataWebSite;
-        console.log('dataWebsite', dataWebSite);        
+        //console.log('dataWebsite', dataWebSite);        
       } catch (error) {
         console.log("Error: ", error);
       }
