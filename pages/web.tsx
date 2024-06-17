@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import Head from "next/head";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
@@ -13,6 +13,16 @@ import {
   Tooltip,
 } from "@mui/material";
 import mixpanel from "../utils/mixpanel-config";
+import {
+  createParser,
+  ParsedEvent,
+  ReconnectInterval,
+} from "eventsource-parser";
+import {
+  ptemp,
+  ptop,
+} from "../utils/Definitions";
+import SBRContext from "../context/SBRContext";
 
 const Home = () => {
   const [textAboutMe, setTextAboutMe] = useState("");
@@ -29,6 +39,12 @@ const Home = () => {
 
   const [generatedSite, setGeneratedSite] = useState("");
 
+  const context = useContext(SBRContext);
+  if (!context) {
+    throw new Error("SBRContext must be used within a SBRProvider");
+  }
+  const { dataUser } = context;
+
   const handleChange = (event: { target: { name: any; checked: any; }; }) => {
     setOptions({
       ...options,
@@ -36,10 +52,95 @@ const Home = () => {
     });
   };
 
-  const generateWeb = (e: { preventDefault: () => void; }) => {
+  const generateWeb = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
+    
+    let hardcodedHTML = '';
+    //-------------------------------------------------------------------------------------------------
+    const prompt = `Role:
+
+    I am ${dataUser.name}
+    Objective:
+    
+    Your mission is to create a personal webpage for me, all in a single file.
+    Details:
+    
+    - Content and Structure: Sections on the webpage: ${textAboutMe ? 'AboutMe' : ''} ${textPortFolio ? 'Portfolio' : ''} ${textContact ? 'Contact' : ''} ${textBlog ? 'Blog' : ''}
+    - Content Details: 
+    ${textAboutMe ? `This is the content of the "About Me" section: ${textAboutMe}` : ''}
+    ${textPortFolio ? `This is the content of the "Portfolio" section: ${textPortFolio}` : ''}
+    ${textContact ? `This is the content of the "Contact" section: ${textContact}` : ''}
+    ${textBlog ? `This is the content of the "Blog" section: ${textBlog}` : ''}`;
+    
+    //console.log('prompt', prompt);
+    const isGPT = true;
+    const response = await fetch(isGPT ? "/api/openai" : "/api/mistral", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt,
+        ptemp,
+        ptop,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+
+    const dataResponse = response.body;
+    if (dataResponse) {
+      let dataWebSite = "";
+      const onParseGPT = (event: ParsedEvent | ReconnectInterval) => {
+        if (event.type === "event") {
+          const data = event.data;
+          try {
+            const text = JSON.parse(data).text ?? "";
+            dataWebSite += text;
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      };
+
+      const onParseMistral = (event: ParsedEvent | ReconnectInterval) => {
+        if (event.type === "event") {
+          const data = event.data;
+          try {
+            const text = JSON.parse(data).choices[0].text ?? "";
+            dataWebSite += text;
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      };
+
+      const onParse = isGPT ? onParseGPT : onParseMistral;
+
+      const reader = dataResponse.getReader();
+      const decoder = new TextDecoder();
+      const parser = createParser(onParse);
+      let done = false;
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        const chunkValue = decoder.decode(value);
+        parser.feed(chunkValue);
+      }
+
+      try {
+        hardcodedHTML = dataWebSite;
+        //console.log('dataWebsite', dataWebSite);        
+      } catch (error) {
+        console.log("Error: ", error);
+      }
+    }    
+    //-------------------------------------------------------------------------------------------------
+
     // Hardcoded HTML for demo purposes
-    const hardcodedHTML = `
+    /*const hardcodedHTML = `
       <html>
       <head><title>Generated Site</title></head>
       <body>
@@ -68,6 +169,7 @@ const Home = () => {
       </body>
       </html>
     `;
+    */
     setGeneratedSite(hardcodedHTML);
 
     mixpanel.track("Web Generated", {
