@@ -21,6 +21,7 @@ interface SBRProviderProps  {
 
 export const SBRProvider: FC<SBRProviderProps> = ({ children }) => {
   const [dataUser, setDataUser] = useState<any>({
+    id: '0',
     name: 'anonymous',
     email: 'anonymous@anonymous.com'
   });

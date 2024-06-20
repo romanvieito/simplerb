@@ -561,7 +561,7 @@ const DomainPage: NextPage = () => {
         return null;
       }*/
 
-      const userData = await getUserByEmail(dataUser.email);
+      //const userData = await getUserByEmail(dataUser.email);
 
       /*if (!userData || userData.rows[0].credits <= 0) {
         return;
@@ -581,7 +581,7 @@ const DomainPage: NextPage = () => {
       if (resultDomainFounded) {
         resultDomainFounded = await getDomainNamesWithRate(
           resultDomainFounded,
-          userData.rows[0].id
+          dataUser.id
         );
         setDomainFounded(resultDomainFounded);
         saveDomainFounded(resultDomainFounded);
@@ -599,7 +599,7 @@ const DomainPage: NextPage = () => {
     }
   };
 
-  const getUserByEmail = async (email: string) => {
+  /*const getUserByEmail = async (email: string) => {
     try {
       const response = await fetch(`/api/getUser?email=${email}`);
       if (!response.ok) {
@@ -610,7 +610,7 @@ const DomainPage: NextPage = () => {
     } catch (error) {
       console.error("Error fetching user:", error);
     }
-  };
+  };*/
 
   const getDomainNamesWithRate = async (
     foundedomain: DomainInfo[],

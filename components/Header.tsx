@@ -119,6 +119,11 @@ export default function Header(): JSX.Element {
         userData = await response.json();
         if (userData.user.rows.length > 0) break;
       }
+      setDataUser({
+        id: userData.user.rows[0].id,
+        name: userData.user.rows[0].name,
+        email: userData.user.rows[0].email
+      });      
       setCredits(userData.user.rows[0].credits);
       setAdmin(userData.user.rows[0].admin);
       setSubsTplan(userData.user.rows[0].subs_tplan);
@@ -131,10 +136,6 @@ export default function Header(): JSX.Element {
 
   useEffect(() => {
     if (isLoaded && user) {
-      setDataUser({
-        name: user.fullName,
-        email: user.emailAddresses[0].emailAddress 
-      });
       fetchCredits(user.emailAddresses[0].emailAddress || "");
       // Set this to a unique identifier for the user performing the event.
       mixpanel.identify(user.emailAddresses[0].emailAddress);     
@@ -146,6 +147,13 @@ export default function Header(): JSX.Element {
     if (!isSignedIn && isSignedIn!==undefined) {
       setSubsTplan(null);
       setSubsCancel(null);
+      setCredits(null);
+      setDataUser({
+        id: '0',
+        name: 'anonymous',
+        email: 'anonymous@anonymous.com'
+      });
+      setAdmin(false);
       resetSearch();
     }
   }, [isSignedIn]);
