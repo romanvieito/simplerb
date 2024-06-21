@@ -1,7 +1,7 @@
 import { DomainInfo, DomainInfoArray, DomainInfoItem } from "../utils/Definitions";
 import { Toaster, toast } from "react-hot-toast";
 import mixpanel from "../utils/mixpanel-config";
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Table, TableHead, TableBody, TableCell, TableContainer, TableRow, Paper, TablePagination, Tooltip, Switch, Button } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import {
@@ -12,6 +12,7 @@ import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import SBRContext from "../context/SBRContext";
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -268,8 +269,8 @@ const CellRate: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
     )  
 };
 
-const ButtonCheckAvailability = ({ domain, domains, functiondf } : { domain : DomainInfo, domains: DomainInfo[], functiondf: any }) => {  
-  const [isLoading, setIsLoading] = useState(false);    
+const ButtonCheckAvailability = ({ domain, domains, functiondf, plan } : { domain : DomainInfo, domains: DomainInfo[], functiondf: any, plan: string }) => {  
+  const [isLoading, setIsLoading] = useState(false);
   return (
     <Tooltip
       title={
@@ -284,55 +285,70 @@ const ButtonCheckAvailability = ({ domain, domains, functiondf } : { domain : Do
         <button 
           className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-gray-300 hover:text-black w-full"
           onClick={async () => {
-            setIsLoading(true);
-            try {
-              const result = await checkAvailability(domain.domain);
-              setIsLoading(false);
-              if(result === -1) {
+            if(plan==='STARTER' || plan==='CREATOR') {
+              try {
+                setIsLoading(true);
+                const result = await checkAvailability(domain.domain);
+                setIsLoading(false);
+                if(result === -1) {
+                  toast(
+                    (t) => (
+                      <div>
+                        <span>Failed to get data. Let's try again</span>
+                      </div>
+                    ),
+                    {
+                      icon: "🔴",
+                      duration: 5000,
+                    }
+                  );
+                } else {
+                  toast(
+                    (t) => (
+                      <div>
+                        { result ? <>Domain available</> : <>Domain not available</>}
+                      </div>
+                    ),
+                    {
+                      icon: result ? "✔" : "❌",
+                      duration: 5000,
+                    }
+                  );             
+                  const updateDomain = [...domains];
+                  updateDomain.forEach(elem => {
+                    if (elem.domain === domain.domain) {
+                        elem.available = result;
+                    }
+                  });
+                  functiondf(updateDomain);
+                  saveDomainFounded(updateDomain);
+                } 
+              } catch (error: any) {
+                setIsLoading(false);
                 toast(
                   (t) => (
                     <div>
-                      <span>Failed to get data. Let's try again</span>
+                      <span>{error}</span>
                     </div>
                   ),
                   {
                     icon: "🔴",
                     duration: 5000,
                   }
-                );
-              } else {
-                toast(
-                  (t) => (
-                    <div>
-                      { result ? <>Domain available</> : <>Domain not available</>}
-                    </div>
-                  ),
-                  {
-                    icon: result ? "✔" : "❌",
-                    duration: 5000,
-                  }
-                );             
-                const updateDomain = [...domains];
-                updateDomain.forEach(elem => {
-                  if (elem.domain === domain.domain) {
-                      elem.available = result;
-                  }
-                });
-                functiondf(updateDomain);
-                saveDomainFounded(updateDomain);
-              } 
-            } catch (error: any) {
+                );            
+              }
+            } else {
               toast(
                 (t) => (
                   <div>
-                    <span>{error}</span>
+                    <span>This function is for the STARTER and CREATOR</span>
                   </div>
                 ),
                 {
                   icon: "🔴",
                   duration: 5000,
                 }
-              );            
+              );
             }          
           }}            
           >
@@ -457,6 +473,12 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, email, functionDo
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  const context = useContext(SBRContext);
+  if (!context) {
+    throw new Error("SBRContext must be used within a SBRProvider");
+  }
+  const { subsTplan } = context;
 
   // Calcular opciones dinámicas para filas por página
   const rowsPerPageOptions = [5, 10, 25].filter(option => option <= rows.length);
@@ -609,9 +631,9 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, email, functionDo
                         <ButtonCheckSocials dinfo={row} admin={admin} email={email} cr={cred} functioncr={functionCred}/>    
                       </Box>              
                       </> : 
-                      row.available === undefined ?
+                      row.available === undefined && (subsTplan!=='CREATOR') ?
                       <>
-                        <ButtonCheckAvailability domain={row} domains={rows} functiondf={functionDomainFounded}/>
+                        <ButtonCheckAvailability domain={row} domains={rows} functiondf={functionDomainFounded} plan={subsTplan}/>
                       </> :
                       <></>      
                     }
