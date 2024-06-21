@@ -95,7 +95,7 @@ const DomainPage: NextPage = () => {
   if (!context) {
     throw new Error("SBRContext must be used within a SBRProvider");
   }
-  const { dataUser, credits, setCredits, admin, setAdmin } = context;
+  const { dataUser, credits, setCredits, admin, setAdmin, subsTplan } = context;
 
   const bioRef = useRef<null | HTMLDivElement>(null);
 
@@ -499,13 +499,27 @@ const DomainPage: NextPage = () => {
         .map((domain) => domain.replace(/^\d+\.\s*/, ""))
         .filter((domain) => domain);
 
-      tempDomainNamesText.map((domain) => {
-        domainNames.push({
-          domain,
-          available: undefined,
-          favorite: undefined,
+      if (subsTplan === 'CREATOR') {
+        const tempDomainAvailability = await multipleCheckAvailability(tempDomainNamesText);
+        tempDomainAvailability.map((domain) => {
+          domainNames.push({
+            domain: domain.domain,
+            available: domain.available,
+            favorite: undefined,
+          });
+        });        
+      } else {
+        tempDomainNamesText.map((domain) => {
+          domainNames.push({
+            domain,
+            available: undefined,
+            favorite: undefined,
+          });
         });
-      });
+      }
+
+      //---------------------------------------------------------------------
+
     } catch (error: any) {
       throw new Error(error);
     }
@@ -579,6 +593,11 @@ const DomainPage: NextPage = () => {
       saveVpCharacters(vpTransform, vpMinlength, vpMaxlength);
 
       if (resultDomainFounded) {
+        if(resultDomainFounded.length === 0) 
+          toast.error(
+            "Domain availability not found"
+          );
+
         resultDomainFounded = await getDomainNamesWithRate(
           resultDomainFounded,
           dataUser.id
@@ -598,19 +617,6 @@ const DomainPage: NextPage = () => {
       );
     }
   };
-
-  /*const getUserByEmail = async (email: string) => {
-    try {
-      const response = await fetch(`/api/getUser?email=${email}`);
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-      const userData = await response.json();
-      return userData.user;
-    } catch (error) {
-      console.error("Error fetching user:", error);
-    }
-  };*/
 
   const getDomainNamesWithRate = async (
     foundedomain: DomainInfo[],
@@ -693,6 +699,47 @@ const DomainPage: NextPage = () => {
     }
 
     return resultDomainsRate;
+  };
+
+  const multipleCheckAvailability = async (domain: string[]) => {  
+
+    try {    
+      
+      const response = await fetch("/api/check-availability-godaddy", { //"/api/check-availability-godaddy"
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ domains: domain }),
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Error: ${response.statusText}`);
+      }
+  
+      const data = await response.json();
+      let domainAvailability=[];
+      for (const item of data) {
+        if (item.available) {
+          domainAvailability.push(item);
+        }
+      }
+  
+      mixpanel.track("Multiple checked availability successful", {
+        // You can add properties to the event as needed
+        domains: domainAvailability
+      });
+  
+      return domainAvailability;
+  
+    } catch (error: any) {
+      mixpanel.track("Multiple checked availability with error", {
+        // You can add properties to the event as needed
+        domain: domain,
+        error: error
+      });    
+      throw new Error(error);
+    }
   };
 
   const handleBuyCreditsClick = (
