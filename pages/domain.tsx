@@ -930,40 +930,40 @@ const DomainPage: NextPage = () => {
                         >
                           Clear Filter
                         </Button>
-                        <Box mb={2} sx={{ width: "100%" }}>
+                        <Box mb={2} sx={{ width: "100%", textAlign:'left', marginTop: '20px' }}>
+                          <span className="text-sm">Contains</span>
                           <TextField
-                            fullWidth
-                            label="Contains"
+                            fullWidth                            
                             id="vpContains"
                             variant="standard"
                             value={vpContains}
                             onChange={(e) => setVpContains(e.target.value)}
                           />
                         </Box>
-                        <Box mb={2} sx={{ width: "100%" }}>
+                        <Box mb={2} sx={{ width: "100%", textAlign:'left', marginTop: '5px' }}>
+                          <span className="text-sm">Starts with</span>
                           <TextField
                             fullWidth
-                            label="Starts with"
                             id="vpStartsWith"
                             variant="standard"
                             value={vpStartsWith}
                             onChange={(e) => setVpStartsWith(e.target.value)}
                           />
                         </Box>
-                        <Box mb={2} sx={{ width: "100%" }}>
+                        <Box mb={2} sx={{ width: "100%", textAlign:'left', marginTop: '5px' }}>
+                          <span className="text-sm">Ends with</span>
                           <TextField
                             fullWidth
-                            label="Ends with"
                             id="vpEndsWith"
                             variant="standard"
                             value={vpEndsWith}
                             onChange={(e) => setVpEndsWith(e.target.value)}
                           />
                         </Box>
-                        <Box mb={2} sx={{ width: "100%" }}>
+                        <Box mb={2} sx={{ width: "100%", textAlign:'left', marginTop: '5px' }}>
+                          <span className="text-sm">Similar to this domain name</span>
                           <TextField
                             fullWidth
-                            label="Similar to this domain name"
                             id="vpSimilarToThisDomainName"
                             variant="standard"
                             value={vpSimilarToThisDomainName}
