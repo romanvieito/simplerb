@@ -323,7 +323,7 @@ const Home: NextPage = () => {
               onClick={() => openSignIn()}
               className="bg-black cursor-pointer rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
             >
-              Start Business
+              Sign in / up
             </a>
           </div>
         </SignedOut>
