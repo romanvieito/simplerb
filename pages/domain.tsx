@@ -73,6 +73,7 @@ import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import LoadingButton from "@mui/lab/LoadingButton";
 import SBRContext from "../context/SBRContext";
+import { SignedOut } from "@clerk/nextjs";
 
 function vp_not(a: string[], b: string[]) {
   return a.filter((value) => b.indexOf(value) === -1);
@@ -1108,39 +1109,32 @@ const DomainPage: NextPage = () => {
               )}
             </>
           )}
-          {!loading && /*(
-            <div>
-              <SignedIn>
-                {credits !== null ? (
-                  <>
-                    <button
-                      className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
-                      onClick={(e) => generateDom(e)}
-                    >
-                      Create your domain &rarr;
-                    </button>
-                  </>
-                ) : (
-                  <></>
-                )}
-              </SignedIn>
-            </div>
-          )*/
-          <button
-            className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
-            onClick={(e) => generateDom(e)}
-          >
-            Create your domain &rarr;
-          </button>          
-          }
-          {loading && (
+          <SignedOut>  
             <button
-              className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
-              disabled
+              className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+              onClick={() => openSignIn()}
             >
-              <LoadingDots color="white" style="large" />
-            </button>
-          )}
+              Sign in / up
+            </button> 
+          </SignedOut>
+          <SignedIn>
+          {!loading &&           
+            <button
+              className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+              onClick={(e) => generateDom(e)}
+            >
+              Create your domain &rarr;
+            </button>          
+            }
+            {loading && (
+              <button
+                className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+                disabled
+              >
+                <LoadingDots color="white" style="large" />
+              </button>
+            )}
+          </SignedIn>
         </div>
         <Toaster
           position="top-center"
