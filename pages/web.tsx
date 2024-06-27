@@ -23,8 +23,10 @@ import {
   ptop,
 } from "../utils/Definitions";
 import SBRContext from "../context/SBRContext";
+import LoadingDots from "../components/LoadingDots";
 
 const Home = () => {
+  const [loading, setLoading] = useState(false);
   const [textAboutMe, setTextAboutMe] = useState("");
   const [textPortFolio, setTextPortFolio] = useState("");
   const [textContact, setTextContact] = useState("");
@@ -57,21 +59,45 @@ const Home = () => {
     
     let hardcodedHTML = '';
     //-------------------------------------------------------------------------------------------------
-    const prompt = `Role:
-
+    const prompt = `Claude:
     I am ${dataUser.name}
     Objective:
-    
     Your mission is to create a personal webpage for me, all in a single file.
-    Details:
-    
+    Details:    
     - Content and Structure: Sections on the webpage: ${textAboutMe ? 'AboutMe' : ''} ${textPortFolio ? 'Portfolio' : ''} ${textContact ? 'Contact' : ''} ${textBlog ? 'Blog' : ''}
     - Content Details: 
     ${textAboutMe ? `This is the content of the "About Me" section: ${textAboutMe}` : ''}
     ${textPortFolio ? `This is the content of the "Portfolio" section: ${textPortFolio}` : ''}
     ${textContact ? `This is the content of the "Contact" section: ${textContact}` : ''}
-    ${textBlog ? `This is the content of the "Blog" section: ${textBlog}` : ''}`;
-    
+    ${textBlog ? `This is the content of the "Blog" section: ${textBlog}` : ''}.
+    Just return the code in format html, nothing else.`;
+
+    setLoading(true);
+
+    const response = await fetch("/api/anthropic", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt
+      }),
+    });
+
+    if (!response.ok) {
+      setLoading(false);
+      throw new Error(response.statusText);
+    }
+
+    const result = await response.json();
+
+    setLoading(false);
+
+    //console.log('View anthropic:', result.data.content[0].text);    
+
+    if(result) hardcodedHTML = result.data.content[0].text;
+
+    /*
     //console.log('prompt', prompt);
     const isGPT = true;
     const response = await fetch(isGPT ? "/api/openai" : "/api/mistral", {
@@ -128,15 +154,16 @@ const Home = () => {
         done = doneReading;
         const chunkValue = decoder.decode(value);
         parser.feed(chunkValue);
-      }
+      }      
 
       try {
         hardcodedHTML = dataWebSite;
         //console.log('dataWebsite', dataWebSite);        
       } catch (error) {
         console.log("Error: ", error);
-      }
-    }    
+      }      
+    }
+    */        
     //-------------------------------------------------------------------------------------------------
 
     // Hardcoded HTML for demo purposes
@@ -170,6 +197,7 @@ const Home = () => {
       </html>
     `;
     */
+
     setGeneratedSite(hardcodedHTML);
 
     mixpanel.track("Web Generated", {
@@ -396,12 +424,22 @@ const Home = () => {
               </FormControl>
             </Box>
             <Box>
+            {!loading &&           
               <button
                 className="bg-black rounded-md text-white font-medium px-4 py-2 mt-2 hover:bg-black/80"
                 onClick={generateWeb}
               >
                 Create your web &rarr;
+              </button>         
+            }
+            {loading && (
+              <button
+                className="bg-black rounded-md text-white font-medium px-4 py-2 mt-2 hover:bg-black/80"
+                disabled
+              >
+                <LoadingDots color="white" style="large" />
               </button>
+            )}
             </Box>
           </Box>
           <Box
