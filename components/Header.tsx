@@ -15,20 +15,30 @@ import { createTheme, ThemeProvider, styled } from '@mui/material/styles';
 import { useState, useEffect, useContext } from "react";
 import SBRContext from "../context/SBRContext";
 
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+
 import {
   resetSearch,
 } from "../utils/LocalStorage";
+import CFAQ from "./CFAQ";
+import CPricing from "./CPricing";
 
-const pages = [{
-  name: 'Domain Generator', 
-  link: '/domain'
-}, {
-  name: 'Website Generator', 
-  link: '/web'
-}, {
-  name: 'Google Ads Generator', 
-  link: '/ads'
-}];
+const commonPages = [
+  { name: 'Domain Generator', link: '/domain' },
+  { name: 'Website Generator', link: '/web' },
+  { name: 'Google Ads Generator', link: '/ads' }
+];
+
+const pages = [...commonPages];
+
+const pagesv2 = [
+  ...commonPages,
+  { name: 'Pricing', link: '/pricing' },
+  { name: 'FAQ', link: '/faq' }
+];
 
 interface HeaderProps {
   credits: number;
@@ -53,6 +63,22 @@ const ButtonMenu = styled(Button)({
 });
 
 export default function Header(): JSX.Element {
+
+  const CustomAccordion = styled(Accordion)(({ theme }) => ({
+    boxShadow: 'none',
+    '&:before': {
+      display: 'none',
+    },
+    '&.MuiAccordion-root:before': {
+      display: 'none',
+    },
+    '& .MuiAccordionSummary-root': {
+      borderBottom: 'none',
+    },
+    '& .MuiAccordionDetails-root': {
+      borderTop: 'none',
+    },
+  }));
 
   const { openSignIn } = useClerk();
   const { isLoaded, user, isSignedIn } = useUser();
@@ -199,7 +225,7 @@ export default function Header(): JSX.Element {
                 onClick={handleOpenNavMenu}
                 endIcon={<KeyboardArrowDownIcon />}
               >
-                Generate
+                Menu
               </Button>
               <Menu
                 id="menu-appbar"
@@ -219,7 +245,7 @@ export default function Header(): JSX.Element {
                   display: { xs: "block", md: "none" },
                 }}
               >
-                {pages.map((page) => (
+                {pagesv2.map((page) => (
                   <MenuItem key={page.name}>
                     <ButtonMenu
                       key={page.name}
@@ -301,6 +327,32 @@ export default function Header(): JSX.Element {
               </SignedOut>
             </Box>
           </Toolbar>
+          <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" }, flexDirection: "column" }}>
+            <CustomAccordion>
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                aria-controls="panelPricing-content"
+                id="panelPricing-header"
+              >
+                <Typography>Pricing</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <CPricing/>
+              </AccordionDetails>
+            </CustomAccordion>
+            <CustomAccordion>
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                aria-controls="panelFAQ-content"
+                id="panelFAQ-header"
+              >
+                <Typography>Frequently Asked Questions</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <CFAQ/>
+              </AccordionDetails>
+            </CustomAccordion>            
+          </Box>
         </Container>
       </AppBar>
     </ThemeProvider>
