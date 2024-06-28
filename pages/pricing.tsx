@@ -2,6 +2,7 @@ import React from 'react';
 import Head from "next/head";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
+import CPricing from '../components/CPricing';
 
 export default function PricingPage() {
 
@@ -11,8 +12,9 @@ export default function PricingPage() {
         <title>Domain Generator</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Header />
+      <Header showPricing={false} showFAQ={true}/>
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
+        <CPricing/>
       </main>
       <Footer />
     </div>

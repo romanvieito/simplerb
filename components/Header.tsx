@@ -62,7 +62,7 @@ const ButtonMenu = styled(Button)({
   textTransform: 'none',
 });
 
-export default function Header(): JSX.Element {
+export default function Header({showPricing, showFAQ }:{showPricing: boolean, showFAQ: boolean}): JSX.Element {
 
   const CustomAccordion = styled(Accordion)(({ theme }) => ({
     boxShadow: 'none',
@@ -328,30 +328,40 @@ export default function Header(): JSX.Element {
             </Box>
           </Toolbar>
           <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" }, flexDirection: "column" }}>
-            <CustomAccordion>
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls="panelPricing-content"
-                id="panelPricing-header"
-              >
-                <Typography>Pricing</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <CPricing/>
-              </AccordionDetails>
-            </CustomAccordion>
-            <CustomAccordion>
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls="panelFAQ-content"
-                id="panelFAQ-header"
-              >
-                <Typography>Frequently Asked Questions</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <CFAQ/>
-              </AccordionDetails>
-            </CustomAccordion>            
+            {
+              showPricing && 
+              <>
+              <CustomAccordion>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                  aria-controls="panelPricing-content"
+                  id="panelPricing-header"
+                >
+                  <Typography>Pricing</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <CPricing/>
+                </AccordionDetails>
+              </CustomAccordion>              
+              </>
+            }
+            {
+              showFAQ && 
+              <>
+              <CustomAccordion>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                  aria-controls="panelFAQ-content"
+                  id="panelFAQ-header"
+                >
+                  <Typography>Frequently Asked Questions</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <CFAQ/>
+                </AccordionDetails>
+              </CustomAccordion>              
+              </>
+            }                        
           </Box>
         </Container>
       </AppBar>

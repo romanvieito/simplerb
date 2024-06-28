@@ -235,7 +235,7 @@ const Home = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Header />
+      <Header showPricing={true} showFAQ={true}/>
       <main className="flex flex-1 w-full flex-col px-4">
         <h1 className="sm:text-3xl mb-3 text-2xl text-center items-center font-bold text-slate-900">
           Website Generator
