@@ -13,6 +13,7 @@ import Modal from '@mui/material/Modal';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import SBRContext from "../context/SBRContext";
+import CPricing from "./CPricing";
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -271,91 +272,113 @@ const CellRate: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
 
 const ButtonCheckAvailability = ({ domain, domains, functiondf, plan } : { domain : DomainInfo, domains: DomainInfo[], functiondf: any, plan: string }) => {  
   const [isLoading, setIsLoading] = useState(false);
+  const [openPricing, setOpenPricing] = React.useState(false);  
+
+  const closePricing = () => setOpenPricing(false);
+
   return (
-    <Tooltip
-      title={
-        <div>
-          <p>Check domain availability</p>
-          <p><span>✔</span>: Available</p>
-          <p><span>❌</span>: Not available</p>
-        </div>
-      }
-    >
-      <span>
-        <button 
-          className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-gray-300 hover:text-black w-full"
-          onClick={async () => {
-            if(plan==='STARTER' || plan==='CREATOR') {
-              try {
-                setIsLoading(true);
-                const result = await checkAvailability(domain.domain);
-                setIsLoading(false);
-                if(result === -1) {
+    <div>
+      <Tooltip
+        title={
+          <div>
+            <p>Check domain availability</p>
+            <p><span>✔</span>: Available</p>
+            <p><span>❌</span>: Not available</p>
+          </div>
+        }
+      >
+        <span>
+          <button 
+            className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-gray-300 hover:text-black w-full"
+            onClick={async () => {
+              if(plan==='STARTER' || plan==='CREATOR') {
+                try {
+                  setIsLoading(true);
+                  const result = await checkAvailability(domain.domain);
+                  setIsLoading(false);
+                  if(result === -1) {
+                    toast(
+                      (t) => (
+                        <div>
+                          <span>Failed to get data. Let's try again</span>
+                        </div>
+                      ),
+                      {
+                        icon: "🔴",
+                        duration: 5000,
+                      }
+                    );
+                  } else {
+                    toast(
+                      (t) => (
+                        <div>
+                          { result ? <>Domain available</> : <>Domain not available</>}
+                        </div>
+                      ),
+                      {
+                        icon: result ? "✔" : "❌",
+                        duration: 5000,
+                      }
+                    );             
+                    const updateDomain = [...domains];
+                    updateDomain.forEach(elem => {
+                      if (elem.domain === domain.domain) {
+                          elem.available = result;
+                      }
+                    });
+                    functiondf(updateDomain);
+                    saveDomainFounded(updateDomain);
+                  } 
+                } catch (error: any) {
+                  setIsLoading(false);
                   toast(
                     (t) => (
                       <div>
-                        <span>Failed to get data. Let's try again</span>
+                        <span>{error}</span>
                       </div>
                     ),
                     {
                       icon: "🔴",
                       duration: 5000,
                     }
-                  );
-                } else {
-                  toast(
-                    (t) => (
-                      <div>
-                        { result ? <>Domain available</> : <>Domain not available</>}
-                      </div>
-                    ),
-                    {
-                      icon: result ? "✔" : "❌",
-                      duration: 5000,
-                    }
-                  );             
-                  const updateDomain = [...domains];
-                  updateDomain.forEach(elem => {
-                    if (elem.domain === domain.domain) {
-                        elem.available = result;
-                    }
-                  });
-                  functiondf(updateDomain);
-                  saveDomainFounded(updateDomain);
-                } 
-              } catch (error: any) {
-                setIsLoading(false);
+                  );            
+                }
+              } else {
+                /*
                 toast(
                   (t) => (
                     <div>
-                      <span>{error}</span>
+                      <span>This function is for the STARTER and CREATOR</span>
                     </div>
                   ),
                   {
                     icon: "🔴",
                     duration: 5000,
                   }
-                );            
-              }
-            } else {
-              toast(
-                (t) => (
-                  <div>
-                    <span>This function is for the STARTER and CREATOR</span>
-                  </div>
-                ),
-                {
-                  icon: "🔴",
-                  duration: 5000,
-                }
-              );
-            }          
-          }}            
-          >
-          Check availability
-        </button>          
-      </span>
-    </Tooltip>      
+                );*/ 
+                setOpenPricing(true);
+              }          
+            }}            
+            >
+            Check availability
+          </button>          
+        </span>
+      </Tooltip>
+      <div>
+        <Modal
+          open={openPricing}
+          onClose={closePricing}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <Box sx={style}>
+            <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+              <CPricing />
+            </Typography>
+          </Box>
+        </Modal>
+      </div>            
+    </div>
   )
 };
 
@@ -468,6 +491,7 @@ const ButtonCheckSocials: React.FC<DomainInfoItem> = ({ dinfo, admin, email, cr,
 const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, email, functionDomainFounded, cred, functionCred }) => {
   
   const [open, setOpen] = React.useState(false);
+
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
@@ -654,7 +678,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, email, functionDo
         page={page}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
-      /> */}
+      /> */}      
     </Paper>
   );
 };

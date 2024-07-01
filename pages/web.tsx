@@ -24,8 +24,29 @@ import {
 } from "../utils/Definitions";
 import SBRContext from "../context/SBRContext";
 import LoadingDots from "../components/LoadingDots";
+import { useClerk, SignedIn, SignedOut } from "@clerk/nextjs";
+import CPricing from "../components/CPricing";
+import Typography from '@mui/material/Typography';
+import Modal from '@mui/material/Modal';
 
-const Home = () => {
+const style = {
+  position: 'absolute' as 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: '80%',
+  bgcolor: 'background.paper',
+  border: '1px #000',
+  boxShadow: 24,
+  p: 2,
+  maxHeight: '90vh', // Establece la altura máxima del contenedor
+  overflow: 'auto'   // Activa el desplazamiento automático  
+};
+
+const WebPage = () => {
+
+  const { openSignIn } = useClerk();
+
   const [loading, setLoading] = useState(false);
   const [textAboutMe, setTextAboutMe] = useState("");
   const [textPortFolio, setTextPortFolio] = useState("");
@@ -41,11 +62,13 @@ const Home = () => {
 
   const [generatedSite, setGeneratedSite] = useState("");
 
+  const [openPricing, setOpenPricing] = React.useState(false);
+
   const context = useContext(SBRContext);
   if (!context) {
     throw new Error("SBRContext must be used within a SBRProvider");
   }
-  const { dataUser } = context;
+  const { dataUser, subsTplan } = context;
 
   const handleChange = (event: { target: { name: any; checked: any; }; }) => {
     setOptions({
@@ -213,6 +236,14 @@ const Home = () => {
       }
     });
   };
+
+  const showPricing = () => {
+    setOpenPricing(true);
+  } 
+
+  const closePricing = () => {
+    setOpenPricing(false);
+  }  
 
   const downloadCode = () => {
     const element = document.createElement("a");
@@ -423,24 +454,36 @@ const Home = () => {
                 <FormHelperText></FormHelperText>
               </FormControl>
             </Box>
-            <Box>
-            {!loading &&           
-              <button
-                className="bg-black rounded-md text-white font-medium px-4 py-2 mt-2 hover:bg-black/80"
-                onClick={generateWeb}
+            <SignedIn>
+              <Box>
+              {!loading &&  
+                <>
+                  <button
+                    className="bg-black rounded-md text-white font-medium px-4 py-2 mt-2 hover:bg-black/80"
+                    onClick={(subsTplan==='STARTER' || subsTplan==='CREATOR') ? generateWeb : showPricing }
+                  >
+                    Create your web &rarr;
+                  </button>                    
+                </>   
+              }
+              {loading && (
+                <button
+                  className="bg-black rounded-md text-white font-medium px-4 py-2 mt-2 hover:bg-black/80"
+                  disabled
+                >
+                  <LoadingDots color="white" style="large" />
+                </button>
+              )}
+              </Box>
+            </SignedIn>
+            <SignedOut>
+  `            <button
+                className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80"
+                onClick={() => openSignIn()}
               >
-                Create your web &rarr;
-              </button>         
-            }
-            {loading && (
-              <button
-                className="bg-black rounded-md text-white font-medium px-4 py-2 mt-2 hover:bg-black/80"
-                disabled
-              >
-                <LoadingDots color="white" style="large" />
-              </button>
-            )}
-            </Box>
+                Sign in / up
+              </button>`               
+            </SignedOut>
           </Box>
           <Box
             sx={{
@@ -469,10 +512,24 @@ const Home = () => {
             )}
           </Box>
         </Box>
+        <div>
+        <Modal
+          open={openPricing}
+          onClose={closePricing}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <Box sx={style}>
+            <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+              <CPricing />
+            </Typography>
+          </Box>
+        </Modal>
+      </div>        
       </main>
       <Footer />
     </div>
   );
 };
 
-export default Home;
+export default WebPage;
