@@ -274,7 +274,7 @@ const ButtonCheckAvailability = ({ domain, domains, functiondf, plan } : { domai
   const [isLoading, setIsLoading] = useState(false);
   const [openPricing, setOpenPricing] = React.useState(false);  
 
-  const handleClose = () => setOpenPricing(false);
+  const closePricing = () => setOpenPricing(false);
 
   return (
     <div>
@@ -367,7 +367,7 @@ const ButtonCheckAvailability = ({ domain, domains, functiondf, plan } : { domai
       <div>
         <Modal
           open={openPricing}
-          onClose={handleClose}
+          onClose={closePricing}
           aria-labelledby="modal-modal-title"
           aria-describedby="modal-modal-description"
         >
