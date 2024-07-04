@@ -15,7 +15,7 @@ const AdsPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Header showPricing={true} showFAQ={true}/>
+      <Header/>
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
         <h2 className="mt-12 font-medium" style={{ fontSize: 30 }}>
           Join the Exclusive Waitlist for our Google Ads Generator

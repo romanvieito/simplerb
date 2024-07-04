@@ -22,12 +22,22 @@ import {
   ptemp,
   ptop,
 } from "../utils/Definitions";
+import Image from "next/image";
 import SBRContext from "../context/SBRContext";
 import LoadingDots from "../components/LoadingDots";
 import { useClerk, SignedIn, SignedOut } from "@clerk/nextjs";
 import CPricing from "../components/CPricing";
 import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
+
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
+import Slide from '@mui/material/Slide';
+import { TransitionProps } from '@mui/material/transitions';
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -43,26 +53,27 @@ const style = {
   overflow: 'auto'   // Activa el desplazamiento automático  
 };
 
+const Transition = React.forwardRef(function Transition(
+  props: TransitionProps & {
+    children: React.ReactElement;
+  },
+  ref: React.Ref<unknown>,
+) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
+
 const WebPage = () => {
 
   const { openSignIn } = useClerk();
 
   const [loading, setLoading] = useState(false);
-  const [textAboutMe, setTextAboutMe] = useState("");
-  const [textPortFolio, setTextPortFolio] = useState("");
-  const [textContact, setTextContact] = useState("");
-  const [textBlog, setTextBlog] = useState("");
-
-  const [options, setOptions] = useState({
-    aboutme: true,
-    portfolio: false,
-    contact: false,
-    blog: false,
-  });
+  const [textName, setTextName] = useState("");
+  const [textDescription, setTextDescription] = useState("");
 
   const [generatedSite, setGeneratedSite] = useState("");
 
   const [openPricing, setOpenPricing] = React.useState(false);
+  const [openWebSite, setOpenWebSite] = React.useState(false);
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -70,30 +81,14 @@ const WebPage = () => {
   }
   const { dataUser, subsTplan } = context;
 
-  const handleChange = (event: { target: { name: any; checked: any; }; }) => {
-    setOptions({
-      ...options,
-      [event.target.name]: event.target.checked,
-    });
-  };
-
   const generateWeb = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     
     let hardcodedHTML = '';
     //-------------------------------------------------------------------------------------------------
-    const prompt = `Claude:
-    I am ${dataUser.name}
-    Objective:
-    Your mission is to create a personal webpage for me, all in a single file.
-    Details:    
-    - Content and Structure: Sections on the webpage: ${textAboutMe ? 'AboutMe' : ''} ${textPortFolio ? 'Portfolio' : ''} ${textContact ? 'Contact' : ''} ${textBlog ? 'Blog' : ''}
-    - Content Details: 
-    ${textAboutMe ? `This is the content of the "About Me" section: ${textAboutMe}` : ''}
-    ${textPortFolio ? `This is the content of the "Portfolio" section: ${textPortFolio}` : ''}
-    ${textContact ? `This is the content of the "Contact" section: ${textContact}` : ''}
-    ${textBlog ? `This is the content of the "Blog" section: ${textBlog}` : ''}.
-    Just return the code in format html, nothing else.`;
+    const prompt = `Claude: Your task is to create a one-page website based on the given specifications, delivered as an HTML file with embedded JavaScript and CSS. The website should incorporate a variety of engaging and interactive design features, such as drop-down menus, dynamic text and content, clickable buttons, and more. Ensure that the design is visually appealing, responsive, and user-friendly. The HTML, CSS, and JavaScript code should be well-structured, efficiently organized, and properly commented for readability and maintainability.
+    Create a one-page website for an online business website called ${textName} with the features and sections you believe match the client's business description. Just return the code, nothing else.
+    Client's business description: ${textDescription}`;
 
     setLoading(true);
 
@@ -120,120 +115,13 @@ const WebPage = () => {
 
     if(result) hardcodedHTML = result.data.content[0].text;
 
-    /*
-    //console.log('prompt', prompt);
-    const isGPT = true;
-    const response = await fetch(isGPT ? "/api/openai" : "/api/mistral", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        prompt,
-        ptemp,
-        ptop,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(response.statusText);
-    }
-
-    const dataResponse = response.body;
-    if (dataResponse) {
-      let dataWebSite = "";
-      const onParseGPT = (event: ParsedEvent | ReconnectInterval) => {
-        if (event.type === "event") {
-          const data = event.data;
-          try {
-            const text = JSON.parse(data).text ?? "";
-            dataWebSite += text;
-          } catch (e) {
-            console.error(e);
-          }
-        }
-      };
-
-      const onParseMistral = (event: ParsedEvent | ReconnectInterval) => {
-        if (event.type === "event") {
-          const data = event.data;
-          try {
-            const text = JSON.parse(data).choices[0].text ?? "";
-            dataWebSite += text;
-          } catch (e) {
-            console.error(e);
-          }
-        }
-      };
-
-      const onParse = isGPT ? onParseGPT : onParseMistral;
-
-      const reader = dataResponse.getReader();
-      const decoder = new TextDecoder();
-      const parser = createParser(onParse);
-      let done = false;
-      while (!done) {
-        const { value, done: doneReading } = await reader.read();
-        done = doneReading;
-        const chunkValue = decoder.decode(value);
-        parser.feed(chunkValue);
-      }      
-
-      try {
-        hardcodedHTML = dataWebSite;
-        //console.log('dataWebsite', dataWebSite);        
-      } catch (error) {
-        console.log("Error: ", error);
-      }      
-    }
-    */        
-    //-------------------------------------------------------------------------------------------------
-
-    // Hardcoded HTML for demo purposes
-    /*const hardcodedHTML = `
-      <html>
-      <head><title>Generated Site</title></head>
-      <body>
-        <header><h1>Welcome to My Website</h1></header>
-        ${
-          options.aboutme
-            ? `<section><h2>About Me</h2><p>${textAboutMe}</p></section>`
-            : ""
-        }
-        ${
-          options.portfolio
-            ? `<section><h2>Portfolio</h2><p>${textPortFolio}</p></section>`
-            : ""
-        }
-        ${
-          options.contact
-            ? `<section><h2>Contact</h2><p>${textContact}</p></section>`
-            : ""
-        }
-        ${
-          options.blog
-            ? `<section><h2>Blog</h2><p>${textBlog}</p></section>`
-            : ""
-        }
-        <footer><p>Footer content here</p></footer>
-      </body>
-      </html>
-    `;
-    */
-
     setGeneratedSite(hardcodedHTML);
 
+    setOpenWebSite(true);
+
     mixpanel.track("Web Generated", {
-      textAboutMe: textAboutMe,
-      textPortFolio: textPortFolio,
-      textContact: textContact,
-      textBlog: textBlog,
-      options: {
-        'aboutme': options.aboutme,
-        'portfolio': options.portfolio,
-        'contact': options.contact,
-        'blog': options.blog,
-      }
+      textName: textName,
+      textDescription: textDescription,
     });
   };
 
@@ -244,6 +132,10 @@ const WebPage = () => {
   const closePricing = () => {
     setOpenPricing(false);
   }  
+
+  const closeWebSite = () => {
+    setOpenWebSite(false);
+  }
 
   const downloadCode = () => {
     const element = document.createElement("a");
@@ -265,267 +157,118 @@ const WebPage = () => {
         <title>Website Generator</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
-      <Header showPricing={true} showFAQ={true}/>
-      <main className="flex flex-1 w-full flex-col px-4">
-        <h1 className="sm:text-3xl mb-3 text-2xl text-center items-center font-bold text-slate-900">
+      <Header/>
+      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
+        <h1 className="sm:text-6xl text-4xl max-w-[708px] font-bold text-slate-900">
           Website Generator
         </h1>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            gap: 2,
-          }}
-        >
-          <Box
-            sx={{
-              flexDirection: "column",
-              order: { xs: 1, sm: 1 },
-              flexGrow: 1,
-            }}
-          >
-            <Box>
-              <FormControl component="fieldset" variant="standard">
-                <FormLabel component="legend"></FormLabel>
-                <FormGroup>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={options.aboutme}
-                        onChange={handleChange}
-                        name="aboutme"
-                      />
-                    }
-                    label="About Me"
-                  />
-                  {options.aboutme && (
-                    <>
-                      <div className="flex mt-3 items-center space-x-3">
-                        <p className="text-left font-medium">
-                          Enter content or key points for 'About Me' section{" "}
-                          <Tooltip
-                            title={
-                              <div>
-                                <p>
-                                  e.g., I'm a passionate entrepreneur with a
-                                  focus on innovative health solutions.
-                                </p>
-                              </div>
-                            }
-                          >
-                            <span className="info-icon cursor-pointer">
-                              &#x24D8;
-                            </span>
-                          </Tooltip>
-                        </p>
-                      </div>
-                      <textarea
-                        value={textAboutMe}
-                        onChange={(e) => setTextAboutMe(e.target.value)}
-                        rows={4}
-                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
-                        placeholder={
-                          "e.g., I'm a passionate entrepreneur with a focus on innovative health solutions."
-                        }
-                      />
-                    </>
-                  )}
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={options.portfolio}
-                        onChange={handleChange}
-                        name="portfolio"
-                      />
-                    }
-                    label="Portfolio"
-                  />
-                  {options.portfolio && (
-                    <>
-                      <div className="flex mt-3 items-center space-x-3">
-                        <p className="text-left font-medium">
-                          Enter Your Portfolio{" "}
-                          <Tooltip
-                            title={
-                              <div>
-                                <p>
-                                  Enter a description of some of your work
-                                  examples
-                                </p>
-                              </div>
-                            }
-                          >
-                            <span className="info-icon cursor-pointer">
-                              &#x24D8;
-                            </span>
-                          </Tooltip>
-                        </p>
-                      </div>
-                      <textarea
-                        value={textPortFolio}
-                        onChange={(e) => setTextPortFolio(e.target.value)}
-                        rows={4}
-                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
-                        placeholder={
-                          "e.g., A description of some work examples"
-                        }
-                      />
-                    </>
-                  )}
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={options.contact}
-                        onChange={handleChange}
-                        name="contact"
-                      />
-                    }
-                    label="Contact"
-                  />
-                  {options.contact && (
-                    <>
-                      <div className="flex mt-3 items-center space-x-3">
-                        <p className="text-left font-medium">
-                          Enter Your Contact Information{" "}
-                          <Tooltip
-                            title={
-                              <div>
-                                <p>
-                                  Enter your Business Address, Phone Number,
-                                  etc.
-                                </p>
-                              </div>
-                            }
-                          >
-                            <span className="info-icon cursor-pointer">
-                              &#x24D8;
-                            </span>
-                          </Tooltip>
-                        </p>
-                      </div>
-                      <textarea
-                        value={textContact}
-                        onChange={(e) => setTextContact(e.target.value)}
-                        rows={4}
-                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
-                        placeholder={"e.g., Business Address and Phone Number"}
-                      />
-                    </>
-                  )}
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={options.blog}
-                        onChange={handleChange}
-                        name="blog"
-                      />
-                    }
-                    label="Blog"
-                  />
-                  {options.blog && (
-                    <>
-                      <div className="flex mt-3 items-center space-x-3">
-                        <p className="text-left font-medium">
-                          Enter An Idea For A Blog Post{" "}
-                          <Tooltip
-                            title={
-                              <div>
-                                <p>Enter details to create your blog post</p>
-                              </div>
-                            }
-                          >
-                            <span className="info-icon cursor-pointer">
-                              &#x24D8;
-                            </span>
-                          </Tooltip>
-                        </p>
-                      </div>
-                      <textarea
-                        value={textBlog}
-                        onChange={(e) => setTextBlog(e.target.value)}
-                        rows={4}
-                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
-                        placeholder={"e.g., Create blog post about teamwork"}
-                      />
-                    </>
-                  )}
-                </FormGroup>
-                <FormHelperText></FormHelperText>
-              </FormControl>
-            </Box>
-            <SignedIn>
-              <Box>
-              {!loading &&  
-                <>
-                  <button
-                    className="bg-black rounded-md text-white font-medium px-4 py-2 mt-2 hover:bg-black/80"
-                    onClick={(subsTplan==='STARTER' || subsTplan==='CREATOR') ? generateWeb : showPricing }
-                  >
-                    Create your web &rarr;
-                  </button>                    
-                </>   
-              }
-              {loading && (
-                <button
-                  className="bg-black rounded-md text-white font-medium px-4 py-2 mt-2 hover:bg-black/80"
-                  disabled
-                >
-                  <LoadingDots color="white" style="large" />
-                </button>
-              )}
-              </Box>
-            </SignedIn>
-            <SignedOut>
-  `            <button
-                className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80"
-                onClick={() => openSignIn()}
+        <div className="max-w-xl w-full">
+          <div className="flex mt-10 items-center space-x-3">
+            <Image
+              src="/1-black.png"
+              width={30}
+              height={30}
+              alt="1 icon"
+              className="mb-5 sm:mb-0"
+            />
+            <p className="text-left font-medium">
+              Enter Your Business Name{" "}
+            </p>
+          </div>
+          <textarea
+            value={textName}
+            onChange={(e) => setTextName(e.target.value)}
+            rows={1}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
+            placeholder={"e.g., SimplerB"}
+          />
+          <div className="flex mb-5 items-center space-x-3">
+            <Image src="/2-black.png" width={30} height={30} alt="1 icon" />
+            <p className="text-left font-medium">
+            Enter Your Business Description{" "}
+            </p>
+          </div>
+          <textarea
+            value={textDescription}
+            onChange={(e) => setTextDescription(e.target.value)}
+            rows={4}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-1"
+            placeholder={"e.g., Boutique Coffee Shop, Personal Fitness"}
+          />
+          <SignedOut>  
+            <button
+              className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+              onClick={() => openSignIn()}
+            >
+              Sign in / up
+            </button> 
+          </SignedOut>
+          <SignedIn>
+          {!loading &&           
+            <button
+              className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+              onClick={(e)=>generateWeb(e)}
+            >
+              Create website
+            </button>          
+            }
+            {loading && (
+              <button
+                className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+                disabled
               >
-                Sign in / up
-              </button>`               
-            </SignedOut>
-          </Box>
-          <Box
-            sx={{
-              order: { xs: 2, sm: 2 },
-              color: (theme) =>
-                theme.palette.mode === "dark" ? "grey.300" : "grey.800",
-              border: "1px solid",
-              borderColor: (theme) =>
-                theme.palette.mode === "dark" ? "grey.800" : "grey.300",
-              borderRadius: 2,
-              flexGrow: 3,
-              mb: { xs: 2, sm: 0 },
-            }}
-          >
-            {generatedSite && (
-              <div>
-                <h2>Generated Website Preview</h2>
-                <div dangerouslySetInnerHTML={{ __html: generatedSite }} />
-                <button
-                  className="bg-gray-400 rounded-md text-white font-medium px-4 py-2 mt-2 hover:bg-gray-500"
-                  onClick={downloadCode}
-                >
-                  Download Code
-                </button>
-              </div>
+                <LoadingDots color="white" style="large" />
+              </button>
             )}
-          </Box>
-        </Box>
+          </SignedIn>
+        </div>
+        <br/>        
         <div>
-        <Modal
-          open={openPricing}
-          onClose={closePricing}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
+          <Modal
+            open={openPricing}
+            onClose={closePricing}
+            aria-labelledby="modal-modal-title"
+            aria-describedby="modal-modal-description"
+          >
+            <Box sx={style}>
+              <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+                <CPricing />
+              </Typography>
+            </Box>
+          </Modal>
+        </div>
+        <div>
+        <Dialog
+          fullScreen
+          open={openWebSite}
+          onClose={closeWebSite}
+          TransitionComponent={Transition}
         >
-          <Box sx={style}>
-            <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-              <CPricing />
-            </Typography>
-          </Box>
-        </Modal>
-      </div>        
+          <AppBar sx={{ position: 'relative', backgroundColor: 'black' }}>
+            <Toolbar>
+              <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+                <IconButton
+                  edge="start"
+                  color="inherit"
+                  onClick={closeWebSite}
+                  aria-label="close"
+                >
+                  <CloseIcon />
+                </IconButton>
+                <Typography sx={{ ml: 2 }} variant="h6" component="div">
+                  Generated Website Preview
+                </Typography>
+              </Box>
+              <Button autoFocus color="inherit" onClick={downloadCode}>
+                Download Code
+              </Button>
+            </Toolbar>
+          </AppBar>
+          <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
+            <div dangerouslySetInnerHTML={{ __html: generatedSite }} />
+          </Box>          
+        </Dialog>       
+        </div>        
       </main>
       <Footer />
     </div>

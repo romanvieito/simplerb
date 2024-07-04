@@ -15,29 +15,15 @@ import { createTheme, ThemeProvider, styled } from '@mui/material/styles';
 import { useState, useEffect, useContext } from "react";
 import SBRContext from "../context/SBRContext";
 
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-
 import {
   resetSearch,
 } from "../utils/LocalStorage";
-import CFAQ from "./CFAQ";
-import CPricing from "./CPricing";
 
-const commonPages = [
+const pages = [
   { name: 'Domain Generator', link: '/domain' },
   { name: 'Website Generator', link: '/web' },
-  { name: 'Google Ads Generator', link: '/ads' }
-];
-
-const pages = [...commonPages];
-
-const pagesv2 = [
-  ...commonPages,
-  { name: 'Pricing', link: '/pricing' },
-  { name: 'FAQ', link: '/faq' }
+  { name: 'Google Ads Generator', link: '/ads' },
+  { name: 'Pricing', link: '/pricing' }
 ];
 
 interface HeaderProps {
@@ -62,23 +48,7 @@ const ButtonMenu = styled(Button)({
   textTransform: 'none',
 });
 
-export default function Header({showPricing, showFAQ }:{showPricing: boolean, showFAQ: boolean}): JSX.Element {
-
-  const CustomAccordion = styled(Accordion)(({ theme }) => ({
-    boxShadow: 'none',
-    '&:before': {
-      display: 'none',
-    },
-    '&.MuiAccordion-root:before': {
-      display: 'none',
-    },
-    '& .MuiAccordionSummary-root': {
-      borderBottom: 'none',
-    },
-    '& .MuiAccordionDetails-root': {
-      borderTop: 'none',
-    },
-  }));
+export default function Header(): JSX.Element {
 
   const { openSignIn } = useClerk();
   const { isLoaded, user, isSignedIn } = useUser();
@@ -245,7 +215,7 @@ export default function Header({showPricing, showFAQ }:{showPricing: boolean, sh
                   display: { xs: "block", md: "none" },
                 }}
               >
-                {pagesv2.map((page) => (
+                {pages.map((page) => (
                   <MenuItem key={page.name}>
                     <ButtonMenu
                       key={page.name}
@@ -327,42 +297,6 @@ export default function Header({showPricing, showFAQ }:{showPricing: boolean, sh
               </SignedOut>
             </Box>
           </Toolbar>
-          <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" }, flexDirection: "column" }}>
-            {
-              showPricing && 
-              <>
-              <CustomAccordion>
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon />}
-                  aria-controls="panelPricing-content"
-                  id="panelPricing-header"
-                >
-                  <Typography>Pricing</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <CPricing/>
-                </AccordionDetails>
-              </CustomAccordion>              
-              </>
-            }
-            {
-              showFAQ && 
-              <>
-              <CustomAccordion>
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon />}
-                  aria-controls="panelFAQ-content"
-                  id="panelFAQ-header"
-                >
-                  <Typography>Frequently Asked Questions</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <CFAQ/>
-                </AccordionDetails>
-              </CustomAccordion>              
-              </>
-            }                        
-          </Box>
         </Container>
       </AppBar>
     </ThemeProvider>

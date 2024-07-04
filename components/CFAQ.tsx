@@ -25,6 +25,10 @@ export default function CFAQ() {
 
     return (
         <div>
+          
+          <h2 className="mt-12 font-medium" style={{ fontSize: 30 }}>
+            Frequently Asked Questions
+          </h2>
 
           <CustomAccordion>
             <AccordionSummary
