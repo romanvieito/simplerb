@@ -86,18 +86,9 @@ const WebPage = () => {
     
     let hardcodedHTML = '';
     //-------------------------------------------------------------------------------------------------
-    /*const prompt = `Your task is to create a one-page website based on the given specifications, delivered as an HTML file with embedded JavaScript and CSS. The website should incorporate a variety of engaging and interactive design features, such as drop-down menus, dynamic text and content, clickable buttons, and more. Ensure that the design is visually appealing, responsive, and user-friendly. The HTML, CSS, and JavaScript code should be well-structured, efficiently organized, and properly commented for readability and maintainability.
+    const prompt = `Claude: Your task is to create a one-page website based on the given specifications, delivered as an HTML file with embedded JavaScript and CSS. The website should incorporate a variety of engaging and interactive design features, such as drop-down menus, dynamic text and content, clickable buttons, and more. Ensure that the design is visually appealing, responsive, and user-friendly. The HTML, CSS, and JavaScript code should be well-structured, efficiently organized, and properly commented for readability and maintainability.
     Create a one-page website for an online business website called ${textName} with the features and sections you believe match the client's business description. Just return the code, nothing else.
-    Client's business description: ${textDescription}.`;*/
-
-    const prompt = `Claude:
-    I am ${dataUser.name}
-    Objective:
-    Your mission is to create a personal webpage for me, all in a single file.
-    Details:    
-    - The title is: ${textName}
-    - Content Details: This is the content of the "Description" section: ${textDescription}
-    Just return the code in format html, nothing else.`;    
+    Client's business description: ${textDescription}`;
 
     setLoading(true);
 
@@ -120,7 +111,7 @@ const WebPage = () => {
 
     setLoading(false);
 
-    console.log('View anthropic:', result.data.content[0].text);    
+    //console.log('View anthropic:', result.data.content[0].text);    
 
     if(result) hardcodedHTML = result.data.content[0].text;
 
