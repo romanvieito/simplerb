@@ -1,12 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Anthropic from '@anthropic-ai/sdk';
 
-const API_TOKEN = process.env.ANTHROPIC_API_KEY ?? '';
-
-const anthropic = new Anthropic({
-  apiKey: API_TOKEN,
-});
-
 export default async function handler (
     req: NextApiRequest,
     res: NextApiResponse
@@ -14,6 +8,12 @@ export default async function handler (
     if (req.method !== 'POST') {
       return res.status(405).end('Method Not Allowed');
     }
+
+    const API_TOKEN = process.env.ANTHROPIC_API_KEY ?? '';
+
+    const anthropic = new Anthropic({
+      apiKey: API_TOKEN,
+    });
 
     const { prompt } : { prompt: string } = req.body;    
 
