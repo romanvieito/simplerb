@@ -9,6 +9,8 @@ export default async function handler (
       return res.status(405).end('Method Not Allowed');
     }
 
+    res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
+        
     const API_TOKEN = process.env.ANTHROPIC_API_KEY ?? '';
 
     const anthropic = new Anthropic({
