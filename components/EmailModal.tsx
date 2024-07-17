@@ -84,6 +84,12 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subjectType }) =
 
     mixpanel.track(`Send ${subjectType} by mail`, {
       message: result.data ? "Mail send successfully" : "Data failed to send email",
+    }, function(err) {
+      if (err) {
+        console.error('Error al enviar evento a mixpanel:', err);
+      } else {
+        console.log('Evento enviado a mixpanel');
+      }
     });
 
     toast(
