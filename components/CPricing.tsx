@@ -191,7 +191,7 @@ export default function CPricing() {
                         ) : */(
                         <div className={styles.cardAction}>
                             <form action="/api/checkout_sessions" method="POST">
-                            <input type="hidden" name="tipo" value={subsTplan} />
+                            <input type="hidden" name="tipo" value='STARTER' />
                             <button
                                 type="submit"
                                 onClick={handleSubsStarterCreatorClick}
@@ -252,7 +252,7 @@ export default function CPricing() {
                         ) : */(
                         <div className={styles.cardAction}>
                             <form action="/api/checkout_sessions" method="POST">
-                            <input type="hidden" name="tipo" value={subsTplan} />
+                            <input type="hidden" name="tipo" value='CREATOR' />
                             <button
                                 type="submit"
                                 onClick={handleSubsStarterCreatorClick}
