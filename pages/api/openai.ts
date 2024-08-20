@@ -23,7 +23,7 @@ const handler = async (req: Request): Promise<Response> => {
   const top_p = (typeof ptop === 'number') ? ptop : 0;
 
   const payload: OpenAIStreamPayload = {
-    model: 'gpt-3.5-turbo',
+    model: 'gpt-4o-mini',
     messages: [{ role: 'user', content: prompt }],
     temperature: temperature,
     top_p: top_p,
