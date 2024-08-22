@@ -266,16 +266,17 @@ export default function Header(): JSX.Element {
                     style={{ textTransform: "none" }}
                     sx={{
                       "@media (max-width:600px)": {
-                        padding: 1 // Padding for screens sm and smaller
+                        padding: 1, // Padding for screens sm and smaller
                       },
                       "@media (max-width:450px)": {
-                        padding: "3px" // Padding for screens sm and smaller
+                        padding: "3px", // Padding for screens sm and smaller
                       },
+                      display:
+                        subsTplan && subsTplan !== "FREE" ? "none" : "block",
                     }}
                     type="submit"
                     variant="contained"
                     role="link"
-                    disabled={subsTplan && subsTplan !== "FREE" ? true : false}
                     onClick={handleSubsStarterClick}
                   >
                     Become a Member

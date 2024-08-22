@@ -338,7 +338,7 @@ const DomainPage: NextPage = () => {
     try {
       let prompt_extensions = "";
       if (vpExtChecked.length > 0)
-        prompt_extensions = `Make sure to generate domain names using these extensions: ${vpExtChecked.join(
+        prompt_extensions = `Please use these extensions: ${vpExtChecked.join(
           ", "
         )}. `;
       let prompt_keywords = "";
@@ -396,13 +396,10 @@ const DomainPage: NextPage = () => {
         1. Memorable: Craft domain names that maximize brand recall and leave a lasting impression.
         2. Brevity: Keep the domain names concise, aiming for short lengths.
         3. Simplicity: Ensure each domain name is easy to spell and pronounce.
-        4. TLD: Craft memorable web addresses exploring diverse and inventive combinations of domain names and TLDs, such as .com, .net, .io, .co, .ai, .app, .me, .biz, .club, and .cc.
 
         Good Examples:
-        - Starbucks.com: Simple, memorable, and concise.
         - Apple.com: Easy to spell and pronounce.
         - JetBlue.com: Descriptive and easy to remember.
-        - Ambient.com: Simple and evocative.
         - Amazon.com: Short, memorable, and now synonymous with online shopping.
 
         Examples to Avoid:
@@ -427,7 +424,7 @@ const DomainPage: NextPage = () => {
         prompt_keywords ||
         prompt_character ||
         prompt_minmax
-          ? `Keep in mind the client's focus on ` +
+          ? `Just return the domains, nothing else. Keep in mind client's focus on ` +
             (bio +
               prompt_extensions +
               prompt_keywords +
@@ -595,8 +592,9 @@ const DomainPage: NextPage = () => {
 
       if (resultDomainFounded) {
         if(resultDomainFounded.length === 0) 
+          console.log(resultDomainFounded);
           toast.error(
-            "Domain availability not found"
+            "Please try a different prompt"
           );
 
         resultDomainFounded = await getDomainNamesWithRate(
