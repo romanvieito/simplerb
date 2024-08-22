@@ -592,10 +592,12 @@ const DomainPage: NextPage = () => {
 
       if (resultDomainFounded) {
         if(resultDomainFounded.length === 0) 
-          console.log(resultDomainFounded);
-          toast.error(
-            "Please try a different prompt"
-          );
+          {
+            console.log(resultDomainFounded);
+            toast.error(
+              "Please try a different prompt"
+            );
+          }
 
         resultDomainFounded = await getDomainNamesWithRate(
           resultDomainFounded,
