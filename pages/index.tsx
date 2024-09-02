@@ -32,133 +32,20 @@ const Home: NextPage = () => {
         <title>Domain Generator</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Header/>
-      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
+      <Header />
+      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4">
         <h1 className="sm:text-6xl text-4xl max-w-[708px] font-bold text-slate-900">
-          Generate your business with AI
+          Launch Your Business in Just {" "}
+          <span className="text-blue-600">3 clicks</span>
         </h1>
 
         <h2 className="mt-3" style={{ color: "rgba(0, 0, 0, 0.6)" }}>
-          Kickstart your business with AI: Get your domain, website, and Google
-          Ads, all done for you effortlessly!
+          Get started quickly: Secure your domain, build your website, and drive traffic with targeted ads.
         </h2>
 
-        <Box className="flex mt-7 flex-wrap justify-center">
-          <Box
-            className="m-2"
-            sx={{
-              width: {
-                xs: "100%",
-                sm: "calc(50% - 16px)",
-                md: "calc(33% - 16px)",
-              },
-            }}
-          >
-            <Card sx={{ minWidth: 275 }}>
-              <CardContent>
-                {/* <Typography
-                sx={{ fontSize: 14 }}
-                color="text.secondary"
-                gutterBottom
-              >
-                Simple, memorable, and impactful
-              </Typography> */}
-                <Typography variant="h5" component="div">
-                  Domain Generator
-                </Typography>
-                {/* <Typography sx={{ mb: 1.5 }} color="text.secondary">
-              Simple, memorable, and impactful
-              </Typography> */}
-                <Typography className="pt-4" variant="body2">
-                  Create the best domain possible
-                  <br />
-                  {'"Simple, memorable, and impactful."'}
-                </Typography>
-              </CardContent>
-              <CardActions className="justify-center">
-                <Button size="small" key={pages[0].name} href={pages[0].link}>
-                  Create Domain
-                </Button>
-              </CardActions>
-            </Card>
-          </Box>
-          <Box
-            className="m-2"
-            sx={{
-              width: {
-                xs: "100%",
-                sm: "calc(50% - 16px)",
-                md: "calc(33% - 16px)",
-              },
-            }}
-          >
-            <Card sx={{ minWidth: 275 }}>
-              <CardContent>
-                {/* <Typography
-                sx={{ fontSize: 14 }}
-                color="text.secondary"
-                gutterBottom
-              >
-                Simple, memorable, and impactful
-              </Typography> */}
-                <Typography variant="h5" component="div">
-                  Website Generator
-                </Typography>
-                {/* <Typography sx={{ mb: 1.5 }} color="text.secondary">
-              Simple, memorable, and impactful
-              </Typography> */}
-                <Typography className="pt-4" variant="body2">
-                  Create a website for your business
-                  <br />
-                  {'"Digital is more important than ever."'}
-                </Typography>
-              </CardContent>
-              <CardActions className="justify-center">
-                <Button size="small" key={pages[1].name} href={pages[1].link}>
-                  Create Website
-                </Button>
-              </CardActions>
-            </Card>
-          </Box>
-          <Box
-            className="m-2"
-            sx={{
-              width: {
-                xs: "100%",
-                sm: "calc(50% - 16px)",
-                md: "calc(33% - 16px)",
-              },
-            }}
-          >
-            <Card sx={{ minWidth: 275 }}>
-              <CardContent>
-                {/* <Typography
-                sx={{ fontSize: 14 }}
-                color="text.secondary"
-                gutterBottom
-              >
-                Simple, memorable, and impactful
-              </Typography> */}
-                <Typography variant="h5" component="div">
-                  Google Ads Generator
-                </Typography>
-                {/* <Typography sx={{ mb: 1.5 }} color="text.secondary">
-              Simple, memorable, and impactful
-              </Typography> */}
-                <Typography className="pt-4" variant="body2">
-                  Let people know about your business
-                  <br />
-                  {'"Unleash your business potential."'}
-                </Typography>
-              </CardContent>
-              <CardActions className="justify-center">
-                <Button size="small" key={pages[2].name} href={pages[2].link}>
-                  Create Ads
-                </Button>
-              </CardActions>
-            </Card>
-          </Box>
-        </Box>
+        {/* <Button size="small" key={pages[0].name} href={pages[0].link}>
+          Create Domain
+        </Button> */}
 
         {/* <div className="max-w-xl w-full">
           <div className="flex mt-10 items-center space-x-3">
@@ -194,19 +81,26 @@ const Home: NextPage = () => {
             }
           />
         </div> */}
-
-        <SignedOut>
-          <div className="mt-8">
+        <div className="flex">
+          <div className="mt-8 mr-2">
             <a
-              onClick={() => openSignIn()}
-              className="bg-black cursor-pointer rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+              href={pages[0].link}
+              className="bg-blue-600 cursor-pointer rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-gray/80 w-full"
             >
-              Sign in / up
+              Get Started
             </a>
           </div>
-        </SignedOut>
-        <br/>
-
+          <SignedOut>
+            <div className="mt-8">
+              <a
+                onClick={() => openSignIn()}
+                className="bg-black cursor-pointer rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+              >
+                Sign in / up
+              </a>
+            </div>
+          </SignedOut>
+        </div>
       </main>
       <Footer />
     </div>
