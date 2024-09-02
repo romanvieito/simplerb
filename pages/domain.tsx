@@ -772,12 +772,12 @@ const DomainPage: NextPage = () => {
       </Head>
 
       <Header/>
-      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
-        <h1 className="sm:text-6xl text-4xl max-w-[708px] font-bold text-slate-900">
+      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-2 sm:mt-6">
+        {/* <h1 className="sm:text-6xl text-4xl max-w-[708px] font-bold text-slate-900">
           Domain Generator
-        </h1>
-        <div className="max-w-xl w-full">
-          <div className="flex mt-10 items-center space-x-3">
+        </h1> */}
+        <div className="flex flex-col max-w-xl w-full">
+          <div className="flex mt-0 items-center space-x-3">
             <Image
               src="/1-black.png"
               width={30}
@@ -841,14 +841,15 @@ const DomainPage: NextPage = () => {
             <>
               <DropDown vibe={vibe} setVibe={(newVibe) => setVibe(newVibe)} />
               <Button
+              className="self-end"
                 size="small"
                 variant="text"
                 onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
                 sx={{ marginTop: 3 }}
               >
                 {showAdvancedSettings
-                  ? "Hide Advanced Settings"
-                  : "Show Advanced Settings"}
+                  ? "X"
+                  : "Advanced Settings"}
               </Button>
               {showAdvancedSettings && (
                 <Box

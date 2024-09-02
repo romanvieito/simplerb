@@ -21,8 +21,8 @@ import {
 
 const pages = [
   { name: 'Domain Generator', link: '/domain' },
-  { name: 'Website Generator', link: '/web' },
-  { name: 'Google Ads Generator', link: '/ads' },
+  // { name: 'Website Generator', link: '/web' },
+  // { name: 'Google Ads Generator', link: '/ads' },
   { name: 'Pricing', link: '/pricing' }
 ];
 
