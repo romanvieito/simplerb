@@ -39,7 +39,7 @@ const Home: NextPage = () => {
           <span className="text-blue-600">3 clicks</span>
         </h1>
 
-        <h2 className="mt-3" style={{ color: "rgba(0, 0, 0, 0.6)" }}>
+        <h2 className="mt-6" style={{ color: "rgba(0, 0, 0, 0.6)" }}>
           Get started quickly: Secure your domain, build your website, and drive traffic with targeted ads.
         </h2>
 
