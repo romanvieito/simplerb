@@ -34,13 +34,13 @@ const Home: NextPage = () => {
       </Head>
       <Header />
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4">
-        <h1 className="sm:text-6xl text-4xl max-w-[708px] font-bold text-slate-900">
+        <h1 className="sm:text-8xl text-6xl max-w-[708px] font-bold text-slate-900">
           Launch Your Business in Just {" "}
-          <span className="text-blue-600">3 clicks</span>
+          <span className="text-blue-600">3 Clicks</span>
         </h1>
 
-        <h2 className="mt-6" style={{ color: "rgba(0, 0, 0, 0.6)" }}>
-          Get started quickly: Secure your domain, build your website, and drive traffic with targeted ads.
+        <h2 className="mt-9 sm:text-3xl text-xl" style={{ color: "rgba(0, 0, 0, 0.6)" }}>
+          It all starts with the right domain: Set your brand apart, build your website, and attract customers with targeted ads.
         </h2>
 
         {/* <Button size="small" key={pages[0].name} href={pages[0].link}>
@@ -81,8 +81,8 @@ const Home: NextPage = () => {
             }
           />
         </div> */}
-        <div className="flex">
-          <div className="mt-8 mr-2">
+        <div className="flex mt-20">
+          <div className="mr-2">
             <a
               href={pages[0].link}
               className="bg-blue-600 cursor-pointer rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-gray/80 w-full"
@@ -91,7 +91,7 @@ const Home: NextPage = () => {
             </a>
           </div>
           <SignedOut>
-            <div className="mt-8">
+            <div className="">
               <a
                 onClick={() => openSignIn()}
                 className="bg-black cursor-pointer rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
