@@ -202,7 +202,7 @@ const SpanResultAvailability: React.FC<DomainInfoItem> = ({ dinfo }) => {
 const CellFavorite = ({ domain, domains, functiondf, email } : { domain : DomainInfo, domains: DomainInfo[], functiondf: any, email: string }) => {  
   const [isLoading, setIsLoading] = useState(false);
   return (
-    <Tooltip title={!domain.favorite ? "Mask a favorite" : "Unmark as favorite"}>
+    <Tooltip title={!domain.favorite ? "Mark as favorite" : "Unmark as favorite"}>
       <span>
       <IconButton
         disabled={isLoading} 
