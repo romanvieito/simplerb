@@ -72,6 +72,8 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import LoadingButton from "@mui/lab/LoadingButton";
+import Modal from '@mui/material/Modal';
+
 import SBRContext from "../context/SBRContext";
 import { SignedOut } from "@clerk/nextjs";
 
@@ -90,7 +92,24 @@ const DomainPage: NextPage = () => {
   const [generatedBios, setGeneratedBios] = useState<String>("");
   const [numberDomainsCreated, setNumberDomainsCreated] = useState<number>(0);
   const [isGPT, setIsGPT] = useState(true);
-  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+
+  //For Settings Modal
+  const [open, setOpen] = React.useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+  const style = {
+    position: 'absolute' as 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: '80%',
+    bgcolor: 'background.paper',
+    border: '1px #000',
+    boxShadow: 24,
+    p: 2,
+    maxHeight: '90vh', // Establece la altura máxima del contenedor
+    overflow: 'auto'   // Activa el desplazamiento automático  
+  };
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -844,22 +863,30 @@ const DomainPage: NextPage = () => {
               className="self-end"
                 size="small"
                 variant="text"
-                onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+                onClick={() => {
+                  handleOpen();
+                }}
                 sx={{ marginTop: 3 }}
               >
-                {showAdvancedSettings
-                  ? "X"
+                {false
+                  ? ""
                   : "Advanced Settings"}
               </Button>
-              {showAdvancedSettings && (
-                <Box
-                  sx={{ width: "100%", typography: "body1" }}
+                  <Box
+                    sx={{ width: "100%", typography: "body1" }}
                 >
+                  <Modal  
+                  open={open}
+                  onClose={handleClose}
+                  aria-labelledby="simple-modal-title"
+                  aria-describedby="simple-modal-description"
+                >
+                  <Box sx={style}>
                   <TabContext value={vpTabIndex}>
                     <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
                       <TabList
                         onChange={handleVpTabIndexChange}
-                        aria-label="Options for vite professional"
+                        aria-label="Advanced Options"
                       >
                         <Tab label="Extensions" value="1" />
                         <Tab label="Keywords" value="2" />
@@ -1106,8 +1133,9 @@ const DomainPage: NextPage = () => {
                       </Box>
                     </TabPanel>
                   </TabContext>
+                  </Box>
+                </Modal>
                 </Box>
-              )}
             </>
           )}
           <SignedOut>  
@@ -1170,7 +1198,7 @@ const DomainPage: NextPage = () => {
           </div>
         )}
       </main>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 };
