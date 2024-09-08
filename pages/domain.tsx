@@ -124,7 +124,7 @@ const DomainPage: NextPage = () => {
   const { isLoaded, user, isSignedIn } = useUser();
   const { openSignIn } = useClerk();
 
-  const [vpTabIndex, setVpTabIndex] = useState("1");
+  const [vpTabIndex, setVpTabIndex] = useState("3");
   const handleVpTabIndexChange = (event: any, newValue: string) => {
     setVpTabIndex(newValue);
   };
