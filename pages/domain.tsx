@@ -358,9 +358,9 @@ const DomainPage: NextPage = () => {
     try {
       let prompt_extensions = "";
       if (vpExtChecked.length > 0)
-        prompt_extensions = `Please just use these extensions: ${vpExtChecked.join(
+        prompt_extensions = `. Just use the extensions: ${vpExtChecked.join(
           ", "
-        )}. `;
+        )}`;
       let prompt_keywords = "";
       const conditions_keywords = [
         vpContains && `that contain ${vpContains}`,
@@ -424,7 +424,7 @@ const DomainPage: NextPage = () => {
         - Altus.com: Lacks immediate brandability.
         - Prius.com: Pronunciation challenges may hinder global brand recall.
 
-        Please craft domain names that ${
+        Craft domain names that ${
           vibe === "Friendly"
             ? "feel relaxed and welcoming, suitable for personal blogs, small businesses, or customer-oriented services that emphasize a community feel."
             : vibe === "Professional"
