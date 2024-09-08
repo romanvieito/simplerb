@@ -72,7 +72,7 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import LoadingButton from "@mui/lab/LoadingButton";
-import Modal from '@mui/material/Modal';
+import Modal from "@mui/material/Modal";
 
 import SBRContext from "../context/SBRContext";
 import { SignedOut } from "@clerk/nextjs";
@@ -98,17 +98,17 @@ const DomainPage: NextPage = () => {
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
   const style = {
-    position: 'absolute' as 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: '80%',
-    bgcolor: 'background.paper',
-    border: '1px #000',
+    position: "absolute" as "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: "80%",
+    bgcolor: "background.paper",
+    border: "1px #000",
     boxShadow: 24,
     p: 2,
-    maxHeight: '90vh', // Establece la altura máxima del contenedor
-    overflow: 'auto'   // Activa el desplazamiento automático  
+    maxHeight: "90vh", // Establece la altura máxima del contenedor
+    overflow: "auto", // Activa el desplazamiento automático
   };
 
   const context = useContext(SBRContext);
@@ -139,6 +139,7 @@ const DomainPage: NextPage = () => {
     setVpStartsWith("");
     setVpEndsWith("");
     setVpSimilarToThisDomainName("");
+    handleClearCharacters();
   };
 
   const [vpExtLeft, setVpExtLeft] = useState<string[]>([]);
@@ -516,15 +517,17 @@ const DomainPage: NextPage = () => {
         .map((domain) => domain.replace(/^\d+\.\s*/, ""))
         .filter((domain) => domain);
 
-      if (subsTplan === 'CREATOR') {
-        const tempDomainAvailability = await multipleCheckAvailability(tempDomainNamesText);
+      if (subsTplan === "CREATOR") {
+        const tempDomainAvailability = await multipleCheckAvailability(
+          tempDomainNamesText
+        );
         tempDomainAvailability.map((domain) => {
           domainNames.push({
             domain: domain.domain,
             available: domain.available,
             favorite: undefined,
           });
-        });        
+        });
       } else {
         tempDomainNamesText.map((domain) => {
           domainNames.push({
@@ -536,7 +539,6 @@ const DomainPage: NextPage = () => {
       }
 
       //---------------------------------------------------------------------
-
     } catch (error: any) {
       throw new Error(error);
     }
@@ -572,20 +574,20 @@ const DomainPage: NextPage = () => {
         vibe: vibe,
         credits: credits,
         domains_generated: resultDomainFounded,
-        extensions: vpExtChecked.join(','),
+        extensions: vpExtChecked.join(","),
         keywords: {
-          'contains': vpContains,
-          'startswith': vpStartsWith,
-          'endswith': vpEndsWith,
-          'similartothisdomainname': vpSimilarToThisDomainName,
+          contains: vpContains,
+          startswith: vpStartsWith,
+          endswith: vpEndsWith,
+          similartothisdomainname: vpSimilarToThisDomainName,
         },
         transform: {
-          'hiremecom': vpHiremecom,
-          'flickercom': vpFlickercom,
-          'toolcom': vpToolcom,
-          'minlength': vpMinlength,
-          'maxlength': vpMaxlength,
-        }
+          hiremecom: vpHiremecom,
+          flickercom: vpFlickercom,
+          toolcom: vpToolcom,
+          minlength: vpMinlength,
+          maxlength: vpMaxlength,
+        },
       });
 
       /*if (!isLoaded || !user) {
@@ -610,13 +612,10 @@ const DomainPage: NextPage = () => {
       saveVpCharacters(vpTransform, vpMinlength, vpMaxlength);
 
       if (resultDomainFounded) {
-        if(resultDomainFounded.length === 0) 
-          {
-            console.log(resultDomainFounded);
-            toast.error(
-              "Please try a different prompt"
-            );
-          }
+        if (resultDomainFounded.length === 0) {
+          console.log(resultDomainFounded);
+          toast.error("Please try a different prompt");
+        }
 
         resultDomainFounded = await getDomainNamesWithRate(
           resultDomainFounded,
@@ -721,43 +720,41 @@ const DomainPage: NextPage = () => {
     return resultDomainsRate;
   };
 
-  const multipleCheckAvailability = async (domain: string[]) => {  
-
-    try {    
-      
-      const response = await fetch("/api/check-availability-godaddy", { //"/api/check-availability-godaddy"
+  const multipleCheckAvailability = async (domain: string[]) => {
+    try {
+      const response = await fetch("/api/check-availability-godaddy", {
+        //"/api/check-availability-godaddy"
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ domains: domain }),
       });
-  
+
       if (!response.ok) {
         throw new Error(`Error: ${response.statusText}`);
       }
-  
+
       const data = await response.json();
-      let domainAvailability=[];
+      let domainAvailability = [];
       for (const item of data) {
         if (item.available) {
           domainAvailability.push(item);
         }
       }
-  
+
       mixpanel.track("Multiple checked availability successful", {
         // You can add properties to the event as needed
-        domains: domainAvailability
+        domains: domainAvailability,
       });
-  
+
       return domainAvailability;
-  
     } catch (error: any) {
       mixpanel.track("Multiple checked availability with error", {
         // You can add properties to the event as needed
         domain: domain,
-        error: error
-      });    
+        error: error,
+      });
       throw new Error(error);
     }
   };
@@ -790,7 +787,7 @@ const DomainPage: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Header/>
+      <Header />
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-2 sm:mt-6">
         {/* <h1 className="sm:text-6xl text-4xl max-w-[708px] font-bold text-slate-900">
           Domain Generator
@@ -856,11 +853,11 @@ const DomainPage: NextPage = () => {
               </Tooltip>
             </p>
           </div>
-          {/*isSignedIn && */(
-            <>
+          {
+            /*isSignedIn && */ <>
               <DropDown vibe={vibe} setVibe={(newVibe) => setVibe(newVibe)} />
               <Button
-              className="self-end"
+                className="self-end"
                 size="small"
                 variant="text"
                 onClick={() => {
@@ -868,176 +865,112 @@ const DomainPage: NextPage = () => {
                 }}
                 sx={{ marginTop: 3 }}
               >
-                {false
-                  ? ""
-                  : "Advanced Settings"}
+                {false ? "" : "Advanced Settings"}
               </Button>
-                  <Box
-                    sx={{ width: "100%", typography: "body1" }}
-                >
-                  <Modal  
+              <Box sx={{ width: "100%", typography: "body1" }}>
+                <Modal
                   open={open}
                   onClose={handleClose}
                   aria-labelledby="simple-modal-title"
                   aria-describedby="simple-modal-description"
                 >
                   <Box sx={style}>
-                  <TabContext value={vpTabIndex}>
-                    <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                      <TabList
-                        onChange={handleVpTabIndexChange}
-                        aria-label="Advanced Options"
-                      >
-                        <Tab label="Extensions" value="1" />
-                        <Tab label="Keywords" value="2" />
-                        <Tab label="Characters" value="3" />
-                      </TabList>
-                    </Box>
-                    <TabPanel value="1">
-                      <Box
-                        sx={{
-                          maxWidth: "100%",
-                          display: "flex",
-                          flexDirection: "row",
-                          alignItems: "center",
-                        }}
-                      >
-                        <Button
-                          size="small"
-                          startIcon={<ClearIcon />}
-                          id="clear-extensions"
-                          onClick={handleClearExtensions}
-                          sx={{ marginRight: 2 }}
+                    <TabContext value={vpTabIndex}>
+                      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+                        <TabList
+                          onChange={handleVpTabIndexChange}
+                          aria-label="Advanced Options"
                         >
-                          Clear Filter
-                        </Button>
-                        <LoadingButton
-                          onClick={handleLoadMoreExtensions}
-                          startIcon={<DownloadIcon />}
-                          loading={vpLoadingTldsDomains}
-                          loadingPosition="start"
-                          size="small"
-                        >
-                          <span>Load more extensions</span>
-                        </LoadingButton>
+                          <Tab label="Extensions" value="3" />
+                          <Tab label="Name" value="2" />
+                        </TabList>
                       </Box>
-                      <TextField
-                        fullWidth
-                        id="ext-search"
-                        label="Filter..."
-                        variant="standard"
-                        value={vpFilterExtLeft}
-                        onChange={(e) => setVpFilterExtLeft(e.target.value)}
-                        sx={{ height: 50, marginBottom: 1 }}
-                      />
-                      <Box
-                        sx={{
-                          maxWidth: "100%",
-                          display: "flex",
-                          flexDirection: "row",
-                          alignItems: "left",
-                        }}
-                      >
-                        Check to select
-                      </Box>
-                      {customList(vpFilteredExtLeft)}
-                    </TabPanel>
-                    <TabPanel value="2">
-                      <Box
-                        sx={{
-                          maxWidth: "100%",
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "flex-start",
-                        }}
-                      >
-                        <Button
-                          size="small"
-                          startIcon={<ClearIcon />}
-                          id="clear-keywords"
-                          onClick={handleClearKeyWords}
+                      <TabPanel value="3">
+                        <Box
+                          sx={{
+                            maxWidth: "100%",
+                            display: "flex",
+                            flexDirection: "row",
+                            justifyContent: "flex-end",
+                          }}
                         >
-                          Clear Filter
-                        </Button>
-                        <Box mb={2} sx={{ width: "100%", textAlign:'left', marginTop: '20px' }}>
-                          <span className="text-sm">Contains</span>
-                          <TextField
-                            fullWidth                            
-                            id="vpContains"
-                            variant="standard"
-                            value={vpContains}
-                            onChange={(e) => setVpContains(e.target.value)}
-                          />
-                        </Box>
-                        <Box mb={2} sx={{ width: "100%", textAlign:'left', marginTop: '5px' }}>
-                          <span className="text-sm">Starts with</span>
-                          <TextField
-                            fullWidth
-                            id="vpStartsWith"
-                            variant="standard"
-                            value={vpStartsWith}
-                            onChange={(e) => setVpStartsWith(e.target.value)}
-                          />
-                        </Box>
-                        <Box mb={2} sx={{ width: "100%", textAlign:'left', marginTop: '5px' }}>
-                          <span className="text-sm">Ends with</span>
-                          <TextField
-                            fullWidth
-                            id="vpEndsWith"
-                            variant="standard"
-                            value={vpEndsWith}
-                            onChange={(e) => setVpEndsWith(e.target.value)}
-                          />
-                        </Box>
-                        <Box mb={2} sx={{ width: "100%", textAlign:'left', marginTop: '5px' }}>
-                          <span className="text-sm">Similar to this domain name</span>
-                          <TextField
-                            fullWidth
-                            id="vpSimilarToThisDomainName"
-                            variant="standard"
-                            value={vpSimilarToThisDomainName}
-                            onChange={(e) =>
-                              setVpSimilarToThisDomainName(e.target.value)
-                            }
-                          />
-                        </Box>
-                      </Box>
-                    </TabPanel>
-                    <TabPanel value="3">
-                      <Box
-                        sx={{
-                          maxWidth: "100%",
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "flex-start",
-                        }}
-                      >
-                        <Button
-                          size="small"
-                          startIcon={<ClearIcon />}
-                          id="clear-characters"
-                          onClick={handleClearCharacters}
-                        >
-                          Clear Filter
-                        </Button>
-                      </Box>
-                      <Box sx={{ display: "flex" }}>
-                        <FormControl
-                          sx={{ m: 2 }}
-                          component="fieldset"
-                          variant="standard"
-                        >
-                          <FormLabel
-                            component="legend"
-                            style={{ textAlign: "left" }}
+                          <Button
+                            sx={{ marginRight: 2 }}
+                            size="small"
+                            startIcon={<ClearIcon />}
+                            id="clear-extensions"
+                            onClick={handleClearExtensions}
                           >
-                            Transform{" "}
+                            Clear
+                          </Button>
+                        </Box>
+                        {/* <TextField
+                          fullWidth
+                          id="ext-search"
+                          label="Filter..."
+                          variant="standard"
+                          value={vpFilterExtLeft}
+                          onChange={(e) => setVpFilterExtLeft(e.target.value)}
+                          sx={{ height: 50, marginBottom: 1 }}
+                        />
+                        <Box
+                          sx={{
+                            maxWidth: "100%",
+                            display: "flex",
+                            flexDirection: "row",
+                            alignItems: "left",
+                          }}
+                        >
+                          Check to select
+                        </Box> */}
+                        {customList(vpFilteredExtLeft)}
+
+                        {/* <LoadingButton
+                            onClick={handleLoadMoreExtensions}
+                            startIcon={<DownloadIcon />}
+                            loading={vpLoadingTldsDomains}
+                            loadingPosition="start"
+                            size="small"
+                          >
+                            <span>More extensions</span>
+                          </LoadingButton> */}
+                      </TabPanel>
+                      <TabPanel value="2">
+                        <Box
+                          sx={{
+                            maxWidth: "100%",
+                            display: "flex",
+                            flexDirection: "column",
+                          }}
+                        >
+                          <Button
+                            sx={{ alignSelf: "flex-end" }}
+                            size="small"
+                            startIcon={<ClearIcon />}
+                            id="clear-keywords"
+                            onClick={handleClearKeyWords}
+                          >
+                            Clear
+                          </Button>
+                        
+                          <Box sx={{ display: "flex" }}>
+                            <FormGroup>
+                              <FormControlLabel
+                                control={
+                                  <Checkbox
+                                    checked={vpHiremecom}
+                                    onChange={handleVpTransformChange}
+                                    name="vpHiremecom"
+                                  />
+                                }
+                                label="Transform"
+                              />
+                            </FormGroup>
                             <Tooltip
                               title={
                                 <div>
                                   <p>
-                                    Include results that transform your
-                                    keywords.
+                                    Try results that transform your keywords.
                                   </p>
                                   <p>
                                     {" "}
@@ -1059,102 +992,85 @@ const DomainPage: NextPage = () => {
                                 &#x24D8;
                               </span>
                             </Tooltip>
-                          </FormLabel>
-                          <FormGroup>
-                            <FormControlLabel
-                              control={
-                                <Checkbox
-                                  checked={vpHiremecom}
-                                  onChange={handleVpTransformChange}
-                                  name="vpHiremecom"
-                                />
-                              }
-                              label="Use Domain Hacks"
-                            />
-                            <FormControlLabel
-                              control={
-                                <Checkbox
-                                  checked={vpFlickercom}
-                                  onChange={handleVpTransformChange}
-                                  name="vpFlickercom"
-                                />
-                              }
-                              label="Drop Last Vowel"
-                            />
-                            <FormControlLabel
-                              control={
-                                <Checkbox
-                                  checked={vpToolcom}
-                                  onChange={handleVpTransformChange}
-                                  name="vpToolcom"
-                                />
-                              }
-                              label="Pluralize Nouns"
-                            />
-                          </FormGroup>
-                        </FormControl>
-                      </Box>
-                      <Box
-                        component="form"
-                        sx={{
-                          "& .MuiTextField-root": { m: 1, width: "25ch" },
-                        }}
-                        noValidate
-                        autoComplete="off"
-                      >
-                        <div>
-                          <TextField
-                            id="vpMinlength"
-                            label="Min length"
-                            type="number"
-                            variant="standard"
-                            InputLabelProps={{
-                              shrink: true,
+                          </Box>
+                          <Box
+                            component="form"
+                            sx={{
+                              "& .MuiTextField-root": { m: 1 },
                             }}
-                            value={vpMinlength}
-                            onChange={(e) =>
-                              setVpMinlength(parseInt(e.target.value, 10))
-                            }
-                          />
-                          <TextField
-                            id="vpMaxlength"
-                            label="Max length"
-                            type="number"
-                            variant="standard"
-                            InputLabelProps={{
-                              shrink: true,
-                            }}
-                            value={vpMaxlength}
-                            onChange={(e) =>
-                              setVpMaxlength(parseInt(e.target.value, 10))
-                            }
-                          />
-                        </div>
-                      </Box>
-                    </TabPanel>
-                  </TabContext>
+                            noValidate
+                            autoComplete="off"
+                          >
+                            <div>
+                              <TextField
+                                id="vpMaxlength"
+                                label="Max length"
+                                type="number"
+                                size="small"
+                                variant="standard"
+                                InputLabelProps={{
+                                  shrink: true,
+                                }}
+                                value={vpMaxlength}
+                                onChange={(e) =>
+                                  setVpMaxlength(parseInt(e.target.value, 10))
+                                }
+                              />
+                            </div>
+                          </Box>
+                          <Box
+                            mb={2}
+                            sx={{ textAlign: "left", marginTop: "20px" }}
+                          >
+                            <span className="text-sm">Contains</span>
+                            <TextField
+                              fullWidth
+                              id="vpContains"
+                              variant="standard"
+                              value={vpContains}
+                              onChange={(e) => setVpContains(e.target.value)}
+                            />
+                          </Box>
+                          <Box
+                            mb={2}
+                            sx={{ textAlign: "left", marginTop: "5px" }}
+                          >
+                            <span className="text-sm">Similar to</span>
+                            <TextField
+                              fullWidth
+                              id="vpSimilarToThisDomainName"
+                              variant="standard"
+                              value={vpSimilarToThisDomainName}
+                              onChange={(e) =>
+                                setVpSimilarToThisDomainName(e.target.value)
+                              }
+                            />
+                          </Box>
+                        </Box>
+                      </TabPanel>
+                    </TabContext>
                   </Box>
                 </Modal>
-                </Box>
+              </Box>
             </>
-          )}
-          <SignedOut>  
+          }
+          <SignedOut>
             <button
               className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
               onClick={() => openSignIn()}
             >
               Sign in / up
-            </button> 
+            </button>
           </SignedOut>
           <SignedIn>
-          {!loading &&           
-            <button
-              className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
-              onClick={(e) => generateDom(e)}
-            >
-              Create your domain &rarr;
-            </button>          
-            }
+            {!loading && (
+              <button
+                className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+                onClick={(e) => generateDom(e)}
+              >
+                Create your domain &rarr;
+              </button>
+            )}
             {loading && (
               <button
                 className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
@@ -1171,8 +1087,8 @@ const DomainPage: NextPage = () => {
           toastOptions={{ duration: 2000 }}
         />
         <hr className="h-px bg-gray-700 border-1 dark:bg-gray-700" />
-        {/*!loading && user && */(
-          <div className="space-y-10 my-10">
+        {
+          /*!loading && user && */ <div className="space-y-10 my-10">
             {domainfounded.length > 0 && (
               <>
                 <div>
@@ -1196,7 +1112,7 @@ const DomainPage: NextPage = () => {
               </>
             )}
           </div>
-        )}
+        }
       </main>
       {/* <Footer /> */}
     </div>
