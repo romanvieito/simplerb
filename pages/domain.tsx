@@ -124,7 +124,7 @@ const DomainPage: NextPage = () => {
   const { isLoaded, user, isSignedIn } = useUser();
   const { openSignIn } = useClerk();
 
-  const [vpTabIndex, setVpTabIndex] = useState("3");
+  const [vpTabIndex, setVpTabIndex] = useState("1");
   const handleVpTabIndexChange = (event: any, newValue: string) => {
     setVpTabIndex(newValue);
   };
@@ -358,14 +358,14 @@ const DomainPage: NextPage = () => {
     try {
       let prompt_extensions = "";
       if (vpExtChecked.length > 0)
-        prompt_extensions = `Please use these extensions: ${vpExtChecked.join(
+        prompt_extensions = `Please just use these extensions: ${vpExtChecked.join(
           ", "
         )}. `;
       let prompt_keywords = "";
       const conditions_keywords = [
         vpContains && `that contain ${vpContains}`,
-        vpStartsWith && `that start with ${vpStartsWith}`,
-        vpEndsWith && `that end with ${vpEndsWith}`,
+        // vpStartsWith && `that start with ${vpStartsWith}`,
+        // vpEndsWith && `that end with ${vpEndsWith}`,
         vpSimilarToThisDomainName && `similar to ${vpSimilarToThisDomainName}`,
       ].filter(Boolean);
       if (conditions_keywords.length > 1) {
@@ -379,10 +379,7 @@ const DomainPage: NextPage = () => {
 
       let prompt_character = "";
       const conditions_character = [
-        vpHiremecom && `use domain hacks like in hireme.com → hire.me`,
-        vpFlickercom &&
-          `drop last vowel of the domain name like in flicker.com → flickr.com`,
-        vpToolcom && `pluralize nouns like in tool.com → tools.com`,
+        vpHiremecom && `use domain hacks like in hireme.com → hire.me, or drop last vowel of the domain name like in flicker.com → flickr.com or pluralize nouns like in tool.com → tools.com`,
       ].filter(Boolean);
       if (conditions_character.length > 1) {
         const lastCondition = conditions_character.pop();
@@ -395,7 +392,7 @@ const DomainPage: NextPage = () => {
 
       let prompt_minmax = "";
       const conditions_minmax = [
-        vpMinlength && `min length: ${vpMinlength} characters`,
+        // vpMinlength && `min length: ${vpMinlength} characters`,
         vpMaxlength && `max length: ${vpMaxlength} characters`,
       ].filter(Boolean);
       switch (conditions_minmax.length) {
@@ -404,7 +401,7 @@ const DomainPage: NextPage = () => {
           prompt_minmax = `Character length does not include the domain extension (i.e. .com), make sure ${conditions_minmax[0]} and ${lastCondition}. `;
           break;
         case 1:
-          prompt_minmax = `Character length does not include the domain extension (i.e. .com), make sure ${conditions_minmax[0]}. `;
+          prompt_minmax = `Make sure ${conditions_minmax[0]}. `;
           break;
       }
 
@@ -881,11 +878,11 @@ const DomainPage: NextPage = () => {
                           onChange={handleVpTabIndexChange}
                           aria-label="Advanced Options"
                         >
-                          <Tab label="Extensions" value="3" />
+                          <Tab label="Extensions" value="1" />
                           <Tab label="Name" value="2" />
                         </TabList>
                       </Box>
-                      <TabPanel value="3">
+                      <TabPanel value="1">
                         <Box
                           sx={{
                             maxWidth: "100%",
