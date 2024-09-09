@@ -719,8 +719,24 @@ const DomainPage: NextPage = () => {
 
   const multipleCheckAvailability = async (domain: string[]) => {
     try {
+      // Check if running on localhost
+      const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+
+      if (isLocalhost) {
+        // Mock data for localhost
+        const mockData = domain.map(d => ({
+          domain: d,
+          available: Math.random() < 0.5, // Randomly set availability
+        }));
+
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        return mockData.filter(item => item.available);
+      }
+
+      // Actual API call for non-localhost environments
       const response = await fetch("/api/check-availability-godaddy", {
-        //"/api/check-availability-godaddy"
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -733,22 +749,15 @@ const DomainPage: NextPage = () => {
       }
 
       const data = await response.json();
-      let domainAvailability = [];
-      for (const item of data) {
-        if (item.available) {
-          domainAvailability.push(item);
-        }
-      }
+      let domainAvailability = data.filter(item => item.available);
 
       mixpanel.track("Multiple checked availability successful", {
-        // You can add properties to the event as needed
         domains: domainAvailability,
       });
 
       return domainAvailability;
     } catch (error: any) {
       mixpanel.track("Multiple checked availability with error", {
-        // You can add properties to the event as needed
         domain: domain,
         error: error,
       });

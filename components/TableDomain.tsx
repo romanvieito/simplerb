@@ -14,6 +14,7 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import SBRContext from "../context/SBRContext";
 import CPricing from "./CPricing";
+import Link from 'next/link';
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -417,6 +418,46 @@ const ButtonCheckSocials: React.FC<DomainInfoItem> = ({ dinfo, admin, email, cr,
     )    
 };
 
+const buttonStyle = "bg-blue-600 rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-gray-300 hover:text-black w-full";
+
+const ButtonCreateWebsite: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
+  const cleanDomainName = getCleanDomainName(dinfo);
+
+  return (
+    <Tooltip title={!dinfo.available ? "Create a website with this domain" : ""} disableHoverListener={dinfo.available}>
+      <span>
+        <Link href={`/web?domain=${encodeURIComponent(cleanDomainName)}`} passHref>
+          <button
+            className={buttonStyle}
+            disabled={!dinfo.available}
+          >
+            Create Website
+          </button>
+        </Link>
+      </span>
+    </Tooltip>
+  )    
+};
+
+const ButtonCreateAds: React.FC<DomainInfoItem> = ({ dinfo, admin }) => {
+  const cleanDomainName = getCleanDomainName(dinfo);
+
+  return (
+    <Tooltip title={!dinfo.available ? "Create ads for this domain" : ""} disableHoverListener={dinfo.available}>
+      <span>
+        <Link href={`/ads?domain=${encodeURIComponent(cleanDomainName)}`} passHref>
+          <button
+            className={buttonStyle}
+            disabled={!dinfo.available}
+          >
+            Create Ads
+          </button>
+        </Link>
+      </span>
+    </Tooltip>
+  )    
+};
+
 const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, email, functionDomainFounded, cred, functionCred }) => {
   
   const [open, setOpen] = React.useState(false);
@@ -580,8 +621,8 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, email, functionDo
                       row.available ? 
                       <>
                       <Box display="flex" justifyContent="flex-start">
-                        <div style={{ marginRight: "16px" }}><ButtonBuyDomain dinfo={row} admin={admin} email={email} cr={cred} functioncr={functionCred}/></div>
-                        <ButtonCheckSocials dinfo={row} admin={admin} email={email} cr={cred} functioncr={functionCred}/>    
+                        <div style={{ marginRight: "16px" }}><ButtonCreateWebsite dinfo={row} admin={admin} /></div>
+                        <ButtonCreateAds dinfo={row} admin={admin} />
                       </Box>              
                       </> : 
                       row.available === undefined && (subsTplan!=='CREATOR') ?
