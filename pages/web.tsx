@@ -180,7 +180,7 @@ const WebPage = () => {
     setIsUploading(true);
 
     try {
-      const response = await fetch('/api/save-information', {
+      const response = await fetch('/api/save-web-information', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
