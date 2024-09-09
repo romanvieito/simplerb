@@ -284,15 +284,6 @@ const ButtonCheckAvailability = ({ domain, domains, functiondf, plan } : { domai
 
   return (
     <div>
-      <Tooltip
-        title={
-          <div>
-            <p>Check domain availability</p>
-            <p><span>✔</span>: Available</p>
-            <p><span>❌</span>: Not available</p>
-          </div>
-        }
-      >
         <span>
           <button 
             className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-gray-300 hover:text-black w-full"
@@ -302,7 +293,6 @@ const ButtonCheckAvailability = ({ domain, domains, functiondf, plan } : { domai
             Check availability
           </button>          
         </span>
-      </Tooltip>
       <div>
         <Modal
           open={openPricing}
