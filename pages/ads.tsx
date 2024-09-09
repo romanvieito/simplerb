@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import Head from "next/head";
 import Image from "next/image";
+import Link from "next/link";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import { useClerk, SignedIn, SignedOut } from "@clerk/nextjs";
@@ -63,10 +64,16 @@ const AdsPage = () => {
 
       <Header/>
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4">
-        {/* <h1 className="max-w-[708px] font-bold text-slate-900">
-          Generate Your Google Ads
-        </h1> */}
-        <div className="max-w-xl w-full">
+        <div className="flex justify-center items-center w-full max-w-xl">
+          <Link href="/domain" className="text-black hover:text-gray-700 mr-auto">
+            ← Back
+          </Link>
+          <h1 className="sm:text-2xl text-1xl max-w-[708px] font-bold text-slate-900">
+            Generate Your Google Ads
+          </h1>
+          <div className="ml-auto w-8"></div> {/* This empty div balances the layout */}
+        </div>
+        <div className="max-w-xl w-full mt-6">
           <div className="flex mb-5 items-center space-x-3">
             <Image src="/1-black.png" width={30} height={30} alt="1 icon" />
             <p className="text-left font-medium">
@@ -124,7 +131,7 @@ const AdsPage = () => {
           </SignedIn>                   
         </div>
       </main>
-      {/* <Footer/>       */}
+      <Footer/>      
     </div>
   );
 };
