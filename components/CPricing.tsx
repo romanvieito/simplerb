@@ -125,11 +125,11 @@ export default function CPricing() {
                     </div>
                     <div className={styles.cardDescription}>
                     <ul>
-                        <li className={styles.ok}>Unlimited domains names</li>
+                        <li className={styles.ok}>Daily generation of 3 domain name sets</li>
                         <li className={styles.ok}>
                         Click to check domain availability
                         </li>
-                        <li className={styles.ok}>See domain rating</li>
+                        {/* <li className={styles.ok}>See domain rating</li> */}
                     </ul>
                     </div>
                     {subsTplan !== "FREE" ? (
@@ -235,7 +235,7 @@ export default function CPricing() {
                     <ul>
                         <li>Everything in starter, plus</li>
                         <li className={styles.ok}>
-                        Generate domains and websites with the latest AI model
+                        Attract customers with targeted ads
                         </li>
                         <li className={styles.ok}>Priority support (Chat and Email)</li>
                         <li className={styles.ok}>Premium features*</li>
@@ -273,7 +273,7 @@ export default function CPricing() {
                 </Box>
             </div>
 
-            <Box className="flex">
+            {/* <Box className="flex">
                 <div className={styles.card}>
                     <div className={styles.cardTitle}>
                     <p>Need more?</p>
@@ -297,7 +297,7 @@ export default function CPricing() {
                     </ul>
                     </div>
                 </div>
-            </Box>
+            </Box> */}
 
             <Snackbar
                 autoHideDuration={3000}
