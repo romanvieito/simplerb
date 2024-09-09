@@ -158,12 +158,12 @@ const WebPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Header/>
-      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
-        <h1 className="sm:text-6xl text-4xl max-w-[708px] font-bold text-slate-900">
+      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4">
+        {/* <h1 className="sm:text-6xl text-4xl max-w-[708px] font-bold text-slate-900">
           Website Generator
-        </h1>
+        </h1> */}
         <div className="max-w-xl w-full">
-          <div className="flex mt-10 items-center space-x-3">
+          {/* <div className="flex mt-10 items-center space-x-3">
             <Image
               src="/1-black.png"
               width={30}
@@ -181,9 +181,9 @@ const WebPage = () => {
             rows={1}
             className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
             placeholder={"e.g., SimplerB"}
-          />
+          /> */}
           <div className="flex mb-5 items-center space-x-3">
-            <Image src="/2-black.png" width={30} height={30} alt="1 icon" />
+            {/* <Image src="/2-black.png" width={30} height={30} alt="1 icon" /> */}
             <p className="text-left font-medium">
             Enter Your Business Description{" "}
             </p>
@@ -270,7 +270,7 @@ const WebPage = () => {
         </Dialog>       
         </div>        
       </main>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 };
