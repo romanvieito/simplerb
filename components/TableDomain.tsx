@@ -276,6 +276,12 @@ const ButtonCheckAvailability = ({ domain, domains, functiondf, plan } : { domai
 
   const closePricing = () => setOpenPricing(false);
 
+  const handleCheckAvailability = () => {
+    const cleanDomainName = domain.domain.replace(/^\d+\.\s*/, "");
+    const namecheapUrl = `https://www.namecheap.com/domains/registration/results/?domain=${cleanDomainName}`;
+    window.open(namecheapUrl, '_blank');
+  };
+
   return (
     <div>
       <Tooltip
@@ -290,75 +296,8 @@ const ButtonCheckAvailability = ({ domain, domains, functiondf, plan } : { domai
         <span>
           <button 
             className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-gray-300 hover:text-black w-full"
-            onClick={async () => {
-              if(plan==='STARTER' || plan==='CREATOR') {
-                try {
-                  setIsLoading(true);
-                  const result = await checkAvailability(domain.domain);
-                  setIsLoading(false);
-                  if(result === -1) {
-                    toast(
-                      (t) => (
-                        <div>
-                          <span>Failed to get data. Let's try again</span>
-                        </div>
-                      ),
-                      {
-                        icon: "🔴",
-                        duration: 5000,
-                      }
-                    );
-                  } else {
-                    toast(
-                      (t) => (
-                        <div>
-                          { result ? <>Domain available</> : <>Domain not available</>}
-                        </div>
-                      ),
-                      {
-                        icon: result ? "✔" : "❌",
-                        duration: 5000,
-                      }
-                    );             
-                    const updateDomain = [...domains];
-                    updateDomain.forEach(elem => {
-                      if (elem.domain === domain.domain) {
-                          elem.available = result;
-                      }
-                    });
-                    functiondf(updateDomain);
-                    saveDomainFounded(updateDomain);
-                  } 
-                } catch (error: any) {
-                  setIsLoading(false);
-                  toast(
-                    (t) => (
-                      <div>
-                        <span>{error}</span>
-                      </div>
-                    ),
-                    {
-                      icon: "🔴",
-                      duration: 5000,
-                    }
-                  );            
-                }
-              } else {
-                /*
-                toast(
-                  (t) => (
-                    <div>
-                      <span>This function is for the STARTER and CREATOR</span>
-                    </div>
-                  ),
-                  {
-                    icon: "🔴",
-                    duration: 5000,
-                  }
-                );*/ 
-                setOpenPricing(true);
-              }          
-            }}            
+            onClick={handleCheckAvailability}   
+            disabled={isLoading}         
             >
             Check availability
           </button>          
@@ -429,7 +368,7 @@ const ButtonBuyDomain: React.FC<DomainInfoItem> = ({ dinfo, admin, email, cr, fu
               }                  
             }
           }}
-        >Buy</button>            
+        >Get Domain</button>            
       </span>
     </Tooltip>      
     )
