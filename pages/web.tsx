@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useRef } from "react";
 import Head from "next/head";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
@@ -69,6 +69,9 @@ const WebPage = () => {
   const [loading, setLoading] = useState(false);
   const [textName, setTextName] = useState("");
   const [textDescription, setTextDescription] = useState("");
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [generatedSite, setGeneratedSite] = useState("");
 
@@ -151,6 +154,58 @@ const WebPage = () => {
     });
   };
 
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setUploadedImage(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      alert("Please select an image file.");
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  const sendInformationToBackend = async () => {
+    if (!textDescription.trim()) {
+      alert("Please enter a description.");
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const response = await fetch('/api/save-information', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          description: textDescription,
+          image: uploadedImage 
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save information');
+      }
+
+      const data = await response.json();
+      console.log('Information saved successfully:', data);
+      alert('Information saved successfully!');
+    } catch (error) {
+      console.error('Error saving information:', error);
+      alert('Failed to save information. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
       <Head>
@@ -163,38 +218,55 @@ const WebPage = () => {
           Website Generator
         </h1> */}
         <div className="max-w-xl w-full">
-          {/* <div className="flex mt-10 items-center space-x-3">
+          <div className="flex mb-1 items-center space-x-3">
             <Image
               src="/1-black.png"
               width={30}
               height={30}
               alt="1 icon"
-              className="mb-5 sm:mb-0"
+              className="mb-0"
             />
-            <p className="text-left font-medium">
-              Enter Your Business Name{" "}
-            </p>
-          </div>
-          <textarea
-            value={textName}
-            onChange={(e) => setTextName(e.target.value)}
-            rows={1}
-            className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
-            placeholder={"e.g., SimplerB"}
-          /> */}
-          <div className="flex mb-5 items-center space-x-3">
-            {/* <Image src="/2-black.png" width={30} height={30} alt="1 icon" /> */}
-            <p className="text-left font-medium">
-            Enter Your Business Description{" "}
-            </p>
+            <p className="text-left font-medium">Enter Your Website Description</p>
           </div>
           <textarea
             value={textDescription}
             onChange={(e) => setTextDescription(e.target.value)}
             rows={4}
-            className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-1"
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
             placeholder={"e.g., Boutique Coffee Shop, Personal Fitness"}
           />
+          
+          {/* Image upload section */}
+          <div className="flex mb-5 items-center space-x-3">
+            <Image
+              src="/2-black.png"
+              width={30}
+              height={30}
+              alt="1 icon"
+              className="mb-0"
+            />
+            <p className="text-left font-medium">Upload an image (optional)</p>
+          </div>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImageUpload}
+            accept="image/*"
+            style={{ display: 'none' }}
+          />
+          <button
+            className="bg-gray-200 rounded-md text-black font-medium px-4 py-2 mb-4 hover:bg-gray-300 w-full"
+            onClick={triggerFileInput}
+          >
+            {uploadedImage ? "Change image" : "Choose image"}
+          </button>
+          
+          {uploadedImage && (
+            <div className="mb-4">
+              <Image src={uploadedImage} alt="Uploaded image" width={200} height={200} objectFit="contain" />
+            </div>
+          )}
+          
           <SignedOut>  
             <button
               className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
@@ -205,21 +277,22 @@ const WebPage = () => {
           </SignedOut>
           <SignedIn>
           {!loading &&           
-            <button
-              className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
-              onClick={(e)=>generateWeb(e)}
-            >
-              Create website
-            </button>          
+             <button
+             className="bg-black text-white rounded-md font-medium px-4 py-2 mt-2 hover:bg-gray-800 w-full"
+             onClick={sendInformationToBackend}
+             disabled={isUploading}
+           >
+             {isUploading ? "Saving..." : "Send Information"}
+           </button>         
             }
-            {loading && (
+            {/* {loading && (
               <button
                 className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
                 disabled
               >
                 <LoadingDots color="white" style="large" />
               </button>
-            )}
+            )} */}
           </SignedIn>
         </div>
         <br/>        
@@ -270,7 +343,6 @@ const WebPage = () => {
         </Dialog>       
         </div>        
       </main>
-      {/* <Footer /> */}
     </div>
   );
 };
