@@ -1,5 +1,6 @@
 import React, { useState, useContext, useRef } from "react";
 import Head from "next/head";
+import Link from "next/link";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import {
@@ -214,10 +215,16 @@ const WebPage = () => {
       </Head>
       <Header/>
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4">
-        {/* <h1 className="sm:text-6xl text-4xl max-w-[708px] font-bold text-slate-900">
-          Website Generator
-        </h1> */}
-        <div className="max-w-xl w-full">
+        <div className="flex justify-center items-center w-full max-w-xl">
+          <Link href="/domain" className="text-black hover:text-gray-700 mr-auto">
+            ← Back
+          </Link>
+          <h1 className="sm:text-2xl text-1xl  max-w-[708px] font-bold text-slate-900">
+            Website Generator
+          </h1>
+          <div className="ml-auto w-8"></div> {/* This empty div balances the layout */}
+        </div>
+        <div className="max-w-xl w-full mt-10">
           <div className="flex mb-1 items-center space-x-3">
             <Image
               src="/1-black.png"
