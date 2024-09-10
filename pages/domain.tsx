@@ -776,9 +776,8 @@ const DomainPage: NextPage = () => {
       if (!response.ok) {
         throw new Error(`Error: ${response.statusText}`);
       }
-
       const data = await response.json();
-      let domainAvailability = data.filter(item => item.available);
+      let domainAvailability = data.filter((item: { available: boolean }) => item.available);
 
       mixpanel.track("Multiple checked availability successful", {
         domains: domainAvailability,
