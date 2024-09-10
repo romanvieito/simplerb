@@ -278,9 +278,15 @@ const ButtonCheckAvailability = ({ domain, domains, functiondf, plan } : { domai
   const closePricing = () => setOpenPricing(false);
 
   const handleCheckAvailability = () => {
+    
     const cleanDomainName = domain.domain.replace(/^\d+\.\s*/, "");
     const namecheapUrl = `https://www.namecheap.com/domains/registration/results/?domain=${cleanDomainName}`;
     window.open(namecheapUrl, '_blank');
+
+    mixpanel.track("Check Domain Availability", {
+      domain: cleanDomainName,
+      plan: plan
+    });
   };
 
   return (
