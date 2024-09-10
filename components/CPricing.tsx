@@ -1,17 +1,16 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext } from "react";
 import EmailModal from "./EmailModal";
 import styles from "../components/CardsPricing.module.css";
 import mixpanel from "../utils/mixpanel-config";
 import { useClerk, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
-import Snackbar from '@mui/joy/Snackbar';
+import Snackbar from "@mui/joy/Snackbar";
 import SBRContext from "../context/SBRContext";
 import { Box } from "@mui/material";
 
 export default function CPricing() {
-
   const context = useContext(SBRContext);
   if (!context) {
-    throw new Error('SBRContext must be used within a SBRProvider');
+    throw new Error("SBRContext must be used within a SBRProvider");
   }
   const { dataUser, subsTplan, setSubsTplan, setSubsCancel } = context;
 
@@ -19,68 +18,78 @@ export default function CPricing() {
   const [modalOpenLetsTalk, setModalOpenLetsTalk] = useState(false);
   const [openSuccess, setOpenSuccess] = useState(false);
   const [openDanger, setOpenDanger] = useState(false);
-  const [message, setMessage] = useState('');  
+  const [message, setMessage] = useState("");
   const { openSignIn } = useClerk();
 
-  const handleSubscriptionFreeClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleSubscriptionFreeClick = async (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
     if (!isLoaded || !user) {
-        openSignIn();
+      openSignIn();
     } else {
-        try {      
-        const substplan = 'FREE';
+      try {
+        const substplan = "FREE";
         const subscancel = false;
-    
+
         const data = {
-            substplan,
-            subscancel
+          substplan,
+          subscancel,
         };
-    
-        const resp = await fetch(`/api/user-subscription?email=${dataUser.email}`, {
+
+        const resp = await fetch(
+          `/api/user-subscription?email=${dataUser.email}`,
+          {
             method: "PUT",
             headers: {
-            "Content-Type": "application/json",
+              "Content-Type": "application/json",
             },
             body: JSON.stringify(data),
-        });
-    
+          }
+        );
+
         if (!resp.ok) {
-            setMessage("Network response was not ok. Failed to set users subscription");
-            setOpenDanger(true);
+          setMessage(
+            "Network response was not ok. Failed to set users subscription"
+          );
+          setOpenDanger(true);
         } else {
-            setMessage("FREE subscription success");
-            setOpenSuccess(true);
-            setSubsTplan('FREE');
-            setSubsCancel(false);
-            mixpanel.track("Subscription", {
-            plan_subscription: 'FREE',
-            });
+          setMessage("FREE subscription success");
+          setOpenSuccess(true);
+          setSubsTplan("FREE");
+          setSubsCancel(false);
+          mixpanel.track("Subscription", {
+            plan_subscription: "FREE",
+          });
         }
-        } catch (error) {
-            console.error("Subscription with error: ", error);
-            mixpanel.track("Subscription with error", {
-                plan_subscription: 'FREE',
-                error: error
-            });
-        }
+      } catch (error) {
+        console.error("Subscription with error: ", error);
+        mixpanel.track("Subscription with error", {
+          plan_subscription: "FREE",
+          error: error,
+        });
+      }
     }
-  }
+  };
 
   // Handler function to track the event when the button is clicked
-  const handleSubsStarterCreatorClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleSubsStarterCreatorClick = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
     // Prevent the form from submitting traditionally
     event.preventDefault();
-  
+
     // The Google Ads event snippet
-    window.gtag && window.gtag('event', 'conversion', {
-      'send_to': '16510475658/ZCyECJS9tqYZEIq758A9', // Your conversion ID and conversion label
-    });
+    window.gtag &&
+      window.gtag("event", "conversion", {
+        send_to: "16510475658/ZCyECJS9tqYZEIq758A9", // Your conversion ID and conversion label
+      });
 
     // Safely access the form and submit it
     const form = event.currentTarget.form;
 
     if (form) {
       const formData = new FormData(form); // Crea un objeto FormData con los datos del formulario
-      const tipo = formData.get('tipo');
+      const tipo = formData.get("tipo");
       mixpanel.track("Subscription", {
         plan_subscription: tipo?.toString(),
       });
@@ -92,8 +101,7 @@ export default function CPricing() {
   };
 
   const letsTalk = () => {
-    mixpanel.track("Lets Talk Click", {
-    });
+    mixpanel.track("Lets Talk Click", {});
     setModalOpenLetsTalk(true);
   };
 
@@ -102,178 +110,174 @@ export default function CPricing() {
   };
 
   return (
-        <div>
-            <div className={styles.pricingTitle}>
-            <h2 className="mt-12 font-medium" style={{ fontSize: 30 }}>
-                A perfect fit for creators and businesses owners
+    <div>
+      <div className={styles.pricingTitle}>
+        <h2 className="mt-12 font-medium" style={{ fontSize: 30 }}>
+          A perfect fit for creators and businesses owners
+        </h2>
+      </div>
+
+      <div className={styles.wrapperCard}>
+        <div className={styles.card}>
+          <div className={styles.cardTitle}>
+            <h3>Free</h3>
+            <h4>
+              For individuals who want to try out the most advanced AI domain
+              generator.
+            </h4>
+          </div>
+          <div className={styles.cardPrice}>
+            <h2>
+              <sup>$</sup>0<small>forever</small>
             </h2>
-            </div>
+          </div>
+          <div className={styles.cardDescription}>
+            <ul>
+              <li className={styles.ok}>
+                Daily generation of 3 domain name sets
+              </li>
+              <li className={styles.ok}>Click to check domain availability</li>
+              {/* <li className={styles.ok}>See domain rating</li> */}
+            </ul>
+          </div>
+          {subsTplan !== "FREE" ? (
+            <>
+              <div className={styles.cardAction}>
+                <button type="button" onClick={handleSubscriptionFreeClick}>
+                  Get free
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className={styles.cardTitle}>
+                <h3>subscribed</h3>
+              </div>
+            </>
+          )}
+        </div>
 
-            <div className={styles.wrapperCard}>
-                <div className={styles.card}>
-                    <div className={styles.cardTitle}>
-                    <h3>Free</h3>
-                    <h4>
-                        For individuals who want to try out the most advanced AI domain
-                        generator.
-                    </h4>
-                    </div>
-                    <div className={styles.cardPrice}>
-                    <h2>
-                        <sup>$</sup>0<small>forever</small>
-                    </h2>
-                    </div>
-                    <div className={styles.cardDescription}>
-                    <ul>
-                        <li className={styles.ok}>Daily generation of 3 domain name sets</li>
-                        <li className={styles.ok}>
-                        Click to check domain availability
-                        </li>
-                        {/* <li className={styles.ok}>See domain rating</li> */}
-                    </ul>
-                    </div>
-                    {subsTplan !== "FREE" ? (
-                    <>
-                        <div className={styles.cardAction}>
-                        <button type="button" onClick={handleSubscriptionFreeClick}>
-                            Get free
-                        </button>
-                        </div>
-                    </>
-                    ) : (
-                    <>
-                        <div className={styles.cardTitle}>
-                        <h3>subscribed</h3>
-                        </div>
-                    </>
-                    )}
-                </div>
-
-                <div className={`${styles.card} ${styles.popular}`}>
-                    <div className={styles.cardRibbon}>
-                    <span>most popular</span>
-                    </div>
-                    <div className={styles.cardTitle}>
-                    <h3>Starter</h3>
-                    <span className={styles.off}>First month 80% off</span>
-                    <h4>
-                        For hobbyists bringing ideas to life with AI by their side.
-                    </h4>
-                    </div>
-                    <div className={styles.cardPrice}>
-                    <h2>
-                        <sup>$</sup>
-                        <span className={styles.discountPrice}>5</span>
-                        <span className={styles.ml2}>
-                        <sup>$</sup>1<small>/month</small>
-                        </span>
-                    </h2>
-                    </div>
-                    <div className={styles.cardDescription}>
-                    <ul>
-                        <li>Everything in free, plus</li>
-                        <li className={styles.ok}>
-                        Generate only available domain names
-                        </li>
-                        <li className={styles.ok}>Website generator</li>
-                        <li className={styles.ok}>Support (Chat and Email)</li>
-                        <li className={styles.ok}>Premium features*</li>
-                    </ul>
-                    </div>
-                    {subsTplan !== "STARTER" ? (
-                    <>
-                        {/*!isLoaded || !user ? (
+        <div className={`${styles.card} ${styles.popular}`}>
+          <div className={styles.cardRibbon}>
+            <span>most popular</span>
+          </div>
+          <div className={styles.cardTitle}>
+            <h3>Starter</h3>
+            <span className={styles.off}>First month 80% off</span>
+            <h4>For hobbyists bringing ideas to life with AI by their side.</h4>
+          </div>
+          <div className={styles.cardPrice}>
+            <h2>
+              <sup>$</sup>
+              <span className={styles.discountPrice}>5</span>
+              <span className={styles.ml2}>
+                <sup>$</sup>1<small>/month</small>
+              </span>
+            </h2>
+          </div>
+          <div className={styles.cardDescription}>
+            <ul>
+              <li>Everything in free, plus</li>
+              <li className={styles.ok}>
+                Generate only available domain names
+              </li>
+              <li className={styles.ok}>Website generator</li>
+              <li className={styles.ok}>Attract customers with targeted ads</li>
+              <li className={styles.ok}>Support (Chat and Email)</li>
+            </ul>
+          </div>
+          {subsTplan !== "STARTER" ? (
+            <>
+              {
+                /*!isLoaded || !user ? (
                         <div className={styles.cardAction}>
                             <button type="button" onClick={() => openSignIn()}>
                             Get starter
                             </button>
                         </div>
-                        ) : */(
-                        <div className={styles.cardAction}>
-                            <form action="/api/checkout_sessions" method="POST">
-                            <input type="hidden" name="tipo" value='STARTER' />
-                            <button
-                                type="submit"
-                                onClick={handleSubsStarterCreatorClick}
-                            >
-                                Get starter
-                            </button>
-                            </form>
-                        </div>
-                        )}
-                    </>
-                    ) : (
-                    <>
-                        <div className={styles.cardTitle}>
-                        <h3>subscribed</h3>
-                        </div>
-                    </>
-                    )}
+                        ) : */ <div className={styles.cardAction}>
+                  <form action="/api/checkout_sessions" method="POST">
+                    <input type="hidden" name="tipo" value="STARTER" />
+                    <button
+                      type="submit"
+                      onClick={handleSubsStarterCreatorClick}
+                    >
+                      Get starter
+                    </button>
+                  </form>
                 </div>
+              }
+            </>
+          ) : (
+            <>
+              <div className={styles.cardTitle}>
+                <h3>subscribed</h3>
+              </div>
+            </>
+          )}
+        </div>
 
-                <Box className={styles.card}>
-                    <div className={styles.cardTitle}>
-                    <h3>Creator</h3>
-                    <span className={styles.off}>First month 50% off</span>
-                    <h4>
-                        For passionate creators building the apps they want to see in
-                        the world.
-                    </h4>
-                    </div>
-                    <div className={styles.cardPrice}>
-                    <h2>
-                        <sup>$</sup>
-                        <span className={styles.discountPrice}>22</span>
-                        <span className={styles.ml2}>
-                        <sup>$</sup>
-                        11
-                        <small>/month</small>
-                        </span>
-                    </h2>
-                    </div>
-                    <div className={styles.cardDescription}>
-                    <ul>
-                        <li>Everything in starter, plus</li>
-                        <li className={styles.ok}>
-                        Attract customers with targeted ads
-                        </li>
-                        <li className={styles.ok}>Priority support (Chat and Email)</li>
-                        <li className={styles.ok}>Premium features*</li>
-                    </ul>
-                    </div>
-                    {subsTplan !== "CREATOR" ? (
-                    <>
-                        {/*!isLoaded || !user ? (
+        <Box className={styles.card}>
+          <div className={styles.cardTitle}>
+            <h3>Creator</h3>
+            <span className={styles.off}>First month 50% off</span>
+            <h4>
+              For passionate creators building the apps they want to see in the
+              world.
+            </h4>
+          </div>
+          <div className={styles.cardPrice}>
+            <h2>
+              <sup>$</sup>
+              <span className={styles.discountPrice}>22</span>
+              <span className={styles.ml2}>
+                <sup>$</sup>
+                11
+                <small>/month</small>
+              </span>
+            </h2>
+          </div>
+          <div className={styles.cardDescription}>
+            <ul>
+              <li>Everything in starter, plus</li>
+              <li className={styles.ok}>Unlock our best AI model</li>
+              <li className={styles.ok}>Priority support (Phone)</li>
+              <li className={styles.ok}>Premium features*</li>
+            </ul>
+          </div>
+          {subsTplan !== "CREATOR" ? (
+            <>
+              {
+                /*!isLoaded || !user ? (
                         <div className={styles.cardAction}>
                             <button type="button" onClick={() => openSignIn()}>
                             Get creator
                             </button>
                         </div>
-                        ) : */(
-                        <div className={styles.cardAction}>
-                            <form action="/api/checkout_sessions" method="POST">
-                            <input type="hidden" name="tipo" value='CREATOR' />
-                            <button
-                                type="submit"
-                                onClick={handleSubsStarterCreatorClick}
-                            >
-                                Get creator
-                            </button>
-                            </form>
-                        </div>
-                        )}
-                    </>
-                    ) : (
-                    <>
-                        <div className={styles.cardTitle}>
-                        <h3>subscribed</h3>
-                        </div>
-                    </>
-                    )}
-                </Box>
-            </div>
+                        ) : */ <div className={styles.cardAction}>
+                  <form action="/api/checkout_sessions" method="POST">
+                    <input type="hidden" name="tipo" value="CREATOR" />
+                    <button
+                      type="submit"
+                      onClick={handleSubsStarterCreatorClick}
+                    >
+                      Get creator
+                    </button>
+                  </form>
+                </div>
+              }
+            </>
+          ) : (
+            <>
+              <div className={styles.cardTitle}>
+                <h3>subscribed</h3>
+              </div>
+            </>
+          )}
+        </Box>
+      </div>
 
-            {/* <Box className="flex">
+      {/* <Box className="flex">
                 <div className={styles.card}>
                     <div className={styles.cardTitle}>
                     <p>Need more?</p>
@@ -299,32 +303,32 @@ export default function CPricing() {
                 </div>
             </Box> */}
 
-            <Snackbar
-                autoHideDuration={3000}
-                anchorOrigin={{
-                    vertical: "top",
-                    horizontal: "center",
-                }}
-                open={openSuccess}
-                variant="soft"
-                color="success"
-                onClose={() => setOpenSuccess(false)}
-            >
-                {message}
-            </Snackbar>
-            <Snackbar
-                autoHideDuration={2500}
-                anchorOrigin={{
-                    vertical: "top",
-                    horizontal: "center",
-                }}
-                open={openDanger}
-                variant="soft"
-                color="danger"
-                onClose={() => setOpenDanger(false)}
-            >
-                {message}
-            </Snackbar>                        
-        </div>
+      <Snackbar
+        autoHideDuration={3000}
+        anchorOrigin={{
+          vertical: "top",
+          horizontal: "center",
+        }}
+        open={openSuccess}
+        variant="soft"
+        color="success"
+        onClose={() => setOpenSuccess(false)}
+      >
+        {message}
+      </Snackbar>
+      <Snackbar
+        autoHideDuration={2500}
+        anchorOrigin={{
+          vertical: "top",
+          horizontal: "center",
+        }}
+        open={openDanger}
+        variant="soft"
+        color="danger"
+        onClose={() => setOpenDanger(false)}
+      >
+        {message}
+      </Snackbar>
+    </div>
   );
-}        
+}
