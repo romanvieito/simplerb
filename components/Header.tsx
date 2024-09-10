@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button, Tooltip, Box } from "@mui/material";
+import StarIcon from '@mui/icons-material/Star';
 import { useClerk, SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
 import styles from "./Header.module.css";
 import mixpanel from "mixpanel-browser";
@@ -279,7 +280,10 @@ export default function Header(): JSX.Element {
                     role="link"
                     onClick={handleSubsStarterClick}
                   >
-                    Become a Member
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <StarIcon sx={{ mr: 0.2, fontSize: '1rem' }} />
+                      Become a Member
+                    </Box>
                   </Button>
                 </form>
                 <Box>
