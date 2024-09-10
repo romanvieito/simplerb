@@ -117,8 +117,6 @@ const DomainPage: NextPage = () => {
   }
   const { dataUser, credits, setCredits, admin, setAdmin, subsTplan } = context;
 
-  const bioRef = useRef<null | HTMLDivElement>(null);
-
   const [domainfounded, setDomainFounded] = useState<DomainInfo[]>([]);
 
   const { isLoaded, user, isSignedIn } = useUser();
@@ -335,12 +333,6 @@ const DomainPage: NextPage = () => {
       handleClearCharacters();
     }
   }, [isSignedIn]);
-
-  const scrollToBios = () => {
-    if (bioRef.current !== null) {
-      bioRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  };
 
   const countDomainToPrompt = admin
     ? stringGenerateCountDomain(COUNT_DOMAINS_TO_SEARCH_YES_ADMIN)
@@ -660,7 +652,8 @@ const DomainPage: NextPage = () => {
 
       setLoading(false);
       setNumberDomainsCreated(numberDomainsCreated + 3);
-      scrollToBios();
+      // bioRef.current?.scrollIntoView({ behavior: 'smooth' })
+
     } catch (error) {
       setLoading(false);
       console.error("An error occurred:", error);
@@ -1134,12 +1127,12 @@ const DomainPage: NextPage = () => {
             {domainfounded.length > 0 && (
               <>
                 <div>
-                  <h2
+                  {/* <h2
                     className="sm:text-4xl text-3xl font-bold text-slate-900 mx-auto"
                     ref={bioRef}
                   >
-                    {/* Domain suggestions: */}
-                  </h2>
+                    Domain suggestions:
+                  </h2> */}
                 </div>
                 <div>
                   <TableDomain

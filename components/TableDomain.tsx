@@ -142,7 +142,7 @@ const checkUserDomainFavorite = async (domain: DomainInfo, email: string) => {
     toast(
       (t) => (
         <div>
-          { favorite ? <>Check favorite</> : <>Uncheck favorite</>}
+          { favorite ? <>Save {namedomain} as favorite</> : <>Unchecked {namedomain} as favorite</>}
         </div>
       ),
       {
