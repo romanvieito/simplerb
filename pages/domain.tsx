@@ -562,6 +562,42 @@ const DomainPage: NextPage = () => {
       return;
     }*/
 
+    if (subsTplan !== "CREATOR" && subsTplan !== "PRO") {
+         // Check if user has exceeded the daily limit
+    const MAX_DAILY_GENERATIONS = 3;
+    const GENERATION_COOLDOWN = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+    const lastGenerations = JSON.parse(localStorage.getItem('lastGenerations') || '[]');
+    const now = Date.now();
+
+    // Remove generations older than 24 hours
+    const recentGenerations = lastGenerations.filter((timestamp: number) => now - timestamp < GENERATION_COOLDOWN);
+
+    if (recentGenerations.length >= MAX_DAILY_GENERATIONS) {
+      const oldestGeneration = Math.min(...recentGenerations);
+      const timeUntilNextGeneration = GENERATION_COOLDOWN - (now - oldestGeneration);
+      const hoursLeft = Math.ceil(timeUntilNextGeneration / (60 * 60 * 1000));
+
+      toast(
+        `You've reached the limit of ${MAX_DAILY_GENERATIONS} domain generations per day. Please subscribe or try again in ${hoursLeft} hours.`,
+        {
+          icon: "⏳",
+          style: {
+            border: "1px solid #FFA500",
+            padding: "16px",
+            color: "#FFA500",
+          },
+          duration: 10000,
+        }
+      );
+      return;
+    }
+
+    // Add current timestamp to generations
+    recentGenerations.push(now);
+    localStorage.setItem('lastGenerations', JSON.stringify(recentGenerations));
+      }
+
     setLoading(true);
 
     try {
