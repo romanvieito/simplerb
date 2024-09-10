@@ -134,7 +134,7 @@ export default function CPricing() {
           <div className={styles.cardDescription}>
             <ul>
               <li className={styles.ok}>
-                Daily generation of 3 domain name sets
+                Generate 3 domain sets per day
               </li>
               <li className={styles.ok}>Click to check domain availability</li>
               {/* <li className={styles.ok}>See domain rating</li> */}
@@ -163,7 +163,7 @@ export default function CPricing() {
           </div>
           <div className={styles.cardTitle}>
             <h3>Starter</h3>
-            <span className={styles.off}>First month 80% off</span>
+            <span className={styles.off}>80% OFF for the first 10 today!</span>
             <h4>For hobbyists bringing ideas to life with AI by their side.</h4>
           </div>
           <div className={styles.cardPrice}>
@@ -179,10 +179,10 @@ export default function CPricing() {
             <ul>
               <li>Everything in free, plus</li>
               <li className={styles.ok}>
-                Generate only available domain names
+                Generate only available domains
               </li>
               <li className={styles.ok}>Website generator</li>
-              <li className={styles.ok}>Attract customers with targeted ads</li>
+              <li className={styles.ok}>Get customers with quick ads</li>
               <li className={styles.ok}>Support (Chat and Email)</li>
             </ul>
           </div>
@@ -220,7 +220,7 @@ export default function CPricing() {
         <Box className={styles.card}>
           <div className={styles.cardTitle}>
             <h3>Creator</h3>
-            <span className={styles.off}>First month 50% off</span>
+            <span className={styles.off}>First 5 today save 50% – act fast!</span>
             <h4>
               For passionate creators building the apps they want to see in the
               world.
