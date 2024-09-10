@@ -499,7 +499,13 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, email, functionDo
         <Table stickyHeader aria-label="simple table">
           <TableHead>
             <TableRow>
-              <TableCell align="left"></TableCell>
+              <TableCell align="left">
+                      {subsTplan === 'CREATOR' || subsTplan === 'PRO' ? (
+                        <p className="text-lg mr-4 flex-1 font-bold">Best available domains:</p>
+                      ) : (
+                        <p className="text-lg font-bold mr-4 flex-1">Best possible domains</p>
+                      )}
+              </TableCell>
               {/* <TableCell align="center">
                 Status{" "}
                 {!admin && (
@@ -545,7 +551,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, email, functionDo
                       >
                         &#x24D8;
                       </span>
-                    </Tooltip> */}
+                    </Tooltip>
                     <Modal
                       open={open}
                       onClose={handleClose}
@@ -605,7 +611,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, email, functionDo
                           </p>
                         </Typography>
                       </Box>
-                    </Modal>
+                    </Modal> */}
                   </>
                 )}
               </TableCell>
@@ -621,8 +627,10 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, email, functionDo
                   <TableCell component="th" scope="row">
                     <section style={{ display: 'flex', alignItems: 'center' }}>
                       <CellDomain dinfo={row} admin={admin} />
-                      <CellFavorite domain={row} domains={rows} functiondf={functionDomainFounded} email={email}/>                      
+                      <CellFavorite domain={row} domains={rows} functiondf={functionDomainFounded} email={email}/>  
+                      {subsTplan !== 'CREATOR' && subsTplan !== 'PRO' && (
                       <SpanResultAvailability dinfo={row}/>
+                      )}                    
                     </section>
                     {
                       row.available ? 
