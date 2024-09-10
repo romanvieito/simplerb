@@ -114,7 +114,7 @@ const checkUserDomainFavorite = async (domain: DomainInfo, email: string) => {
     const namedomain = domain.domain;
     const available = domain.available;
     const favorite = domain.favorite;
-    const rate = domain.rate;
+    const rate = domain.rate ? domain.rate : -1;
     const users_id = userData.user.rows[0].id;
 
     const data = {
@@ -124,6 +124,7 @@ const checkUserDomainFavorite = async (domain: DomainInfo, email: string) => {
       rate,
       users_id
     };
+
 
     const resp2 = await fetch('/api/user-domainfavorite', {
       method: "PUT",
