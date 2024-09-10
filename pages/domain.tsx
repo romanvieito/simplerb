@@ -510,7 +510,7 @@ const DomainPage: NextPage = () => {
         const tempDomainAvailability = await multipleCheckAvailability(
           tempDomainNamesText
         );
-        tempDomainAvailability.map((domain) => {
+        tempDomainAvailability.forEach((domain: { domain: string; available: boolean }) => {
           domainNames.push({
             domain: domain.domain,
             available: domain.available,
