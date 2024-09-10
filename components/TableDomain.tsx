@@ -510,7 +510,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, email, functionDo
                 )}
               </TableCell> */}
               <TableCell align="center">
-                Rating{" "}
+                {/* Rating{" "} */}
                 {/*!admin ? (
                   <>
                     <Tooltip
@@ -525,7 +525,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, email, functionDo
                   </>
                 ) : */(
                   <>
-                    <Tooltip
+                    {/* <Tooltip
                       title={
                         <div>
                           <p>Click to learn about domain rating</p>
@@ -538,7 +538,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, email, functionDo
                       >
                         &#x24D8;
                       </span>
-                    </Tooltip>
+                    </Tooltip> */}
                     <Modal
                       open={open}
                       onClose={handleClose}

@@ -1130,7 +1130,7 @@ const DomainPage: NextPage = () => {
         />
         <hr className="h-px bg-gray-700 border-1 dark:bg-gray-700" />
         {
-          /*!loading && user && */ <div className="space-y-10 my-10">
+          /*!loading && user && */ <div className="space-y-4">
             {domainfounded.length > 0 && (
               <>
                 <div>
@@ -1138,7 +1138,7 @@ const DomainPage: NextPage = () => {
                     className="sm:text-4xl text-3xl font-bold text-slate-900 mx-auto"
                     ref={bioRef}
                   >
-                    Domain suggestions:
+                    {/* Domain suggestions: */}
                   </h2>
                 </div>
                 <div>
