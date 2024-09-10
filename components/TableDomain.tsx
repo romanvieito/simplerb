@@ -294,10 +294,13 @@ const ButtonCheckAvailability = ({ domain, domains, functiondf, plan } : { domai
     <div>
         <span>
           <button 
-            className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-gray-300 hover:text-black w-full"
+            className="bg-blue-600 rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-gray-300 hover:text-black w-full flex items-center justify-center"
             onClick={handleCheckAvailability}   
             disabled={isLoading}         
             >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+            </svg>
             Check availability
           </button>          
         </span>
@@ -514,7 +517,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({ rows, admin, email, functionDo
                       {subsTplan === 'CREATOR' || subsTplan === 'PRO' ? (
                         <p className="text-lg mr-4 flex-1 font-bold">Best available domains:</p>
                       ) : (
-                        <p className="text-lg font-bold mr-4 flex-1">Best possible domains</p>
+                        <p className="text-lg font-bold mr-4 flex-1">Best possible domains:</p>
                       )}
               </TableCell>
               {/* <TableCell align="center">
