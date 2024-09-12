@@ -384,133 +384,133 @@ const ButtonCheckAvailability = ({
   );
 };
 
-const ButtonBuyDomain: React.FC<DomainInfoItem> = ({
-  dinfo,
-  admin,
-  email,
-  cr,
-  functioncr,
-}) => {
-  /*return (
-        admin ? 
-        <>      
-        </> : 
-        <>
-        </>
-    )*/
-  return (
-    <Tooltip
-      title={!dinfo.available ? "Check its availability to buy it" : ""}
-      disableHoverListener={dinfo.available}
-    >
-      <span>
-        <button
-          className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-gray-300 hover:text-black w-full"
-          disabled={!dinfo.available}
-          onClick={async () => {
-            const d = getCleanDomainName(dinfo);
-            if (cr! > 0) {
-              functioncr((prevCredits: number) => prevCredits - 1);
-              try {
-                await setUserByEmail(cr! - 1, email!);
-                toast(
-                  (t) => (
-                    <div>
-                      Buy domain for <b>{d}</b> coming soon
-                    </div>
-                  ),
-                  {
-                    icon: "🔍",
-                  }
-                );
-                mixpanel.track("Buy domain", {
-                  domain: d,
-                });
-              } catch (error: any) {
-                toast(
-                  (t) => (
-                    <div>
-                      Error<b>{error}</b>
-                    </div>
-                  ),
-                  {
-                    icon: "🔴",
-                  }
-                );
-              }
-            }
-          }}
-        >
-          Get Domain
-        </button>
-      </span>
-    </Tooltip>
-  );
-};
+// const ButtonBuyDomain: React.FC<DomainInfoItem> = ({
+//   dinfo,
+//   admin,
+//   email,
+//   cr,
+//   functioncr,
+// }) => {
+//   /*return (
+//         admin ? 
+//         <>      
+//         </> : 
+//         <>
+//         </>
+//     )*/
+//   return (
+//     <Tooltip
+//       title={!dinfo.available ? "Check its availability to buy it" : ""}
+//       disableHoverListener={dinfo.available}
+//     >
+//       <span>
+//         <button
+//           className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-gray-300 hover:text-black w-full"
+//           disabled={!dinfo.available}
+//           onClick={async () => {
+//             const d = getCleanDomainName(dinfo);
+//             if (cr! > 0) {
+//               functioncr((prevCredits: number) => prevCredits - 1);
+//               try {
+//                 await setUserByEmail(cr! - 1, email!);
+//                 toast(
+//                   (t) => (
+//                     <div>
+//                       Buy domain for <b>{d}</b> coming soon
+//                     </div>
+//                   ),
+//                   {
+//                     icon: "🔍",
+//                   }
+//                 );
+//                 mixpanel.track("Buy domain", {
+//                   domain: d,
+//                 });
+//               } catch (error: any) {
+//                 toast(
+//                   (t) => (
+//                     <div>
+//                       Error<b>{error}</b>
+//                     </div>
+//                   ),
+//                   {
+//                     icon: "🔴",
+//                   }
+//                 );
+//               }
+//             }
+//           }}
+//         >
+//           Get Domain
+//         </button>
+//       </span>
+//     </Tooltip>
+//   );
+// };
 
-const ButtonCheckSocials: React.FC<DomainInfoItem> = ({
-  dinfo,
-  admin,
-  email,
-  cr,
-  functioncr,
-}) => {
-  /*return (
-        admin ? 
-        <>
-        </> : 
-        <>
-        </>
-    )*/
-  return (
-    <Tooltip
-      title={!dinfo.available ? "Check its availability to buy it" : ""}
-      disableHoverListener={dinfo.available}
-    >
-      <span>
-        <button
-          className="bg-white border border-black rounded-xl text-black font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-gray-300 w-full"
-          disabled={!dinfo.available}
-          onClick={async () => {
-            const d = getCleanDomainName(dinfo);
-            if (cr! > 0) {
-              functioncr((prevCredits: number) => prevCredits - 1);
-              try {
-                await setUserByEmail(cr! - 1, email!);
-                toast(
-                  (t) => (
-                    <div>
-                      Checking social networks for <b>{d}</b> coming soon
-                    </div>
-                  ),
-                  {
-                    icon: "🔍",
-                  }
-                );
-                mixpanel.track("Check Socials", {
-                  domain: d,
-                });
-              } catch (error: any) {
-                toast(
-                  (t) => (
-                    <div>
-                      Error<b>{error}</b>
-                    </div>
-                  ),
-                  {
-                    icon: "🔴",
-                  }
-                );
-              }
-            }
-          }}
-        >
-          Check Socials
-        </button>
-      </span>
-    </Tooltip>
-  );
-};
+// const ButtonCheckSocials: React.FC<DomainInfoItem> = ({
+//   dinfo,
+//   admin,
+//   email,
+//   cr,
+//   functioncr,
+// }) => {
+//   /*return (
+//         admin ? 
+//         <>
+//         </> : 
+//         <>
+//         </>
+//     )*/
+//   return (
+//     <Tooltip
+//       title={!dinfo.available ? "Check its availability to buy it" : ""}
+//       disableHoverListener={dinfo.available}
+//     >
+//       <span>
+//         <button
+//           className="bg-white border border-black rounded-xl text-black font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-gray-300 w-full"
+//           disabled={!dinfo.available}
+//           onClick={async () => {
+//             const d = getCleanDomainName(dinfo);
+//             if (cr! > 0) {
+//               functioncr((prevCredits: number) => prevCredits - 1);
+//               try {
+//                 await setUserByEmail(cr! - 1, email!);
+//                 toast(
+//                   (t) => (
+//                     <div>
+//                       Checking social networks for <b>{d}</b> coming soon
+//                     </div>
+//                   ),
+//                   {
+//                     icon: "🔍",
+//                   }
+//                 );
+//                 mixpanel.track("Check Socials", {
+//                   domain: d,
+//                 });
+//               } catch (error: any) {
+//                 toast(
+//                   (t) => (
+//                     <div>
+//                       Error<b>{error}</b>
+//                     </div>
+//                   ),
+//                   {
+//                     icon: "🔴",
+//                   }
+//                 );
+//               }
+//             }
+//           }}
+//         >
+//           Check Socials
+//         </button>
+//       </span>
+//     </Tooltip>
+//   );
+// };
 
 const buttonStyle =
   "bg-blue-600 rounded-xl text-white font-medium px-4 py-2 sm:mt-2 mt-2 hover:bg-gray-300 hover:text-black w-full";
