@@ -273,7 +273,7 @@ export default function Header(): JSX.Element {
                         padding: "3px", // Padding for screens sm and smaller
                       },
                       display:
-                        subsTplan && subsTplan !== "FREE" ? "none" : "block",
+                        (subsTplan && (subsTplan === "STARTER" || subsTplan === "CREATOR")) ? "none" : "block",
                     }}
                     type="submit"
                     variant="contained"

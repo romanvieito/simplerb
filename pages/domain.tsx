@@ -554,7 +554,7 @@ const DomainPage: NextPage = () => {
       return;
     }*/
 
-    if (subsTplan !== "CREATOR" && subsTplan !== "PRO") {
+    if (subsTplan !== "CREATOR" && subsTplan !== "STARTER") {
          // Check if user has exceeded the daily limit
     const MAX_DAILY_GENERATIONS = 3;
     const GENERATION_COOLDOWN = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
