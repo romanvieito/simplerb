@@ -609,7 +609,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({
     throw new Error("SBRContext must be used within a SBRProvider");
   }
   const { subsTplan } = context;
-console.log(subsTplan);
+
   // Calcular opciones dinámicas para filas por página
   const rowsPerPageOptions = [5, 10, 25].filter(
     (option) => option <= rows.length
@@ -636,7 +636,7 @@ console.log(subsTplan);
               <TableCell align="left">
                 {subsTplan === "CREATOR" || subsTplan === "STARTER" ? (
                   <p className="text-lg mr-4 flex-1 font-bold">
-                    Best available domains:
+                    Best domains (All availables):
                   </p>
                 ) : (
                   <p className="text-lg font-bold mr-4 flex-1">
@@ -775,7 +775,7 @@ console.log(subsTplan);
                         <SpanResultAvailability dinfo={row} />
                       )}
                     </section>
-                    {row.available ? (
+                    {row.available && (subsTplan === "CREATOR" || subsTplan === "STARTER") ? (
                       <>
                         <Box display="flex" justifyContent="flex-start">
                           <div style={{ marginRight: "16px" }}>
@@ -784,8 +784,7 @@ console.log(subsTplan);
                           <ButtonCreateAds dinfo={row} admin={admin} />
                         </Box>
                       </>
-                    ) : row.available === undefined &&
-                      subsTplan !== "CREATOR" ? (
+                    ) :  (
                       <>
                         <ButtonCheckAvailability
                           domain={row}
@@ -794,8 +793,6 @@ console.log(subsTplan);
                           plan={subsTplan}
                         />
                       </>
-                    ) : (
-                      <></>
                     )}
                   </TableCell>
                   <TableCell align="center">

@@ -105,43 +105,49 @@ export default function Header(): JSX.Element {
   // Function to fetch user credits by email
   const fetchCredits = async (email: string) => {
     try {
-      let userData = undefined;
-      while(true) {
-        const response = await fetch(`/api/getUser?email=${email}`);
-        if (!response.ok) {
-          throw new Error(
-            "Network response was not ok. Failed to get user email"
-          );
-        }
-        userData = await response.json();
-        if (userData.user.rows.length > 0) break;
+      const response = await fetch(`/api/getUser?email=${email}`);
+      console.log('Full response:', response);
+      if (!response.ok) {
+        const text = await response.text();
+        console.error(`Response status: ${response.status}, text: ${text}`);
+        throw new Error(`Network response was not ok. Status: ${response.status}`);
       }
-      setDataUser({
-        id: userData.user.rows[0].id,
-        name: userData.user.rows[0].name,
-        email: userData.user.rows[0].email
-      });      
-      setCredits(userData.user.rows[0].credits);
-      setAdmin(userData.user.rows[0].admin);
-      setSubsTplan(userData.user.rows[0].subs_tplan);
-      setSubsCancel(userData.user.rows[0].subs_cancel);
+      const userData = await response.json();
+      console.log('User data:', userData);
+      if (userData.user) {
+        setDataUser({
+          id: userData.user.id,
+          name: userData.user.name,
+          email: userData.user.email
+        });      
+        setCredits(userData.user.credits);
+        setAdmin(userData.user.admin);
+        setSubsTplan(userData.user.subs_tplan);
+        setSubsCancel(userData.user.subs_cancel);
+      }
     } catch (error) {
       console.error("Failed to fetch user credits:", error);
-    } finally {
     }
   };
 
-  useEffect(() => {
+  // Function to initialize header data
+  const initHeader = async () => {
     if (isLoaded && user) {
-      fetchCredits(user.emailAddresses[0].emailAddress || "");
-      // Set this to a unique identifier for the user performing the event.
-      mixpanel.identify(user.emailAddresses[0].emailAddress);     
-    } else {  
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (!isSignedIn && isSignedIn!==undefined) {
+      const email = user.emailAddresses[0].emailAddress;
+      if (email) {
+        try {
+          await fetchCredits(email);
+          mixpanel.identify(email);
+        } catch (error) {
+          console.error("Error initializing header data:", error);
+          // Removed toast.error as it's not defined in this context
+          console.warn("Failed to load user data. Please try refreshing the page.");
+        }
+      } else {
+        console.warn("User email not available");
+      }
+    } else if (isLoaded && !user) {
+      // Reset user data when not signed in
       setSubsTplan(null);
       setSubsCancel(null);
       setCredits(null);
@@ -153,7 +159,12 @@ export default function Header(): JSX.Element {
       setAdmin(false);
       resetSearch();
     }
-  }, [isSignedIn]);
+  };
+
+  useEffect(() => {
+    initHeader();
+  }, [isSignedIn, user]);
+
 
   return (
     <ThemeProvider theme={theme}>
@@ -273,7 +284,7 @@ export default function Header(): JSX.Element {
                         padding: "3px", // Padding for screens sm and smaller
                       },
                       display:
-                        (subsTplan && (subsTplan === "STARTER" || subsTplan === "CREATOR")) ? "none" : "block",
+                        (isSignedIn && (subsTplan === "STARTER" || subsTplan === "CREATOR")) ? "none" : "block",
                     }}
                     type="submit"
                     variant="contained"

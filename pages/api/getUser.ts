@@ -1,20 +1,31 @@
-
 import { sql } from '@vercel/postgres';
 import { NextApiResponse, NextApiRequest } from 'next';
- 
+
 export default async function handler(
   request: NextApiRequest,
   response: NextApiResponse,
 ) {
-  var user = null;
+  if (request.method !== 'GET') {
+    return response.status(405).json({ error: 'Method Not Allowed' });
+  }
+
   try {
     const email = request.query.email as string;
-    if (!email) throw new Error('Email required');
-    user = await sql`SELECT * FROM users WHERE email=${email}`;
+    if (!email) {
+      return response.status(400).json({ error: 'Email parameter is required' });
+    }
+
+    const result = await sql`SELECT * FROM users WHERE email=${email}`;
+
+    if (result.rowCount === 0) {
+      return response.status(404).json({ error: 'User not found' });
+    }
+
+    return response.status(200).json({ user: result.rows[0] });
   } catch (error) {
-    return response.status(500).json({ error });
+    console.error('Error in getUser API:', error);
+    return response.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
-  return response.status(200).json({ user });
 }
 
 // export default async function setCreditsUserById(req, res) {

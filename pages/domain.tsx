@@ -1099,7 +1099,7 @@ const DomainPage: NextPage = () => {
           <SignedIn>
             {!loading && (
               <button
-                className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+                className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-5 mt-3 hover:bg-black/80 w-full"
                 onClick={(e) => generateDom(e)}
               >
                 Create your domain &rarr;
@@ -1122,7 +1122,7 @@ const DomainPage: NextPage = () => {
         />
         <hr className="h-px bg-gray-700 border-1 dark:bg-gray-700" />
         {
-          /*!loading && user && */ <div className="space-y-4">
+          /*!loading && user && */ <div className="space-y-8">
             {domainfounded.length > 0 && (
               <>
                 <div>
