@@ -506,9 +506,14 @@ const DomainPage: NextPage = () => {
         .map((domain) => domain.replace(/^\d+\.\s*/, ""))
         .filter((domain) => domain);
 
+      // Trim whitespace from each domain name and limit to the specified count
+      const trimmedDomainNames = tempDomainNamesText
+        .map(domain => domain.trim())
+        .filter(domain => domain.length > 0)
+
       if (subsTplan === "CREATOR" || subsTplan === "STARTER") {
         const tempDomainAvailability = await multipleCheckAvailability(
-          tempDomainNamesText
+          trimmedDomainNames
         );
         tempDomainAvailability.forEach((domain: { domain: string; available: boolean }) => {
           domainNames.push({
@@ -518,7 +523,7 @@ const DomainPage: NextPage = () => {
           });
         });
       } else {
-        tempDomainNamesText.map((domain) => {
+        trimmedDomainNames.map((domain) => {
           domainNames.push({
             domain,
             available: undefined,
@@ -531,7 +536,6 @@ const DomainPage: NextPage = () => {
     } catch (error: any) {
       throw new Error(error);
     }
-
     return domainNames;
   };
 
