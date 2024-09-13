@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       
       console.log('Saved information to database:', result.rows[0].id);
       
-      res.status(200).json({ message: 'Information saved successfully. Please wait while we generate your website.' });
+      res.status(200).json({ message: 'Information saved. Please wait while we generate your website.' });
     } catch (error) {
       console.error('Error processing information:', error);
       res.status(500).json({ error: 'Failed to process information' });

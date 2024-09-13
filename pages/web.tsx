@@ -2,6 +2,7 @@ import React, { useState, useContext, useRef } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import Footer from "../components/Footer";
+import { Toaster, toast } from "react-hot-toast";
 import Header from "../components/Header";
 import {
   Box,
@@ -198,7 +199,19 @@ const WebPage = () => {
 
       const data = await response.json();
       console.log('Information saved successfully:', data);
-      alert('Information saved successfully!');
+      // toast.success('Information saved successfully! We will start generating your website.');
+      
+      toast(
+        "Success! We’ve saved your details and are now creating your website. Keep an eye on your email for further updates.",
+        {
+          icon: "🚀",
+          style: {
+            border: "1px solid #000",
+            padding: "16px",
+            color: "#000",
+          },
+        }
+      );
     } catch (error) {
       console.error('Error saving information:', error);
       alert('Failed to save information. Please try again.');
@@ -219,6 +232,11 @@ const WebPage = () => {
           <Link href="/domain" className="text-black hover:text-gray-700 mr-auto">
             ← Back
           </Link>
+          <Toaster
+            position="top-center"
+            reverseOrder={false}
+            toastOptions={{ duration: 5000 }}
+          />
           <h1 className="sm:text-2xl text-1xl  max-w-[708px] font-bold text-slate-900">
             Website Generator
           </h1>
