@@ -392,9 +392,9 @@ const ButtonCheckAvailability = ({
 //   functioncr,
 // }) => {
 //   /*return (
-//         admin ? 
-//         <>      
-//         </> : 
+//         admin ?
+//         <>
+//         </> :
 //         <>
 //         </>
 //     )*/
@@ -456,9 +456,9 @@ const ButtonCheckAvailability = ({
 //   functioncr,
 // }) => {
 //   /*return (
-//         admin ? 
+//         admin ?
 //         <>
-//         </> : 
+//         </> :
 //         <>
 //         </>
 //     )*/
@@ -661,22 +661,10 @@ const TableDomain: React.FC<DomainInfoArray> = ({
                 )}
               </TableCell> */}
               <TableCell align="center">
-                {/* Rating{" "} */}
+                Rating{" "}
                 {
-                  /*!admin ? (
                   <>
                     <Tooltip
-                      title={
-                        <div>
-                          <p>*{" "}Premium feature</p>
-                        </div>
-                      }
-                    >
-                      <span className="info-icon cursor-pointer">&#x24D8;</span>
-                    </Tooltip>
-                  </>
-                ) : */ <>
-                    {/* <Tooltip
                       title={
                         <div>
                           <p>Click to learn about domain rating</p>
@@ -749,7 +737,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({
                           </p>
                         </Typography>
                       </Box>
-                    </Modal> */}
+                    </Modal>
                   </>
                 }
               </TableCell>
@@ -775,7 +763,8 @@ const TableDomain: React.FC<DomainInfoArray> = ({
                         <SpanResultAvailability dinfo={row} />
                       )}
                     </section>
-                    {row.available && (subsTplan === "CREATOR" || subsTplan === "STARTER") ? (
+                    {row.available &&
+                    (subsTplan === "CREATOR" || subsTplan === "STARTER") ? (
                       <>
                         <Box display="flex" justifyContent="flex-start">
                           <div style={{ marginRight: "16px" }}>
@@ -784,7 +773,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({
                           <ButtonCreateAds dinfo={row} admin={admin} />
                         </Box>
                       </>
-                    ) :  (
+                    ) : (
                       <>
                         <ButtonCheckAvailability
                           domain={row}
