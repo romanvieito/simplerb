@@ -106,14 +106,12 @@ export default function Header(): JSX.Element {
   const fetchCredits = async (email: string) => {
     try {
       const response = await fetch(`/api/getUser?email=${email}`);
-      console.log('Full response:', response);
       if (!response.ok) {
         const text = await response.text();
         console.error(`Response status: ${response.status}, text: ${text}`);
         throw new Error(`Network response was not ok. Status: ${response.status}`);
       }
       const userData = await response.json();
-      console.log('User data:', userData);
       if (userData.user) {
         setDataUser({
           id: userData.user.id,
