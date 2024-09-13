@@ -512,6 +512,7 @@ const DomainPage: NextPage = () => {
         .filter(domain => domain.length > 0)
 
       if (subsTplan === "CREATOR" || subsTplan === "STARTER") {
+        console.log("trimmedDomainNames", trimmedDomainNames);
         const tempDomainAvailability = await multipleCheckAvailability(
           trimmedDomainNames
         );
