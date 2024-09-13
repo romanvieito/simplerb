@@ -896,6 +896,16 @@ const DomainPage: NextPage = () => {
                 variant="text"
                 onClick={() => {
                   handleOpen();
+                  mixpanel.track("Advanced Settings Click", {
+                    user_prompt: bio,
+                    vibe: vibe,
+                    credits: credits,
+                    extensions: vpExtChecked.join(","),
+                    keywords: {
+                      contains: vpContains,
+                      similarTo: vpSimilarToThisDomainName,
+                    }
+                  });
                 }}
                 sx={{ marginTop: 3 }}
               >
