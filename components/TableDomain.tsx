@@ -636,11 +636,11 @@ const TableDomain: React.FC<DomainInfoArray> = ({
               <TableCell align="left">
                 {subsTplan === "CREATOR" || subsTplan === "STARTER" ? (
                   <p className="text-lg mr-4 flex-1 font-bold">
-                    Best domains (All availables):
+                    Top Domains Available Now:
                   </p>
                 ) : (
                   <p className="text-lg font-bold mr-4 flex-1">
-                    Best possible domains:
+                    Best Possible Domains:
                   </p>
                 )}
               </TableCell>
