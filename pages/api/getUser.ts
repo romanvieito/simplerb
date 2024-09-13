@@ -22,9 +22,13 @@ export default async function handler(
     }
 
     return response.status(200).json({ user: result.rows[0] });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in getUser API:', error);
-    return response.status(500).json({ error: 'Internal Server Error', details: error.message });
+    if (error instanceof Error) {
+      return response.status(500).json({ error: 'Internal Server Error', details: error.message });
+    } else {
+      return response.status(500).json({ error: 'Internal Server Error', details: 'An unknown error occurred' });
+    }
   }
 }
 
