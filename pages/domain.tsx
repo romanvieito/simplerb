@@ -506,7 +506,7 @@ const DomainPage: NextPage = () => {
         .map((domain) => domain.replace(/^\d+\.\s*/, ""))
         .filter((domain) => domain);
 
-      if (subsTplan === "CREATOR") {
+      if (subsTplan === "CREATOR" || subsTplan === "STARTER") {
         const tempDomainAvailability = await multipleCheckAvailability(
           tempDomainNamesText
         );
@@ -534,6 +534,11 @@ const DomainPage: NextPage = () => {
 
     return domainNames;
   };
+
+
+  useEffect(() => {
+    console.log("jaja", domainfounded);
+  }, [domainfounded]);
 
   const generateDom = async (e: any) => {
     e.preventDefault();
