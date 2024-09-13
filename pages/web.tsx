@@ -181,6 +181,9 @@ const WebPage = () => {
 
     setIsUploading(true);
 
+    // Get the domain from the URL query parameter
+    const domain = typeof window !== 'undefined' ? new URL(window.location.href).searchParams.get('domain') || '' : '';
+
     try {
       const response = await fetch('/api/save-web-information', {
         method: 'POST',
@@ -189,7 +192,8 @@ const WebPage = () => {
         },
         body: JSON.stringify({ 
           description: textDescription,
-          image: uploadedImage 
+          image: uploadedImage,
+          domain: domain
         }),
       });
 

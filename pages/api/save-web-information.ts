@@ -4,7 +4,7 @@ import { sql } from '@vercel/postgres';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     try {
-      const { description, image } = req.body;
+      const { description, image, domain } = req.body;
       
       if (!description) {
         return res.status(400).json({ error: 'Description is required' });
@@ -12,8 +12,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       
       // Save the description and image to the database
       const result = await sql`
-        INSERT INTO website_info (description, image)
-        VALUES (${description}, ${image || null})
+        INSERT INTO website_info (description, image, domain)
+        VALUES (${description}, ${image || null}, ${domain})
         RETURNING id;
       `;
       
