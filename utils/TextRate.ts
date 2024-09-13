@@ -1,26 +1,28 @@
 import { DomainInfo, DomainRate, value_rate_for_save } from "./Definitions";
 
-export function convertTextRateToJson(data: string): DomainRate[] {
+export function jsonToAverageScore(data: string): DomainRate[] {
     const dr: DomainRate[] = [];
+    console.log('data:', data);
     try {
-        for (const item of data.split("\n\n")) {
-          const lines = item.split(/\r?\n/);
-          const domain = lines[0].split(" ").length > 0 ? lines[0].split(" ")[1] : lines[0]; 
-          const memorability = lines[1].split(": ").length > 0 ? parseInt(lines[1].split(": ")[1]) : -1;
-          const simplicity = lines[2].split(": ").length > 0 ? parseInt(lines[2].split(": ")[1]) : -1;
-          const brevity = lines[3].split(": ").length > 0 ? parseInt(lines[3].split(": ")[1]) : -1;
-          const averageScore = (memorability+simplicity+brevity)/3;
-          const data: DomainRate = {
-            domain: domain,
-            memorability: memorability,
-            simplicity: simplicity,
-            brevity: brevity,
-            averageScore: averageScore > 0 ? averageScore.toFixed(2) : '',
-          };
-          dr.push(data);
-        }        
+        const items = JSON.parse(data);
+        
+        for (const item of items) {
+            const memorability = item.memorability;
+            const simplicity = item.simplicity;
+            const brevity = item.brevity;
+            const averageScore = (memorability + simplicity + brevity) / 3;
+            
+            const domainRate: DomainRate = {
+                domain: item.domain,
+                memorability: memorability,
+                simplicity: simplicity,
+                brevity: brevity,
+                averageScore: averageScore.toFixed(2),
+            };
+            dr.push(domainRate);
+        }
     } catch (error: any) {
-        console.log(error);
+        console.error("Error parsing JSON:", error);
     }
     return dr;
 }

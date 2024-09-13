@@ -796,7 +796,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({
                     )}
                   </TableCell>
                   <TableCell align="center">
-                    <CellRate dinfo={row} admin={admin} />
+                    <CellRate dinfo={row} />
                   </TableCell>
                 </TableRow>
               ))}

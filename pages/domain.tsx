@@ -49,7 +49,7 @@ import { stringGenerateCountDomain } from "../utils/StringGenerateCountDomain";
 import TableDomain from "../components/TableDomain";
 import mixpanel from "../utils/mixpanel-config";
 import {
-  convertTextRateToJson,
+  jsonToAverageScore,
   addRateToDomainInfo,
   saveInDataBaseDomainRate,
 } from "../utils/TextRate";
@@ -663,6 +663,7 @@ const DomainPage: NextPage = () => {
     }
   };
 
+  //Rate the domain names
   const getDomainNamesWithRate = async (
     foundedomain: DomainInfo[],
     user_id: string
@@ -673,8 +674,8 @@ const DomainPage: NextPage = () => {
       .map((item, index) => `${index + 1}. ${item.domain}`)
       .join("\n");
 
-    const prompt = `Rate the following domain names based on three key criteria: Memorability, Simplicity, and Brevity. Each category should be scored on a scale from 0 to 10, where 0 indicates very poor and 10 means excellent.
-    Domain Names to Rate:
+    const prompt = `Rate the following domain names based on three key criteria: Memorability, Simplicity, and Brevity from 0 to 10. Return a JSON with this structure (avoid using any other text): [{"domain": "name", "memorability": 10, "simplicity": 10, "brevity": 10},{"domain": "x.com", "memorability": 7, "simplicity": 8, "brevity": 6}].
+    Domains:
       ${domainListText}`;
 
     const response = await fetch(isGPT ? "/api/openai" : "/api/mistral", {
@@ -735,7 +736,7 @@ const DomainPage: NextPage = () => {
 
       let jsonRate = null;
       try {
-        jsonRate = convertTextRateToJson(dataRate);
+        jsonRate = jsonToAverageScore(dataRate);
         resultDomainsRate = addRateToDomainInfo(resultDomainsRate, jsonRate);
         await saveInDataBaseDomainRate(resultDomainsRate, user_id);
       } catch (error) {
