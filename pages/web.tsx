@@ -284,7 +284,7 @@ const WebPage = () => {
             style={{ display: 'none' }}
           />
           <button
-            className="bg-gray-200 rounded-md text-black font-medium px-4 py-2 mb-4 hover:bg-gray-300 w-full"
+            className="bg-gray-200 rounded-md text-black font-medium px-4 py-2 mb-4 hover:bg-gray-300"
             onClick={triggerFileInput}
           >
             {uploadedImage ? "Change image" : "Choose image"}

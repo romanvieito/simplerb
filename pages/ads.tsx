@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
+import { Toaster, toast } from "react-hot-toast";
 import { useClerk, SignedIn, SignedOut } from "@clerk/nextjs";
 
 const AdsPage = () => {
@@ -48,6 +49,18 @@ const AdsPage = () => {
         // Handle error
         console.error('Failed to save ad information');
       }
+
+      toast(
+        "Success! We’ve saved your details and are now creating your ads. Keep an eye on your email for further updates.",
+        {
+          icon: "🚀",
+          style: {
+            border: "1px solid #000",
+            padding: "16px",
+            color: "#000",
+          },
+        }
+      );
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -68,6 +81,11 @@ const AdsPage = () => {
           <Link href="/domain" className="text-black hover:text-gray-700 mr-auto">
             ← Back
           </Link>
+          <Toaster
+            position="top-center"
+            reverseOrder={false}
+            toastOptions={{ duration: 5000 }}
+          />
           <h1 className="sm:text-2xl text-1xl max-w-[708px] font-bold text-slate-900">
             Generate Your Google Ads
           </h1>
