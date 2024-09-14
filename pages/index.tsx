@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import Head from "next/head";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
@@ -6,23 +6,26 @@ import { Box, Button, Tooltip } from "@mui/material";
 import { useClerk, SignedOut } from "@clerk/nextjs";
 import type { NextPage } from "next";
 
-import Card from '@mui/material/Card';
-import CardActions from '@mui/material/CardActions';
-import CardContent from '@mui/material/CardContent';
-import Typography from '@mui/material/Typography';
+import Card from "@mui/material/Card";
+import CardActions from "@mui/material/CardActions";
+import CardContent from "@mui/material/CardContent";
+import Typography from "@mui/material/Typography";
 
 const Home: NextPage = () => {
-
-  const pages = [{
-    name: 'Domain', 
-    link: '/domain'
-  }, {
-    name: 'Website Generator', 
-    link: '/web'
-  }, {
-    name: 'Ads Generator', 
-    link: '/ads'
-  }];
+  const pages = [
+    {
+      name: "Domain",
+      link: "/domain",
+    },
+    {
+      name: "Website Generator",
+      link: "/web",
+    },
+    {
+      name: "Ads Generator",
+      link: "/ads",
+    },
+  ];
 
   const { openSignIn } = useClerk();
 
@@ -35,12 +38,16 @@ const Home: NextPage = () => {
       <Header />
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4">
         <h1 className="sm:text-8xl text-6xl max-w-[708px] font-bold text-slate-900">
-          Launch Your Business in Just {" "}
+          Launch Your Business in Just{" "}
           <span className="text-blue-600">3 Clicks</span>
         </h1>
 
-        <h2 className="mt-9 sm:text-3xl text-xl" style={{ color: "rgba(0, 0, 0, 0.6)" }}>
-          It all starts with the right domain: Set your brand apart, build your website, and attract customers with targeted ads.
+        <h2
+          className="mt-9 sm:text-3xl text-xl"
+          style={{ color: "rgba(0, 0, 0, 0.6)" }}
+        >
+          It all starts with the right domain: Set your brand apart, build your
+          website, and attract customers with targeted ads.
         </h2>
 
         {/* <Button size="small" key={pages[0].name} href={pages[0].link}>
