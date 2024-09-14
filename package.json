@@ -28,6 +28,7 @@
     "git": "^0.1.5",
     "google-auth-library": "^9.14.1",
     "inngest": "^3.16.1",
+    "kaibanjs": "^0.4.1",
     "mailtrap": "^3.3.0",
     "micro": "^10.0.1",
     "micro-cors": "^0.1.1",
