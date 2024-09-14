@@ -24,14 +24,14 @@ export default function Footer() {
   return (
     <footer className="text-center w-full border-t flex sm:flex-row justify-between items-center p-4 ">
       <Box>
-        Made with ♥️ by{" "}
+        Made with ♥️ in{" "}
         <a
           href="https://adaved.com/"
           target="_blank"
           rel="noreferrer"
           className="font-bold hover:underline transition underline-offset-2"
         >
-          yai{" "}
+          Miami, FL{" "}
         </a>
       </Box>
       <Box className="flex items-center">

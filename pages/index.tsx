@@ -81,7 +81,7 @@ const Home: NextPage = () => {
             }
           />
         </div> */}
-        <div className="flex mt-20">
+        <div className="flex mt-10">
           <div className="mr-2">
             <a
               href={pages[0].link}
