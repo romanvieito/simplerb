@@ -196,7 +196,7 @@ export default function CPricing() {
           ) : (
             <>
               <div className={styles.cardTitle}>
-                <h3>subscribed</h3>
+                <h3>Your Plan!</h3>
               </div>
             </>
           )}
@@ -255,7 +255,7 @@ export default function CPricing() {
           ) : (
             <>
               <div className={styles.cardTitle}>
-                <h3>subscribed</h3>
+                <h3>Your Plan!</h3>
               </div>
             </>
           )}

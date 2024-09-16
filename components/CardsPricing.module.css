@@ -28,7 +28,7 @@
 }
 
 .card.popular .cardTitle h3 {
-    color: black;
+    color: rgba(0, 0, 0, 0.6);
     font-size: 22px;
 }
 
@@ -100,7 +100,7 @@
 }
 
 .cardTitle h3 {
-    color: black;
+    color: rgba(0, 0, 0, 0.6);
     font-size: 15px;
     text-transform: uppercase;
 }
