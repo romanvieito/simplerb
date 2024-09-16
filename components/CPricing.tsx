@@ -140,21 +140,6 @@ export default function CPricing() {
               {/* <li className={styles.ok}>See domain rating</li> */}
             </ul>
           </div>
-          {subsTplan !== "FREE" ? (
-            <>
-              <div className={styles.cardAction}>
-                <button type="button" onClick={handleSubscriptionFreeClick}>
-                  Get free
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className={styles.cardTitle}>
-                <h3>subscribed</h3>
-              </div>
-            </>
-          )}
         </div>
 
         <div className={`${styles.card} ${styles.popular}`}>
