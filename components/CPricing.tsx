@@ -110,7 +110,7 @@ export default function CPricing() {
   };
 
   return (
-    <div style={{ marginTop: -60 }}>
+    <div style={{ marginTop: -10 }}>
       <div className={styles.pricingTitle}>
         <h2 className="font-medium" style={{ fontSize: 30 }}>
           A perfect fit for creators and businesses owners

@@ -34,8 +34,10 @@ export default function AIWebCreatorPage() {
           <p className="mt-4 text-gray-600">No coding, no design skills needed. Our AI does all the work for you.</p>
         </div>
         
-        <CPricing/>
-        <CFAQ/>
+        <div className="mt-16">
+          <CPricing />
+          <CFAQ />
+        </div>
       </main>
       <Footer />
     </div>
