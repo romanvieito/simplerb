@@ -227,7 +227,7 @@ const WebPage = () => {
   return (
     <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
       <Head>
-        <title>Website Generator</title>
+        <title>Website Creator</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Header/>
@@ -242,7 +242,7 @@ const WebPage = () => {
             toastOptions={{ duration: 5000 }}
           />
           <h1 className="sm:text-2xl text-1xl  max-w-[708px] font-bold text-slate-900">
-            Website Generator
+            Website Creator
           </h1>
           <div className="ml-auto w-8"></div> {/* This empty div balances the layout */}
         </div>
