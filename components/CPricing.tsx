@@ -181,7 +181,7 @@ export default function CPricing() {
               <li className={styles.ok}>
                 Generate only available domains
               </li>
-              <li className={styles.ok}>Website generator</li>
+              <li className={styles.ok}>Website creator</li>
               <li className={styles.ok}>Get customers with quick ads</li>
               <li className={styles.ok}>Support (Chat and Email)</li>
             </ul>

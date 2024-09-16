@@ -233,9 +233,9 @@ const WebPage = () => {
       <Header/>
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4">
         <div className="flex justify-center items-center w-full max-w-xl">
-          <Link href="/domain" className="text-black hover:text-gray-700 mr-auto">
+          {/* <Link href="/domain" className="text-black hover:text-gray-700 mr-auto">
             ← Back
-          </Link>
+          </Link> */}
           <Toaster
             position="top-center"
             reverseOrder={false}
