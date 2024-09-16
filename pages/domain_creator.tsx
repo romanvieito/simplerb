@@ -22,7 +22,7 @@ export default function AIWebCreatorPage() {
         </p>
         <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
           <a
-            href="/web"
+            href="/domain"
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
           >
             Get Started <span className="inline-block ml-2">➔</span>
