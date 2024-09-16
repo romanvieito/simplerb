@@ -10,6 +10,7 @@ import Card from '@mui/material/Card';
 import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
+import CPricing from '../components/CPricing';
 
 const Home: NextPage = () => {
 
@@ -33,7 +34,7 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Header />
-      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4">
+      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
         <h1 className="sm:text-6xl text-5xl max-w-[708px] font-bold text-slate-900">
           Launch Your Business in Just {" "}
           <span className="text-blue-600">3 Clicks</span>
@@ -43,44 +44,6 @@ const Home: NextPage = () => {
           It all starts with the right domain: Set your brand apart, build your website, and attract customers with targeted ads.
         </h2>
 
-        {/* <Button size="small" key={pages[0].name} href={pages[0].link}>
-          Create Domain
-        </Button> */}
-
-        {/* <div className="max-w-xl w-full">
-          <div className="flex mt-10 items-center space-x-3">
-            <Image
-              src="/1-black.png"
-              width={30}
-              height={30}
-              alt="1 icon"
-              className="mb-5 sm:mb-0"
-            />
-            <p className="text-left font-medium">
-              Let's Start Generating Your Business Domain{" "}
-              <Tooltip
-                title={
-                  <div>
-                    <p>
-                      Type the main focus of your business or hobby. This helps
-                      us suggest a domain that's just right for you
-                    </p>
-                  </div>
-                }
-              >
-                <span className="info-icon cursor-pointer">&#x24D8;</span>
-              </Tooltip>
-            </p>
-          </div>
-          <textarea
-            value=""
-            rows={4}
-            className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
-            placeholder={
-              "Enter Your Business or Hobby. E.g., Boutique Coffee Shop, Personal Fitness"
-            }
-          />
-        </div> */}
         <div className="flex mt-10">
           <div className="mr-2">
             <a
@@ -101,6 +64,30 @@ const Home: NextPage = () => {
             </div>
           </SignedOut>
         </div>
+
+        <div className="flex flex-wrap justify-center mt-16 gap-8">
+          {pages.map((page, index) => (
+            <div key={index} className="w-64 p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
+              <h3 className="text-xl font-semibold mb-4">{page.name}</h3>
+              <p className="text-gray-600 mb-6">
+                {page.name === 'Domain' && 'Find the right domain for your brand.'}
+                {page.name === 'Website Generator' && 'Create a faster website in seconds.'}
+                {page.name === 'Ads Generator' && 'Try quick ads to attract customers.'}
+              </p>
+              <a
+                href={page.link}
+                className="bg-black text-white font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-300"
+              >
+                Try {page.name}
+              </a>
+            </div>
+          ))}
+        </div>
+        
+        <div className="mt-16">
+          <CPricing />
+        </div>
+        
       </main>
       <Footer />
     </div>
