@@ -83,6 +83,26 @@ const Home: NextPage = () => {
             </div>
           ))}
         </div>
+
+        <div className="mt-16 w-full max-w-3xl">
+          <h2 className="text-3xl font-semibold mb-8">See How It Works</h2>
+          <div className="relative" style={{ paddingBottom: '56.25%', height: 0 }}>
+            <video 
+              className="absolute top-0 left-0 w-full h-full rounded-lg shadow-lg"
+              controls
+              autoPlay
+              muted
+              loop
+              poster="/video-thumbnail.jpg"
+            >
+              <source src="/simplerB.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          <p className="mt-4 text-gray-600">
+            Watch our quick demo to see how easy it is to launch your business with our platform.
+          </p>
+        </div>
         
         <div className="mt-16">
           <CPricing />
