@@ -273,6 +273,7 @@ export default function Header(): JSX.Element {
                 <form action="/api/checkout_sessions" method="POST">
                   <input type="hidden" name="tipo" value="STARTER" />
                   <Button
+                    className="bg-black cursor-pointer hover:bg-black/80 rounded-xl"
                     style={{ textTransform: "none" }}
                     sx={{
                       "@media (max-width:600px)": {

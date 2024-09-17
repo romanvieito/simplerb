@@ -48,7 +48,7 @@ const Home: NextPage = () => {
           <div className="mr-2">
             <a
               href={pages[0].link}
-              className="bg-blue-600 cursor-pointer rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-gray/80 w-full"
+              className="bg-blue-600 cursor-pointer rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-blue-700 w-full"
             >
               Get Started
             </a>
@@ -76,7 +76,7 @@ const Home: NextPage = () => {
               </p>
               <a
                 href={page.link}
-                className="bg-black text-white font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-300"
+                className="bg-blue-600 text-white font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-300"
               >
                 Try {page.name}
               </a>
