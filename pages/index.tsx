@@ -134,7 +134,7 @@ const Home: NextPage = () => {
       <section className="w-full bg-white py-16">
         <Container maxWidth="lg">
           {/* <h2 className="text-3xl font-semibold mb-8 text-center">Choose Your Plan</h2> */}
-      <CFAQ />
+        <CFAQ />
         </Container>
       </section>
       <Footer />
