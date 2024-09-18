@@ -89,45 +89,45 @@ const WebPage = () => {
   const generateWeb = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     
-    let hardcodedHTML = '';
-    //-------------------------------------------------------------------------------------------------
-    const prompt = `Claude: Your task is to create a one-page website based on the given specifications, delivered as an HTML file with embedded JavaScript and CSS. The website should incorporate a variety of engaging and interactive design features, such as drop-down menus, dynamic text and content, clickable buttons, and more. Ensure that the design is visually appealing, responsive, and user-friendly. The HTML, CSS, and JavaScript code should be well-structured, efficiently organized, and properly commented for readability and maintainability.
-    Create a one-page website for an online business website called ${textName} with the features and sections you believe match the client's business description. Just return the code, nothing else.
-    Client's business description: ${textDescription}`;
-
     setLoading(true);
 
-    const response = await fetch("/api/anthropic", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        prompt
-      }),
-    });
+    const prompt = `Create a simple landing page for an online business with the following description: ${textDescription}. The website should be visually appealing, responsive, and include interactive elements. Just return the code, nothing else.`;
 
-    if (!response.ok) {
+    try {
+      const response = await fetch("/api/anthropic", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+
+      const result = await response.json();
+      console.log("API Response:", result); // Log the entire response for debugging
+
+      // Check if the expected data structure exists
+      if (result.data && result.data.content && result.data.content[0] && result.data.content[0].text) {
+        const generatedHTML = result.data.content[0].text;
+        setGeneratedSite(generatedHTML);
+        setOpenWebSite(true);
+
+        mixpanel.track("Web Generated", {
+          textName: textName,
+          textDescription: textDescription,
+        });
+      } else {
+        throw new Error("Unexpected response structure from API");
+      }
+    } catch (error) {
+      console.error("Error generating website:", error);
+      toast.error("Failed to generate website. Please try again.");
+    } finally {
       setLoading(false);
-      throw new Error(response.statusText);
     }
-
-    const result = await response.json();
-
-    setLoading(false);
-
-    //console.log('View anthropic:', result.data.content[0].text);    
-
-    if(result) hardcodedHTML = result.data.content[0].text;
-
-    setGeneratedSite(hardcodedHTML);
-
-    setOpenWebSite(true);
-
-    mixpanel.track("Web Generated", {
-      textName: textName,
-      textDescription: textDescription,
-    });
   };
 
   const showPricing = () => {
@@ -206,12 +206,11 @@ const WebPage = () => {
       // toast.success('Information saved successfully! We will start generating your website.');
       
       toast(
-        "Success! We’ve saved your details and are now creating your website. Keep an eye on your email for further updates.",
+        "Success! We've saved your details and are now creating your website. Keep an eye on your email for further updates.",
         {
           icon: "🚀",
           style: {
             border: "1px solid #000",
-            padding: "16px",
             color: "#000",
           },
         }
@@ -308,7 +307,7 @@ const WebPage = () => {
           {!loading &&           
              <button
              className="bg-black text-white rounded-md font-medium px-4 py-2 mt-2 hover:bg-gray-800 w-full"
-             onClick={sendInformationToBackend}
+             onClick={generateWeb}
              disabled={isUploading}
            >
              {isUploading ? "Saving..." : "Send Information"}
@@ -346,7 +345,7 @@ const WebPage = () => {
           onClose={closeWebSite}
           TransitionComponent={Transition}
         >
-          <AppBar sx={{ position: 'relative', backgroundColor: 'black' }}>
+          <AppBar sx={{ position: 'relative', backgroundColor: 'gray' }}>
             <Toolbar>
               <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
                 <IconButton
@@ -358,7 +357,7 @@ const WebPage = () => {
                   <CloseIcon />
                 </IconButton>
                 <Typography sx={{ ml: 2 }} variant="h6" component="div">
-                  Generated Website Preview
+                  Preview
                 </Typography>
               </Box>
               <Button autoFocus color="inherit" onClick={downloadCode}>

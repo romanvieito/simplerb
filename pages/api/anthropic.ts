@@ -25,7 +25,7 @@ export default async function handler (
     
     try {
       const message = await anthropic.messages.create({
-        model: 'claude-3-haiku-20240307',
+        model: 'claude-3-5-sonnet-20240620',
         max_tokens: 4096,
         messages: [
           {"role": "user", "content": prompt }
@@ -34,6 +34,7 @@ export default async function handler (
 
       return res.status(200).json({ data: message });
     } catch (error) {
-      return res.status(500).json({ error: error });
+      console.error("Anthropic API error:", error);
+      return res.status(500).json({ error: error.message || "An error occurred while generating the website" });
     }    
 };
