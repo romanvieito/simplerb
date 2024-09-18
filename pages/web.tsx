@@ -264,7 +264,7 @@ const WebPage = () => {
             placeholder={"e.g., Boutique Coffee Shop, Personal Fitness"}
           />
           
-          {/* Image upload section */}
+          {/* Image upload section
           <div className="flex mb-5 items-center space-x-3">
             <Image
               src="/2-black.png"
@@ -294,7 +294,7 @@ const WebPage = () => {
               <Image src={uploadedImage} alt="Uploaded image" width={200} height={200} objectFit="contain" />
             </div>
           )}
-          
+           */}
           <SignedOut>  
             <button
               className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
@@ -308,19 +308,19 @@ const WebPage = () => {
              <button
              className="bg-black text-white rounded-md font-medium px-4 py-2 mt-2 hover:bg-gray-800 w-full"
              onClick={generateWeb}
-             disabled={isUploading}
+             disabled={loading}
            >
-             {isUploading ? "Saving..." : "Send Information"}
+             {loading ? "Saving..." : "Create Website"}
            </button>         
             }
-            {/* {loading && (
+            {loading && (
               <button
                 className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
                 disabled
               >
                 <LoadingDots color="white" style="large" />
               </button>
-            )} */}
+            )}
           </SignedIn>
         </div>
         <br/>        
@@ -361,6 +361,9 @@ const WebPage = () => {
                 </Typography>
               </Box>
               <Button autoFocus color="inherit" onClick={downloadCode}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 inline-block" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
                 Download Code
               </Button>
             </Toolbar>
