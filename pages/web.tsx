@@ -88,40 +88,42 @@ const WebPage = () => {
 
   const generateWeb = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
-    
     setLoading(true);
 
-    const prompt = `Create a simple landing page for an online business with the following description: ${textDescription}. The website should be visually appealing, responsive, and include interactive elements. Just return the code, nothing else.`;
-
     try {
-      const response = await fetch("/api/anthropic", {
+      // Designer Agent
+      const designerPrompt = `As a web designer, create a visually appealing layout for a landing page with the following description: ${textDescription}. Focus on the structure, color scheme, and overall visual elements. Provide a high-level HTML structure with placeholder content. Return only the code, nothing else.`;
+
+      const designerResponse = await fetch("/api/anthropic", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: designerPrompt }),
       });
 
-      if (!response.ok) {
-        throw new Error(response.statusText);
-      }
+      if (!designerResponse.ok) throw new Error(designerResponse.statusText);
+      const designerResult = await designerResponse.json();
+      const designLayout = designerResult.data.content[0].text;
 
-      const result = await response.json();
-      console.log("API Response:", result); // Log the entire response for debugging
+      // Developer Agent
+      const developerPrompt = `As a web developer, enhance the following HTML structure with interactive elements and responsive design. Add appropriate CSS and JavaScript to make the page functional and engaging: ${designLayout}. Return only the code, nothing else.`;
 
-      // Check if the expected data structure exists
-      if (result.data && result.data.content && result.data.content[0] && result.data.content[0].text) {
-        const generatedHTML = result.data.content[0].text;
-        setGeneratedSite(generatedHTML);
-        setOpenWebSite(true);
+      const developerResponse = await fetch("/api/anthropic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: developerPrompt }),
+      });
 
-        mixpanel.track("Web Generated", {
-          textName: textName,
-          textDescription: textDescription,
-        });
-      } else {
-        throw new Error("Unexpected response structure from API");
-      }
+      if (!developerResponse.ok) throw new Error(developerResponse.statusText);
+      const developerResult = await developerResponse.json();
+      const finalWebsite = developerResult.data.content[0].text;
+
+      setGeneratedSite(finalWebsite);
+      setOpenWebSite(true);
+
+      mixpanel.track("Web Generated", {
+        textName: textName,
+        textDescription: textDescription,
+      });
     } catch (error) {
       console.error("Error generating website:", error);
       toast.error("Failed to generate website. Please try again.");
