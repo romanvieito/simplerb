@@ -24,7 +24,7 @@ export default function AIWebCreatorPage() {
         
         <div className="mt-16">
           <h2 className="text-3xl font-semibold mb-8">How It Works</h2>
-          <p className="text-xl mb-4">The Easiest Website Generator in the World</p>
+          <p className="text-xl mb-4">The Easiest Website Creator in the World</p>
           <div className="flex items-center justify-center">
             <div className="bg-gray-100 rounded-full p-4 mr-4">
               <span className="text-2xl font-bold">1</span>
