@@ -11,6 +11,7 @@ import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import CPricing from '../components/CPricing';
+import CFAQ from '../components/CFAQ';
 
 const Home: NextPage = () => {
 
@@ -68,26 +69,28 @@ const Home: NextPage = () => {
         </Container>
       </section>
 
-      {/* Features Section */}
+      {/* Features Section (Our Services) */}
       <section className="w-full bg-gray-100 py-16">
         <Container maxWidth="lg">
           <h2 className="text-3xl font-semibold mb-12 text-center">Our Services</h2>
-          <Grid container spacing={4}>
+          <Grid container spacing={4} justifyContent="center">
             {pages.map((page, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
+              <Grid item xs={12} sm={6} md={4} key={index} className="flex justify-center">
                 <div className="w-64 p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
-                  <h3 className="text-xl font-semibold mb-4">{page.name}</h3>
-                  <p className="text-gray-600 mb-6">
+                  <h3 className="text-xl font-semibold mb-4 text-center">{page.name}</h3>
+                  <p className="text-gray-600 mb-6 text-center">
                     {page.name === 'Domain' && 'Find the right domain for your brand.'}
                     {page.name === 'Website Generator' && 'Create a faster website in seconds.'}
                     {page.name === 'Ads Generator' && 'Try quick ads to attract customers.'}
                   </p>
-                  <a
-                    href={page.link}
-                    className="bg-blue-600 text-white font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-300"
-                  >
-                    Try {page.name}
-                  </a>
+                  <div className="text-center">
+                    <a
+                      href={page.link}
+                      className="inline-block bg-blue-600 text-white font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-300"
+                    >
+                      Try {page.name}
+                    </a>
+                  </div>
                 </div>
               </Grid>
             ))}
@@ -126,6 +129,14 @@ const Home: NextPage = () => {
         </Container>
       </section>
 
+
+      {/* FAQ Section */}
+      <section className="w-full bg-white py-16">
+        <Container maxWidth="lg">
+          {/* <h2 className="text-3xl font-semibold mb-8 text-center">Choose Your Plan</h2> */}
+      <CFAQ />
+        </Container>
+      </section>
       <Footer />
     </div>
   );
