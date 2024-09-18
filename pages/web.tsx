@@ -370,7 +370,7 @@ const WebPage = () => {
               </Button>
             </Toolbar>
           </AppBar>
-          <Box component="section" sx={{ p: 2, border: '1px dashed grey' }}>
+          <Box component="section" sx={{ border: '1px dashed grey' }}>
             <div dangerouslySetInnerHTML={{ __html: generatedSite }} />
           </Box>          
         </Dialog>       
