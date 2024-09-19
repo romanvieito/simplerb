@@ -71,9 +71,6 @@ const WebPage = () => {
   const [loading, setLoading] = useState(false);
   const [textName, setTextName] = useState("");
   const [textDescription, setTextDescription] = useState("");
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [generatedSite, setGeneratedSite] = useState("");
 
@@ -92,7 +89,7 @@ const WebPage = () => {
 
     try {
       // Designer Agent
-      const designerPrompt = `As a web designer, create a visually appealing layout for a landing page with the following description: ${textDescription}. Focus on the structure, color scheme, and overall visual elements. Provide a high-level HTML structure with placeholder content. Include a placeholder for a YouTube video. Return only the code, nothing else.`;
+      const designerPrompt = `As a web designer, create a visually appealing layout for a landing page with the following description: ${textDescription}. Focus on the structure, color scheme, and overall visual elements. Provide a high-level HTML structure with placeholder content. Just return the code, nothing else.`;
 
       const designerResponse = await fetch("/api/anthropic", {
         method: "POST",
@@ -102,23 +99,13 @@ const WebPage = () => {
 
       if (!designerResponse.ok) throw new Error(designerResponse.statusText);
       const designerResult = await designerResponse.json();
+      console.log("designerResult", designerResult);
       const designLayout = designerResult.data.content[0].text;
 
-      // Media Agent
-      const mediaPrompt = `Find a relevant YouTube video for a website about: ${textDescription}. Return only the YouTube video ID.`;
 
-      const mediaResponse = await fetch("/api/anthropic", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: mediaPrompt }),
-      });
-
-      if (!mediaResponse.ok) throw new Error(mediaResponse.statusText);
-      const mediaResult = await mediaResponse.json();
-      const videoId = mediaResult.data.content[0].text.trim();
 
       // Developer Agent
-      const developerPrompt = `As a web developer, enhance the following HTML structure with interactive elements and responsive design. Add appropriate CSS and JavaScript to make the page functional and engaging. Replace the video placeholder with an embedded YouTube video using this link: https://www.youtube.com/watch?v=${videoId}. Here's the initial layout: ${designLayout}. Return only the code, nothing else.`;
+      const developerPrompt = `As a web developer, enhance the following HTML structure with interactive elements and responsive design. Add appropriate CSS and JavaScript to make the page functional and engaging. Here's the initial layout: ${designLayout}. Just return the code, nothing else.`;
 
       const developerResponse = await fetch("/api/anthropic", {
         method: "POST",
@@ -128,6 +115,7 @@ const WebPage = () => {
 
       if (!developerResponse.ok) throw new Error(developerResponse.statusText);
       const developerResult = await developerResponse.json();
+      console.log("developerResult", developerResult);
       const finalWebsite = developerResult.data.content[0].text;
 
       setGeneratedSite(finalWebsite);
@@ -136,7 +124,6 @@ const WebPage = () => {
       mixpanel.track("Web Generated", {
         textName: textName,
         textDescription: textDescription,
-        videoId: videoId,
       });
     } catch (error) {
       console.error("Error generating website:", error);
@@ -146,9 +133,9 @@ const WebPage = () => {
     }
   };
 
-  const showPricing = () => {
-    setOpenPricing(true);
-  } 
+  // const showPricing = () => {
+  //   setOpenPricing(true);
+  // } 
 
   const closePricing = () => {
     setOpenPricing(false);
@@ -172,73 +159,6 @@ const WebPage = () => {
     });
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file && file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setUploadedImage(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      alert("Please select an image file.");
-    }
-  };
-
-  const triggerFileInput = () => {
-    fileInputRef.current?.click();
-  };
-
-  const sendInformationToBackend = async () => {
-    if (!textDescription.trim()) {
-      alert("Please enter a description.");
-      return;
-    }
-
-    setIsUploading(true);
-
-    // Get the domain from the URL query parameter
-    const domain = typeof window !== 'undefined' ? new URL(window.location.href).searchParams.get('domain') || '' : '';
-
-    try {
-      const response = await fetch('/api/save-web-information', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          description: textDescription,
-          image: uploadedImage,
-          domain: domain
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save information');
-      }
-
-      const data = await response.json();
-      console.log('Information saved successfully:', data);
-      // toast.success('Information saved successfully! We will start generating your website.');
-      
-      toast(
-        "Success! We've saved your details and are now creating your website. Keep an eye on your email for further updates.",
-        {
-          icon: "🚀",
-          style: {
-            border: "1px solid #000",
-            color: "#000",
-          },
-        }
-      );
-    } catch (error) {
-      console.error('Error saving information:', error);
-      alert('Failed to save information. Please try again.');
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   return (
     <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
       <Head>
@@ -248,9 +168,7 @@ const WebPage = () => {
       <Header/>
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4">
         <div className="flex justify-center items-center w-full max-w-xl">
-          {/* <Link href="/domain" className="text-black hover:text-gray-700 mr-auto">
-            ← Back
-          </Link> */}
+   
           <Toaster
             position="top-center"
             reverseOrder={false}
@@ -280,37 +198,7 @@ const WebPage = () => {
             placeholder={"e.g., Boutique Coffee Shop, Personal Fitness"}
           />
           
-          {/* Image upload section
-          <div className="flex mb-5 items-center space-x-3">
-            <Image
-              src="/2-black.png"
-              width={30}
-              height={30}
-              alt="1 icon"
-              className="mb-0"
-            />
-            <p className="text-left font-medium">Upload an image (optional)</p>
-          </div>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleImageUpload}
-            accept="image/*"
-            style={{ display: 'none' }}
-          />
-          <button
-            className="bg-gray-200 rounded-md text-black font-medium px-4 py-2 mb-4 hover:bg-gray-300"
-            onClick={triggerFileInput}
-          >
-            {uploadedImage ? "Change image" : "Choose image"}
-          </button>
-          
-          {uploadedImage && (
-            <div className="mb-4">
-              <Image src={uploadedImage} alt="Uploaded image" width={200} height={200} objectFit="contain" />
-            </div>
-          )}
-           */}
+         
           <SignedOut>  
             <button
               className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
