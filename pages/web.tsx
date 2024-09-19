@@ -67,7 +67,7 @@ const WebPage = () => {
       }
   
       // Designer Agent
-      const designerPrompt = `As a web designer, create a visually appealing layout for a landing page with the following description: ${textDescription}. Focus on the structure, color scheme, and overall visual elements. Provide a high-level HTML structure with placeholder content. Just return the code, nothing else.`;
+      const designerPrompt = `As a web designer, create a visually appealing layout for a landing page with the following name: ${textName} and description: ${textDescription}. Focus on the structure, color scheme, and overall visual elements. Provide a high-level HTML structure with placeholder content. Just return the code, nothing else.`;
 
       const designerResponse = await fetch("/api/anthropic", {
         method: "POST",
@@ -92,7 +92,76 @@ const WebPage = () => {
       if (!developerResponse.ok) throw new Error(developerResponse.statusText);
       const developerResult = await developerResponse.json();
       console.log("developerResult", developerResult);
-      const finalWebsite = developerResult.data.content[0].text;
+      let finalWebsite = developerResult.data.content[0].text;
+
+      // Reviewer Agent
+      const reviewerPrompt = `As a web quality assurance specialist, review the following website code: ${finalWebsite}. Just focus in:
+      	•	Replace placeholder resources with actual product images and data.
+        •	Update the CTA button functionality and ensure the links point to real destinations.
+        •	Test and optimize for responsiveness on all devices and screen sizes.
+      Analyze the code for potential improvements and provide a short and concise summary of your critical findings and suggested enhancements.`;
+
+      const reviewerResponse = await fetch("/api/openai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: reviewerPrompt }),
+      });
+
+      if (!reviewerResponse.ok) throw new Error(reviewerResponse.statusText);
+
+      const reader = reviewerResponse.body?.getReader();
+      let reviewerResult = '';
+      while (true) {
+        const { done, value } = await reader?.read() ?? { done: true, value: undefined };
+        if (done) break;
+        const chunk = new TextDecoder().decode(value);
+        const lines = chunk.split('\n').filter(line => line.trim() !== '');
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const jsonData = JSON.parse(line.slice(6));
+            reviewerResult += jsonData.text;
+          }
+        }
+      }
+      reviewerResult = reviewerResult.trim();
+      console.log("reviewerResult", reviewerResult);
+
+      // Developer Agent (Fixing Reviewer Feedback)
+      const fixerPrompt = `As a web developer, please address the following QA feedback and improve the website code accordingly:
+
+      ${reviewerResult}
+
+      Here's the current website code:
+
+      ${finalWebsite}
+
+      Please provide the updated code that addresses these issues. Just return the improved code, nothing else.`;
+
+      const fixerResponse = await fetch("/api/anthropic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: fixerPrompt }),
+      });
+
+      if (!fixerResponse.ok) throw new Error(fixerResponse.statusText);
+      const fixerResult = await fixerResponse.json();
+      console.log("fixerResult", fixerResult);
+      const improvedWebsite = fixerResult.data.content[0].text;
+
+      // Add review summary to the generated site
+      const reviewedWebsite = `
+        ${finalWebsite}
+        <!-- QA Review Summary -->
+        <div style="margin-top: 20px; padding: 10px; background-color: #f0f0f0; border: 1px solid #ccc;">
+          <h3>QA Review Summary:</h3>
+          <pre>${reviewerResult}</pre>
+        </div>
+      `;
+
+      // Update the final website with improvements
+      finalWebsite = improvedWebsite;
+
+      setGeneratedSite(reviewedWebsite);
 
       setGeneratedSite(finalWebsite);
       setOpenWebSite(true);
@@ -123,6 +192,7 @@ const WebPage = () => {
 
     //TODO Code se corta, generatedSite es muy largo pa mixpanel
     mixpanel.track("Download Web Code Button Click", {
+      textName: textName,
       textDescription: textDescription
     });
   };
@@ -147,10 +217,31 @@ const WebPage = () => {
           </h1>
           <div className="ml-auto w-8"></div> {/* This empty div balances the layout */}
         </div>
+
         <div className="max-w-xl w-full mt-10">
-          <div className="flex mb-1 items-center space-x-3">
+        <div className="flex mt-0 items-center space-x-3">
             <Image
               src="/1-black.png"
+              width={30}
+              height={30}
+              alt="1 icon"
+              className="mb-0"
+            />
+            <p className="text-left font-medium">
+              Enter Your Website or Brand Name{" "}
+            </p>
+          </div>
+          <input
+            type="text"
+            value={textName}
+            onChange={(e) => setTextName(e.target.value)}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
+            placeholder={"e.g., mywebsite.com"}
+          />
+          
+          <div className="flex mb-1 items-center space-x-3">
+            <Image
+              src="/2-black.png"
               width={30}
               height={30}
               alt="1 icon"
