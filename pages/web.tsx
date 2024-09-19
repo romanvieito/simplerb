@@ -88,6 +88,24 @@ const WebPage = () => {
     setLoading(true);
 
     try {
+
+      if (subsTplan !== "CREATOR" && subsTplan !== "STARTER") {
+        toast(
+          "Premium plan required. Please become a member to generate websites.",
+          {
+            icon: "⏳",
+            style: {
+              border: "1px solid #FFA500",
+              padding: "16px",
+              color: "#FFA500",
+            },  
+            duration: 10000,
+          }
+        );
+        setLoading(false);
+        return;
+      }
+  
       // Designer Agent
       const designerPrompt = `As a web designer, create a visually appealing layout for a landing page with the following description: ${textDescription}. Focus on the structure, color scheme, and overall visual elements. Provide a high-level HTML structure with placeholder content. Just return the code, nothing else.`;
 
