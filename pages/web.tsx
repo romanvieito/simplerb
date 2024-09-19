@@ -19,6 +19,7 @@ import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
+import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/20/solid";
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -206,7 +207,54 @@ const WebPage = () => {
       <Header/>
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4">
         <div className="flex justify-center items-center w-full max-w-xl">
-   
+          {generatedSite && (
+            <>
+              <Button
+                variant="contained"
+                color="primary"
+                style={{
+                  position: "fixed",
+                  bottom: 20,
+                  right: 20,
+                  borderRadius: "50%",
+                  width: 60,
+                  height: 60,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 24,
+                  zIndex: 9999,
+                }}
+                onClick={() => setOpenWebSite(!openWebSite)}
+              >
+                {openWebSite ? <ArrowDownIcon /> : <ArrowUpIcon />}
+              </Button>
+              
+              <Button
+                variant="contained"
+                color="secondary"
+                style={{
+                  position: "fixed",
+                  bottom: 90,
+                  right: 20,
+                  borderRadius: "50%",
+                  width: 60,
+                  height: 60,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 24,
+                  zIndex: 9999,
+                }}
+                onClick={downloadCode}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              </Button>
+            </>
+          )}
+          
           <Toaster
             position="top-center"
             reverseOrder={false}
@@ -294,7 +342,7 @@ const WebPage = () => {
           onClose={closeWebSite}
           TransitionComponent={Transition}
         >
-          <AppBar sx={{ position: 'relative', backgroundColor: 'gray' }}>
+          {/* <AppBar sx={{ position: 'relative', backgroundColor: 'gray' }}>
             <Toolbar>
               <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
                 <IconButton
@@ -313,10 +361,10 @@ const WebPage = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 inline-block" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
-                Download Code
+                Download
               </Button>
             </Toolbar>
-          </AppBar>
+          </AppBar> */}
           <Box component="section" sx={{ border: '1px dashed grey' }}>
             <div dangerouslySetInnerHTML={{ __html: generatedSite }} />
           </Box>          
