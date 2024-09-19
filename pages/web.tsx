@@ -92,7 +92,7 @@ const WebPage = () => {
 
     try {
       // Designer Agent
-      const designerPrompt = `As a web designer, create a visually appealing layout for a landing page with the following description: ${textDescription}. Focus on the structure, color scheme, and overall visual elements. Provide a high-level HTML structure with placeholder content. Return only the code, nothing else.`;
+      const designerPrompt = `As a web designer, create a visually appealing layout for a landing page with the following description: ${textDescription}. Focus on the structure, color scheme, and overall visual elements. Provide a high-level HTML structure with placeholder content. Include a placeholder for a YouTube video. Return only the code, nothing else.`;
 
       const designerResponse = await fetch("/api/anthropic", {
         method: "POST",
@@ -104,8 +104,21 @@ const WebPage = () => {
       const designerResult = await designerResponse.json();
       const designLayout = designerResult.data.content[0].text;
 
+      // Media Agent
+      const mediaPrompt = `Find a relevant YouTube video for a website about: ${textDescription}. Return only the YouTube video ID.`;
+
+      const mediaResponse = await fetch("/api/anthropic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: mediaPrompt }),
+      });
+
+      if (!mediaResponse.ok) throw new Error(mediaResponse.statusText);
+      const mediaResult = await mediaResponse.json();
+      const videoId = mediaResult.data.content[0].text.trim();
+
       // Developer Agent
-      const developerPrompt = `As a web developer, enhance the following HTML structure with interactive elements and responsive design. Add appropriate CSS and JavaScript to make the page functional and engaging: ${designLayout}. Return only the code, nothing else.`;
+      const developerPrompt = `As a web developer, enhance the following HTML structure with interactive elements and responsive design. Add appropriate CSS and JavaScript to make the page functional and engaging. Replace the video placeholder with an embedded YouTube video using this link: https://www.youtube.com/watch?v=${videoId}. Here's the initial layout: ${designLayout}. Return only the code, nothing else.`;
 
       const developerResponse = await fetch("/api/anthropic", {
         method: "POST",
@@ -123,6 +136,7 @@ const WebPage = () => {
       mixpanel.track("Web Generated", {
         textName: textName,
         textDescription: textDescription,
+        videoId: videoId,
       });
     } catch (error) {
       console.error("Error generating website:", error);
