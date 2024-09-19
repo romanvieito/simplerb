@@ -1,37 +1,16 @@
 import React, { useState, useContext, useRef } from "react";
 import Head from "next/head";
-import Link from "next/link";
-import Footer from "../components/Footer";
 import { Toaster, toast } from "react-hot-toast";
 import Header from "../components/Header";
 import {
   Box,
-  Switch,
-  FormControlLabel,
-  FormHelperText,
-  FormGroup,
-  FormControl,
-  FormLabel,
-  Tooltip,
 } from "@mui/material";
 import mixpanel from "../utils/mixpanel-config";
-import {
-  createParser,
-  ParsedEvent,
-  ReconnectInterval,
-} from "eventsource-parser";
-import {
-  ptemp,
-  ptop,
-} from "../utils/Definitions";
 import Image from "next/image";
 import SBRContext from "../context/SBRContext";
 import LoadingDots from "../components/LoadingDots";
 import { useClerk, SignedIn, SignedOut } from "@clerk/nextjs";
-import CPricing from "../components/CPricing";
 import Typography from '@mui/material/Typography';
-import Modal from '@mui/material/Modal';
-
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import AppBar from '@mui/material/AppBar';
@@ -40,20 +19,6 @@ import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
-
-const style = {
-  position: 'absolute' as 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: '80%',
-  bgcolor: 'background.paper',
-  border: '1px #000',
-  boxShadow: 24,
-  p: 2,
-  maxHeight: '90vh', // Establece la altura máxima del contenedor
-  overflow: 'auto'   // Activa el desplazamiento automático  
-};
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -65,23 +30,18 @@ const Transition = React.forwardRef(function Transition(
 });
 
 const WebPage = () => {
-
   const { openSignIn } = useClerk();
-
   const [loading, setLoading] = useState(false);
   const [textName, setTextName] = useState("");
   const [textDescription, setTextDescription] = useState("");
-
   const [generatedSite, setGeneratedSite] = useState("");
-
-  const [openPricing, setOpenPricing] = React.useState(false);
   const [openWebSite, setOpenWebSite] = React.useState(false);
 
   const context = useContext(SBRContext);
   if (!context) {
     throw new Error("SBRContext must be used within a SBRProvider");
   }
-  const { dataUser, subsTplan } = context;
+  const { subsTplan } = context;
 
   const generateWeb = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
@@ -120,8 +80,6 @@ const WebPage = () => {
       console.log("designerResult", designerResult);
       const designLayout = designerResult.data.content[0].text;
 
-
-
       // Developer Agent
       const developerPrompt = `As a web developer, enhance the following HTML structure with interactive elements and responsive design. Add appropriate CSS and JavaScript to make the page functional and engaging. Here's the initial layout: ${designLayout}. Just return the code, nothing else.`;
 
@@ -151,14 +109,6 @@ const WebPage = () => {
     }
   };
 
-  // const showPricing = () => {
-  //   setOpenPricing(true);
-  // } 
-
-  const closePricing = () => {
-    setOpenPricing(false);
-  }  
-
   const closeWebSite = () => {
     setOpenWebSite(false);
   }
@@ -173,7 +123,7 @@ const WebPage = () => {
 
     //TODO Code se corta, generatedSite es muy largo pa mixpanel
     mixpanel.track("Download Web Code Button Click", {
-      generatedSite: generatedSite
+      textDescription: textDescription
     });
   };
 
@@ -245,21 +195,7 @@ const WebPage = () => {
             )}
           </SignedIn>
         </div>
-        <br/>        
-        <div>
-          <Modal
-            open={openPricing}
-            onClose={closePricing}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-          >
-            <Box sx={style}>
-              <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-                <CPricing />
-              </Typography>
-            </Box>
-          </Modal>
-        </div>
+
         <div>
         <Dialog
           fullScreen
