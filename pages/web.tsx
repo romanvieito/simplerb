@@ -4,6 +4,7 @@ import { Toaster, toast } from "react-hot-toast";
 import Header from "../components/Header";
 import {
   Box,
+  Tooltip,
 } from "@mui/material";
 import mixpanel from "../utils/mixpanel-config";
 import Image from "next/image";
@@ -13,10 +14,6 @@ import { useClerk, SignedIn, SignedOut } from "@clerk/nextjs";
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
-import CloseIcon from '@mui/icons-material/Close';
 import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/20/solid";
@@ -209,49 +206,53 @@ const WebPage = () => {
         <div className="flex justify-center items-center w-full max-w-xl">
           {generatedSite && (
             <>
-              <Button
-                variant="contained"
-                color="primary"
-                style={{
-                  position: "fixed",
-                  bottom: 20,
-                  right: 20,
-                  borderRadius: "50%",
-                  width: 60,
-                  height: 60,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 24,
-                  zIndex: 9999,
-                }}
-                onClick={() => setOpenWebSite(!openWebSite)}
-              >
-                {openWebSite ? <EyeIcon /> : <EyeSlashIcon />}
-              </Button>
+              <Tooltip title={openWebSite ? "Hide Preview" : "Show Preview"} arrow placement="left">
+                <Button
+                  variant="contained"
+                  color="primary"
+                  style={{
+                    position: "fixed",
+                    bottom: 20,
+                    right: 20,
+                    borderRadius: "50%",
+                    width: 60,
+                    height: 60,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 24,
+                    zIndex: 9999,
+                  }}
+                  onClick={() => setOpenWebSite(!openWebSite)}
+                >
+                  {openWebSite ? <EyeIcon /> : <EyeSlashIcon />}
+                </Button>
+              </Tooltip>
               
-              <Button
-                variant="contained"
-                style={{
-                  position: "fixed",
-                  backgroundColor: "black",
-                  bottom: 90,
-                  right: 20,
-                  borderRadius: "50%",
-                  width: 60,
-                  height: 60,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 24,
-                  zIndex: 9999,
-                }}
-                onClick={downloadCode}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-              </Button>
+              <Tooltip title="Download Code" arrow placement="left">
+                <Button
+                  variant="contained"
+                  style={{
+                    position: "fixed",
+                    backgroundColor: "black",
+                    bottom: 90,
+                    right: 20,
+                    borderRadius: "50%",
+                    width: 60,
+                    height: 60,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 24,
+                    zIndex: 9999,
+                  }}
+                  onClick={downloadCode}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </Button>
+              </Tooltip>
             </>
           )}
           
