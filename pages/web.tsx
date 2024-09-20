@@ -19,7 +19,7 @@ import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
-import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/20/solid";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/20/solid";
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -227,14 +227,14 @@ const WebPage = () => {
                 }}
                 onClick={() => setOpenWebSite(!openWebSite)}
               >
-                {openWebSite ? <ArrowDownIcon /> : <ArrowUpIcon />}
+                {openWebSite ? <EyeIcon /> : <EyeSlashIcon />}
               </Button>
               
               <Button
                 variant="contained"
-                color="secondary"
                 style={{
                   position: "fixed",
+                  backgroundColor: "black",
                   bottom: 90,
                   right: 20,
                   borderRadius: "50%",
