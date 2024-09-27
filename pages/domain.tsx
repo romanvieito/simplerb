@@ -544,21 +544,6 @@ const DomainPage: NextPage = () => {
     e.preventDefault();
     setDomainFounded([]);
 
-    /*if (credits <= 0) {
-      toast(
-        "You have no more credits left. Please buy credits to generate more domain names.",
-        {
-          icon: "⚠️",
-          style: {
-            border: "1px solid #FF4500",
-            padding: "16px",
-            color: "#FF4500",
-          },
-        }
-      );
-      return;
-    }*/
-
     if (subsTplan !== "CREATOR" && subsTplan !== "STARTER") {
          // Check if user has exceeded the daily limit
     const MAX_DAILY_GENERATIONS = 3;
@@ -619,17 +604,7 @@ const DomainPage: NextPage = () => {
           maxlength: vpMaxlength,
         },
       });
-
-      /*if (!isLoaded || !user) {
-        return null;
-      }*/
-
-      //const userData = await getUserByEmail(dataUser.email);
-
-      /*if (!userData || userData.rows[0].credits <= 0) {
-        return;
-      }*/
-
+      
       saveBioVite(bio, vibe);
       saveVpTabIndex(vpTabIndex);
       saveVpKeywords(
