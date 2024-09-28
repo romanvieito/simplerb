@@ -40,7 +40,7 @@ export default function CFAQ() {
             </AccordionSummary>
             <AccordionDetails>
               <Typography align="left" sx={{ fontSize: '0.875rem' }}>
-              SimplerB is an AI-powered tool designed to help you kickstart your business effortlessly. It generates your domain, website, and Google Ads, so you can focus on growing your business.
+              SimplerB is an AI-powered tool designed to help you kickstart your business effortlessly. It generates your domain, website, and Google Ads, so you can focus on growing your business. Additionally, it includes features like a business name generator, brand name generator, and company name generator to help you establish a strong brand identity.
               </Typography>
             </AccordionDetails>
           </CustomAccordion>
@@ -55,7 +55,7 @@ export default function CFAQ() {
             </AccordionSummary>
             <AccordionDetails>
               <Typography align="left" sx={{ fontSize: '0.875rem' }}>
-              Getting started with SimplerB is easy. Sign up on our website, choose a plan that fits your needs, and begin leveraging our AI features to generate your domain, website, and Google Ads.
+              Getting started with SimplerB is easy. Sign up on our website, choose a plan that fits your needs, and begin leveraging our AI features to generate your domain, website, and Google Ads. You can also use our AI business name generator, company name generator, and brand generator to create a unique identity for your business.
               </Typography>
             </AccordionDetails>
           </CustomAccordion>
@@ -130,7 +130,7 @@ export default function CFAQ() {
             </AccordionSummary>
             <AccordionDetails>
               <Typography align="left" sx={{ fontSize: '0.875rem' }}>
-              SimplerB is designed to help small businesses across various industries, including retail, service-based businesses, and startups, streamline their operations and improve efficiency with AI.
+              SimplerB is designed to help small businesses across various industries, including retail, service-based businesses, and startups, streamline their operations and improve efficiency with AI. Our tools, such as the business name generator, brand name generator, and company name generator, are particularly beneficial for new businesses looking to establish a strong brand presence.
               </Typography>
             </AccordionDetails>
           </CustomAccordion>

@@ -9,7 +9,7 @@ export default function AIWebCreatorPage() {
   return (
     <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
       <Head>
-        <title>AI Website Creator</title>
+        <title>AI Website Generator</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Header/>
