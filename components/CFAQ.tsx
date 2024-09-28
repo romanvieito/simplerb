@@ -205,7 +205,7 @@ export default function CFAQ() {
             </AccordionSummary>
             <AccordionDetails>
               <Typography align="left" sx={{ fontSize: '0.875rem' }}>
-              SimplerB helps you grow your business by using its powerful AI to create your website through an intuitive website generator. With just one click, our AI can create your website, domain, and Google Ads. It also provides insightful analytics (coming soon) and streamlines your operations, allowing you to focus on strategic growth activities and customer satisfaction.
+              SimplerB helps you grow your business by using AI to automate the creation of your domain, website, and Google Ads, providing insightful analytics (coming soon), and streamlining your operations, so you can focus on strategic growth activities and customer satisfaction.
               </Typography>
             </AccordionDetails>
           </CustomAccordion>
