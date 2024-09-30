@@ -4,8 +4,10 @@ import { toast } from "react-hot-toast";
 import { DomainInfo, VibeType } from "../utils/Definitions";
 import { createParser, ParsedEvent, ReconnectInterval } from "eventsource-parser";
 import mixpanel from "../utils/mixpanel-config";
+import { useRouter } from "next/router"; // Add this import
 
 const DomainPage: React.FC = () => {
+  const router = useRouter(); // Add this line
   const [loading, setLoading] = useState(false);
   const [businessDescription, setBusinessDescription] = useState("");
   const [vibe, setVibe] = useState<VibeType>("Professional");
@@ -98,6 +100,10 @@ const DomainPage: React.FC = () => {
     });
   };
 
+  const handleBack = () => {
+    router.back();
+  };
+
   return (
     <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
       <Head>
@@ -106,6 +112,16 @@ const DomainPage: React.FC = () => {
       </Head>
 
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
+        <button
+          onClick={handleBack}
+          className="absolute top-4 left-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back
+        </button>
+
         <h1 className="sm:text-6xl text-4xl max-w-[708px] font-bold text-slate-900">
           Domain Generator
         </h1>
