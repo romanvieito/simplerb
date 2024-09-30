@@ -1,0 +1,189 @@
+import React, { useState } from "react";
+import Head from "next/head";
+import { toast } from "react-hot-toast";
+import { DomainInfo, VibeType } from "../utils/Definitions";
+import { createParser, ParsedEvent, ReconnectInterval } from "eventsource-parser";
+import mixpanel from "../utils/mixpanel-config";
+
+const DomainPage: React.FC = () => {
+  const [loading, setLoading] = useState(false);
+  const [businessDescription, setBusinessDescription] = useState("");
+  const [vibe, setVibe] = useState<VibeType>("Professional");
+  const [generatedDomains, setGeneratedDomains] = useState<DomainInfo[]>([]);
+  const [currentDomain, setCurrentDomain] = useState("");
+
+  const generateDomains = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setGeneratedDomains([]);
+
+    try {
+        const prompt = `
+        Role: You are a domain name expert.
+        Objective: Generate 5 memorable, brief, and simple domain names based on the following input:
+        Client's input: ${businessDescription}
+        Vibe: ${vibe}
+        
+        Return only the domain names, one per line.
+      `;
+
+      const response = await fetch("/api/openai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, ptemp: 0.7, ptop: 1 }),
+      });
+
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+
+      const data = response.body;
+      if (!data) return;
+
+      const reader = data.getReader();
+      const decoder = new TextDecoder();
+      const parser = createParser(onParse);
+      let done = false;
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        const chunkValue = decoder.decode(value);
+        parser.feed(chunkValue);
+      }
+
+    } catch (error) {
+      console.error("An error occurred:", error);
+      toast.error("An error occurred while generating domains. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onParse = (event: ParsedEvent | ReconnectInterval) => {
+    if (event.type === "event") {
+      try {
+        const text = JSON.parse(event.data).text ?? "";
+        setCurrentDomain(prev => {
+          const updatedDomain = prev + text;
+          if (updatedDomain.includes("\n")) {
+            const domains = updatedDomain.split("\n");
+            domains.forEach(domain => {
+              if (domain.trim()) {
+                setGeneratedDomains(prev => [...prev, { domain: domain.trim(), available: undefined, favorite: false }]);
+              }
+            });
+            return domains[domains.length - 1];
+          }
+          return updatedDomain;
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
+  const handleCheckAvailability = (domain: string) => {
+    const cleanDomainName = domain.replace(/^\d+\.\s*/, "");
+    const namecheapUrl = `https://www.namecheap.com/domains/registration/results/?domain=${cleanDomainName}`;
+    window.open(namecheapUrl, "_blank");
+
+    mixpanel.track("Check Domain Availability", {
+      domain: cleanDomainName,
+      source: "domain-ai-page",
+    });
+
+    toast.success(`Checking availability for ${cleanDomainName}`, {
+      duration: 3000,
+    });
+  };
+
+  return (
+    <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
+      <Head>
+        <title>Domain Generator</title>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+
+      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
+        <h1 className="sm:text-6xl text-4xl max-w-[708px] font-bold text-slate-900">
+          Domain Generator
+        </h1>
+
+        <form onSubmit={generateDomains} className="max-w-xl w-full">
+          <div className="flex mt-10 items-center space-x-3">
+            <p className="text-left font-medium">
+              Describe your business or idea
+            </p>
+          </div>
+          <textarea
+            value={businessDescription}
+            onChange={(e) => setBusinessDescription(e.target.value)}
+            rows={4}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
+            placeholder="e.g. Boutique Coffee Shop"
+          />
+
+          <div className="flex mb-5 items-center space-x-3">
+            <p className="text-left font-medium">Select the vibe</p>
+          </div>
+          <select
+            value={vibe}
+            onChange={(e) => setVibe(e.target.value as VibeType)}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black"
+          >
+            <option value="Professional">Professional</option>
+            <option value="Friendly">Friendly</option>
+            <option value="Creative">Creative</option>
+            <option value="Sophisticated">Sophisticated</option>
+          </select>
+
+          <button
+            className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? "Generating..." : "Generate domains"}
+          </button>
+        </form>
+
+        {generatedDomains.length > 0 && (
+          <div className="space-y-8 mt-10">
+            <h2 className="sm:text-4xl text-3xl font-bold text-slate-900 mx-auto">
+              Generated Domains:
+            </h2>
+            <ul className="space-y-4">
+              {generatedDomains.map((domain, index) => (
+                <li key={index} className="text-xl flex items-center justify-between">
+                  <span>{domain.domain}</span>
+                  <button
+                    onClick={() => handleCheckAvailability(domain.domain)}
+                    className="bg-blue-600 rounded-xl text-white font-medium px-4 py-2 mx-2 hover:bg-gray-300 hover:text-black"
+                  >
+                    <span className="flex items-center">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5 mr-2"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      Check Availability
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
+
+export default DomainPage;
