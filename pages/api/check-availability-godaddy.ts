@@ -5,15 +5,18 @@ const GODADDY_API_URL = 'https://api.ote-godaddy.com/v1';
 const GODADDY_API_KEY = process.env.GODADDY_API_KEY;
 const GODADDY_API_SECRET = process.env.GODADDY_API_SECRET;
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+// Ensure the API handler correctly processes the domains array
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).end('Method Not Allowed');
   }
 
   const { domains }: { domains: string[] } = req.body;
+
+  if (!domains || !Array.isArray(domains)) {
+    return res.status(400).json({ error: 'Invalid request body' });
+  }
+
   const availabilityResults = [];
 
   for (const domain of domains) {
@@ -36,7 +39,7 @@ export default async function handler(
     }
 
     const data = await response.json();
-    
+
     availabilityResults.push({
       domain,
       available: data.available,

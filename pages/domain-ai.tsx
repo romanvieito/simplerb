@@ -43,6 +43,11 @@ const DomainPage: React.FC = () => {
   const isPremiumUser = subsTplan === "STARTER" || subsTplan === "CREATOR";
 
   const handleAvailableOnlyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Track the change in the "Available only" checkbox
+    mixpanel.track("Available Only Checkbox Changed", {
+      checked: e.target.checked,
+      isPremiumUser: isPremiumUser
+    });
     if (isPremiumUser) {
       setAvailableOnly(e.target.checked);
     } else {
@@ -118,23 +123,38 @@ const DomainPage: React.FC = () => {
   }, [generatedDomains, availableOnly, isPremiumUser]);
 
   const checkAvailability = async () => {
-    const availableDomains = [];
-    for (const domain of generatedDomains) {
-      try {
-        const response = await fetch('/api/check-availability-godaddy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ domain: domain.domain }),
-        });
-        const data = await response.json();
-        if (data.available) {
-          availableDomains.push({ ...domain, available: true });
-        }
-      } catch (error) {
-        console.error('Error checking availability:', error);
+    try {
+      // Assuming 'generatedDomains' is an array of your domain objects
+      const domainsToCheck = generatedDomains.map((domainInfo) => domainInfo.domain);
+  
+      const response = await fetch('/api/check-availability-godaddy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domains: domainsToCheck }),
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Error: ${response.statusText}`);
       }
+  
+      const availabilityResults = await response.json();
+  
+      // Map the availability results back to your generatedDomains
+      const updatedDomains = generatedDomains.map((domainInfo) => {
+        const availabilityInfo = availabilityResults.find(
+          (result) => result.domain === domainInfo.domain
+        );
+        return {
+          ...domainInfo,
+          available: availabilityInfo ? availabilityInfo.available : undefined,
+        };
+      });
+  
+      // Update your state with the new domain information
+      setGeneratedDomains(updatedDomains);
+    } catch (error) {
+      console.error('Error checking domain availability:', error);
     }
-    setFilteredDomains(availableDomains);
   };
 
   const generateDomains = async (e: React.FormEvent) => {
