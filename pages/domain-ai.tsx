@@ -21,6 +21,7 @@ const DomainPage: React.FC = () => {
   const [generatedDomains, setGeneratedDomains] = useState<DomainInfo[]>([]);
   const [currentDomain, setCurrentDomain] = useState("");
   const [availableOnly, setAvailableOnly] = useState(false);
+  const [filteredDomains, setFilteredDomains] = useState<DomainInfo[]>([]);
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -108,6 +109,34 @@ const DomainPage: React.FC = () => {
     initPageData();
   }, [isSignedIn, user]);
 
+  useEffect(() => {
+    if (availableOnly && isPremiumUser) {
+      checkAvailability();
+    } else {
+      setFilteredDomains(generatedDomains);
+    }
+  }, [generatedDomains, availableOnly, isPremiumUser]);
+
+  const checkAvailability = async () => {
+    const availableDomains = [];
+    for (const domain of generatedDomains) {
+      try {
+        const response = await fetch('/api/check-availability-godaddy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ domain: domain.domain }),
+        });
+        const data = await response.json();
+        if (data.available) {
+          availableDomains.push({ ...domain, available: true });
+        }
+      } catch (error) {
+        console.error('Error checking availability:', error);
+      }
+    }
+    setFilteredDomains(availableDomains);
+  };
+
   const generateDomains = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -163,13 +192,14 @@ const DomainPage: React.FC = () => {
         setCurrentDomain(prev => {
           const updatedDomain = prev + text;
           if (updatedDomain.includes("\n")) {
-            const domains = updatedDomain.split("\n");
-            domains.forEach(domain => {
-              if (domain.trim()) {
-                setGeneratedDomains(prev => [...prev, { domain: domain.trim(), available: undefined, favorite: false }]);
-              }
-            });
-            return domains[domains.length - 1];
+            const domains = updatedDomain.split("\n")
+              .map(domain => domain.trim().replace(/^\d+\.\s*/, ""))
+              .filter(domain => domain !== "");
+            setGeneratedDomains(prev => [
+              ...prev,
+              ...domains.map(domain => ({ domain, available: undefined, favorite: false }))
+            ]);
+            return "";
           }
           return updatedDomain;
         });
@@ -327,7 +357,7 @@ const DomainPage: React.FC = () => {
               </h2>
             )}
             <ul className="space-y-4">
-              {generatedDomains.map((domain, index) => (
+              {(availableOnly && isPremiumUser ? filteredDomains : generatedDomains).map((domain, index) => (
                 <li key={index} className="text-xl flex items-center justify-between">
                   <span>{domain.domain}</span>
                   <button
