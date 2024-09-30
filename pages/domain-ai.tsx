@@ -8,6 +8,7 @@ import { useRouter } from "next/router";
 import { useClerk, SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
 import { Button, Box } from "@mui/material";
 import StarIcon from '@mui/icons-material/Star';
+import DiamondIcon from '@mui/icons-material/Diamond';
 import SBRContext from "../context/SBRContext";
 
 const DomainPage: React.FC = () => {
@@ -19,6 +20,7 @@ const DomainPage: React.FC = () => {
   const [vibe, setVibe] = useState<VibeType>("Professional");
   const [generatedDomains, setGeneratedDomains] = useState<DomainInfo[]>([]);
   const [currentDomain, setCurrentDomain] = useState("");
+  const [availableOnly, setAvailableOnly] = useState(false);
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -36,6 +38,16 @@ const DomainPage: React.FC = () => {
     subsCancel, 
     setSubsCancel    
    } = context;
+
+  const isPremiumUser = subsTplan === "STARTER" || subsTplan === "CREATOR";
+
+  const handleAvailableOnlyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isPremiumUser) {
+      setAvailableOnly(e.target.checked);
+    } else {
+      toast.error("This feature is available only for premium members. Please upgrade your plan.");
+    }
+  };
 
   // Function to fetch user data by email
   const fetchUserData = async (email: string) => {
@@ -238,7 +250,7 @@ const DomainPage: React.FC = () => {
                 onClick={handleSubsStarterClick}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <StarIcon sx={{ mr: 0.2, fontSize: '1rem' }} />
+                  <DiamondIcon sx={{ mr: 0.2, fontSize: '1rem' }} />
                   Become a Member
                 </Box>
               </Button>
@@ -284,6 +296,20 @@ const DomainPage: React.FC = () => {
               <option value="Creative">Creative</option>
               <option value="Sophisticated">Sophisticated</option>
             </select>
+
+            <div className="flex items-center space-x-3 mt-5">
+              <input
+                type="checkbox"
+                className={`${!isPremiumUser ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                checked={availableOnly}
+                onChange={handleAvailableOnlyChange}
+                disabled={!isPremiumUser}
+              />
+              <label className={`text-left font-medium ${!isPremiumUser ? 'text-gray-400' : ''}`}>
+                Available only
+              </label>
+              <DiamondIcon sx={{ fontSize: '1rem', color: 'gold' }} />
+            </div>
 
             <button
               className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
