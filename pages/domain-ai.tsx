@@ -295,9 +295,11 @@ const DomainPage: React.FC = () => {
           </form>
 
           <div className="space-y-8 mt-10">
-            <h2 className="sm:text-4xl text-3xl font-bold text-slate-900 mx-auto">
-              Generated Domains:
-            </h2>
+            {generatedDomains.length > 0 && (
+              <h2 className="sm:text-4xl text-3xl font-bold text-slate-900 mx-auto">
+                Generated Domains:
+              </h2>
+            )}
             <ul className="space-y-4">
               {generatedDomains.map((domain, index) => (
                 <li key={index} className="text-xl flex items-center justify-between">
