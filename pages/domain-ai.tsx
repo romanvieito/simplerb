@@ -1,18 +1,100 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import Head from "next/head";
 import { toast } from "react-hot-toast";
 import { DomainInfo, VibeType } from "../utils/Definitions";
 import { createParser, ParsedEvent, ReconnectInterval } from "eventsource-parser";
 import mixpanel from "../utils/mixpanel-config";
-import { useRouter } from "next/router"; // Add this import
+import { useRouter } from "next/router";
+import { useClerk, SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
+import { Button, Box } from "@mui/material";
+import StarIcon from '@mui/icons-material/Star';
+import SBRContext from "../context/SBRContext";
 
 const DomainPage: React.FC = () => {
-  const router = useRouter(); // Add this line
+  const router = useRouter();
+  const { openSignIn } = useClerk();
+  const { isLoaded, user, isSignedIn } = useUser();
   const [loading, setLoading] = useState(false);
   const [businessDescription, setBusinessDescription] = useState("");
   const [vibe, setVibe] = useState<VibeType>("Professional");
   const [generatedDomains, setGeneratedDomains] = useState<DomainInfo[]>([]);
   const [currentDomain, setCurrentDomain] = useState("");
+
+  const context = useContext(SBRContext);
+  if (!context) {
+    throw new Error('SBRContext must be used within a SBRProvider');
+  }
+  const { 
+    dataUser, 
+    setDataUser,    
+    credits, 
+    setCredits, 
+    admin, 
+    setAdmin,
+    subsTplan, 
+    setSubsTplan, 
+    subsCancel, 
+    setSubsCancel    
+   } = context;
+
+  // Function to fetch user data by email
+  const fetchUserData = async (email: string) => {
+    try {
+      const response = await fetch(`/api/getUser?email=${email}`);
+      if (!response.ok) {
+        const text = await response.text();
+        console.error(`Response status: ${response.status}, text: ${text}`);
+        throw new Error(`Network response was not ok. Status: ${response.status}`);
+      }
+      const userData = await response.json();
+      if (userData.user) {
+        setDataUser({
+          id: userData.user.id,
+          name: userData.user.name,
+          email: userData.user.email
+        });      
+        setCredits(userData.user.credits);
+        setAdmin(userData.user.admin);
+        setSubsTplan(userData.user.subs_tplan);
+        setSubsCancel(userData.user.subs_cancel);
+      }
+    } catch (error) {
+      console.error("Failed to fetch user data:", error);
+    }
+  };
+
+  // Function to initialize page data
+  const initPageData = async () => {
+    if (isLoaded && user) {
+      const email = user.emailAddresses[0].emailAddress;
+      if (email) {
+        try {
+          await fetchUserData(email);
+          mixpanel.identify(email);
+        } catch (error) {
+          console.error("Error initializing page data:", error);
+          console.warn("Failed to load user data. Please try refreshing the page.");
+        }
+      } else {
+        console.warn("User email not available");
+      }
+    } else if (isLoaded && !user) {
+      // Reset user data when not signed in
+      setSubsTplan(null);
+      setSubsCancel(null);
+      setCredits(null);
+      setDataUser({
+        id: '0',
+        name: 'anonymous',
+        email: 'anonymous@anonymous.com'
+      });
+      setAdmin(false);
+    }
+  };
+
+  useEffect(() => {
+    initPageData();
+  }, [isSignedIn, user]);
 
   const generateDomains = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,8 +182,21 @@ const DomainPage: React.FC = () => {
     });
   };
 
-  const handleBack = () => {
-    router.back();
+  const handleSubsStarterClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    mixpanel.track("Become a Member Click", {
+      plan_subscription: 'STARTER',
+    });  
+    window.gtag && window.gtag('event', 'conversion', {
+      'send_to': '16510475658/ZCyECJS9tqYZEIq758A9',
+    });
+
+    const form = event.currentTarget.form;
+    if (form) {
+      form.submit();
+    } else {
+      console.error("Form not found");
+    }
   };
 
   return (
@@ -113,7 +208,7 @@ const DomainPage: React.FC = () => {
 
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
         <button
-          onClick={handleBack}
+          onClick={() => router.back()}
           className="absolute top-4 left-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -126,44 +221,79 @@ const DomainPage: React.FC = () => {
           Domain Generator
         </h1>
 
-        <form onSubmit={generateDomains} className="max-w-xl w-full">
-          <div className="flex mt-10 items-center space-x-3">
-            <p className="text-left font-medium">
-              Describe your business or idea
-            </p>
-          </div>
-          <textarea
-            value={businessDescription}
-            onChange={(e) => setBusinessDescription(e.target.value)}
-            rows={4}
-            className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
-            placeholder="e.g. Boutique Coffee Shop"
-          />
+        <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 2, alignItems: 'center' }}>
+          <SignedIn>
+            <form action="/api/checkout_sessions" method="POST">
+              <input type="hidden" name="tipo" value="STARTER" />
+              <Button
+                className="bg-black cursor-pointer hover:bg-black/80 rounded-xl"
+                style={{ textTransform: "none" }}
+                sx={{
+                  padding: { xs: "3px", sm: 1 },
+                  display: (isSignedIn && (subsTplan === "STARTER" || subsTplan === "CREATOR")) ? "none" : "block",
+                }}
+                type="submit"
+                variant="contained"
+                role="link"
+                onClick={handleSubsStarterClick}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <StarIcon sx={{ mr: 0.2, fontSize: '1rem' }} />
+                  Become a Member
+                </Box>
+              </Button>
+            </form>
+            <UserButton userProfileUrl="/user" afterSignOutUrl="/" />
+          </SignedIn>
+          <SignedOut>
+            <Button
+              onClick={() => openSignIn()}
+              className="bg-black cursor-pointer rounded-xl text-white font-medium px-4 py-2 hover:bg-black/80"
+            >
+              Sign in / up
+            </Button>
+          </SignedOut>
+        </Box>
 
-          <div className="flex mb-5 items-center space-x-3">
-            <p className="text-left font-medium">Select the vibe</p>
-          </div>
-          <select
-            value={vibe}
-            onChange={(e) => setVibe(e.target.value as VibeType)}
-            className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black"
-          >
-            <option value="Professional">Professional</option>
-            <option value="Friendly">Friendly</option>
-            <option value="Creative">Creative</option>
-            <option value="Sophisticated">Sophisticated</option>
-          </select>
+        <SignedIn>
+          {/* Show this content when the user is signed in */}
+          <form onSubmit={generateDomains} className="max-w-xl w-full">
+            <div className="flex mt-10 items-center space-x-3">
+              <p className="text-left font-medium">
+                Describe your business or idea
+              </p>
+            </div>
+            <textarea
+              value={businessDescription}
+              onChange={(e) => setBusinessDescription(e.target.value)}
+              rows={4}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
+              placeholder="e.g. Boutique Coffee Shop"
+            />
 
-          <button
-            className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
-            type="submit"
-            disabled={loading}
-          >
-            {loading ? "Generating..." : "Generate domains"}
-          </button>
-        </form>
+            <div className="flex mb-5 items-center space-x-3">
+              <p className="text-left font-medium">Select the vibe</p>
+            </div>
+            <select
+              value={vibe}
+              onChange={(e) => setVibe(e.target.value as VibeType)}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black"
+            >
+              <option value="Professional">Professional</option>
+              <option value="Friendly">Friendly</option>
+              <option value="Creative">Creative</option>
+              <option value="Sophisticated">Sophisticated</option>
+            </select>
 
-        {generatedDomains.length > 0 && (
+            <button
+              className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? "Generating..." : "Generate domains"}
+            </button>
+          </form>
+
           <div className="space-y-8 mt-10">
             <h2 className="sm:text-4xl text-3xl font-bold text-slate-900 mx-auto">
               Generated Domains:
@@ -196,7 +326,20 @@ const DomainPage: React.FC = () => {
               ))}
             </ul>
           </div>
-        )}
+        </SignedIn>
+
+        <SignedOut>
+          {/* Show this content when the user is signed out */}
+          <div className="mt-10">
+            <h2 className="text-2xl font-bold mb-5">Sign in to generate domains</h2>
+            <button
+              onClick={() => openSignIn()}
+              className="bg-black rounded-xl text-white font-medium px-4 py-2 hover:bg-black/80"
+            >
+              Sign in
+            </button>
+          </div>
+        </SignedOut>
       </main>
     </div>
   );
