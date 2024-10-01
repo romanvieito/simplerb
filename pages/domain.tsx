@@ -42,51 +42,6 @@ const DomainPage: React.FC = () => {
 
   const isPremiumUser = subsTplan === "STARTER" || subsTplan === "CREATOR";
 
-  const handleAvailableOnlyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Track the change in the "Available only" checkbox
-    mixpanel.track("Available Only Checkbox Changed", {
-      checked: e.target.checked,
-      isPremiumUser: isPremiumUser
-    });
-    if (isPremiumUser) {
-      setAvailableOnly(e.target.checked);
-    } else {
-    toast((t) => (
-      <div className="flex flex-col items-center">
-        <p className="mb-2">Premium feature. Please become a member.</p>
-        <div className="flex space-x-2">
-          <button
-            onClick={() => {
-              toast.dismiss(t.id);
-              mixpanel.track("Become a Member Click", {
-                source: "Available Only Checkbox",
-              });
-              const form = document.querySelector('form[action="/api/checkout_sessions"]');
-              if (form instanceof HTMLFormElement) {
-                form.submit();
-              }
-            }}
-            className="bg-black text-white font-medium px-4 py-2 rounded-xl hover:bg-black/80 flex items-center"
-          >
-            <DiamondIcon className="mr-2" />
-            Become a Member
-          </button>
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            className="bg-gray-300 text-black font-medium px-4 py-2 rounded-xl hover:bg-gray-400"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    ), {
-      duration: 15000,
-      position: 'top-center',
-    });
-      
-    }
-  };
-
   // Function to fetch user data by email
   const fetchUserData = async (email: string) => {
     try {
@@ -305,6 +260,51 @@ const DomainPage: React.FC = () => {
       form.submit();
     } else {
       console.error("Form not found");
+    }
+  };
+
+  const handleAvailableOnlyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Track the change in the "Available only" checkbox
+    mixpanel.track("Available Only Checkbox Changed", {
+      checked: e.target.checked,
+      isPremiumUser: isPremiumUser
+    });
+    if (isPremiumUser) {
+      setAvailableOnly(e.target.checked);
+    } else {
+    toast((t) => (
+      <div className="flex flex-col items-center">
+        <p className="mb-2">Premium feature. Please become a member.</p>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              mixpanel.track("Become a Member Click", {
+                source: "Available Only Checkbox",
+              });
+              const form = document.querySelector('form[action="/api/checkout_sessions"]');
+              if (form instanceof HTMLFormElement) {
+                form.submit();
+              }
+            }}
+            className="bg-black text-white font-medium px-4 py-2 rounded-xl hover:bg-black/80 flex items-center"
+          >
+            <DiamondIcon className="mr-2" />
+            Become a Member
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="bg-gray-300 text-black font-medium px-4 py-2 rounded-xl hover:bg-gray-400"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 15000,
+      position: 'top-center',
+    });
+      
     }
   };
 
