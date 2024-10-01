@@ -122,8 +122,7 @@ export default function CPricing() {
           <div className={styles.cardTitle}>
             <h3>Free</h3>
             <h4>
-              For individuals who want to try out the most advanced AI domain
-              generator.
+              For individuals who want to generate their own domains.
             </h4>
           </div>
           <div className={styles.cardPrice}>
@@ -134,10 +133,9 @@ export default function CPricing() {
           <div className={styles.cardDescription}>
             <ul>
               <li className={styles.ok}>
-                Generate 3 domain sets per day
+                Generate domains
               </li>
               <li className={styles.ok}>Click to check domain availability</li>
-              {/* <li className={styles.ok}>See domain rating</li> */}
             </ul>
           </div>
         </div>
@@ -148,15 +146,15 @@ export default function CPricing() {
           </div>
           <div className={styles.cardTitle}>
             <h3>Starter</h3>
-            <span className={styles.off}>80% OFF for the first 10 today!</span>
+            <span className={styles.off}>50% OFF today!</span>
             <h4>For hobbyists bringing ideas to life with AI by their side.</h4>
           </div>
           <div className={styles.cardPrice}>
             <h2>
               <sup>$</sup>
-              <span className={styles.discountPrice}>5</span>
+              <span className={styles.discountPrice}>10</span>
               <span className={styles.ml2}>
-                <sup>$</sup>1<small>/month</small>
+                <sup>$</sup>5<small>/month</small>
               </span>
             </h2>
           </div>
@@ -168,7 +166,7 @@ export default function CPricing() {
               </li>
               <li className={styles.ok}>Website creator</li>
               <li className={styles.ok}>Get customers with quick ads</li>
-              <li className={styles.ok}>Support (Chat and Email)</li>
+              <li className={styles.ok}>Support (Email)</li>
             </ul>
           </div>
           {subsTplan !== "STARTER" ? (
@@ -205,7 +203,7 @@ export default function CPricing() {
         <Box className={styles.card}>
           <div className={styles.cardTitle}>
             <h3>Creator</h3>
-            <span className={styles.off}>First 5 today save 50% – act fast!</span>
+            <span className={styles.off}>50% OFF today!</span>
             <h4>
               For passionate creators building the apps they want to see in the
               world.
@@ -225,9 +223,8 @@ export default function CPricing() {
           <div className={styles.cardDescription}>
             <ul>
               <li>Everything in starter, plus</li>
-              <li className={styles.ok}>Unlock our best AI model</li>
+              <li className={styles.ok}>Unlock the best AI model</li>
               <li className={styles.ok}>Priority support (Phone)</li>
-              <li className={styles.ok}>Premium features*</li>
             </ul>
           </div>
           {subsTplan !== "CREATOR" ? (
