@@ -7,7 +7,6 @@ import mixpanel from "../utils/mixpanel-config";
 import { useRouter } from "next/router";
 import { useClerk, SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
 import { Button, Box } from "@mui/material";
-import StarIcon from '@mui/icons-material/Star';
 import DiamondIcon from '@mui/icons-material/Diamond';
 import SBRContext from "../context/SBRContext";
 
@@ -22,6 +21,7 @@ const DomainPage: React.FC = () => {
   const [currentDomain, setCurrentDomain] = useState("");
   const [availableOnly, setAvailableOnly] = useState(false);
   const [filteredDomains, setFilteredDomains] = useState<DomainInfo[]>([]);
+  const [availabilityChecked, setAvailabilityChecked] = useState(false);
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -115,12 +115,13 @@ const DomainPage: React.FC = () => {
   }, [isSignedIn, user]);
 
   useEffect(() => {
-    if (availableOnly && isPremiumUser) {
+    if (availableOnly && isPremiumUser && !availabilityChecked && generatedDomains.length > 0) {
       checkAvailability();
+      setAvailabilityChecked(true);
     } else {
       setFilteredDomains(generatedDomains);
     }
-  }, [generatedDomains, availableOnly, isPremiumUser]);
+  }, [generatedDomains, isPremiumUser]);
 
   const checkAvailability = async () => {
     try {
@@ -161,6 +162,7 @@ const DomainPage: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setGeneratedDomains([]);
+    setAvailabilityChecked(false); // Reset the flag when generating new domains
 
     try {
         const prompt = `
