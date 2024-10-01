@@ -1,457 +1,196 @@
-import React, { useRef, useState, useEffect, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import Head from "next/head";
-import Footer from "../components/Footer";
-import Header from "../components/Header";
-import { NextPage } from "next";
-import Image from "next/image";
-import { Toaster, toast } from "react-hot-toast";
-import DropDown from "../components/DropDown";
-import LoadingDots from "../components/LoadingDots";
-import { Tooltip } from "@mui/material";
-import {
-  COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN,
-  COUNT_DOMAINS_TO_SEARCH_YES_ADMIN,
-  DomainInfo,
-  VibeType,
-  ptemp,
-  ptop,
-  default_extensions,
-} from "../utils/Definitions";
-import {
-  getBio,
-  getVibe,
-  getDomainFounded,
-  saveBioVite,
-  saveDomainFounded,
-  getVpTabIndex,
-  getVpContains,
-  getVpStartsWith,
-  getVpEndsWith,
-  getVpSimilarToThisDomainName,
-  getVpExtLeft,
-  getVpExtChecked,
-  getVpFilterExtLeft,
-  getVpTransform,
-  getVpMinlength,
-  getVpMaxlength,
-  saveVpTabIndex,
-  saveVpKeywords,
-  saveVpExtensions,
-  saveVpCharacters,
-} from "../utils/LocalStorage";
-import {
-  createParser,
-  ParsedEvent,
-  ReconnectInterval,
-} from "eventsource-parser";
-import { useClerk, SignedIn, useUser } from "@clerk/nextjs";
-import { stringGenerateCountDomain } from "../utils/StringGenerateCountDomain";
-import TableDomain from "../components/TableDomain";
+import { toast } from "react-hot-toast";
+import { DomainInfo, VibeType } from "../utils/Definitions";
+import { createParser, ParsedEvent, ReconnectInterval } from "eventsource-parser";
 import mixpanel from "../utils/mixpanel-config";
-import {
-  jsonToAverageScore,
-  addRateToDomainInfo,
-  saveInDataBaseDomainRate,
-} from "../utils/TextRate";
-import Box from "@mui/material/Box";
-import Tab from "@mui/material/Tab";
-import TabContext from "@mui/lab/TabContext";
-import TabList from "@mui/lab/TabList";
-import TabPanel from "@mui/lab/TabPanel";
-import TextField from "@mui/material/TextField";
-import ClearIcon from "@mui/icons-material/Clear";
-import DownloadIcon from "@mui/icons-material/Download";
-import Button from "@mui/material/Button";
-import FormLabel from "@mui/material/FormLabel";
-import FormControl from "@mui/material/FormControl";
-import FormGroup from "@mui/material/FormGroup";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Checkbox from "@mui/material/Checkbox";
-import List from "@mui/material/List";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemText from "@mui/material/ListItemText";
-import LoadingButton from "@mui/lab/LoadingButton";
-import Modal from "@mui/material/Modal";
-
+import { useRouter } from "next/router";
+import { useClerk, SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
+import { Button, Box } from "@mui/material";
+import DiamondIcon from '@mui/icons-material/Diamond';
 import SBRContext from "../context/SBRContext";
-import { SignedOut } from "@clerk/nextjs";
 
-function vp_not(a: string[], b: string[]) {
-  return a.filter((value) => b.indexOf(value) === -1);
-}
-
-function vp_intersection(a: string[], b: string[]) {
-  return a.filter((value) => b.indexOf(value) !== -1);
-}
-
-const DomainPage: NextPage = () => {
+const DomainPage: React.FC = () => {
+  const router = useRouter();
+  const { openSignIn } = useClerk();
+  const { isLoaded, user, isSignedIn } = useUser();
   const [loading, setLoading] = useState(false);
-  const [bio, setBio] = useState("");
+  const [businessDescription, setBusinessDescription] = useState("");
   const [vibe, setVibe] = useState<VibeType>("Professional");
-  const [generatedBios, setGeneratedBios] = useState<String>("");
-  const [numberDomainsCreated, setNumberDomainsCreated] = useState<number>(0);
-  const [isGPT, setIsGPT] = useState(true);
-
-  //For Settings Modal
-  const [open, setOpen] = React.useState(false);
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
-  const style = {
-    position: "absolute" as "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    width: "80%",
-    bgcolor: "background.paper",
-    border: "1px #000",
-    boxShadow: 24,
-    p: 2,
-    maxHeight: "90vh", // Establece la altura máxima del contenedor
-    overflow: "auto", // Activa el desplazamiento automático
-  };
+  const [generatedDomains, setGeneratedDomains] = useState<DomainInfo[]>([]);
+  const [currentDomain, setCurrentDomain] = useState("");
+  const [availableOnly, setAvailableOnly] = useState(false);
+  const [filteredDomains, setFilteredDomains] = useState<DomainInfo[]>([]);
+  const [availabilityChecked, setAvailabilityChecked] = useState(false);
 
   const context = useContext(SBRContext);
   if (!context) {
-    throw new Error("SBRContext must be used within a SBRProvider");
+    throw new Error('SBRContext must be used within a SBRProvider');
   }
-  const { dataUser, credits, setCredits, admin, setAdmin, subsTplan } = context;
+  const { 
+    dataUser, 
+    setDataUser,    
+    credits, 
+    setCredits, 
+    admin, 
+    setAdmin,
+    subsTplan, 
+    setSubsTplan, 
+    subsCancel, 
+    setSubsCancel    
+   } = context;
 
-  const [domainfounded, setDomainFounded] = useState<DomainInfo[]>([]);
+  const isPremiumUser = subsTplan === "STARTER" || subsTplan === "CREATOR";
 
-  const { isLoaded, user, isSignedIn } = useUser();
-  const { openSignIn } = useClerk();
-
-  const [vpTabIndex, setVpTabIndex] = useState("1");
-  const handleVpTabIndexChange = (event: any, newValue: string) => {
-    setVpTabIndex(newValue);
-  };
-
-  const [vpContains, setVpContains] = useState("");
-  const [vpStartsWith, setVpStartsWith] = useState("");
-  const [vpEndsWith, setVpEndsWith] = useState("");
-  const [vpSimilarToThisDomainName, setVpSimilarToThisDomainName] =
-    useState("");
-  const handleClearKeyWords = () => {
-    setVpContains("");
-    setVpStartsWith("");
-    setVpEndsWith("");
-    setVpSimilarToThisDomainName("");
-    handleClearCharacters();
-  };
-
-  const [vpExtLeft, setVpExtLeft] = useState<string[]>([]);
-  const [vpExtChecked, setVpExtChecked] = useState<string[]>([]);
-  const [vpFilterExtLeft, setVpFilterExtLeft] = useState("");
-  const [vpLoadingTldsDomains, setVpLoadingTldsDomains] = useState(false);
-  const handleToggle = (value: string) => () => {
-    const currentIndex = vpExtChecked.indexOf(value);
-    const newChecked = [...vpExtChecked];
-    if (currentIndex === -1) {
-      newChecked.push(value);
+  const handleAvailableOnlyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Track the change in the "Available only" checkbox
+    mixpanel.track("Available Only Checkbox Changed", {
+      checked: e.target.checked,
+      isPremiumUser: isPremiumUser
+    });
+    if (isPremiumUser) {
+      setAvailableOnly(e.target.checked);
     } else {
-      newChecked.splice(currentIndex, 1);
+      toast.error("This feature is available only for premium members. Please upgrade your plan.");
     }
-    setVpExtChecked(newChecked);
   };
 
-  const customList = (items: string[]) => (
-    <Box
-      sx={{
-        width: "100%",
-        bgcolor: "background.paper",
-        height: 250,
-        overflowY: "auto",
-      }}
-    >
-      <List>
-        {items.map((value: string) => {
-          const labelId = `transfer-list-item-${value}-label`;
-          return (
-            <ListItemButton
-              key={value}
-              role="listitem"
-              onClick={handleToggle(value)}
-            >
-              <ListItemIcon>
-                <Checkbox
-                  checked={vpExtChecked.indexOf(value) !== -1}
-                  tabIndex={-1}
-                  disableRipple
-                  inputProps={{
-                    "aria-labelledby": labelId,
-                  }}
-                />
-              </ListItemIcon>
-              <ListItemText id={labelId} primary={value} />
-            </ListItemButton>
-          );
-        })}
-      </List>
-    </Box>
-  );
-  const vpFilteredExtLeft = vpExtLeft.filter((item) =>
-    item.toLowerCase().includes(vpFilterExtLeft.toLowerCase())
-  );
-  const handleLoadMoreExtensions = async () => {
+  // Function to fetch user data by email
+  const fetchUserData = async (email: string) => {
     try {
-      let tldsDomains = [];
-      setVpLoadingTldsDomains(true);
-      const response = await fetch("/api/get-tlds-godaddy", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+      const response = await fetch(`/api/getUser?email=${email}`);
+      if (!response.ok) {
+        const text = await response.text();
+        console.error(`Response status: ${response.status}, text: ${text}`);
+        throw new Error(`Network response was not ok. Status: ${response.status}`);
+      }
+      const userData = await response.json();
+      if (userData.user) {
+        setDataUser({
+          id: userData.user.id,
+          name: userData.user.name,
+          email: userData.user.email
+        });      
+        setCredits(userData.user.credits);
+        setAdmin(userData.user.admin);
+        setSubsTplan(userData.user.subs_tplan);
+        setSubsCancel(userData.user.subs_cancel);
+      }
+    } catch (error) {
+      console.error("Failed to fetch user data:", error);
+    }
+  };
+
+  // Function to initialize page data
+  const initPageData = async () => {
+    if (isLoaded && user) {
+      const email = user.emailAddresses[0].emailAddress;
+      if (email) {
+        try {
+          await fetchUserData(email);
+          mixpanel.identify(email);
+        } catch (error) {
+          console.error("Error initializing page data:", error);
+          console.warn("Failed to load user data. Please try refreshing the page.");
+        }
+      } else {
+        console.warn("User email not available");
+      }
+    } else if (isLoaded && !user) {
+      // Reset user data when not signed in
+      setSubsTplan(null);
+      setSubsCancel(null);
+      setCredits(null);
+      setDataUser({
+        id: '0',
+        name: 'anonymous',
+        email: 'anonymous@anonymous.com'
       });
+      setAdmin(false);
+    }
+  };
+
+  useEffect(() => {
+    initPageData();
+  }, [isSignedIn, user]);
+
+  useEffect(() => {
+    if (availableOnly && isPremiumUser && !availabilityChecked && generatedDomains.length > 0) {
+      checkAvailability();
+      setAvailabilityChecked(true);
+    } else {
+      setFilteredDomains(generatedDomains);
+    }
+  }, [generatedDomains, isPremiumUser]);
+
+  const checkAvailability = async () => {
+    try {
+
+      // Assuming 'generatedDomains' is an array of your domain objects
+      const domainsToCheck = generatedDomains.map((domainInfo) => domainInfo.domain);
+  
+      if (process.env.NODE_ENV === 'development') {
+      // Mock data for local development
+      const mockAvailabilityResults = generatedDomains.map((domainInfo) => ({
+        domain: domainInfo.domain,
+        available: Math.random() < 0.7, // 70% chance of being available
+      }));
+
+      setGeneratedDomains(mockAvailabilityResults);
+      setFilteredDomains(mockAvailabilityResults.filter((domain) => domain.available));
+      return;
+    }
+
+      const response = await fetch('/api/check-availability-godaddy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domains: domainsToCheck }),
+      });
+  
       if (!response.ok) {
         throw new Error(`Error: ${response.statusText}`);
       }
-
-      const data = await response.json();
-
-      setVpLoadingTldsDomains(false);
-
-      for (const elem of data) {
-        tldsDomains.push(elem.name);
-      }
-
-      setVpExtLeft(vp_not(tldsDomains, default_extensions));
-      setVpFilterExtLeft("");
-    } catch (error) {
-      setVpLoadingTldsDomains(false);
-      console.error("Failed to fetch tlds domains:", error);
-    } finally {
-    }
-  };
-  const handleClearExtensions = () => {
-    setVpExtLeft(default_extensions);
-    setVpExtChecked([]);
-    setVpFilterExtLeft("");
-  };
-
-  const [vpTransform, setVpTransform] = useState({
-    vpHiremecom: false,
-    vpFlickercom: false,
-    vpToolcom: false,
-  });
-  const [vpMinlength, setVpMinlength] = useState<number>(0);
-  const [vpMaxlength, setVpMaxlength] = useState<number>(0);
-  const handleVpTransformChange = (event: any) => {
-    setVpTransform({
-      ...vpTransform,
-      [event.target.name]: event.target.checked,
-    });
-  };
-  const { vpHiremecom, vpFlickercom, vpToolcom } = vpTransform;
-  const handleClearCharacters = () => {
-    setVpTransform({
-      vpHiremecom: false,
-      vpFlickercom: false,
-      vpToolcom: false,
-    });
-    setVpMinlength(0);
-    setVpMaxlength(0);
-  };
-
-  useEffect(() => {
-    if (isLoaded && user) {
-      setBio(() => {
-        const bioFromStorage = getBio();
-        return bioFromStorage ?? "";
-      });
-      setVibe(() => {
-        const vibeFromStorage = getVibe();
-        return vibeFromStorage ?? "Professional";
-      });
-      setDomainFounded(() => {
-        const dfFromStorage = getDomainFounded();
-        return dfFromStorage ?? [];
-      });
-      setVpTabIndex(() => {
-        const vpti = getVpTabIndex();
-        return vpti ?? "1";
-      });
-      setVpContains(() => {
-        const vpc = getVpContains();
-        return vpc ?? "";
-      });
-      setVpStartsWith(() => {
-        const vpst = getVpStartsWith();
-        return vpst ?? "";
-      });
-      setVpEndsWith(() => {
-        const vpe = getVpEndsWith();
-        return vpe ?? "";
-      });
-      setVpSimilarToThisDomainName(() => {
-        const vpsi = getVpSimilarToThisDomainName();
-        return vpsi ?? "";
-      });
-      setVpExtLeft(() => {
-        const vpextl = getVpExtLeft();
-        return vpextl ?? default_extensions;
-      });
-      setVpExtChecked(() => {
-        const vpextc = getVpExtChecked();
-        return vpextc ?? [];
-      });
-      setVpFilterExtLeft(() => {
-        const vpextf = getVpFilterExtLeft();
-        return vpextf ?? "";
-      });
-      setVpTransform(() => {
-        const vpt = getVpTransform();
-        return (
-          vpt ?? {
-            vpHiremecom: false,
-            vpFlickercom: false,
-            vpToolcom: false,
-          }
+  
+      const availabilityResults = await response.json();
+  
+      // Map the availability results back to your generatedDomains
+      const updatedDomains = generatedDomains.map((domainInfo) => {
+        const availabilityInfo = availabilityResults.find(
+          (result) => result.domain === domainInfo.domain
         );
+        return {
+          ...domainInfo,
+          available: availabilityInfo ? availabilityInfo.available : undefined,
+        };
       });
-      setVpMinlength(() => {
-        const vpmin = getVpMinlength();
-        return vpmin ? parseInt(vpmin) : 0;
-      });
-      setVpMaxlength(() => {
-        const vpmax = getVpMaxlength();
-        return vpmax ? parseInt(vpmax) : 0;
-      });
-    } else {
-      setBio("");
-      setVibe("Professional");
-      handleClearKeyWords();
-      handleClearExtensions();
-      handleClearCharacters();
+  
+      // Update your state with the new domain information
+      setGeneratedDomains(updatedDomains);
+    } catch (error) {
+      console.error('Error checking domain availability:', error);
     }
-  }, [user]);
+  };
 
-  useEffect(() => {
-    if (!isSignedIn && isSignedIn !== undefined) {
-      handleClearKeyWords();
-      handleClearExtensions();
-      handleClearCharacters();
-    }
-  }, [isSignedIn]);
-
-  const countDomainToPrompt = admin
-    ? stringGenerateCountDomain(COUNT_DOMAINS_TO_SEARCH_YES_ADMIN)
-    : stringGenerateCountDomain(COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN);
-
-  const countShowDomain = admin
-    ? COUNT_DOMAINS_TO_SEARCH_YES_ADMIN
-    : COUNT_DOMAINS_TO_SEARCH_NOT_ADMIN;
-
-  const searchDomain = async () => {
-    let tempGeneratedDomains = "";
-    let domainNames: DomainInfo[] = [];
-    setGeneratedBios("");
+  const generateDomains = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setGeneratedDomains([]);
+    setAvailabilityChecked(false); // Reset the flag when generating new domains
 
     try {
-      let prompt_extensions = "";
-      if (vpExtChecked.length > 0)
-        prompt_extensions = `. Just use the extensions: ${vpExtChecked.join(
-          ", "
-        )}`;
-      let prompt_keywords = "";
-      const conditions_keywords = [
-        vpContains && `that contain ${vpContains}`,
-        // vpStartsWith && `that start with ${vpStartsWith}`,
-        // vpEndsWith && `that end with ${vpEndsWith}`,
-        vpSimilarToThisDomainName && `similar to ${vpSimilarToThisDomainName}`,
-      ].filter(Boolean);
-      if (conditions_keywords.length > 1) {
-        const lastCondition = conditions_keywords.pop();
-        prompt_keywords = `Generate domain names ${conditions_keywords.join(
-          ", "
-        )} and ${lastCondition}. `;
-      } else {
-        prompt_keywords = `Generate domain names ${conditions_keywords[0]}. `;
-      }
+        const prompt = `
+        Role: You are a domain name expert.
+        Objective: Generate 5 memorable, brief, and simple domain names based on the following input:
+        Client's input: ${businessDescription}
+        Vibe: ${vibe}
+        
+        Return only the domain names, one per line.
+      `;
 
-      let prompt_character = "";
-      const conditions_character = [
-        vpHiremecom && `use domain hacks like in hireme.com → hire.me, or drop last vowel of the domain name like in flicker.com → flickr.com or pluralize nouns like in tool.com → tools.com`,
-      ].filter(Boolean);
-      if (conditions_character.length > 1) {
-        const lastCondition = conditions_character.pop();
-        prompt_character = `Try to ${conditions_character.join(
-          ", "
-        )} and ${lastCondition}. `;
-      } else {
-        prompt_character = `Try to ${conditions_character[0]}. `;
-      }
-
-      let prompt_minmax = "";
-      const conditions_minmax = [
-        // vpMinlength && `min length: ${vpMinlength} characters`,
-        vpMaxlength && `max length: ${vpMaxlength} characters`,
-      ].filter(Boolean);
-      switch (conditions_minmax.length) {
-        case 2:
-          const lastCondition = conditions_minmax.pop();
-          prompt_minmax = `Character length does not include the domain extension (i.e. .com), make sure ${conditions_minmax[0]} and ${lastCondition}. `;
-          break;
-        case 1:
-          prompt_minmax = `Make sure ${conditions_minmax[0]}. `;
-          break;
-      }
-
-      const prompt = `
-        Role: You are Seth Godin, tasked with creating domain names. ${
-          bio ? `Client's input: ` + bio : ""
-        }.
-        Objective: Your mission is to develop ${countDomainToPrompt} that meet the following criteria for an effective and marketable online presence:
-        1. Memorable: Craft domain names that maximize brand recall and leave a lasting impression.
-        2. Brevity: Keep the domain names concise, aiming for short lengths.
-        3. Simplicity: Ensure each domain name is easy to spell and pronounce.
-
-        Good Examples:
-        - Apple.com: Easy to spell and pronounce.
-        - JetBlue.com: Descriptive and easy to remember.
-        - Amazon.com: Short, memorable, and now synonymous with online shopping.
-
-        Examples to Avoid:
-        - Axelon.com: Sounds like a common English word but isn't, leading to potential confusion.
-        - Altus.com: Lacks immediate brandability.
-        - Prius.com: Pronunciation challenges may hinder global brand recall.
-
-        Craft domain names that ${
-          vibe === "Friendly"
-            ? "feel relaxed and welcoming, suitable for personal blogs, small businesses, or customer-oriented services that emphasize a community feel."
-            : vibe === "Professional"
-            ? "convey credibility and professionalism, ideal for consulting firms or any business where trust is paramount."
-            : vibe === "Creative"
-            ? "are unique, inspiring creativity, ideal for design studios, tech innovators, or any business that prides itself on thinking outside the box."
-            : vibe === "Sophisticated"
-            ? "embody sophistication and elegance, perfect for luxury brands, exclusive clubs, or high-end service industries."
-            : ""
-        }
-      ${
-        bio ||
-        prompt_extensions ||
-        prompt_keywords ||
-        prompt_character ||
-        prompt_minmax
-          ? `Just return the domains, nothing else. Keep in mind client's focus on ` +
-            (bio +
-              prompt_extensions +
-              prompt_keywords +
-              prompt_minmax +
-              prompt_character)
-          : ""
-      }.`;
-
-      const response = await fetch(isGPT ? "/api/openai" : "/api/mistral", {
+      const response = await fetch("/api/openai", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt,
-          ptemp,
-          ptop,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, ptemp: 0.7, ptop: 1 }),
       });
 
       if (!response.ok) {
@@ -459,333 +198,75 @@ const DomainPage: NextPage = () => {
       }
 
       const data = response.body;
-      if (!data) {
-        return;
-      }
-
-      const onParseGPT = (event: ParsedEvent | ReconnectInterval) => {
-        if (event.type === "event") {
-          const data = event.data;
-          try {
-            const text = JSON.parse(data).text ?? "";
-            tempGeneratedDomains += text;
-            setGeneratedBios((prev) => prev + text);
-          } catch (e) {
-            console.error(e);
-          }
-        }
-      };
-
-      const onParseMistral = (event: ParsedEvent | ReconnectInterval) => {
-        if (event.type === "event") {
-          const data = event.data;
-          try {
-            const text = JSON.parse(data).choices[0].text ?? "";
-            setGeneratedBios((prev) => prev + text);
-          } catch (e) {
-            console.error(e);
-          }
-        }
-      };
-
-      const onParse = isGPT ? onParseGPT : onParseMistral;
+      if (!data) return;
 
       const reader = data.getReader();
       const decoder = new TextDecoder();
       const parser = createParser(onParse);
       let done = false;
+
       while (!done) {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
         const chunkValue = decoder.decode(value);
         parser.feed(chunkValue);
       }
-
-      const tempDomainNamesText = tempGeneratedDomains
-        .split("\n")
-        .map((domain) => domain.replace(/^\d+\.\s*/, ""))
-        .filter((domain) => domain);
-
-      // Trim whitespace from each domain name and limit to the specified count
-      const trimmedDomainNames = tempDomainNamesText
-        .map(domain => domain.trim())
-        .filter(domain => domain.length > 0)
-
-      if (subsTplan === "CREATOR" || subsTplan === "STARTER") {
-        console.log("trimmedDomainNames", trimmedDomainNames);
-        const tempDomainAvailability = await multipleCheckAvailability(
-          trimmedDomainNames
-        );
-        tempDomainAvailability.forEach((domain: { domain: string; available: boolean }) => {
-          domainNames.push({
-            domain: domain.domain,
-            available: domain.available,
-            favorite: undefined,
-          });
-        });
-      } else {
-        trimmedDomainNames.map((domain) => {
-          domainNames.push({
-            domain,
-            available: undefined,
-            favorite: undefined,
-          });
-        });
-      }
-
-      //---------------------------------------------------------------------
-    } catch (error: any) {
-      throw new Error(error);
-    }
-    return domainNames;
-  };
-
-  const generateDom = async (e: any) => {
-    e.preventDefault();
-    setDomainFounded([]);
-
-    if (subsTplan !== "CREATOR" && subsTplan !== "STARTER") {
-         // Check if user has exceeded the daily limit
-    const MAX_DAILY_GENERATIONS = 3;
-    const GENERATION_COOLDOWN = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-
-    const lastGenerations = JSON.parse(localStorage.getItem('lastGenerations') || '[]');
-    const now = Date.now();
-
-    // Remove generations older than 24 hours
-    const recentGenerations = lastGenerations.filter((timestamp: number) => now - timestamp < GENERATION_COOLDOWN);
-
-    if (recentGenerations.length >= MAX_DAILY_GENERATIONS) {
-      const oldestGeneration = Math.min(...recentGenerations);
-      const timeUntilNextGeneration = GENERATION_COOLDOWN - (now - oldestGeneration);
-      const hoursLeft = Math.ceil(timeUntilNextGeneration / (60 * 60 * 1000));
-
-      toast(
-        `You've reached the limit of ${MAX_DAILY_GENERATIONS} domain generations per day. Please subscribe or try again in ${hoursLeft} hours.`,
-        {
-          icon: "⏳",
-          style: {
-            border: "1px solid #FFA500",
-            padding: "16px",
-            color: "#FFA500",
-          },
-          duration: 10000,
-        }
-      );
-      return;
-    }
-
-    // Add current timestamp to generations
-    recentGenerations.push(now);
-    localStorage.setItem('lastGenerations', JSON.stringify(recentGenerations));
-      }
-
-    setLoading(true);
-
-    try {
-      let resultDomainFounded = await searchDomain();
-      mixpanel.track("Domains Generated", {
-        user_prompt: bio,
-        vibe: vibe,
-        credits: credits,
-        domains_generated: resultDomainFounded,
-        extensions: vpExtChecked.join(","),
-        keywords: {
-          contains: vpContains,
-          startswith: vpStartsWith,
-          endswith: vpEndsWith,
-          similartothisdomainname: vpSimilarToThisDomainName,
-        },
-        transform: {
-          hiremecom: vpHiremecom,
-          flickercom: vpFlickercom,
-          toolcom: vpToolcom,
-          minlength: vpMinlength,
-          maxlength: vpMaxlength,
-        },
-      });
-      
-      saveBioVite(bio, vibe);
-      saveVpTabIndex(vpTabIndex);
-      saveVpKeywords(
-        vpContains,
-        vpStartsWith,
-        vpEndsWith,
-        vpSimilarToThisDomainName
-      );
-      saveVpExtensions(vpExtLeft, vpExtChecked, vpFilterExtLeft);
-      saveVpCharacters(vpTransform, vpMinlength, vpMaxlength);
-
-      if (resultDomainFounded) {
-        if (resultDomainFounded.length === 0) {
-          console.log(resultDomainFounded);
-          toast.error("Please try a different prompt");
-        }
-
-        resultDomainFounded = await getDomainNamesWithRate(
-          resultDomainFounded,
-          dataUser.id
-        );
-        setDomainFounded(resultDomainFounded);
-        saveDomainFounded(resultDomainFounded);
-      }
-
-      setLoading(false);
-      setNumberDomainsCreated(numberDomainsCreated + 3);
-      // bioRef.current?.scrollIntoView({ behavior: 'smooth' })
 
     } catch (error) {
-      setLoading(false);
       console.error("An error occurred:", error);
-      toast.error(
-        "An error occurred while processing your request. Please try again."
-      );
+      toast.error("An error occurred while generating domains. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  //Rate the domain names
-  const getDomainNamesWithRate = async (
-    foundedomain: DomainInfo[],
-    user_id: string
-  ) => {
-    if (foundedomain.length === 0) return foundedomain;
-    let resultDomainsRate = [...foundedomain];
-    const domainListText = foundedomain
-      .map((item, index) => `${index + 1}. ${item.domain}`)
-      .join("\n");
-
-    const prompt = `Rate the following domain names based on three key criteria: Memorability, Simplicity, and Brevity from 0 to 10. Return a JSON with this structure (avoid using any other text): [{"domain": "name", "memorability": 10, "simplicity": 10, "brevity": 10},{"domain": "x.com", "memorability": 7, "simplicity": 8, "brevity": 6}].
-    Domains:
-      ${domainListText}`;
-
-    const response = await fetch(isGPT ? "/api/openai" : "/api/mistral", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        prompt,
-        ptemp,
-        ptop,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(response.statusText);
-    }
-
-    const dataResponse = response.body;
-    if (dataResponse) {
-      let dataRate = "";
-      const onParseGPT = (event: ParsedEvent | ReconnectInterval) => {
-        if (event.type === "event") {
-          const data = event.data;
-          try {
-            const text = JSON.parse(data).text ?? "";
-            dataRate += text;
-          } catch (e) {
-            console.error(e);
-          }
-        }
-      };
-
-      const onParseMistral = (event: ParsedEvent | ReconnectInterval) => {
-        if (event.type === "event") {
-          const data = event.data;
-          try {
-            const text = JSON.parse(data).choices[0].text ?? "";
-            dataRate += text;
-          } catch (e) {
-            console.error(e);
-          }
-        }
-      };
-
-      const onParse = isGPT ? onParseGPT : onParseMistral;
-
-      const reader = dataResponse.getReader();
-      const decoder = new TextDecoder();
-      const parser = createParser(onParse);
-      let done = false;
-      while (!done) {
-        const { value, done: doneReading } = await reader.read();
-        done = doneReading;
-        const chunkValue = decoder.decode(value);
-        parser.feed(chunkValue);
-      }
-
-      let jsonRate = null;
+  const onParse = (event: ParsedEvent | ReconnectInterval) => {
+    if (event.type === "event") {
       try {
-        jsonRate = jsonToAverageScore(dataRate);
-        resultDomainsRate = addRateToDomainInfo(resultDomainsRate, jsonRate);
-        await saveInDataBaseDomainRate(resultDomainsRate, user_id);
-      } catch (error) {
-        console.log("Error: ", error);
+        const text = JSON.parse(event.data).text ?? "";
+        setCurrentDomain(prev => {
+          const updatedDomain = prev + text;
+          if (updatedDomain.includes("\n")) {
+            const domains = updatedDomain.split("\n")
+              .map(domain => domain.trim().replace(/^\d+\.\s*/, ""))
+              .filter(domain => domain !== "");
+            setGeneratedDomains(prev => [
+              ...prev,
+              ...domains.map(domain => ({ domain, available: undefined, favorite: false }))
+            ]);
+            return "";
+          }
+          return updatedDomain;
+        });
+      } catch (e) {
+        console.error(e);
       }
-    }
-
-    return resultDomainsRate;
-  };
-
-  const multipleCheckAvailability = async (domain: string[]) => {
-    try {
-      // Check if running on localhost
-      const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-
-      if (isLocalhost) {
-        // Mock data for localhost
-        const mockData = domain.map(d => ({
-          domain: d,
-          available: Math.random() < 0.5, // Randomly set availability
-        }));
-
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        return mockData.filter(item => item.available);
-      }
-
-      // Actual API call for non-localhost environments
-      const response = await fetch("/api/check-availability-godaddy", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ domains: domain }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.statusText}`);
-      }
-      const data = await response.json();
-      let domainAvailability = data.filter((item: { available: boolean }) => item.available);
-
-      mixpanel.track("Multiple checked availability successful", {
-        domains: domainAvailability,
-      });
-
-      return domainAvailability;
-    } catch (error: any) {
-      mixpanel.track("Multiple checked availability with error", {
-        domain: domain,
-        error: error,
-      });
-      throw new Error(error);
     }
   };
 
-  const handleBuyCreditsClick = (
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    event.preventDefault();
-    mixpanel.track("Availability Btn Go Premium Click", {
-      credits: credits,
+  const handleCheckAvailability = (domain: string) => {
+    const cleanDomainName = domain.replace(/^\d+\.\s*/, "");
+    const namecheapUrl = `https://www.namecheap.com/domains/registration/results/?domain=${cleanDomainName}`;
+    window.open(namecheapUrl, "_blank");
+
+    mixpanel.track("Check Domain Availability", {
+      domain: cleanDomainName,
+      source: "domain-ai-page",
     });
 
-    window.gtag &&
-      window.gtag("event", "conversion", {
-        send_to: "16510475658/ZCyECJS9tqYZEIq758A9",
-      });
+    toast.success(`Checking availability for ${cleanDomainName}`, {
+      duration: 3000,
+    });
+  };
+
+  const handleSubsStarterClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    mixpanel.track("Become a Member Click", {
+      plan_subscription: 'STARTER',
+    });  
+    window.gtag && window.gtag('event', 'conversion', {
+      'send_to': '16510475658/ZCyECJS9tqYZEIq758A9',
+    });
 
     const form = event.currentTarget.form;
     if (form) {
@@ -802,344 +283,201 @@ const DomainPage: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Header />
-      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-2 sm:mt-6">
-        {/* <h1 className="sm:text-6xl text-4xl max-w-[708px] font-bold text-slate-900">
-          Domain Generator
-        </h1> */}
-        <div className="flex flex-col max-w-xl w-full">
-          <div className="flex mt-0 items-center space-x-3">
-            <Image
-              src="/1-black.png"
-              width={30}
-              height={30}
-              alt="1 icon"
-              className="mb-0"
-            />
-            <p className="text-left font-medium">
-              Enter Your Business or Hobby{" "}
-              <Tooltip
-                title={
-                  <div>
-                    <p>
-                      Type the main focus of your business or hobby. This helps
-                      us suggest a domain that's just right for you
-                    </p>
-                  </div>
-                }
-              >
-                <span className="info-icon cursor-pointer">&#x24D8;</span>
-              </Tooltip>
-            </p>
-          </div>
-          <textarea
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            rows={4}
-            className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
-            placeholder={"e.g., Boutique Coffee Shop, Personal Fitness"}
-          />
-          <div className="flex mb-5 items-center space-x-3">
-            <Image src="/2-black.png" width={30} height={30} alt="1 icon" />
-            <p className="text-left font-medium">
-              Choose Your Brand's Vibe.{" "}
-              <Tooltip
-                title={
-                  <div>
-                    <p>
-                      {" "}
-                      <b>Professional</b> - Polished and formal.
-                    </p>
-                    <p>
-                      <b>Friendly</b> - Ideal for blogs and small businesses.
-                    </p>
-                    <p>
-                      <b>Creative</b> - Unique and memorable, for business
-                      thinking outside the box.
-                    </p>
-                    <p>
-                      <b>Sophisticated</b> - High-end, for luxury brands and
-                      exclusive clubs.
-                    </p>
-                  </div>
-                }
-              >
-                <span className="info-icon cursor-pointer">&#x24D8;</span>
-              </Tooltip>
-            </p>
-          </div>
-          {
-            /*isSignedIn && */ <>
-              <DropDown vibe={vibe} setVibe={(newVibe) => setVibe(newVibe)} />
-              <Button
-                className="self-end"
-                size="small"
-                variant="text"
-                onClick={() => {
-                  handleOpen();
-                  mixpanel.track("Advanced Settings Click", {
-                    user_prompt: bio,
-                    vibe: vibe,
-                    credits: credits,
-                    extensions: vpExtChecked.join(","),
-                    keywords: {
-                      contains: vpContains,
-                      similarTo: vpSimilarToThisDomainName,
-                    }
-                  });
-                }}
-                sx={{ marginTop: 3 }}
-              >
-                {false ? "" : "Advanced Settings"}
-              </Button>
-              <Box sx={{ width: "100%", typography: "body1" }}>
-                <Modal
-                  open={open}
-                  onClose={handleClose}
-                  aria-labelledby="simple-modal-title"
-                  aria-describedby="simple-modal-description"
-                >
-                  <Box sx={style}>
-                    <TabContext value={vpTabIndex}>
-                      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                        <TabList
-                          onChange={handleVpTabIndexChange}
-                          aria-label="Advanced Options"
-                        >
-                          <Tab label="Extensions" value="1" />
-                          <Tab label="Name" value="2" />
-                        </TabList>
-                      </Box>
-                      <TabPanel value="1">
-                        <Box
-                          sx={{
-                            maxWidth: "100%",
-                            display: "flex",
-                            flexDirection: "row",
-                            justifyContent: "flex-end",
-                          }}
-                        >
-                          <Button
-                            sx={{ marginRight: 2 }}
-                            size="small"
-                            startIcon={<ClearIcon />}
-                            id="clear-extensions"
-                            onClick={handleClearExtensions}
-                          >
-                            Clear
-                          </Button>
-                        </Box>
-                        {/* <TextField
-                          fullWidth
-                          id="ext-search"
-                          label="Filter..."
-                          variant="standard"
-                          value={vpFilterExtLeft}
-                          onChange={(e) => setVpFilterExtLeft(e.target.value)}
-                          sx={{ height: 50, marginBottom: 1 }}
-                        />
-                        <Box
-                          sx={{
-                            maxWidth: "100%",
-                            display: "flex",
-                            flexDirection: "row",
-                            alignItems: "left",
-                          }}
-                        >
-                          Check to select
-                        </Box> */}
-                        {customList(vpFilteredExtLeft)}
+      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
+        <button
+          onClick={() => router.back()}
+          className="absolute top-4 left-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back
+        </button>
 
-                        {/* <LoadingButton
-                            onClick={handleLoadMoreExtensions}
-                            startIcon={<DownloadIcon />}
-                            loading={vpLoadingTldsDomains}
-                            loadingPosition="start"
-                            size="small"
-                          >
-                            <span>More extensions</span>
-                          </LoadingButton> */}
-                      </TabPanel>
-                      <TabPanel value="2">
-                        <Box
-                          sx={{
-                            maxWidth: "100%",
-                            display: "flex",
-                            flexDirection: "column",
-                          }}
-                        >
-                          <Button
-                            sx={{ alignSelf: "flex-end" }}
-                            size="small"
-                            startIcon={<ClearIcon />}
-                            id="clear-keywords"
-                            onClick={handleClearKeyWords}
-                          >
-                            Clear
-                          </Button>
-                        
-                          <Box sx={{ display: "flex" }}>
-                            <FormGroup>
-                              <FormControlLabel
-                                control={
-                                  <Checkbox
-                                    checked={vpHiremecom}
-                                    onChange={handleVpTransformChange}
-                                    name="vpHiremecom"
-                                  />
-                                }
-                                label="Transform"
-                              />
-                            </FormGroup>
-                            <Tooltip
-                              title={
-                                <div>
-                                  <p>
-                                    Try results that transform your keywords.
-                                  </p>
-                                  <p>
-                                    {" "}
-                                    <b>Domain Hacks</b>: hireme.com &rarr;
-                                    hire.me
-                                  </p>
-                                  <p>
-                                    <b>Drop Last Vowel</b>: flicker.com &rarr;
-                                    flickr.com
-                                  </p>
-                                  <p>
-                                    <b>Pluralize Nouns</b>: tool.com &rarr;
-                                    tools.com
-                                  </p>
-                                </div>
-                              }
-                            >
-                              <span className="info-icon cursor-pointer">
-                                &#x24D8;
-                              </span>
-                            </Tooltip>
-                          </Box>
-                          <Box
-                            component="form"
-                            sx={{
-                              "& .MuiTextField-root": { m: 1 },
-                            }}
-                            noValidate
-                            autoComplete="off"
-                          >
-                            <div>
-                              <TextField
-                                id="vpMaxlength"
-                                label="Max length"
-                                type="number"
-                                size="small"
-                                variant="standard"
-                                InputLabelProps={{
-                                  shrink: true,
-                                }}
-                                value={vpMaxlength}
-                                onChange={(e) =>
-                                  setVpMaxlength(parseInt(e.target.value, 10))
-                                }
-                              />
-                            </div>
-                          </Box>
-                          <Box
-                            mb={2}
-                            sx={{ textAlign: "left", marginTop: "20px" }}
-                          >
-                            <span className="text-sm">Contains</span>
-                            <TextField
-                              fullWidth
-                              id="vpContains"
-                              variant="standard"
-                              value={vpContains}
-                              onChange={(e) => setVpContains(e.target.value)}
-                            />
-                          </Box>
-                          <Box
-                            mb={2}
-                            sx={{ textAlign: "left", marginTop: "5px" }}
-                          >
-                            <span className="text-sm">Similar to</span>
-                            <TextField
-                              fullWidth
-                              id="vpSimilarToThisDomainName"
-                              variant="standard"
-                              value={vpSimilarToThisDomainName}
-                              onChange={(e) =>
-                                setVpSimilarToThisDomainName(e.target.value)
-                              }
-                            />
-                          </Box>
-                        </Box>
-                      </TabPanel>
-                    </TabContext>
-                  </Box>
-                </Modal>
-              </Box>
-            </>
-          }
+        <h1 className="sm:text-6xl text-4xl max-w-[708px] font-bold text-slate-900">
+          Domain Generator
+        </h1>
+
+        <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 2, alignItems: 'center' }}>
+          <SignedIn>
+            <form action="/api/checkout_sessions" method="POST">
+              <input type="hidden" name="tipo" value="STARTER" />
+              <Button
+                className="bg-black cursor-pointer hover:bg-black/80 rounded-xl"
+                style={{ textTransform: "none" }}
+                sx={{
+                  padding: { xs: "3px", sm: 1 },
+                  display: (isSignedIn && (subsTplan === "STARTER" || subsTplan === "CREATOR")) ? "none" : "block",
+                }}
+                type="submit"
+                variant="contained"
+                role="link"
+                onClick={handleSubsStarterClick}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <DiamondIcon sx={{ mr: 0.2, fontSize: '1rem' }} />
+                  Become a Member
+                </Box>
+              </Button>
+            </form>
+            <UserButton userProfileUrl="/user" afterSignOutUrl="/" />
+          </SignedIn>
           <SignedOut>
-            <button
-              className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+            <Button
               onClick={() => openSignIn()}
+              className="bg-black cursor-pointer rounded-xl text-white font-medium px-4 py-2 hover:bg-black/80"
             >
               Sign in / up
-            </button>
+            </Button>
           </SignedOut>
-          <SignedIn>
-            {!loading && (
-              <button
-                className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-5 mt-3 hover:bg-black/80 w-full"
-                onClick={(e) => generateDom(e)}
-              >
-                Create your domain &rarr;
-              </button>
+        </Box>
+
+        <SignedIn>
+          {/* Show this content when the user is signed in */}
+          <form onSubmit={generateDomains} className="max-w-xl w-full">
+            <div className="flex mt-10 items-center space-x-3">
+              <p className="text-left font-medium">
+                Describe your business or idea
+              </p>
+            </div>
+            <textarea
+              value={businessDescription}
+              onChange={(e) => setBusinessDescription(e.target.value)}
+              rows={4}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
+              placeholder="e.g. Boutique Coffee Shop"
+            />
+
+            <div className="flex mb-5 items-center space-x-3">
+              <p className="text-left font-medium">Select the vibe</p>
+            </div>
+            <select
+              value={vibe}
+              onChange={(e) => setVibe(e.target.value as VibeType)}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black"
+            >
+              <option value="Professional">Professional</option>
+              <option value="Friendly">Friendly</option>
+              <option value="Creative">Creative</option>
+              <option value="Sophisticated">Sophisticated</option>
+            </select>
+
+            <div className="flex items-center space-x-3 mt-5">
+              <input
+                type="checkbox"
+                className={`${!isPremiumUser ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                checked={availableOnly}
+                onChange={handleAvailableOnlyChange}
+                disabled={!isPremiumUser}
+              />
+              <label className={`text-left font-medium ${!isPremiumUser ? 'text-gray-400' : ''}`}>
+                Available only
+              </label>
+              <DiamondIcon sx={{ fontSize: '1rem', color: 'gold' }} />
+            </div>
+
+            <button
+              className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? "Generating..." : "Generate domains"}
+            </button>
+          </form>
+
+          <div className="space-y-8 mt-10">
+            {generatedDomains.length > 0 && (
+              <h2 className="sm:text-4xl text-3xl font-bold text-slate-900 mx-auto">
+                {isPremiumUser ? "Available Domains:" : "Generated Domains:"}
+              </h2>
             )}
-            {loading && (
-              <button
-                className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
-                disabled
-              >
-                <LoadingDots color="white" style="large" />
-              </button>
-            )}
-          </SignedIn>
-        </div>
-        <Toaster
-          position="top-center"
-          reverseOrder={false}
-          toastOptions={{ duration: 2000 }}
-        />
-        <hr className="h-px bg-gray-700 border-1 dark:bg-gray-700" />
-        {
-          /*!loading && user && */ <div className="space-y-8">
-            {domainfounded.length > 0 && (
-              <>
-                <div>
-                  {/* <h2
-                    className="sm:text-4xl text-3xl font-bold text-slate-900 mx-auto"
-                    ref={bioRef}
-                  >
-                    Domain suggestions:
-                  </h2> */}
-                </div>
-                <div>
-                  <TableDomain
-                    rows={domainfounded.slice(0, countShowDomain)}
-                    admin={admin}
-                    email={dataUser.email}
-                    functionDomainFounded={setDomainFounded}
-                    cred={credits}
-                    functionCred={setCredits}
-                  />
-                </div>
-              </>
-            )}
+            <ul className="space-y-4">
+              {(availableOnly && isPremiumUser ? filteredDomains : generatedDomains).map((domain, index) => (
+                <li key={index} className="text-xl flex items-center justify-between">
+                  <span>{domain.domain}</span>
+                  {isPremiumUser && (
+                    <div className="flex space-x-2">
+                      <button
+                      onClick={() => {
+                        handleCheckAvailability(domain.domain);
+                        mixpanel.track("Buy Domain Click", {
+                          domain: domain.domain,
+                          source: "domain-ai-page",
+                        });
+                      }}
+                      className="bg-black rounded-xl text-white font-medium px-4 py-2 mx-2 hover:bg-gray-300 hover:text-black"
+                    >
+                      <span className="flex items-center">
+                        Buy
+                      </span>
+                    </button>
+                    <button
+                        onClick={() => {
+                          window.open(`/web?domain=${encodeURIComponent(domain.domain)}`, '_blank');
+                          mixpanel.track("Create Web Click", {
+                            domain: domain.domain,
+                            source: "domain-ai-page",
+                          });
+                        }}
+                        className="bg-green-600 rounded-xl text-white font-medium px-4 py-2 hover:bg-green-700"
+                      >
+                        Create Web
+                      </button>
+                      <button
+                        onClick={() => {
+                          window.open(`/ads?domain=${encodeURIComponent(domain.domain)}`, '_blank');
+                          mixpanel.track("Create Ads Click", {
+                            domain: domain.domain,
+                            source: "domain-ai-page",
+                          });
+                        }}
+                        className="bg-purple-600 rounded-xl text-white font-medium px-4 py-2 hover:bg-purple-700"
+                      >
+                        Create Ads
+                      </button>
+                    </div>
+                  )}
+                  {!isPremiumUser ? (
+                    <button
+                      onClick={() => handleCheckAvailability(domain.domain)}
+                      className="bg-blue-600 rounded-xl text-white font-medium px-4 py-2 mx-2 hover:bg-gray-300 hover:text-black"
+                    >
+                      <span className="flex items-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5 mr-2"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Check Availability
+                      </span>
+                    </button>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
           </div>
-        }
+        </SignedIn>
+
+        <SignedOut>
+          {/* Show this content when the user is signed out */}
+          <div className="mt-10">
+            <h2 className="text-2xl font-bold mb-5">Sign in to generate domains</h2>
+            <button
+              onClick={() => openSignIn()}
+              className="bg-black rounded-xl text-white font-medium px-4 py-2 hover:bg-black/80"
+            >
+              Sign in
+            </button>
+          </div>
+        </SignedOut>
       </main>
-      {/* <Footer /> */}
     </div>
   );
 };
