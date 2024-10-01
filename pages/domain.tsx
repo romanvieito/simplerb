@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import Head from "next/head";
-import { toast } from "react-hot-toast";
+import { toast, Toaster } from "react-hot-toast";
 import { DomainInfo, VibeType } from "../utils/Definitions";
 import { createParser, ParsedEvent, ReconnectInterval } from "eventsource-parser";
 import mixpanel from "../utils/mixpanel-config";
@@ -51,7 +51,39 @@ const DomainPage: React.FC = () => {
     if (isPremiumUser) {
       setAvailableOnly(e.target.checked);
     } else {
-      toast.error("This feature is available only for premium members. Please upgrade your plan.");
+    toast((t) => (
+      <div className="flex flex-col items-center">
+        <p className="mb-2">Premium feature. Please become a member.</p>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              mixpanel.track("Become a Member Click", {
+                source: "Available Only Checkbox",
+              });
+              const form = document.querySelector('form[action="/api/checkout_sessions"]');
+              if (form instanceof HTMLFormElement) {
+                form.submit();
+              }
+            }}
+            className="bg-black text-white font-medium px-4 py-2 rounded-xl hover:bg-black/80 flex items-center"
+          >
+            <DiamondIcon className="mr-2" />
+            Become a Member
+          </button>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="bg-gray-300 text-black font-medium px-4 py-2 rounded-xl hover:bg-gray-400"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 15000,
+      position: 'top-center',
+    });
+      
     }
   };
 
@@ -362,13 +394,12 @@ const DomainPage: React.FC = () => {
               <option value="Sophisticated">Sophisticated</option>
             </select>
 
-            <div className="flex items-center space-x-3 mt-5">
+            <div className="flex items-center space-x-3 mt-6">
               <input
                 type="checkbox"
-                className={`${!isPremiumUser ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                className="cursor-pointer"
                 checked={availableOnly}
                 onChange={handleAvailableOnlyChange}
-                disabled={!isPremiumUser}
               />
               <label className={`text-left font-medium ${!isPremiumUser ? 'text-gray-400' : ''}`}>
                 Available only
@@ -477,6 +508,11 @@ const DomainPage: React.FC = () => {
             </button>
           </div>
         </SignedOut>
+        <Toaster
+          position="top-center"
+          reverseOrder={false}
+          toastOptions={{ duration: 2000 }}
+        />
       </main>
     </div>
   );
