@@ -17,6 +17,7 @@ import Dialog from '@mui/material/Dialog';
 import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/20/solid";
+import DiamondIcon from '@mui/icons-material/Diamond';
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -60,6 +61,10 @@ const WebPage = () => {
             duration: 10000,
           }
         );
+        mixpanel.track("Free user try Create Website", {
+          textName: textName,
+          textDescription: textDescription,
+        });
         setLoading(false);
         return;
       }
@@ -322,6 +327,8 @@ const WebPage = () => {
              onClick={generateWeb}
              disabled={loading}
            >
+            <DiamondIcon className="mr-2" />
+
              {loading ? "Saving..." : "Create Website"}
            </button>         
             }
