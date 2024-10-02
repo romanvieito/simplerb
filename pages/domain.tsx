@@ -167,6 +167,7 @@ const DomainPage: React.FC = () => {
     setAvailabilityChecked(false);
 
     let generatedResults: DomainInfo[] = [];
+    let tempGeneratedDomains = "";
 
     try {
       const prompt = `
@@ -203,6 +204,20 @@ const DomainPage: React.FC = () => {
 
       const reader = data.getReader();
       const decoder = new TextDecoder();
+
+      // Define onParse before using it
+      const onParse = (event: ParsedEvent | ReconnectInterval) => {
+        if (event.type === "event") {
+          const data = event.data;
+          try {
+            const text = JSON.parse(data).text ?? "";
+            tempGeneratedDomains += text;
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      };
+
       const parser = createParser(onParse);
       let done = false;
 
@@ -213,48 +228,35 @@ const DomainPage: React.FC = () => {
         parser.feed(chunkValue);
       }
 
-      // After parsing is complete, get the final results
-      generatedResults = generatedDomains;
+      // Process tempGeneratedDomains
+      const tempDomainNamesText = tempGeneratedDomains
+        .split("\n")
+        .map((domain) => domain.replace(/^\d+\.\s*/, "").trim())
+        .filter((domain) => domain !== "");
 
-    } catch (error) {
-      console.error("An error occurred:", error);
-      toast.error("An error occurred while generating domains. Please try again.");
-    } finally {
-      setLoading(false);
-      
-      // Track the event with the final results
+      // Build generatedResults
+      generatedResults = tempDomainNamesText.map((domain) => ({
+        domain,
+        available: undefined,
+        favorite: false,
+      }));
+
+      // Update state
+      setGeneratedDomains(generatedResults);
+
+      // Now track the event with the final results
       mixpanel.track("Generated Domains", {
         businessDescription,
         vibe,
         availableOnly,
         userId: dataUser?.id || "anonymous",
-        results: generatedResults.map(domain => domain.domain),
+        results: generatedResults.map((domain) => domain.domain),
       });
-    }
-  };
-
-  const onParse = (event: ParsedEvent | ReconnectInterval) => {
-    if (event.type === "event") {
-      try {
-        const text = JSON.parse(event.data).text ?? "";
-        setCurrentDomain(prev => {
-          const updatedDomain = prev + text;
-          if (updatedDomain.includes("\n")) {
-            const domains = updatedDomain.split("\n")
-              .map(domain => domain.trim().replace(/^\d+\.\s*/, ""))
-              .filter(domain => domain !== "")
-              .flatMap(domain => domain.split(/\s+/));
-            setGeneratedDomains(prev => [
-              ...prev,
-              ...domains.map(domain => ({ domain, available: undefined, favorite: false }))
-            ]);
-            return "";
-          }
-          return updatedDomain;
-        });
-      } catch (e) {
-        console.error(e);
-      }
+    } catch (error) {
+      console.error("An error occurred:", error);
+      toast.error("An error occurred while generating domains. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
