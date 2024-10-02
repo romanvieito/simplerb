@@ -24,6 +24,7 @@ const DomainPage: React.FC = () => {
   const [availabilityChecked, setAvailabilityChecked] = useState(false);
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [temperatureOption, setTemperatureOption] = useState("neutral");
+  const [domainExtension, setDomainExtension] = useState('');
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -172,7 +173,7 @@ const DomainPage: React.FC = () => {
     try {
       const prompt = `
         Role: You are Seth Godin.
-        Objective: Generate 5 memorable, brief, and simple domain names based on the following input:
+        Objective: Generate 5 memorable, brief, and simple domain names ${domainExtension !="" ? `(extension: ${domainExtension}) ` : ""}based on the following input:
         Client's input: ${businessDescription}
         Vibe: ${vibe}
         
@@ -539,6 +540,35 @@ const DomainPage: React.FC = () => {
                         </div>
                       </div>
                     </div>
+
+                    <div className="flex flex-col items-center mb-3">
+                      <label
+                        className="block text-gray-700 text-sm font-bold mb-2 text-center"
+                        htmlFor="domainExtension"
+                      >
+                        Extension:
+                      </label>
+                      <select
+                        id="domainExtension"
+                        value={domainExtension}
+                        onChange={(e) => {
+                          setDomainExtension(e.target.value);
+                          mixpanel.track("Domain Extension Set", {
+                            userId: dataUser?.id || "anonymous",
+                            extension: e.target.value
+                          });
+                        }}
+                        className="shadow appearance-none border rounded w-full max-w-[150px] py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      >
+                        <option value="">--</option>
+                        <option value=".com">.com</option>
+                        <option value=".net">.net</option>
+                        <option value=".org">.org</option>
+                        <option value=".io">.io</option>
+                        <option value=".ai">.ai</option>
+                      </select>
+                    </div>
+                    
                     <div className="items-center px-4 py-3">
                       <button
                         onClick={() => setShowAdvancedSettings(false)}
