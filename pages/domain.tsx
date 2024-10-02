@@ -23,7 +23,7 @@ const DomainPage: React.FC = () => {
   const [filteredDomains, setFilteredDomains] = useState<DomainInfo[]>([]);
   const [availabilityChecked, setAvailabilityChecked] = useState(false);
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
-  const [temperature, setTemperature] = useState(0.7); // Default value of 0.7
+  const [temperatureOption, setTemperatureOption] = useState("neutral");
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -188,6 +188,14 @@ const DomainPage: React.FC = () => {
         
         Return only the domain names, one per line.
       `;
+
+      const temperatureMap = {
+        imaginative: 0.9,
+        neutral: 0.7,
+        reliable: 0.5,
+      };
+
+      const temperature = temperatureMap[temperatureOption as keyof typeof temperatureMap];
 
       const response = await fetch("/api/openai", {
         method: "POST",
@@ -503,23 +511,32 @@ const DomainPage: React.FC = () => {
                       <div className="mb-4">
                         <label
                           className="block text-gray-700 text-sm font-bold mb-2"
-                          htmlFor="temperature"
+                          htmlFor="temperatureOption"
                         >
-                          Temperature: {temperature}
+                          Your domain names should be:
                         </label>
-                        <input
-                          type="range"
-                          id="temperature"
-                          name="temperature"
-                          min="0"
-                          max="1"
-                          step="0.1"
-                          value={temperature}
-                          onChange={(e) =>
-                            setTemperature(parseFloat(e.target.value))
-                          }
-                          className="w-full"
-                        />
+                        <div className="flex justify-between">
+                          {["imaginative", "neutral", "reliable"].map((option) => (
+                            <button
+                              key={option}
+                              type="button"
+                              onClick={() => {
+                                setTemperatureOption(option);
+                                mixpanel.track("Temperature Option Set", {
+                                  userId: dataUser?.id || "anonymous",
+                                  option: option
+                                });
+                              }}
+                              className={`px-4 py-2 rounded-md ${
+                                temperatureOption === option
+                                  ? "bg-black text-white"
+                                  : "bg-gray-200 text-gray-800"
+                              } hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400`}
+                            >
+                              {option.charAt(0).toUpperCase() + option.slice(1)}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
                     <div className="items-center px-4 py-3">
