@@ -164,15 +164,7 @@ const DomainPage: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setGeneratedDomains([]);
-    setAvailabilityChecked(false); // Reset the flag when generating new domains
-
-    // Track the generation start
-    mixpanel.track("Generate Domains Started", {
-      businessDescription,
-      vibe,
-      availableOnly,
-      userId: dataUser?.id || "anonymous",
-    });
+    setAvailabilityChecked(false);
 
     try {
       const prompt = `
@@ -214,6 +206,15 @@ const DomainPage: React.FC = () => {
         const chunkValue = decoder.decode(value);
         parser.feed(chunkValue);
       }
+
+      // After successfully generating domains, update the mixpanel event with the results
+      mixpanel.track("Generated Domains", {
+        businessDescription,
+        vibe,
+        availableOnly,
+        userId: dataUser?.id || "anonymous",
+        results: generatedDomains.map(domain => domain.domain), // Add the generated domain names
+      });
 
     } catch (error) {
       console.error("An error occurred:", error);
