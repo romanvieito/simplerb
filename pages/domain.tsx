@@ -166,12 +166,24 @@ const DomainPage: React.FC = () => {
     setGeneratedDomains([]);
     setAvailabilityChecked(false);
 
+    let generatedResults: DomainInfo[] = [];
+
     try {
       const prompt = `
-        Role: You are a domain name expert.
+        Role: You are Seth Godin.
         Objective: Generate 5 memorable, brief, and simple domain names based on the following input:
         Client's input: ${businessDescription}
         Vibe: ${vibe}
+        
+        Good Examples:
+        - Apple.com: Easy to spell and pronounce.
+        - JetBlue.com: Descriptive and easy to remember.
+        - Amazon.com: Short, memorable, and now synonymous with online shopping.
+
+        Bad Examples:
+        - Axelon.com: Sounds like a common English word but isn't, leading to potential confusion.
+        - Altus.com: Lacks immediate brandability.
+        - Prius.com: Pronunciation challenges may hinder global brand recall.
         
         Return only the domain names, one per line.
       `;
@@ -183,12 +195,6 @@ const DomainPage: React.FC = () => {
       });
 
       if (!response.ok) {
-        // Track the generation failure
-        mixpanel.track("Generate Domains Failed", {
-          status: response.status,
-          statusText: response.statusText,
-          userId: dataUser?.id || "anonymous",
-        });
         throw new Error(response.statusText);
       }
 
@@ -207,20 +213,23 @@ const DomainPage: React.FC = () => {
         parser.feed(chunkValue);
       }
 
-      // After successfully generating domains, update the mixpanel event with the results
-      mixpanel.track("Generated Domains", {
-        businessDescription,
-        vibe,
-        availableOnly,
-        userId: dataUser?.id || "anonymous",
-        results: generatedDomains.map(domain => domain.domain), // Add the generated domain names
-      });
+      // After parsing is complete, get the final results
+      generatedResults = generatedDomains;
 
     } catch (error) {
       console.error("An error occurred:", error);
       toast.error("An error occurred while generating domains. Please try again.");
     } finally {
       setLoading(false);
+      
+      // Track the event with the final results
+      mixpanel.track("Generated Domains", {
+        businessDescription,
+        vibe,
+        availableOnly,
+        userId: dataUser?.id || "anonymous",
+        results: generatedResults.map(domain => domain.domain),
+      });
     }
   };
 
@@ -233,7 +242,8 @@ const DomainPage: React.FC = () => {
           if (updatedDomain.includes("\n")) {
             const domains = updatedDomain.split("\n")
               .map(domain => domain.trim().replace(/^\d+\.\s*/, ""))
-              .filter(domain => domain !== "");
+              .filter(domain => domain !== "")
+              .flatMap(domain => domain.split(/\s+/));
             setGeneratedDomains(prev => [
               ...prev,
               ...domains.map(domain => ({ domain, available: undefined, favorite: false }))
