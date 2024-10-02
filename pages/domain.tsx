@@ -164,8 +164,16 @@ const DomainPage: React.FC = () => {
     setGeneratedDomains([]);
     setAvailabilityChecked(false); // Reset the flag when generating new domains
 
+    // Track the generation start
+    mixpanel.track("Generate Domains Started", {
+      businessDescription,
+      vibe,
+      availableOnly,
+      userId: dataUser?.id || "anonymous",
+    });
+
     try {
-        const prompt = `
+      const prompt = `
         Role: You are a domain name expert.
         Objective: Generate 5 memorable, brief, and simple domain names based on the following input:
         Client's input: ${businessDescription}
@@ -181,6 +189,12 @@ const DomainPage: React.FC = () => {
       });
 
       if (!response.ok) {
+        // Track the generation failure
+        mixpanel.track("Generate Domains Failed", {
+          status: response.status,
+          statusText: response.statusText,
+          userId: dataUser?.id || "anonymous",
+        });
         throw new Error(response.statusText);
       }
 
@@ -238,7 +252,7 @@ const DomainPage: React.FC = () => {
 
     mixpanel.track("Check Domain Availability", {
       domain: cleanDomainName,
-      source: "domain-ai-page",
+      source: "domain-page",
     });
 
     toast.success(`Checking availability for ${cleanDomainName}`, {
@@ -433,7 +447,7 @@ const DomainPage: React.FC = () => {
                         handleCheckAvailability(domain.domain);
                         mixpanel.track("Buy Domain Click", {
                           domain: domain.domain,
-                          source: "domain-ai-page",
+                          source: "domain-page",
                         });
                       }}
                       className="bg-black rounded-xl text-white font-medium px-4 py-2 mx-2 hover:bg-gray-300 hover:text-black"
@@ -447,7 +461,7 @@ const DomainPage: React.FC = () => {
                           window.open(`/web?domain=${encodeURIComponent(domain.domain)}`, '_blank');
                           mixpanel.track("Create Web Click", {
                             domain: domain.domain,
-                            source: "domain-ai-page",
+                            source: "domain-page",
                           });
                         }}
                         className="bg-green-600 rounded-xl text-white font-medium px-4 py-2 hover:bg-green-700"
@@ -459,7 +473,7 @@ const DomainPage: React.FC = () => {
                           window.open(`/ads?domain=${encodeURIComponent(domain.domain)}`, '_blank');
                           mixpanel.track("Create Ads Click", {
                             domain: domain.domain,
-                            source: "domain-ai-page",
+                            source: "domain-page",
                           });
                         }}
                         className="bg-purple-600 rounded-xl text-white font-medium px-4 py-2 hover:bg-purple-700"
