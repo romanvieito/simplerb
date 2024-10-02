@@ -22,6 +22,8 @@ const DomainPage: React.FC = () => {
   const [availableOnly, setAvailableOnly] = useState(false);
   const [filteredDomains, setFilteredDomains] = useState<DomainInfo[]>([]);
   const [availabilityChecked, setAvailabilityChecked] = useState(false);
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [temperature, setTemperature] = useState(0.7); // Default value of 0.7
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -185,7 +187,7 @@ const DomainPage: React.FC = () => {
       const response = await fetch("/api/openai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, ptemp: 0.7, ptop: 1 }),
+        body: JSON.stringify({ prompt, ptemp: temperature, ptop: 1 }),
       });
 
       if (!response.ok) {
@@ -334,8 +336,19 @@ const DomainPage: React.FC = () => {
           onClick={() => router.back()}
           className="absolute top-4 left-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
           </svg>
           Back
         </button>
@@ -344,7 +357,16 @@ const DomainPage: React.FC = () => {
           Domain Generator
         </h1>
 
-        <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 2, alignItems: 'center' }}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            display: "flex",
+            gap: 2,
+            alignItems: "center",
+          }}
+        >
           <SignedIn>
             <form action="/api/checkout_sessions" method="POST">
               <input type="hidden" name="tipo" value="STARTER" />
@@ -353,15 +375,19 @@ const DomainPage: React.FC = () => {
                 style={{ textTransform: "none" }}
                 sx={{
                   padding: { xs: "3px", sm: 1 },
-                  display: (isSignedIn && (subsTplan === "STARTER" || subsTplan === "CREATOR")) ? "none" : "block",
+                  display:
+                    isSignedIn &&
+                    (subsTplan === "STARTER" || subsTplan === "CREATOR")
+                      ? "none"
+                      : "block",
                 }}
                 type="submit"
                 variant="contained"
                 role="link"
                 onClick={handleSubsStarterClick}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <DiamondIcon sx={{ mr: 0.2, fontSize: '1rem' }} />
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <DiamondIcon sx={{ mr: 0.2, fontSize: "1rem" }} />
                   Become a Member
                 </Box>
               </Button>
@@ -408,18 +434,93 @@ const DomainPage: React.FC = () => {
               <option value="Sophisticated">Sophisticated</option>
             </select>
 
-            <div className="flex items-center space-x-3 mt-6">
-              <input
-                type="checkbox"
-                className="cursor-pointer"
-                checked={availableOnly}
-                onChange={handleAvailableOnlyChange}
-              />
-              <label className={`text-left font-medium ${!isPremiumUser ? 'text-gray-400' : ''}`}>
-                Available only
-              </label>
-              <DiamondIcon sx={{ fontSize: '1rem', color: 'gold' }} />
+            <div className="flex items-center mt-6">
+              <div className="flex items-center space-x-1">
+                <input
+                  type="checkbox"
+                  className="cursor-pointer"
+                  checked={availableOnly}
+                  onChange={handleAvailableOnlyChange}
+                />
+                <label
+                  className={`text-left font-medium ${
+                    !isPremiumUser ? "text-gray-400" : ""
+                  }`}
+                >
+                  Available only
+                </label>
+                <DiamondIcon sx={{ fontSize: "1rem", color: "gold" }} />
+              </div>
+              <div className="flex justify-end ml-auto">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAdvancedSettings(true);
+                    mixpanel.track("Advanced Settings Opened", {
+                      userId: dataUser?.id || "anonymous"
+                    });
+                  }}
+                  className="text-sm text-gray-600 hover:text-black focus:outline-none"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 inline-block mr-1"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                  </svg>
+                </button>
+              </div>
             </div>
+
+            {showAdvancedSettings && (
+              <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                  <div className="mt-3 text-center">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">
+                      Advanced Settings
+                    </h3>
+                    <div className="mt-2 px-7 py-3">
+                      <div className="mb-4">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="temperature"
+                        >
+                          Temperature: {temperature}
+                        </label>
+                        <input
+                          type="range"
+                          id="temperature"
+                          name="temperature"
+                          min="0"
+                          max="1"
+                          step="0.1"
+                          value={temperature}
+                          onChange={(e) =>
+                            setTemperature(parseFloat(e.target.value))
+                          }
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
+                    <div className="items-center px-4 py-3">
+                      <button
+                        onClick={() => setShowAdvancedSettings(false)}
+                        className="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <button
               className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
@@ -437,28 +538,35 @@ const DomainPage: React.FC = () => {
               </h2>
             )}
             <ul className="space-y-4">
-              {(availableOnly && isPremiumUser ? filteredDomains : generatedDomains).map((domain, index) => (
-                <li key={index} className="text-xl flex items-center justify-between">
+              {(availableOnly && isPremiumUser
+                ? filteredDomains
+                : generatedDomains
+              ).map((domain, index) => (
+                <li
+                  key={index}
+                  className="text-xl flex items-center justify-between"
+                >
                   <span>{domain.domain}</span>
                   {isPremiumUser && (
                     <div className="flex space-x-2">
                       <button
-                      onClick={() => {
-                        handleCheckAvailability(domain.domain);
-                        mixpanel.track("Buy Domain Click", {
-                          domain: domain.domain,
-                          source: "domain-page",
-                        });
-                      }}
-                      className="bg-black rounded-xl text-white font-medium px-4 py-2 mx-2 hover:bg-gray-300 hover:text-black"
-                    >
-                      <span className="flex items-center">
-                        Buy
-                      </span>
-                    </button>
-                    <button
                         onClick={() => {
-                          window.open(`/web?domain=${encodeURIComponent(domain.domain)}`, '_blank');
+                          handleCheckAvailability(domain.domain);
+                          mixpanel.track("Buy Domain Click", {
+                            domain: domain.domain,
+                            source: "domain-page",
+                          });
+                        }}
+                        className="bg-black rounded-xl text-white font-medium px-4 py-2 mx-2 hover:bg-gray-300 hover:text-black"
+                      >
+                        <span className="flex items-center">Buy</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          window.open(
+                            `/web?domain=${encodeURIComponent(domain.domain)}`,
+                            "_blank"
+                          );
                           mixpanel.track("Create Web Click", {
                             domain: domain.domain,
                             source: "domain-page",
@@ -470,7 +578,10 @@ const DomainPage: React.FC = () => {
                       </button>
                       <button
                         onClick={() => {
-                          window.open(`/ads?domain=${encodeURIComponent(domain.domain)}`, '_blank');
+                          window.open(
+                            `/ads?domain=${encodeURIComponent(domain.domain)}`,
+                            "_blank"
+                          );
                           mixpanel.track("Create Ads Click", {
                             domain: domain.domain,
                             source: "domain-page",
@@ -513,7 +624,9 @@ const DomainPage: React.FC = () => {
         <SignedOut>
           {/* Show this content when the user is signed out */}
           <div className="mt-10">
-            <h2 className="text-2xl font-bold mb-5">Sign in to generate domains</h2>
+            <h2 className="text-2xl font-bold mb-5">
+              Sign in to generate domains
+            </h2>
             <button
               onClick={() => openSignIn()}
               className="bg-black rounded-xl text-white font-medium px-4 py-2 hover:bg-black/80"
