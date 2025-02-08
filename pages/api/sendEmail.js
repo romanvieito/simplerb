@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import nodemailer from "nodemailer";
+import { sql } from '@vercel/postgres';
 
 export default async function handler(req, res) {
     if (req.method !== "POST") {
@@ -7,6 +8,18 @@ export default async function handler(req, res) {
     }
 
     try {
+        // Get pending emails from database
+        const { rows: pendingEmails } = await sql`
+            SELECT * FROM emails 
+            WHERE status = 'pending' 
+            ORDER BY created_at ASC
+            LIMIT 10
+        `;
+
+        if (pendingEmails.length === 0) {
+            return res.status(200).json({ message: "No pending emails to send" });
+        }
+
         const oauth2Client = new google.auth.OAuth2(
             process.env.GMAIL_CLIENT_ID,
             process.env.GMAIL_CLIENT_SECRET,
@@ -31,24 +44,56 @@ export default async function handler(req, res) {
             },
         });
 
-        // Verify connection configuration
+        // Verify connection
         await transporter.verify();
         console.log("Server is ready to take messages");
 
-        const { to, subject, body } = req.body;
-        if (!to || !subject || !body) {
-            return res.status(400).json({ error: "Missing email parameters" });
+        // Send emails
+        const results = [];
+        for (const email of pendingEmails) {
+            try {
+                const mailOptions = {
+                    from: process.env.GMAIL_USER,
+                    to: email.to_email,
+                    subject: email.subject,
+                    text: email.body,
+                };
+
+                const result = await transporter.sendMail(mailOptions);
+                
+                // Update email status in database
+                await sql`
+                    UPDATE emails 
+                    SET status = 'sent', sent_at = NOW() 
+                    WHERE id = ${email.id}
+                `;
+
+                results.push({ 
+                    id: email.id, 
+                    status: 'success', 
+                    messageId: result.messageId 
+                });
+            } catch (error) {
+                // Update email status to failed
+                await sql`
+                    UPDATE emails 
+                    SET status = 'failed' 
+                    WHERE id = ${email.id}
+                `;
+
+                results.push({ 
+                    id: email.id, 
+                    status: 'error', 
+                    error: error.message 
+                });
+            }
         }
 
-        const mailOptions = {
-            from: process.env.GMAIL_USER,
-            to,
-            subject,
-            text: body,
-        };
-
-        const result = await transporter.sendMail(mailOptions);
-        return res.status(200).json({ success: true, message: "Email sent!", result });
+        return res.status(200).json({ 
+            success: true, 
+            message: "Email processing complete", 
+            results 
+        });
     } catch (error) {
         console.error("Full error:", error);
         return res.status(500).json({ 
