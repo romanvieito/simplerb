@@ -145,7 +145,7 @@ export default function CFAQ() {
             </AccordionSummary>
             <AccordionDetails>
               <Typography align="left" sx={{ fontSize: '0.875rem' }}>
-              Digital is more important than ever, so SimplerB’s AI generates your domain, website, and Google Ads, automating these critical startup tasks so you can focus on other strategic activities that grow your business.
+              Digital is more important than ever, so SimplerB’s AI help to automate critical startup tasks so you can focus on other strategic activities that grow your business.
               </Typography>
             </AccordionDetails>
           </CustomAccordion>
