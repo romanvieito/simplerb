@@ -6,25 +6,27 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { to, subject, body } = req.body;
+        const { emails, subject, body } = req.body;
 
-        if (!to || !subject || !body) {
-            return res.status(400).json({ error: "Missing required fields" });
+        if (!emails || !Array.isArray(emails) || !subject || !body) {
+            return res.status(400).json({ error: "Please provide emails array, subject and body" });
         }
 
-        const result = await sql`
-            INSERT INTO emails (to_email, subject, body)
-            VALUES (${to}, ${subject}, ${body})
-            RETURNING id
-        `;
+        // Insert emails one by one
+        for (const email of emails) {
+            await sql`
+                INSERT INTO emails (to_email, subject, body) 
+                VALUES (${email}, ${subject}, ${body})
+            `;
+        }
 
         return res.status(200).json({ 
             success: true, 
-            message: "Email queued successfully",
-            id: result.rows[0].id
+            message: `${emails.length} emails queued successfully`,
+            count: emails.length
         });
     } catch (error) {
-        console.error("Error queueing email:", error);
+        console.error("Error queueing emails:", error);
         return res.status(500).json({ 
             error: "Internal Server Error", 
             details: error.message 
