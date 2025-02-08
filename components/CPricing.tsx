@@ -135,7 +135,8 @@ export default function CPricing() {
               <li className={styles.ok}>
                 Generate domains
               </li>
-              <li className={styles.ok}>Click to check domain availability</li>
+              <li className={styles.ok}>See domain availability</li>  
+              <li className={styles.ok}>Best effort support</li>
             </ul>
           </div>
         </div>
@@ -164,9 +165,9 @@ export default function CPricing() {
               <li className={styles.ok}>
                 Generate only available domains
               </li>
-              <li className={styles.ok}>Website creator</li>
+              {/* <li className={styles.ok}>Website creator</li> */}
               <li className={styles.ok}>Get customers with quick ads</li>
-              <li className={styles.ok}>Support (Email)</li>
+              <li className={styles.ok}>Priority support</li>
             </ul>
           </div>
           {subsTplan !== "STARTER" ? (
@@ -224,7 +225,7 @@ export default function CPricing() {
             <ul>
               <li>Everything in starter, plus</li>
               <li className={styles.ok}>Unlock the best AI model</li>
-              <li className={styles.ok}>Priority support (Phone)</li>
+              <li className={styles.ok}>Priority support</li>
             </ul>
           </div>
           {subsTplan !== "CREATOR" ? (

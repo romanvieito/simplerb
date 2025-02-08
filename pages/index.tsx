@@ -19,9 +19,6 @@ const Home: NextPage = () => {
     name: 'Domain', 
     link: '/domain'
   }, {
-    name: 'Website Generator', 
-    link: '/web'
-  }, {
     name: 'Ads Generator', 
     link: '/ads'
   }];
