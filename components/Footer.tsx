@@ -34,6 +34,23 @@ export default function Footer() {
           Miami, FL{" "}
         </a>
       </Box>
+
+      <Box className="flex items-center gap-2">
+        <Link
+          href="/terms"
+          className="hover:underline transition underline-offset-2"
+        >
+          Terms
+        </Link>
+        <span>·</span>
+        <Link
+          href="/privacy"
+          className="hover:underline transition underline-offset-2"
+        >
+          Privacy Policy
+        </Link>
+      </Box>
+      
       <Box className="flex items-center">
         {
           isLoaded && isSignedIn ? 
