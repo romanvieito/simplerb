@@ -4,16 +4,13 @@ import nodemailer from "nodemailer";
 const oauth2Client = new google.auth.OAuth2(
     process.env.GMAIL_CLIENT_ID,
     process.env.GMAIL_CLIENT_SECRET,
-    "https://developers.google.com/oauthplayground"  // Must match exactly what's in Google Console
+    "https://developers.google.com/oauthplayground"
 );
 
-// Force credentials to be refreshed
-oauth2Client.on('tokens', (tokens) => {
-    if (tokens.refresh_token) {
-        // Store new refresh token if provided
-        console.log('New refresh token:', tokens.refresh_token);
-    }
-    console.log('Access token:', tokens.access_token);
+// Add specific scopes
+oauth2Client.setCredentials({
+    refresh_token: process.env.GMAIL_REFRESH_TOKEN,
+    scope: 'https://mail.google.com/'
 });
 
 export default async function handler(req, res) {
@@ -22,14 +19,9 @@ export default async function handler(req, res) {
     }
 
     try {
-        // Set credentials before getting access token
-        oauth2Client.setCredentials({
-            refresh_token: process.env.GMAIL_REFRESH_TOKEN
-        });
-
         const accessToken = await oauth2Client.getAccessToken();
         
-        if (!accessToken.token) {
+        if (!accessToken?.token) {
             throw new Error('Failed to get access token');
         }
 
@@ -41,12 +33,13 @@ export default async function handler(req, res) {
                 clientId: process.env.GMAIL_CLIENT_ID,
                 clientSecret: process.env.GMAIL_CLIENT_SECRET,
                 refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-                accessToken: accessToken.token
+                accessToken: accessToken.token,
             },
         });
 
-        // Test the connection
+        // Verify connection configuration
         await transporter.verify();
+        console.log("Server is ready to take our messages");
 
         const { to, subject, body } = req.body;
         if (!to || !subject || !body) {
@@ -63,13 +56,7 @@ export default async function handler(req, res) {
         const result = await transporter.sendMail(mailOptions);
         return res.status(200).json({ success: true, message: "Email sent!", result });
     } catch (error) {
-        console.error("Error details:", {
-            message: error.message,
-            name: error.name,
-            code: error.code,
-            response: error.response?.data
-        });
-        
+        console.error("Full error:", error);
         return res.status(500).json({ 
             error: "Internal Server Error", 
             details: error.message,
