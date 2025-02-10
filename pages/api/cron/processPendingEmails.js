@@ -9,8 +9,13 @@ import { sql } from '@vercel/postgres';
 // Change to regular API route format
 export default async function handler(req, res) {
     try {
-        // Just call your existing sendEmail endpoint
-        const response = await fetch(`${process.env.VERCEL_URL}/api/sendEmail`, {
+        // Determine the base URL based on environment
+        const baseUrl = process.env.VERCEL_URL 
+            ? `https://${process.env.VERCEL_URL}`
+            : 'http://localhost:3000';  // Default to localhost for development
+
+        // Call your existing sendEmail endpoint
+        const response = await fetch(`${baseUrl}/api/sendEmail`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
