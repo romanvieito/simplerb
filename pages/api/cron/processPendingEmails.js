@@ -1,24 +1,26 @@
 import { sql } from '@vercel/postgres';
 
-export const config = {
-    runtime: 'edge',
-    regions: ['iad1']
-};
+// Remove the edge config - use regular serverless function instead
+// export const config = {
+//     runtime: 'edge',
+//     regions: ['iad1']
+// };
 
-export default async function handler(req) {
+// Change to regular API route format
+export default async function handler(req, res) {
     try {
         // Process pending emails
         const { rows: pendingEmails } = await sql`
             SELECT * FROM emails 
             WHERE status = 'pending'
-            LIMIT 50  // Process in batches to avoid timeout
+            LIMIT 50
         `;
 
         if (pendingEmails.length === 0) {
-            return new Response(
-                JSON.stringify({ success: true, message: 'No pending emails' }),
-                { status: 200, headers: { 'Content-Type': 'application/json' } }
-            );
+            return res.status(200).json({ 
+                success: true, 
+                message: 'No pending emails' 
+            });
         }
 
         // Your email sending logic here
@@ -45,17 +47,12 @@ export default async function handler(req) {
             }
         }
 
-        return new Response(
-            JSON.stringify({ 
-                success: true, 
-                processed: pendingEmails.length 
-            }),
-            { status: 200, headers: { 'Content-Type': 'application/json' } }
-        );
+        return res.status(200).json({ 
+            success: true, 
+            processed: pendingEmails.length 
+        });
     } catch (error) {
-        return new Response(
-            JSON.stringify({ error: error.message }),
-            { status: 500, headers: { 'Content-Type': 'application/json' } }
-        );
+        console.error('Error processing emails:', error);
+        return res.status(500).json({ error: error.message });
     }
 } 
