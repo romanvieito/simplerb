@@ -2,7 +2,7 @@ import { sql } from '@vercel/postgres';
 
 export const config = {
     runtime: 'edge',
-    regions: ['mia1']
+    regions: ['iad1']  // US East (Virginia)
 }
 
 // Runs at 9:00 AM EST (14:00 UTC)
@@ -22,13 +22,13 @@ export default async function handler(req) {
             const greeting = subscriber.name ? `Hey ${subscriber.name},` : 'Hey,';
             const body = `${greeting}
 
-I see you’re using AI for faceless Shorts—great choice! I’m on the same journey.
+I see you're using AI for faceless Shorts—great choice! I'm on the same journey.
 
-Just made a video to test what’s working (and what’s not) for AI creators like us.
+Just made a video to test what's working (and what's not) for AI creators like us.
 
 🎥 Take a look: https://www.youtube.com/shorts/wf1BKypzhe4
 
-Would love to hear what’s working for you too!
+Would love to hear what's working for you too!
 
 Cheers,
 Yai`;
