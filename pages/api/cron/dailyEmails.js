@@ -33,8 +33,8 @@ async function queueEmails() {
 
 ${body}
 
-Best regards,
-Your Team
+Best,
+Yai
 
 ---
 `;
