@@ -2,11 +2,11 @@ import { sql } from '@vercel/postgres';
 
 export const config = {
     runtime: 'edge',
-    regions: ['iad1']
+    regions: ['mia1']
 }
 
-// Vercel Cron syntax (runs every day at 9:00 AM EST)
-export const cron = '0 9 * * *';
+// Runs at 9:00 AM EST (14:00 UTC)
+export const cron = '0 14 * * *';
 
 export default async function handler(req) {
     try {
