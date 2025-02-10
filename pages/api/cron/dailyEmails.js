@@ -34,26 +34,15 @@ Cheers,
 Yai`;
 
             await sql`
-                INSERT INTO emails (to_email, subject, body)
-                VALUES (${subscriber.email}, ${subject}, ${body})
+                INSERT INTO emails (to_email, subject, body, status)
+                VALUES (${subscriber.email}, ${subject}, ${body}, 'pending')
             `;
         }
-
-        // 2. Trigger email sending immediately
-        const sendResponse = await fetch('https://www.simplerb.com/api/sendEmail', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-
-        const sendResult = await sendResponse.json();
 
         return new Response(
             JSON.stringify({
                 success: true,
-                queued: activeSubscribers.length,
-                sendResult
+                queued: activeSubscribers.length
             }),
             {
                 status: 200,
