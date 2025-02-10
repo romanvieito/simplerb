@@ -13,7 +13,7 @@ export default async function handler(req, res) {
         const { rows: pendingEmails } = await sql`
             SELECT * FROM emails 
             WHERE status = 'pending'
-            LIMIT 50
+            LIMIT 2
         `;
 
         if (pendingEmails.length === 0) {
