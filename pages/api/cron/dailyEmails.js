@@ -17,16 +17,21 @@ export default async function handler(req) {
 
         // Queue personalized emails
         for (const subscriber of activeSubscribers) {
-            const subject = `Daily Update for ${subscriber.name || 'you'}`;
-            const greeting = subscriber.name ? `Dear ${subscriber.name},` : 'Hello,';
+            // const subject = `Daily Update for ${subscriber.name || 'you'}`;
+            const subject = `Boost Your AI Faceless Shorts 🚀`;
+            const greeting = subscriber.name ? `Hey ${subscriber.name},` : 'Hey,';
             const body = `${greeting}
 
-Here are your updates for ${new Date().toLocaleDateString()}.
+I see you’re using AI for faceless Shorts—great choice! I’m on the same journey.
 
-Have a great day!
+Just made a video to test what’s working (and what’s not) for AI creators like us.
 
-Best regards,
-Your Team`;
+🎥 Take a look: https://www.youtube.com/shorts/wf1BKypzhe4
+
+Would love to hear what’s working for you too!
+
+Cheers,
+Yai`;
 
             await sql`
                 INSERT INTO emails (to_email, subject, body)
@@ -35,7 +40,7 @@ Your Team`;
         }
 
         // 2. Trigger email sending immediately
-        const sendResponse = await fetch('http://localhost:3000/api/sendEmail', {
+        const sendResponse = await fetch('https://www.simplerb.com/api/sendEmail', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
