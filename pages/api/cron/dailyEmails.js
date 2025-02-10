@@ -5,9 +5,6 @@ export const config = {
     regions: ['iad1']  // US East (Virginia)
 }
 
-// Runs at 9:00 AM EST (14:00 UTC)
-export const cron = '0 14 * * *';
-
 export default async function handler(req) {
     try {
         // 1. Queue new emails
