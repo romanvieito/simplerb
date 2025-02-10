@@ -7,16 +7,19 @@ export const config = {
 
 export default async function handler(req) {
     try {
-        // 1. Queue new emails
-        const { rows: activeSubscribers } = await sql`
-            SELECT email, name FROM email_list WHERE active = true
+        // Get emails that haven't been sent yet
+        const { rows: emailsToQueue } = await sql`
+            SELECT * FROM email_list 
+            WHERE send_count = 0 AND active = true
+            ORDER BY id ASC
+            LIMIT 100
         `;
 
-        // Queue personalized emails
-        for (const subscriber of activeSubscribers) {
-            // const subject = `Daily Update for ${subscriber.name || 'you'}`;
+        // Queue new emails
+        for (const email of emailsToQueue) {
+            // const subject = `Daily Update for ${email.name || 'you'}`;
             const subject = `Boost Your AI Faceless Shorts 🚀`;
-            const greeting = subscriber.name ? `Hey ${subscriber.name},` : 'Hey,';
+            const greeting = email.name ? `Hey ${email.name},` : 'Hey,';
             const body = `${greeting}
 
 I see you're using AI for faceless Shorts—great choice! I'm on the same journey.
@@ -32,14 +35,21 @@ Yai`;
 
             await sql`
                 INSERT INTO emails (to_email, subject, body, status)
-                VALUES (${subscriber.email}, ${subject}, ${body}, 'pending')
+                VALUES (${email.email}, ${subject}, ${body}, 'pending')
+            `;
+
+            // Increment the send_count
+            await sql`
+                UPDATE email_list 
+                SET send_count = send_count + 1
+                WHERE id = ${email.id}
             `;
         }
 
         return new Response(
             JSON.stringify({
                 success: true,
-                queued: activeSubscribers.length
+                queued: emailsToQueue.length
             }),
             {
                 status: 200,
@@ -49,6 +59,7 @@ Yai`;
             }
         );
     } catch (error) {
+        console.error('Error queueing emails:', error);
         return new Response(
             JSON.stringify({ error: error.message }),
             {
