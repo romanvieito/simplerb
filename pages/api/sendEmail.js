@@ -13,20 +13,23 @@ export default async function handler(req, res) {
         // Debug log
         console.log('Processing email:', { emailId, to, subject });
 
+        // Determine the base URL based on environment
+        const baseUrl = process.env.VERCEL_URL 
+            ? `https://${process.env.VERCEL_URL}`
+            : process.env.NEXT_PUBLIC_VERCEL_URL || 'http://localhost:3000';
+
         // Generate tracking pixel with absolute URL
-        const trackingUrl = `${process.env.NEXT_PUBLIC_VERCEL_URL}/api/track/${emailId}`;
+        const trackingUrl = `${baseUrl}/api/track/${emailId}`;
         const trackingPixel = `<img src="${trackingUrl}" width="1" height="1" alt="" style="display:none" />`;
         
-        // Ensure HTML content is properly wrapped
+        console.log('Tracking URL:', trackingUrl); // Debug log
+
         const htmlWithTracking = `
             <div>
                 ${html}
                 ${trackingPixel}
             </div>
         `;
-
-        // Debug log
-        console.log('Tracking URL:', trackingUrl);
 
         // Get pending emails from database
         const { rows: pendingEmails } = await sql`
@@ -76,7 +79,7 @@ export default async function handler(req, res) {
                 const trackingId = email.id; // Using the email ID as tracking ID for simplicity
 
                 // Add tracking pixel to email body
-                const trackingPixel = `<img src="${process.env.NEXT_PUBLIC_VERCEL_URL}/api/track/${trackingId}" width="1" height="1" alt="" style="display:none" />`;
+                const trackingPixel = `<img src="${baseUrl}/api/track/${trackingId}" width="1" height="1" alt="" style="display:none" />`;
                 const htmlBody = `
                     <div>${email.body}</div>
                     ${trackingPixel}
