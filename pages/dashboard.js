@@ -13,13 +13,16 @@ export default function Dashboard() {
     });
     const [timePeriod, setTimePeriod] = useState('all');
     const [loading, setLoading] = useState(true);
+    const [clickStats, setClickStats] = useState([]);
 
     useEffect(() => {
         fetchStats();
         fetchTrackingStats();
+        fetchClickStats();
         const interval = setInterval(() => {
             fetchStats();
             fetchTrackingStats();
+            fetchClickStats();
         }, 30000);
         return () => clearInterval(interval);
     }, [timePeriod]);
@@ -46,6 +49,16 @@ export default function Dashboard() {
             setTrackingStats(data);
         } catch (error) {
             console.error('Error fetching tracking stats:', error);
+        }
+    };
+
+    const fetchClickStats = async () => {
+        try {
+            const response = await fetch('/api/emailClickStats');
+            const data = await response.json();
+            setClickStats(data);
+        } catch (error) {
+            console.error('Error fetching click stats:', error);
         }
     };
 
@@ -136,6 +149,39 @@ export default function Dashboard() {
             >
                 Process Pending Emails
             </button>
+
+            <div className="mt-8">
+                <h2 className="text-2xl font-bold mb-4">Email Click Activity</h2>
+                <div className="bg-white shadow rounded-lg p-6">
+                    <table className="min-w-full">
+                        <thead>
+                            <tr>
+                                <th className="text-left">Email</th>
+                                <th className="text-left">Link</th>
+                                <th className="text-left">Clicked At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {clickStats.map((click, index) => (
+                                <tr key={index} className="border-t">
+                                    <td className="py-2">{click.to_email}</td>
+                                    <td className="py-2">
+                                        <a href={click.link_url} 
+                                           className="text-blue-500 hover:underline"
+                                           target="_blank"
+                                           rel="noopener noreferrer">
+                                            {click.link_url}
+                                        </a>
+                                    </td>
+                                    <td className="py-2">
+                                        {new Date(click.clicked_at).toLocaleString()}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     );
 } 
