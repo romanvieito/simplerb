@@ -16,14 +16,14 @@ export default async function handler(req, res) {
         // Determine the base URL based on environment
         const baseUrl = process.env.VERCEL_URL 
             ? `https://${process.env.VERCEL_URL}`
-            : process.env.NEXT_PUBLIC_VERCEL_URL || 'http://localhost:3000';
+            : 'https://simplerb.com';  // Hardcode production URL as fallback
 
         // Generate tracking pixel with absolute URL
         const trackingUrl = `${baseUrl}/api/track/${emailId}`;
+        console.log('Using tracking URL:', trackingUrl); // Debug log
+
         const trackingPixel = `<img src="${trackingUrl}" width="1" height="1" alt="" style="display:none" />`;
         
-        console.log('Tracking URL:', trackingUrl); // Debug log
-
         const htmlWithTracking = `
             <div>
                 ${html}
