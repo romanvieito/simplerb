@@ -6,14 +6,33 @@ export default function Dashboard() {
         sent: 0,
         failed: 0
     });
+    const [trackingStats, setTrackingStats] = useState({
+        totalSent: 0,
+        totalOpened: 0,
+        recentOpens: []
+    });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchStats();
+        fetchTrackingStats();
         // Refresh every 30 seconds
-        const interval = setInterval(fetchStats, 30000);
+        const interval = setInterval(() => {
+            fetchStats();
+            fetchTrackingStats();
+        }, 30000);
         return () => clearInterval(interval);
     }, []);
+
+    const fetchTrackingStats = async () => {
+        try {
+            const response = await fetch('/api/emailTrackingStats');
+            const data = await response.json();
+            setTrackingStats(data);
+        } catch (error) {
+            console.error('Error fetching tracking stats:', error);
+        }
+    };
 
     const fetchStats = async () => {
         try {
@@ -60,6 +79,34 @@ export default function Dashboard() {
                 <div className="bg-red-100 p-6 rounded-lg">
                     <h2 className="text-xl font-semibold mb-2">Failed</h2>
                     <p className="text-4xl font-bold text-red-600">{stats.failed || 0}</p>
+                </div>
+            </div>
+
+            <div className="mb-8">
+                <h2 className="text-2xl font-bold mb-4">Email Tracking Stats</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-purple-100 p-6 rounded-lg">
+                        <h3 className="text-xl font-semibold mb-2">Open Rate</h3>
+                        <p className="text-4xl font-bold text-purple-600">
+                            {trackingStats.totalSent ? 
+                                `${Math.round((trackingStats.totalOpened / trackingStats.totalSent) * 100)}%` 
+                                : '0%'}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-2">
+                            {trackingStats.totalOpened} opened of {trackingStats.totalSent} sent
+                        </p>
+                    </div>
+                    
+                    <div className="bg-indigo-100 p-6 rounded-lg">
+                        <h3 className="text-xl font-semibold mb-2">Recent Opens</h3>
+                        <div className="space-y-2">
+                            {trackingStats.recentOpens.map((open, index) => (
+                                <div key={index} className="text-sm">
+                                    {open.email} - {new Date(open.opened_at).toLocaleString()}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
 
