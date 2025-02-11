@@ -11,18 +11,18 @@ export default function Dashboard() {
         totalOpened: 0,
         recentOpens: []
     });
+    const [timePeriod, setTimePeriod] = useState('all');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchStats();
         fetchTrackingStats();
-        // Refresh every 30 seconds
         const interval = setInterval(() => {
             fetchStats();
             fetchTrackingStats();
         }, 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [timePeriod]);
 
     const fetchStats = async () => {
         try {
@@ -41,7 +41,7 @@ export default function Dashboard() {
 
     const fetchTrackingStats = async () => {
         try {
-            const response = await fetch('/api/emailTrackingStats');
+            const response = await fetch(`/api/emailTrackingStats?period=${timePeriod}`);
             const data = await response.json();
             setTrackingStats(data);
         } catch (error) {
@@ -83,10 +83,30 @@ export default function Dashboard() {
             </div>
 
             <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-4">Email Tracking Stats</h2>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold">Email Tracking Stats</h2>
+                    <select 
+                        value={timePeriod}
+                        onChange={(e) => setTimePeriod(e.target.value)}
+                        className="border rounded-md px-3 py-1"
+                    >
+                        <option value="all">All Time</option>
+                        <option value="hour">Last Hour</option>
+                        <option value="day">Last 24 Hours</option>
+                        <option value="week">Last Week</option>
+                    </select>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="bg-purple-100 p-6 rounded-lg">
-                        <h3 className="text-xl font-semibold mb-2">Open Rate</h3>
+                        <h3 className="text-xl font-semibold mb-2">
+                            Open Rate 
+                            <span className="text-sm font-normal text-gray-600 ml-2">
+                                {timePeriod === 'hour' ? '(Last Hour)' :
+                                 timePeriod === 'day' ? '(Last 24h)' : 
+                                 timePeriod === 'week' ? '(Last 7d)' : 
+                                 '(All Time)'}
+                            </span>
+                        </h3>
                         <p className="text-4xl font-bold text-purple-600">
                             {trackingStats.totalSent ? 
                                 `${Math.round((trackingStats.totalOpened / trackingStats.totalSent) * 100)}%` 
@@ -100,7 +120,7 @@ export default function Dashboard() {
                     <div className="bg-indigo-100 p-6 rounded-lg">
                         <h3 className="text-xl font-semibold mb-2">Recent Opens</h3>
                         <div className="space-y-2">
-                            {trackingStats.recentOpens.map((open, index) => (
+                            {trackingStats.recentOpens?.map((open, index) => (
                                 <div key={index} className="text-sm">
                                     {open.email} - {new Date(open.opened_at).toLocaleString()}
                                 </div>
