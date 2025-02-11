@@ -8,6 +8,26 @@ export default async function handler(req, res) {
     }
 
     try {
+        const { to, subject, html, emailId } = req.body;
+        
+        // Debug log
+        console.log('Processing email:', { emailId, to, subject });
+
+        // Generate tracking pixel with absolute URL
+        const trackingUrl = `${process.env.NEXT_PUBLIC_VERCEL_URL}/api/track/${emailId}`;
+        const trackingPixel = `<img src="${trackingUrl}" width="1" height="1" alt="" style="display:none" />`;
+        
+        // Ensure HTML content is properly wrapped
+        const htmlWithTracking = `
+            <div>
+                ${html}
+                ${trackingPixel}
+            </div>
+        `;
+
+        // Debug log
+        console.log('Tracking URL:', trackingUrl);
+
         // Get pending emails from database
         const { rows: pendingEmails } = await sql`
             SELECT * FROM emails 

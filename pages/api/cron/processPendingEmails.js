@@ -40,13 +40,20 @@ export default async function handler(req, res) {
                         to: email.to_email,
                         subject: email.subject,
                         html: email.body,
-                        emailId: email.id  // Include the email ID for updating status
+                        emailId: email.id  // Make sure this is being passed
                     })
                 });
 
                 if (!response.ok) {
                     throw new Error(`Failed to send email: ${response.statusText}`);
                 }
+
+                // Add debug logging
+                console.log('Processed email:', {
+                    id: email.id,
+                    to: email.to_email,
+                    subject: email.subject
+                });
             } catch (error) {
                 console.error(`Failed to process email ${email.id}:`, error);
                 // Update status to failed
