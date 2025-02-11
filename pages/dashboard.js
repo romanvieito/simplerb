@@ -24,16 +24,6 @@ export default function Dashboard() {
         return () => clearInterval(interval);
     }, []);
 
-    const fetchTrackingStats = async () => {
-        try {
-            const response = await fetch('/api/emailTrackingStats');
-            const data = await response.json();
-            setTrackingStats(data);
-        } catch (error) {
-            console.error('Error fetching tracking stats:', error);
-        }
-    };
-
     const fetchStats = async () => {
         try {
             const response = await fetch('/api/emailStats');
@@ -46,6 +36,16 @@ export default function Dashboard() {
             setLoading(false);
         } catch (error) {
             console.error('Error fetching stats:', error);
+        }
+    };
+
+    const fetchTrackingStats = async () => {
+        try {
+            const response = await fetch('/api/emailTrackingStats');
+            const data = await response.json();
+            setTrackingStats(data);
+        } catch (error) {
+            console.error('Error fetching tracking stats:', error);
         }
     };
 
