@@ -13,7 +13,7 @@ export default async function handler(req, res) {
             SELECT * FROM emails 
             WHERE status = 'pending' 
             ORDER BY created_at ASC
-            LIMIT 10
+            LIMIT 1
         `;
 
         if (pendingEmails.length === 0) {
@@ -52,11 +52,22 @@ export default async function handler(req, res) {
         const results = [];
         for (const email of pendingEmails) {
             try {
+                // Generate tracking ID
+                const trackingId = email.id; // Using the email ID as tracking ID for simplicity
+
+                // Add tracking pixel to email body
+                const trackingPixel = `<img src="${process.env.NEXT_PUBLIC_VERCEL_URL}/api/track/${trackingId}" width="1" height="1" alt="" style="display:none" />`;
+                const htmlBody = `
+                    <div>${email.body}</div>
+                    ${trackingPixel}
+                `;
+
                 const mailOptions = {
                     from: process.env.GMAIL_USER,
                     to: email.to_email,
                     subject: email.subject,
-                    text: email.body,
+                    text: email.body, // Plain text version
+                    html: htmlBody,   // HTML version with tracking pixel
                 };
 
                 const result = await transporter.sendMail(mailOptions);
