@@ -2,9 +2,6 @@ import { google } from "googleapis";
 import nodemailer from "nodemailer";
 import { sql } from '@vercel/postgres';
 import { load } from 'cheerio';
-import { Resend } from 'resend';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 function wrapLinksWithTracking(html, emailId, baseUrl) {
     const $ = load(html);
