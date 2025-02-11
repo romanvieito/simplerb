@@ -25,6 +25,7 @@
     "@vercel/postgres": "^0.8.0",
     "ai": "^3.4.6",
     "axios": "^1.7.7",
+    "cheerio": "^1.0.0",
     "dotenv": "^16.4.7",
     "eventsource-parser": "^0.0.5",
     "git": "^0.1.5",
