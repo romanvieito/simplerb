@@ -26,7 +26,7 @@ I see you're using AI for faceless Shorts—great choice! I'm on the same journe
 
 Just made a video to test what's working (and what's not) for AI creators like us.
 
-🎥 Take a look: https://www.youtube.com/shorts/wf1BKypzhe4
+🎥 Take a look: https://youtube.com/shorts/M9Kcc7K9Mts
 
 Would love to hear what's working for you too!
 
