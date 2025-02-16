@@ -14,18 +14,23 @@ export default function Dashboard() {
     const [timePeriod, setTimePeriod] = useState('all');
     const [loading, setLoading] = useState(true);
     const [clickStats, setClickStats] = useState([]);
+    const [lastUpdated, setLastUpdated] = useState(new Date());
 
     useEffect(() => {
-        fetchStats();
-        fetchTrackingStats();
-        fetchClickStats();
-        const interval = setInterval(() => {
-            fetchStats();
-            fetchTrackingStats();
-            fetchClickStats();
-        }, 30000);
+        updateAllStats();
+        // Update every hour (3600000 ms)
+        const interval = setInterval(updateAllStats, 3600000);
         return () => clearInterval(interval);
     }, [timePeriod]);
+
+    const updateAllStats = async () => {
+        await Promise.all([
+            fetchStats(),
+            fetchTrackingStats(),
+            fetchClickStats()
+        ]);
+        setLastUpdated(new Date());
+    };
 
     const fetchStats = async () => {
         try {
@@ -78,7 +83,18 @@ export default function Dashboard() {
 
     return (
         <div className="p-8">
-            <h1 className="text-3xl font-bold mb-8">Email Queue Dashboard</h1>
+            <div className="flex justify-between items-center mb-8">
+                <h1 className="text-3xl font-bold">Email Queue Dashboard</h1>
+                <div className="text-sm text-gray-600">
+                    Last updated: {lastUpdated.toLocaleString()}
+                    <button
+                        onClick={updateAllStats}
+                        className="ml-4 text-blue-500 hover:text-blue-700"
+                    >
+                        Refresh
+                    </button>
+                </div>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 <div className="bg-blue-100 p-6 rounded-lg">
