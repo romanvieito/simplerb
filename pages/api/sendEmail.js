@@ -68,13 +68,13 @@ export default async function handler(req, res) {
 
         const OAuth2 = google.auth.OAuth2;
         const oauth2Client = new OAuth2(
-            process.env.GOOGLE_CLIENT_ID,
-            process.env.GOOGLE_CLIENT_SECRET,
+            process.env.GMAIL_CLIENT_ID,
+            process.env.GMAIL_CLIENT_SECRET,
             "https://developers.google.com/oauthplayground"
         );
 
         oauth2Client.setCredentials({
-            refresh_token: process.env.GOOGLE_REFRESH_TOKEN
+            refresh_token: process.env.GMAIL_REFRESH_TOKEN
         });
 
         const accessToken = await oauth2Client.getAccessToken();
@@ -83,10 +83,10 @@ export default async function handler(req, res) {
             service: "gmail",
             auth: {
                 type: "OAuth2",
-                user: "ybolanoscu@gmail.com",
-                clientId: process.env.GOOGLE_CLIENT_ID,
-                clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-                refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
+                user: "romanvieito@gmail.com",
+                clientId: process.env.GMAIL_CLIENT_ID,
+                clientSecret: process.env.GMAIL_CLIENT_SECRET,
+                refreshToken: process.env.GMAIL_REFRESH_TOKEN,
                 accessToken: accessToken
             }
         });
@@ -97,10 +97,10 @@ export default async function handler(req, res) {
 
         // Send email with tracking
         const result = await transport.sendMail({
-            from: 'ybolanoscu@gmail.com',
+            from: 'romanvieito@gmail.com',
             to: to,
             subject: subject,
-            html: htmlWithTrackedLinks
+            html: htmlWithTracking
         });
 
         return res.status(200).json(result);
