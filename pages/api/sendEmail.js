@@ -30,30 +30,6 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { to, subject, html, emailId } = req.body;
-        
-        // Debug log
-        console.log('Processing email:', { emailId, to, subject });
-
-        // Determine the base URL
-        const baseUrl = process.env.VERCEL_URL 
-            ? `https://${process.env.VERCEL_URL}`
-            : 'http://localhost:3000';
-
-        // Add tracking to links
-        const htmlWithTrackedLinks = wrapLinksWithTracking(html, emailId, baseUrl);
-        
-        // Add tracking pixel (existing code)
-        const trackingUrl = `${baseUrl}/api/track/${emailId}`;
-        const trackingPixel = `<img src="${trackingUrl}" width="1" height="1" alt="" style="display:none" />`;
-        
-        const htmlWithTracking = `
-            <div>
-                ${htmlWithTrackedLinks}
-                ${trackingPixel}
-            </div>
-        `;
-
         // Get pending emails from database
         const { rows: pendingEmails } = await sql`
             SELECT * FROM emails 
@@ -65,6 +41,27 @@ export default async function handler(req, res) {
         if (pendingEmails.length === 0) {
             return res.status(200).json({ message: "No pending emails to send" });
         }
+
+        const email = pendingEmails[0];  // Get the first pending email
+        
+        // Determine the base URL
+        const baseUrl = process.env.VERCEL_URL 
+            ? `https://${process.env.VERCEL_URL}`
+            : 'http://localhost:3000';
+
+        // Add tracking to links
+        const htmlWithTrackedLinks = wrapLinksWithTracking(email.body, email.id, baseUrl);
+        
+        // Add tracking pixel
+        const trackingUrl = `${baseUrl}/api/track/${email.id}`;
+        const trackingPixel = `<img src="${trackingUrl}" width="1" height="1" alt="" style="display:none" />`;
+        
+        const htmlWithTracking = `
+            <div>
+                ${htmlWithTrackedLinks}
+                ${trackingPixel}
+            </div>
+        `;
 
         const OAuth2 = google.auth.OAuth2;
         const oauth2Client = new OAuth2(
@@ -98,8 +95,8 @@ export default async function handler(req, res) {
         // Send email with tracking
         const result = await transport.sendMail({
             from: 'romanvieito@gmail.com',
-            to: to,
-            subject: subject,
+            to: email.to_email,      // Use email from database
+            subject: email.subject,   // Use subject from database
             html: htmlWithTracking
         });
 
