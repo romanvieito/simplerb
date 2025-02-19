@@ -18,15 +18,13 @@ export default async function handler(req) {
         // Queue new emails
         for (const email of emailsToQueue) {
             // const subject = `Daily Update for ${email.name || 'you'}`;
-            const subject = `Boost Your AI Faceless Shorts 🚀`;
+            const subject = `Boost Your AI Shorts 🚀`;
             const greeting = email.name ? `Hey ${email.name},` : 'Hey,';
             const body = `${greeting}
 
-I see you're using AI for faceless Shorts—great choice! I'm on the same journey.
+I see you're using AI for Shorts—great choice! I'm on the same journey.
 
-Just made a video to test what's working (and what's not) for AI creators like us.
-
-🎥 Take a look: https://youtube.com/shorts/M9Kcc7K9Mts
+Just made a quick video to test what's working (and what's not) for AI creators like us. Take a look: https://www.youtube.com/shorts/GaJj5sr_Jo0
 
 Would love to hear what's working for you too!
 
