@@ -20,15 +20,15 @@ export default async function handler(req) {
             // const subject = `Daily Update for ${email.name || 'you'}`;
             const subject = `Boost Your AI Shorts 🚀`;
             const greeting = email.name ? `Hey ${email.name},` : 'Hey,';
-            const body = `${greeting}
-
-I see you're using AI for Shorts—great choice! I'm on the same journey.
-
-Just made a quick video to test what's working (and what's not) for AI creators like us. Take a look: https://www.youtube.com/shorts/GaJj5sr_Jo0
-
-Would love to hear what's working for you too!
-
-Cheers,
+            const body = `${greeting}<br>
+<br>
+I see you're using AI for Shorts—great choice! I'm on the same journey.<br>
+<br>
+Just made a quick video to test what's working (and what's not) for AI creators like us. Take a look: https://www.youtube.com/shorts/GaJj5sr_Jo0<br>
+<br>
+Would love to hear what's working for you too!<br>
+<br>
+Cheers,<br>
 Yai`;
 
             await sql`
