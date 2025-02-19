@@ -100,8 +100,24 @@ export default async function handler(req, res) {
             html: htmlWithTracking
         });
 
+        // Update email status to sent
+        await sql`
+            UPDATE emails 
+            SET status = 'sent',
+                sent_at = NOW()
+            WHERE id = ${email.id}
+        `;
+
         return res.status(200).json(result);
     } catch (error) {
+        // Update email status to failed with error message
+        await sql`
+            UPDATE emails 
+            SET status = 'failed',
+                error = ${error.message}
+            WHERE id = ${email.id}
+        `;
+        
         console.error('Error sending email:', error);
         return res.status(500).json({ error: error.message });
     }
