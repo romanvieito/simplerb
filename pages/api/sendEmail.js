@@ -25,116 +25,75 @@ function wrapLinksWithTracking(html, emailId, baseUrl) {
 }
 
 export default async function handler(req, res) {
-    if (req.method !== "POST") {
-        return res.status(405).json({ error: "Method Not Allowed" });
-    }
-
     try {
         const { id, to, subject } = req.body;
 
-        // Update status to sending
-        await sql`
-            UPDATE emails 
-            SET status = 'sending'
-            WHERE id = ${id}
-        `;
+        // Log OAuth2 configuration (remove sensitive data in production)
+        console.log('OAuth2 Config:', {
+            clientId: process.env.GMAIL_CLIENT_ID ? 'Set' : 'Missing',
+            clientSecret: process.env.GMAIL_CLIENT_SECRET ? 'Set' : 'Missing',
+            refreshToken: process.env.GMAIL_REFRESH_TOKEN ? 'Set' : 'Missing'
+        });
 
-        // Get pending emails from database
-        const { rows: pendingEmails } = await sql`
-            SELECT * FROM emails 
-            WHERE status = 'pending' 
-            ORDER BY created_at ASC
-            LIMIT 1
-        `;
-
-        if (pendingEmails.length === 0) {
-            return res.status(200).json({ message: "No pending emails to send" });
-        }
-
-        const email = pendingEmails[0];  // Get the first pending email
-        
-        // Update status to processing to prevent duplicate processing
-        await sql`
-            UPDATE emails 
-            SET status = 'processing'
-            WHERE id = ${email.id}
-        `;
-
-        // Determine the base URL
-        const baseUrl = process.env.VERCEL_URL 
-            ? `https://${process.env.VERCEL_URL}`
-            : 'http://localhost:3000';
-
-        // Add tracking to links
-        const htmlWithTrackedLinks = wrapLinksWithTracking(email.body, email.id, baseUrl);
-        
-        // Add tracking pixel
-        const trackingUrl = `${baseUrl}/api/track/${email.id}`;
-        const trackingPixel = `<img src="${trackingUrl}" width="1" height="1" alt="" style="display:none" />`;
-        
-        const htmlWithTracking = `
-            <div>
-                ${htmlWithTrackedLinks}
-                ${trackingPixel}
-            </div>
-        `;
-
+        // Set up OAuth2 client
         const OAuth2 = google.auth.OAuth2;
         const oauth2Client = new OAuth2(
             process.env.GMAIL_CLIENT_ID,
             process.env.GMAIL_CLIENT_SECRET,
-            "https://developers.google.com/oauthplayground"
+            'https://developers.google.com/oauthplayground'
         );
 
         oauth2Client.setCredentials({
             refresh_token: process.env.GMAIL_REFRESH_TOKEN
         });
 
-        let accessToken;
         try {
-            accessToken = await oauth2Client.getAccessToken();
-        } catch (authError) {
-            console.error('OAuth2 Authentication Error:', authError);
-            throw new Error('Email authentication failed - refresh token may have expired');
+            // Get new access token
+            const tokens = await oauth2Client.getAccessToken();
+            console.log('Access token obtained successfully');
+
+            // Create transport
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    type: 'OAuth2',
+                    user: process.env.GMAIL_USER,
+                    clientId: process.env.GMAIL_CLIENT_ID,
+                    clientSecret: process.env.GMAIL_CLIENT_SECRET,
+                    refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+                    accessToken: tokens.token
+                }
+            });
+
+            // Update status to sending
+            await sql`
+                UPDATE emails 
+                SET status = 'sending'
+                WHERE id = ${id}
+            `;
+
+            // Send email
+            await transporter.sendMail({
+                from: process.env.GMAIL_USER,
+                to,
+                subject,
+                text: 'Email content here'  // Add your email content
+            });
+
+            // Update status to sent
+            await sql`
+                UPDATE emails 
+                SET status = 'sent'
+                WHERE id = ${id}
+            `;
+
+            return res.status(200).json({ success: true });
+
+        } catch (oauthError) {
+            console.error('OAuth/Email Error:', oauthError);
+            throw new Error(`Email sending failed: ${oauthError.message}`);
         }
 
-        const transport = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                type: "OAuth2",
-                user: "romanvieito@gmail.com",
-                clientId: process.env.GMAIL_CLIENT_ID,
-                clientSecret: process.env.GMAIL_CLIENT_SECRET,
-                refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-                accessToken: accessToken
-            }
-        });
-
-        // Verify connection configuration before sending
-        try {
-            await transport.verify();
-            console.log("SMTP connection verified");
-        } catch (verifyError) {
-            console.error('SMTP Verification Error:', verifyError);
-            throw new Error('Failed to verify SMTP connection');
-        }
-
-        // Send email with tracking
-        const result = await transport.sendMail({
-            from: 'romanvieito@gmail.com',
-            to: email.to_email,      // Use email from database
-            subject: email.subject,   // Use subject from database
-            html: htmlWithTracking
-        });
-
-        // Update email status to sent
-        await sql`
-            UPDATE emails 
-            SET status = 'sent'
-            WHERE id = ${email.id}
-        `;
-
-        return res.status(200).json(result);
     } catch (error) {
         console.error('Error sending email:', error);
         
@@ -147,6 +106,9 @@ export default async function handler(req, res) {
             `;
         }
         
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ 
+            error: error.message,
+            details: 'Check Gmail OAuth2 configuration'
+        });
     }
 }
