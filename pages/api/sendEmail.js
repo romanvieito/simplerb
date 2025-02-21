@@ -82,7 +82,13 @@ export default async function handler(req, res) {
             refresh_token: process.env.GMAIL_REFRESH_TOKEN
         });
 
-        const accessToken = await oauth2Client.getAccessToken();
+        let accessToken;
+        try {
+            accessToken = await oauth2Client.getAccessToken();
+        } catch (authError) {
+            console.error('OAuth2 Authentication Error:', authError);
+            throw new Error('Email authentication failed - refresh token may have expired');
+        }
 
         const transport = nodemailer.createTransport({
             service: "gmail",
@@ -96,9 +102,14 @@ export default async function handler(req, res) {
             }
         });
 
-        // Verify connection
-        await transport.verify();
-        console.log("Server is ready to take messages");
+        // Verify connection configuration before sending
+        try {
+            await transport.verify();
+            console.log("SMTP connection verified");
+        } catch (verifyError) {
+            console.error('SMTP Verification Error:', verifyError);
+            throw new Error('Failed to verify SMTP connection');
+        }
 
         // Send email with tracking
         const result = await transport.sendMail({
@@ -118,17 +129,26 @@ export default async function handler(req, res) {
 
         return res.status(200).json(result);
     } catch (error) {
-        // Only update the status if we have an email
+        // More detailed error logging
+        console.error('Detailed error:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+        });
+
         if (email?.id) {
             await sql`
                 UPDATE emails 
                 SET status = 'failed',
-                    error = ${error.message}
+                    error = ${error.message},
+                    updated_at = NOW()
                 WHERE id = ${email.id}
             `;
         }
         
-        console.error('Error sending email:', error);
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ 
+            error: error.message,
+            details: 'If you see invalid_grant, please refresh OAuth2 credentials'
+        });
     }
 }
