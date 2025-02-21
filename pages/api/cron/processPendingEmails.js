@@ -9,6 +9,15 @@ import { sql } from '@vercel/postgres';
 // Change to regular API route format
 export default async function handler(req, res) {
     try {
+        // Get the base URL using the correct environment variable
+        const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL ? 
+                       `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` :
+                       `https://${req.headers.host}`;
+
+        if (!baseUrl) {
+            throw new Error('Unable to determine application URL');
+        }
+
         // Reset any stuck "processing" emails (simplified without updated_at)
         await sql`
             UPDATE emails 
@@ -41,7 +50,7 @@ export default async function handler(req, res) {
         `;
 
         // Send to email endpoint
-        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/sendEmail`, {
+        const response = await fetch(`${baseUrl}/api/sendEmail`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
