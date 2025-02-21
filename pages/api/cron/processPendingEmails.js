@@ -10,10 +10,10 @@ import { sql } from '@vercel/postgres';
 export default async function handler(req, res) {
     let email = null; // Define email variable in outer scope
     try {
-        // For local testing, hardcode localhost if needed
-        const baseUrl = process.env.NODE_ENV === 'development' 
-            ? 'http://localhost:3000'  // Use http for local development
-            : `https://${process.env.NEXT_PUBLIC_VERCEL_URL || req.headers.host}`;
+        // Fix the base URL construction
+        const baseUrl = process.env.NODE_ENV === 'development'
+            ? 'http://localhost:3000'
+            : 'https://simplerb.com';  // Direct URL without double https://
             
         console.log('Using base URL:', baseUrl); // Debug log
 
@@ -68,14 +68,7 @@ export default async function handler(req, res) {
         });
 
         if (!response.ok) {
-            // Get more detailed error information
-            const errorText = await response.text();
-            console.error('Send email failed:', {
-                status: response.status,
-                statusText: response.statusText,
-                responseBody: errorText
-            });
-            throw new Error(`Failed to send email: ${response.statusText}. Response: ${errorText}`);
+            throw new Error(`Failed to send email: ${response.statusText}`);
         }
 
         return res.status(200).json({ 
