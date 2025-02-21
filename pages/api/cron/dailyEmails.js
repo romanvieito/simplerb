@@ -24,7 +24,7 @@ export default async function handler(req) {
 <br>
 I see you're using AI for Shorts—great choice! I'm on the same journey.<br>
 <br>
-Just made a quick video to test what's working (and what's not) for AI creators like us. Take a look: https://www.youtube.com/shorts/GaJj5sr_Jo0<br>
+Just made a quick video to test what's working (and what's not) for AI creators like us. Take a look: https://www.youtube.com/shorts/oU-WiAJxQ5A<br>
 <br>
 Would love to hear what's working for you too!<br>
 <br>
