@@ -28,6 +28,13 @@ export default async function handler(req, res) {
     try {
         const { id, to, subject } = req.body;
 
+        // Define baseUrl first
+        const baseUrl = process.env.NODE_ENV === 'development' 
+            ? 'http://localhost:3000'
+            : 'https://simplerb.com';
+
+        console.log('baseUrl:', baseUrl);  // Log to verify
+
         // Fetch the email content from database
         const { rows } = await sql`
             SELECT * FROM emails WHERE id = ${id}
@@ -76,12 +83,22 @@ export default async function handler(req, res) {
                 WHERE id = ${id}
             `;
 
-            // Send email with content from database
+            // Add tracking pixel for open rate
+            const trackingPixel = `<img src="${baseUrl}/api/track/open/${id}" width="1" height="1" alt="" />`;
+            const htmlWithTracking = `${emailContent.body}${trackingPixel}`;
+            
+            console.log('baseUrl:', baseUrl);
+            console.log('id:', id);
+            console.log('trackingPixel:', trackingPixel);
+            console.log('emailContent:', emailContent);
+            console.log('Final HTML:', htmlWithTracking);
+
+            // Send email with tracking pixel
             const info = await transporter.sendMail({
                 from: process.env.GMAIL_USER,
                 to,
                 subject,
-                html: emailContent.body,
+                html: htmlWithTracking,
                 text: 'Please view this email in an HTML-capable client'
             });
 
