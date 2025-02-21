@@ -12,7 +12,7 @@ export default async function handler(req) {
             SELECT * FROM email_list 
             WHERE send_count = 0 AND active = true
             ORDER BY id ASC
-            LIMIT 100
+            LIMIT 1
         `;
 
         // Queue new emails
