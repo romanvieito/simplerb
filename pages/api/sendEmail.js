@@ -29,8 +29,16 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: "Method Not Allowed" });
     }
 
-    let email;
     try {
+        const { id, to, subject } = req.body;
+
+        // Update status to sending
+        await sql`
+            UPDATE emails 
+            SET status = 'sending'
+            WHERE id = ${id}
+        `;
+
         // Get pending emails from database
         const { rows: pendingEmails } = await sql`
             SELECT * FROM emails 
@@ -43,7 +51,7 @@ export default async function handler(req, res) {
             return res.status(200).json({ message: "No pending emails to send" });
         }
 
-        email = pendingEmails[0];  // Get the first pending email
+        const email = pendingEmails[0];  // Get the first pending email
         
         // Update status to processing to prevent duplicate processing
         await sql`
@@ -122,33 +130,23 @@ export default async function handler(req, res) {
         // Update email status to sent
         await sql`
             UPDATE emails 
-            SET status = 'sent',
-                sent_at = NOW()
+            SET status = 'sent'
             WHERE id = ${email.id}
         `;
 
         return res.status(200).json(result);
     } catch (error) {
-        // More detailed error logging
-        console.error('Detailed error:', {
-            message: error.message,
-            stack: error.stack,
-            name: error.name
-        });
-
-        if (email?.id) {
+        console.error('Error sending email:', error);
+        
+        // Reset status to pending on error
+        if (req.body?.id) {
             await sql`
                 UPDATE emails 
-                SET status = 'failed',
-                    error = ${error.message},
-                    updated_at = NOW()
-                WHERE id = ${email.id}
+                SET status = 'pending'
+                WHERE id = ${req.body.id}
             `;
         }
         
-        return res.status(500).json({ 
-            error: error.message,
-            details: 'If you see invalid_grant, please refresh OAuth2 credentials'
-        });
+        return res.status(500).json({ error: error.message });
     }
 }

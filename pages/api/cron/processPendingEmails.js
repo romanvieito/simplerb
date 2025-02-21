@@ -8,9 +8,13 @@ import { sql } from '@vercel/postgres';
 
 // Change to regular API route format
 export default async function handler(req, res) {
+    let email = null; // Define email variable in outer scope
     try {
-        // Ensure we have a properly formatted URL
-        const baseUrl = `https://${process.env.NEXT_PUBLIC_VERCEL_URL || req.headers.host}`;
+        // For local testing, hardcode localhost if needed
+        const baseUrl = process.env.NODE_ENV === 'development' 
+            ? 'http://localhost:3000'  // Use http for local development
+            : `https://${process.env.NEXT_PUBLIC_VERCEL_URL || req.headers.host}`;
+            
         console.log('Using base URL:', baseUrl); // Debug log
 
         // Reset any stuck "processing" emails
@@ -34,7 +38,7 @@ export default async function handler(req, res) {
             });
         }
 
-        const email = pendingEmails[0];
+        email = pendingEmails[0]; // Assign to outer scope variable
 
         await sql`
             UPDATE emails 
@@ -45,6 +49,11 @@ export default async function handler(req, res) {
         // Construct absolute URL for the API endpoint
         const apiUrl = new URL('/api/sendEmail', baseUrl).toString();
         console.log('Sending request to:', apiUrl); // Debug log
+        console.log('Request body:', {
+            id: email.id,
+            to: email.to_email,
+            subject: email.subject
+        });
 
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -59,7 +68,14 @@ export default async function handler(req, res) {
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to send email: ${response.statusText}`);
+            // Get more detailed error information
+            const errorText = await response.text();
+            console.error('Send email failed:', {
+                status: response.status,
+                statusText: response.statusText,
+                responseBody: errorText
+            });
+            throw new Error(`Failed to send email: ${response.statusText}. Response: ${errorText}`);
         }
 
         return res.status(200).json({ 
@@ -69,7 +85,7 @@ export default async function handler(req, res) {
 
     } catch (error) {
         console.error('Error processing emails:', error);
-        // If there's an error, reset the email status back to pending
+        // Now email will be defined in this scope
         if (email?.id) {
             await sql`
                 UPDATE emails 
