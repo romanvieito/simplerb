@@ -9,23 +9,17 @@ import { sql } from '@vercel/postgres';
 // Change to regular API route format
 export default async function handler(req, res) {
     try {
-        // Get the base URL using the correct environment variable
-        const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL ? 
-                       `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` :
-                       `https://${req.headers.host}`;
+        // Ensure we have a properly formatted URL
+        const baseUrl = `https://${process.env.NEXT_PUBLIC_VERCEL_URL || req.headers.host}`;
+        console.log('Using base URL:', baseUrl); // Debug log
 
-        if (!baseUrl) {
-            throw new Error('Unable to determine application URL');
-        }
-
-        // Reset any stuck "processing" emails (simplified without updated_at)
+        // Reset any stuck "processing" emails
         await sql`
             UPDATE emails 
             SET status = 'pending'
             WHERE status = 'processing'
         `;
 
-        // Then get the next pending email
         const { rows: pendingEmails } = await sql`
             SELECT * FROM emails 
             WHERE status = 'pending'
@@ -42,15 +36,17 @@ export default async function handler(req, res) {
 
         const email = pendingEmails[0];
 
-        // Update status to processing (without updated_at)
         await sql`
             UPDATE emails 
             SET status = 'processing'
             WHERE id = ${email.id}
         `;
 
-        // Send to email endpoint
-        const response = await fetch(`${baseUrl}/api/sendEmail`, {
+        // Construct absolute URL for the API endpoint
+        const apiUrl = new URL('/api/sendEmail', baseUrl).toString();
+        console.log('Sending request to:', apiUrl); // Debug log
+
+        const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -73,6 +69,14 @@ export default async function handler(req, res) {
 
     } catch (error) {
         console.error('Error processing emails:', error);
+        // If there's an error, reset the email status back to pending
+        if (email?.id) {
+            await sql`
+                UPDATE emails 
+                SET status = 'pending'
+                WHERE id = ${email.id}
+            `;
+        }
         return res.status(500).json({ error: error.message });
     }
 } 
