@@ -27,47 +27,27 @@ export default async function handler(req, res) {
             ? `https://${process.env.VERCEL_URL}`
             : 'http://localhost:3000';
 
-        // Process each pending email
-        for (const email of pendingEmails) {
-            try {
-                // Call your existing sendEmail endpoint with the email data
-                const response = await fetch(`${baseUrl}/api/sendEmail`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        to: email.to_email,
-                        subject: email.subject,
-                        html: email.body,
-                        emailId: email.id  // Make sure this is being passed
-                    })
-                });
+        // Process the pending email
+        const email = pendingEmails[0];
+        
+        // Call sendEmail endpoint without wrapping email data
+        const response = await fetch(`${baseUrl}/api/sendEmail`, {
+            method: 'POST'
+        });
 
-                if (!response.ok) {
-                    throw new Error(`Failed to send email: ${response.statusText}`);
-                }
-
-                // Add debug logging
-                console.log('Processed email:', {
-                    id: email.id,
-                    to: email.to_email,
-                    subject: email.subject
-                });
-            } catch (error) {
-                console.error(`Failed to process email ${email.id}:`, error);
-                // Update status to failed
-                await sql`
-                    UPDATE emails 
-                    SET status = 'failed'
-                    WHERE id = ${email.id}
-                `;
-            }
+        if (!response.ok) {
+            throw new Error(`Failed to send email: ${response.statusText}`);
         }
+
+        console.log('Processed email:', {
+            id: email.id,
+            to: email.to_email,
+            subject: email.subject
+        });
 
         return res.status(200).json({ 
             success: true, 
-            processed: pendingEmails.length 
+            processed: 1 
         });
     } catch (error) {
         console.error('Error processing emails:', error);
