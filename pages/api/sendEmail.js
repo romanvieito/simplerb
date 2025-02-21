@@ -28,16 +28,19 @@ export default async function handler(req, res) {
     try {
         const { id, to, subject } = req.body;
 
-        // Log OAuth2 configuration (remove sensitive data in production)
-        console.log('OAuth2 Config:', {
-            clientId: process.env.GMAIL_CLIENT_ID ? 'Set' : 'Missing',
-            clientSecret: process.env.GMAIL_CLIENT_SECRET ? 'Set' : 'Missing',
-            refreshToken: process.env.GMAIL_REFRESH_TOKEN ? 'Set' : 'Missing'
-        });
+        // Fetch the email content from database
+        const { rows } = await sql`
+            SELECT * FROM emails WHERE id = ${id}
+        `;
+
+        if (rows.length === 0) {
+            throw new Error('Email not found');
+        }
+
+        const emailContent = rows[0];
 
         // Set up OAuth2 client
-        const OAuth2 = google.auth.OAuth2;
-        const oauth2Client = new OAuth2(
+        const oauth2Client = new google.auth.OAuth2(
             process.env.GMAIL_CLIENT_ID,
             process.env.GMAIL_CLIENT_SECRET,
             'https://developers.google.com/oauthplayground'
@@ -48,22 +51,23 @@ export default async function handler(req, res) {
         });
 
         try {
-            // Get new access token
-            const tokens = await oauth2Client.getAccessToken();
-            console.log('Access token obtained successfully');
+            const { token: accessToken } = await oauth2Client.getAccessToken();
 
-            // Create transport
             const transporter = nodemailer.createTransport({
-                service: 'gmail',
+                host: 'smtp.gmail.com',
+                port: 465,
+                secure: true,
                 auth: {
                     type: 'OAuth2',
                     user: process.env.GMAIL_USER,
                     clientId: process.env.GMAIL_CLIENT_ID,
                     clientSecret: process.env.GMAIL_CLIENT_SECRET,
                     refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-                    accessToken: tokens.token
+                    accessToken: accessToken
                 }
             });
+
+            await transporter.verify();
 
             // Update status to sending
             await sql`
@@ -72,13 +76,16 @@ export default async function handler(req, res) {
                 WHERE id = ${id}
             `;
 
-            // Send email
-            await transporter.sendMail({
+            // Send email with content from database
+            const info = await transporter.sendMail({
                 from: process.env.GMAIL_USER,
                 to,
                 subject,
-                text: 'Email content here'  // Add your email content
+                html: emailContent.body,
+                text: 'Please view this email in an HTML-capable client'
             });
+
+            console.log('Email sent successfully:', info.messageId);
 
             // Update status to sent
             await sql`
@@ -87,17 +94,21 @@ export default async function handler(req, res) {
                 WHERE id = ${id}
             `;
 
-            return res.status(200).json({ success: true });
+            return res.status(200).json({ success: true, messageId: info.messageId });
 
         } catch (oauthError) {
-            console.error('OAuth/Email Error:', oauthError);
+            console.error('OAuth/Email Error details:', {
+                name: oauthError.name,
+                message: oauthError.message,
+                code: oauthError.code,
+                command: oauthError.command
+            });
             throw new Error(`Email sending failed: ${oauthError.message}`);
         }
 
     } catch (error) {
         console.error('Error sending email:', error);
         
-        // Reset status to pending on error
         if (req.body?.id) {
             await sql`
                 UPDATE emails 
@@ -108,7 +119,7 @@ export default async function handler(req, res) {
         
         return res.status(500).json({ 
             error: error.message,
-            details: 'Check Gmail OAuth2 configuration'
+            details: 'Check Gmail OAuth2 configuration and permissions'
         });
     }
 }
