@@ -9,12 +9,11 @@ import { sql } from '@vercel/postgres';
 // Change to regular API route format
 export default async function handler(req, res) {
     try {
-        // First, reset any stuck "processing" emails (older than 5 minutes)
+        // Reset any stuck "processing" emails (simplified without updated_at)
         await sql`
             UPDATE emails 
             SET status = 'pending'
-            WHERE status = 'processing' 
-            AND updated_at < NOW() - INTERVAL '5 minutes'
+            WHERE status = 'processing'
         `;
 
         // Then get the next pending email
@@ -34,11 +33,10 @@ export default async function handler(req, res) {
 
         const email = pendingEmails[0];
 
-        // Update status to processing
+        // Update status to processing (without updated_at)
         await sql`
             UPDATE emails 
-            SET status = 'processing',
-                updated_at = NOW()
+            SET status = 'processing'
             WHERE id = ${email.id}
         `;
 
