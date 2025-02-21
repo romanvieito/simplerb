@@ -87,10 +87,12 @@ export default async function handler(req, res) {
 
             console.log('Email sent successfully:', info.messageId);
 
-            // Update status to sent
+            // Update status and sent_at timestamp
             await sql`
                 UPDATE emails 
-                SET status = 'sent'
+                SET 
+                    status = 'sent',
+                    sent_at = CURRENT_TIMESTAMP
                 WHERE id = ${id}
             `;
 
