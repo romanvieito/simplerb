@@ -24,12 +24,12 @@ export default async function handler(req) {
 <br>
 I see you're using AI for Shorts—great choice! I'm on the same journey.<br>
 <br>
-Just made a quick video to test what's working (and what's not) for AI creators like us. Take a look: https://www.youtube.com/shorts/oU-WiAJxQ5A<br>
+Just made a quick video to test what's working (and what's not) for AI creators like us. Take a look: https://youtube.com/shorts/YRP7LGsi984<br>
 <br>
 Would love to hear what's working for you too!<br>
 <br>
-Cheers,<br>
-Yai`;
+Cheers...<br>
+`;
 
             await sql`
                 INSERT INTO emails (to_email, subject, body, status)
