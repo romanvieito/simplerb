@@ -25,7 +25,7 @@ export default async function handler(req, res) {
         `;
 
         const { rows: pendingEmails } = await sql`
-            SELECT * FROM emails WHERE status = 'pending' ORDER BY id DESC LIMIT 1;
+            SELECT * FROM emails WHERE status = 'pending' LIMIT 1;
         `;
 
         if (pendingEmails.length === 0) {
