@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/processPendingEmails",
-      "schedule": "*/2 16-23 * * *"
+      "schedule": "*/2 17-23 * * *"
     }
   ]
 } 
