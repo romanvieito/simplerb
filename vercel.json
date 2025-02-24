@@ -7,10 +7,6 @@
     {
       "path": "/api/cron/processPendingEmails",
       "schedule": "*/2 17-23 * * *"
-    },
-    {
-      "path": "/api/cron/syncTwitterLikes",
-      "schedule": "0 */23 * * *"
     }
   ]
 } 
