@@ -7,6 +7,10 @@ export const config = {
 
 export default async function handler(req) {
     try {
+        const baseUrl = process.env.VERCEL_URL 
+            ? `https://${process.env.VERCEL_URL}`
+            : 'http://localhost:3000';
+
         // Get emails that haven't been sent yet
         const { rows: emailsToQueue } = await sql`
             SELECT * FROM email_list 
@@ -17,23 +21,38 @@ export default async function handler(req) {
 
         // Queue new emails
         for (const email of emailsToQueue) {
-            // const subject = `Daily Update for ${email.name || 'you'}`;
-            const subject = `Boost Your AI Shorts 🚀`;
+            // First create the email to get the ID
+            const { rows: [newEmail] } = await sql`
+                INSERT INTO emails (to_email, subject, body, status)
+                VALUES (
+                    ${email.email}, 
+                    ${'Boost Your AI Shorts 🚀'}, 
+                    'Placeholder', 
+                    'pending'
+                )
+                RETURNING *
+            `;
+
+            // Create tracking URL for the YouTube link
+            const trackingUrl = `${baseUrl}/api/track/click/${newEmail.id}?url=${encodeURIComponent('https://youtube.com/shorts/YRP7LGsi984')}`;
+            
             const greeting = email.name ? `Hey ${email.name},` : 'Hey,';
             const body = `${greeting}<br>
 <br>
 I see you're using AI for Shorts—great choice! I'm on the same journey.<br>
 <br>
-Just made a quick video to test what's working (and what's not) for AI creators like us. Take a look: https://youtube.com/shorts/YRP7LGsi984<br>
+Just made a quick video to test what's working (and what's not) for AI creators like us. Take a look: <a href="${trackingUrl}">Watch the video</a><br>
 <br>
 Would love to hear what's working for you too!<br>
 <br>
 Cheers...<br>
 `;
 
+            // Update the email with the tracking link
             await sql`
-                INSERT INTO emails (to_email, subject, body, status)
-                VALUES (${email.email}, ${subject}, ${body}, 'pending')
+                UPDATE emails 
+                SET body = ${body}
+                WHERE id = ${newEmail.id}
             `;
 
             // Increment the send_count
