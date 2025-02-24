@@ -98,33 +98,28 @@ export default function Dashboard() {
         <div className="p-8">
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-3xl font-bold">Email Queue Dashboard</h1>
-                <div className="flex items-center gap-4">
-                    <select 
-                        value={timePeriod}
-                        onChange={(e) => setTimePeriod(e.target.value)}
-                        className="border rounded-md px-3 py-1"
-                    >
-                        <option value="day">Last 24 Hours</option>
-                        <option value="all">All Time</option>
-                        <option value="hour">Last Hour</option>
-                        <option value="week">Last Week</option>
-                    </select>
-                    <div className="text-sm text-gray-600">
-                        Last updated: {lastUpdated.toLocaleString()}
-                        <button
-                            onClick={updateAllStats}
-                            className="ml-4 text-blue-500 hover:text-blue-700"
-                        >
-                            Refresh
-                        </button>
-                    </div>
-                </div>
+                <select 
+                    value={timePeriod}
+                    onChange={(e) => setTimePeriod(e.target.value)}
+                    className="border rounded-md px-3 py-1"
+                >
+                    <option value="day">Last 24 Hours</option>
+                    <option value="hour">Last Hour</option>
+                    <option value="week">Last Week</option>
+                    <option value="all">All Time</option>
+                </select>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 <div className="bg-blue-100 p-6 rounded-lg">
                     <h2 className="text-xl font-semibold mb-2">Pending</h2>
                     <p className="text-4xl font-bold text-blue-600">{stats.pending || 0}</p>
+                    <button
+                        onClick={sendPendingEmails}
+                        className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm"
+                    >
+                        Process Pending Emails
+                    </button>
                 </div>
                 <div className="bg-green-100 p-6 rounded-lg">
                     <h2 className="text-xl font-semibold mb-2">Sent</h2>
@@ -137,19 +132,7 @@ export default function Dashboard() {
             </div>
 
             <div className="mb-8">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold">Email Tracking Stats</h2>
-                    <select 
-                        value={timePeriod}
-                        onChange={(e) => setTimePeriod(e.target.value)}
-                        className="border rounded-md px-3 py-1"
-                    >
-                        <option value="day">Last 24 Hours</option>
-                        <option value="all">All Time</option>
-                        <option value="hour">Last Hour</option>
-                        <option value="week">Last Week</option>
-                    </select>
-                </div>
+                <h2 className="text-2xl font-bold mb-4">Email Tracking Stats</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="bg-purple-100 p-6 rounded-lg">
                         <h3 className="text-xl font-semibold mb-2">
@@ -184,13 +167,6 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            <button
-                onClick={sendPendingEmails}
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            >
-                Process Pending Emails
-            </button>
-
             <div className="mt-8">
                 <h2 className="text-2xl font-bold mb-4">Email Click Activity</h2>
                 <div className="bg-white shadow rounded-lg p-6">
@@ -222,6 +198,16 @@ export default function Dashboard() {
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            <div className="mt-8 flex justify-end items-center text-sm text-gray-600 border-t pt-4">
+                Last updated: {lastUpdated.toLocaleString()}
+                <button
+                    onClick={updateAllStats}
+                    className="ml-4 text-blue-500 hover:text-blue-700"
+                >
+                    Refresh
+                </button>
             </div>
         </div>
     );
