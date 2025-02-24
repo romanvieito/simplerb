@@ -11,7 +11,7 @@ export default function Dashboard() {
         totalOpened: 0,
         recentOpens: []
     });
-    const [timePeriod, setTimePeriod] = useState('all');
+    const [timePeriod, setTimePeriod] = useState('day');
     const [loading, setLoading] = useState(true);
     const [clickStats, setClickStats] = useState([]);
     const [lastUpdated, setLastUpdated] = useState(new Date());
@@ -119,9 +119,9 @@ export default function Dashboard() {
                         onChange={(e) => setTimePeriod(e.target.value)}
                         className="border rounded-md px-3 py-1"
                     >
+                        <option value="day">Last 24 Hours</option>
                         <option value="all">All Time</option>
                         <option value="hour">Last Hour</option>
-                        <option value="day">Last 24 Hours</option>
                         <option value="week">Last Week</option>
                     </select>
                 </div>
