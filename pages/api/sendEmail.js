@@ -19,9 +19,7 @@ function wrapLinksWithTracking(html, emailId, baseUrl) {
         }
     });
 
-    const finalHtml = $.html();
-    console.log('Final HTML:', finalHtml); // Debug log
-    return finalHtml;
+    return $.html();
 }
 
 export default async function handler(req, res) {
@@ -93,12 +91,15 @@ export default async function handler(req, res) {
             console.log('emailContent:', emailContent);
             console.log('Final HTML:', htmlWithTracking);
 
+            // Add this before sending the email
+            const htmlWithAllTracking = wrapLinksWithTracking(htmlWithTracking, id, baseUrl);
+            
             // Send email with tracking pixel
             const info = await transporter.sendMail({
                 from: process.env.GMAIL_USER,
                 to,
                 subject,
-                html: htmlWithTracking,
+                html: htmlWithAllTracking, // Use the fully wrapped HTML
                 text: 'Please view this email in an HTML-capable client'
             });
 

@@ -16,7 +16,7 @@ export default async function handler(req) {
             SELECT * FROM email_list 
             WHERE send_count = 0 AND active = true
             ORDER BY id ASC
-            LIMIT 100
+            LIMIT 1
         `;
 
         // Queue new emails
@@ -32,23 +32,20 @@ export default async function handler(req) {
                 )
                 RETURNING *
             `;
-
-            // Create tracking URL for the YouTube link
-            const trackingUrl = `${baseUrl}/api/track/click/${newEmail.id}?url=${encodeURIComponent('https://youtube.com/shorts/YRP7LGsi984')}`;
             
             const greeting = email.name ? `Hey ${email.name},` : 'Hey,';
             const body = `${greeting}<br>
 <br>
 I see you're using AI for Shorts—great choice! I'm on the same journey.<br>
 <br>
-Just made a quick video to test what's working (and what's not) for AI creators like us. Take a look: <a href="${trackingUrl}">Watch the video</a><br>
+Just made a quick video to test what's working (and what's not) for AI creators like us. Take a look: <a href="https://youtube.com/shorts/YRP7LGsi984">Watch the video</a><br>
 <br>
 Would love to hear what's working for you too!<br>
 <br>
 Cheers...<br>
 `;
 
-            // Update the email with the tracking link
+            // Update the email with the basic HTML
             await sql`
                 UPDATE emails 
                 SET body = ${body}
