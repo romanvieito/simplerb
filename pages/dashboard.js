@@ -34,16 +34,23 @@ export default function Dashboard() {
 
     const fetchStats = async () => {
         try {
-            const response = await fetch('/api/emailStats');
+            const response = await fetch(`/api/emailStats?period=${timePeriod}`);
             const data = await response.json();
-            const statsMap = {};
-            data.forEach(item => {
-                statsMap[item.status] = parseInt(item.count);
-            });
-            setStats(statsMap);
+            if (Array.isArray(data)) {  // Make sure data is an array before using forEach
+                const statsMap = {};
+                data.forEach(item => {
+                    statsMap[item.status] = parseInt(item.count);
+                });
+                setStats(statsMap);
+            } else {
+                console.error('Expected array but got:', data);
+                setStats({});  // Set empty object as fallback
+            }
             setLoading(false);
         } catch (error) {
             console.error('Error fetching stats:', error);
+            setStats({});  // Set empty object on error
+            setLoading(false);
         }
     };
 
@@ -59,11 +66,17 @@ export default function Dashboard() {
 
     const fetchClickStats = async () => {
         try {
-            const response = await fetch('/api/emailClickStats');
+            const response = await fetch(`/api/emailClickStats?period=${timePeriod}`);
             const data = await response.json();
-            setClickStats(data);
+            if (Array.isArray(data)) {  // Make sure data is an array
+                setClickStats(data);
+            } else {
+                console.error('Expected array but got:', data);
+                setClickStats([]);  // Set empty array as fallback
+            }
         } catch (error) {
             console.error('Error fetching click stats:', error);
+            setClickStats([]);  // Set empty array on error
         }
     };
 
@@ -85,14 +98,26 @@ export default function Dashboard() {
         <div className="p-8">
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-3xl font-bold">Email Queue Dashboard</h1>
-                <div className="text-sm text-gray-600">
-                    Last updated: {lastUpdated.toLocaleString()}
-                    <button
-                        onClick={updateAllStats}
-                        className="ml-4 text-blue-500 hover:text-blue-700"
+                <div className="flex items-center gap-4">
+                    <select 
+                        value={timePeriod}
+                        onChange={(e) => setTimePeriod(e.target.value)}
+                        className="border rounded-md px-3 py-1"
                     >
-                        Refresh
-                    </button>
+                        <option value="day">Last 24 Hours</option>
+                        <option value="all">All Time</option>
+                        <option value="hour">Last Hour</option>
+                        <option value="week">Last Week</option>
+                    </select>
+                    <div className="text-sm text-gray-600">
+                        Last updated: {lastUpdated.toLocaleString()}
+                        <button
+                            onClick={updateAllStats}
+                            className="ml-4 text-blue-500 hover:text-blue-700"
+                        >
+                            Refresh
+                        </button>
+                    </div>
                 </div>
             </div>
             
