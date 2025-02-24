@@ -9,7 +9,11 @@ export default async function handler(req, res) {
             query = await sql`
                 SELECT status, COUNT(*)::integer as count
                 FROM emails
-                WHERE created_at > NOW() - INTERVAL '1 hour'
+                WHERE (
+                    (status = 'sent' AND sent_at > NOW() - INTERVAL '1 hour') OR
+                    (status = 'pending' AND created_at > NOW() - INTERVAL '1 hour') OR
+                    (status = 'failed' AND created_at > NOW() - INTERVAL '1 hour')
+                )
                 GROUP BY status;
             `;
         } else if (period === 'day') {
