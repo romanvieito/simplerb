@@ -11,45 +11,31 @@ export default async function handler(req) {
             ? `https://${process.env.VERCEL_URL}`
             : 'http://localhost:3000';
 
-        // Get emails that haven't been sent yet
+        // Get emails that haven't been sent yet and join with template
         const { rows: emailsToQueue } = await sql`
-            SELECT * FROM email_list 
-            WHERE send_count = 0 AND active = true
-            ORDER BY id ASC
+            SELECT el.*, et.subject, et.body as template_body 
+            FROM email_list el
+            JOIN email_templates et ON et.id = 1  -- Using template ID 1 for now
+            WHERE el.send_count = 0 AND el.active = true
+            ORDER BY el.id ASC
             LIMIT 100
         `;
 
         // Queue new emails
         for (const email of emailsToQueue) {
+            const greeting = email.name ? `Hey ${email.name},` : 'Hey,';
+            const personalizedBody = email.template_body.replace('{greeting}', greeting);
+
             // First create the email to get the ID
             const { rows: [newEmail] } = await sql`
                 INSERT INTO emails (to_email, subject, body, status)
                 VALUES (
                     ${email.email}, 
-                    ${'Boost Your AI Shorts 🚀'}, 
-                    'Placeholder', 
+                    ${email.subject}, 
+                    ${personalizedBody}, 
                     'pending'
                 )
                 RETURNING *
-            `;
-            
-            const greeting = email.name ? `Hey ${email.name},` : 'Hey,';
-            const body = `${greeting}<br>
-<br>
-I see you're using AI for Shorts—great choice! I'm on the same journey.<br>
-<br>
-Just made a quick video to test what's working (and what's not) for AI creators like us. Take a look: <a href="https://youtube.com/shorts/YRP7LGsi984">Watch the video</a><br>
-<br>
-Would love to hear what's working for you too!<br>
-<br>
-Cheers...<br>
-`;
-
-            // Update the email with the basic HTML
-            await sql`
-                UPDATE emails 
-                SET body = ${body}
-                WHERE id = ${newEmail.id}
             `;
 
             // Increment the send_count
