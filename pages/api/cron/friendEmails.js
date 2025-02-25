@@ -18,7 +18,7 @@ export default async function handler(req) {
         const { rows: emailsToQueue } = await sql`
             SELECT el.*, et.subject, et.body as template_body 
             FROM email_list el
-            JOIN email_templates et ON et.id = 2  -- Using template ID 2
+            JOIN email_templates et ON et.id = 2
             WHERE el.active = true
             AND el.id = ANY(${targetUserIds}::int[])
             ORDER BY el.id ASC
@@ -27,6 +27,8 @@ export default async function handler(req) {
         // Queue new emails
         for (const email of emailsToQueue) {
             const greeting = email.name ? `Hey ${email.name},` : 'Hey,';
+            
+            // Simple string replacement, assuming the template is stored properly in the database
             const personalizedBody = email.template_body.replace('{greeting}', greeting);
 
             // First create the email to get the ID
