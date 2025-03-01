@@ -96,49 +96,6 @@ export default function Dashboard() {
         }
     };
 
-    const TokenHealthCard = ({ tokenHealth }) => {
-        const refreshToken = async () => {
-            window.open('https://developers.google.com/oauthplayground', '_blank');
-        };
-
-        return (
-            <div className={`p-6 rounded-lg ${tokenHealth.status === 'error' ? 'bg-gray-100' : 'bg-gray-50'}`}>
-                <h2 className="text-xl font-semibold mb-2">Gmail Token Health</h2>
-                <div className="flex items-center gap-2">
-                    {tokenHealth.status === 'error' ? (
-                        <>
-                            <span className="text-gray-900 text-xl">✖</span>
-                            <span className="text-gray-900 text-xl font-bold">Error</span>
-                        </>
-                    ) : (
-                        <>
-                            <span className="text-gray-900 text-xl">✓</span>
-                            <span className="text-gray-900 text-xl font-bold">Healthy</span>
-                        </>
-                    )}
-                </div>
-                
-                {tokenHealth.status === 'error' && (
-                    <div className="mt-4">
-                        <p className="text-gray-700 text-sm mb-3">
-                            Gmail token needs to be refreshed to continue sending emails.
-                        </p>
-                        <button
-                            onClick={refreshToken}
-                            className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-                        >
-                            Get New Token
-                        </button>
-                    </div>
-                )}
-                
-                <p className="text-gray-600 text-sm mt-4">
-                    Last checked: {tokenHealth.lastChecked}
-                </p>
-            </div>
-        );
-    };
-
     if (loading) return <div>Loading...</div>;
 
     return (
@@ -156,8 +113,6 @@ export default function Dashboard() {
                     <option value="all">All Time</option>
                 </select>
             </div>
-
-            <TokenHealthCard tokenHealth={tokenHealth} />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
@@ -249,14 +204,41 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            <div className="mt-8 flex justify-end items-center text-sm text-gray-600 border-t border-gray-200 pt-4">
-                Last updated: {lastUpdated.toLocaleString()}
-                <button
-                    onClick={updateAllStats}
-                    className="ml-4 text-gray-900 hover:text-gray-600 transition-colors"
-                >
-                    Refresh
-                </button>
+            <div className="mt-8 flex justify-between items-center text-sm border-t border-gray-200 pt-4">
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <span className="font-medium">Token Status:</span>
+                        {tokenHealth.status === 'error' ? (
+                            <>
+                                <span className="text-gray-900">✖</span>
+                                <span className="text-gray-900 font-medium">Error</span>
+                                <button
+                                    onClick={() => window.open('https://developers.google.com/oauthplayground', '_blank')}
+                                    className="ml-2 bg-black hover:bg-gray-800 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
+                                >
+                                    Refresh Token
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <span className="text-gray-900">✓</span>
+                                <span className="text-gray-900 font-medium">Healthy</span>
+                            </>
+                        )}
+                    </div>
+                    <span className="text-gray-600">
+                        Last checked: {tokenHealth.lastChecked}
+                    </span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-600">
+                    Last updated: {lastUpdated.toLocaleString()}
+                    <button
+                        onClick={updateAllStats}
+                        className="ml-4 text-gray-900 hover:text-gray-600 transition-colors"
+                    >
+                        Refresh
+                    </button>
+                </div>
             </div>
         </div>
     );
