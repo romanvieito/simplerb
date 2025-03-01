@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/friendEmails",
       "schedule": "0 16 */3 * *"
+    },
+    {
+      "path": "/api/cron/refreshGmailToken",
+      "schedule": "0 0 */5 * *"
     }
   ]
 } 

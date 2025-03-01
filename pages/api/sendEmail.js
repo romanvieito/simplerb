@@ -123,6 +123,12 @@ export default async function handler(req, res) {
                 code: oauthError.code,
                 command: oauthError.command
             });
+
+            // Check if this is a token error
+            if (oauthError.message.includes('invalid_grant')) {
+                throw new Error(`Email sending failed: Gmail token needs to be refreshed. Please visit https://developers.google.com/oauthplayground/ and follow the token refresh process.`);
+            }
+
             throw new Error(`Email sending failed: ${oauthError.message}`);
         }
 
