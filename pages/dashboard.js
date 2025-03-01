@@ -102,30 +102,30 @@ export default function Dashboard() {
         };
 
         return (
-            <div className={`p-6 rounded-lg ${tokenHealth.status === 'error' ? 'bg-red-50' : 'bg-green-50'}`}>
+            <div className={`p-6 rounded-lg ${tokenHealth.status === 'error' ? 'bg-gray-100' : 'bg-gray-50'}`}>
                 <h2 className="text-xl font-semibold mb-2">Gmail Token Health</h2>
                 <div className="flex items-center gap-2">
                     {tokenHealth.status === 'error' ? (
                         <>
-                            <span className="text-red-600 text-xl">✖</span>
-                            <span className="text-red-600 text-xl font-bold">Error</span>
+                            <span className="text-gray-900 text-xl">✖</span>
+                            <span className="text-gray-900 text-xl font-bold">Error</span>
                         </>
                     ) : (
                         <>
-                            <span className="text-green-600 text-xl">✓</span>
-                            <span className="text-green-600 text-xl font-bold">Healthy</span>
+                            <span className="text-gray-900 text-xl">✓</span>
+                            <span className="text-gray-900 text-xl font-bold">Healthy</span>
                         </>
                     )}
                 </div>
                 
                 {tokenHealth.status === 'error' && (
                     <div className="mt-4">
-                        <p className="text-red-700 text-sm mb-3">
+                        <p className="text-gray-700 text-sm mb-3">
                             Gmail token needs to be refreshed to continue sending emails.
                         </p>
                         <button
                             onClick={refreshToken}
-                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                            className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
                         >
                             Get New Token
                         </button>
@@ -160,30 +160,30 @@ export default function Dashboard() {
             <TokenHealthCard tokenHealth={tokenHealth} />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <div className="bg-blue-100 p-6 rounded-lg">
+                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
                     <h2 className="text-xl font-semibold mb-2">Pending</h2>
-                    <p className="text-4xl font-bold text-blue-600">{stats.pending || 0}</p>
+                    <p className="text-4xl font-bold text-gray-900">{stats.pending || 0}</p>
                     <button
                         onClick={sendPendingEmails}
-                        className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm"
+                        className="mt-4 bg-black hover:bg-gray-800 text-white font-bold py-2 px-4 rounded text-sm transition-colors"
                     >
                         Process Pending Emails
                     </button>
                 </div>
-                <div className="bg-green-100 p-6 rounded-lg">
+                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
                     <h2 className="text-xl font-semibold mb-2">Sent</h2>
-                    <p className="text-4xl font-bold text-green-600">{stats.sent || 0}</p>
+                    <p className="text-4xl font-bold text-gray-900">{stats.sent || 0}</p>
                 </div>
-                <div className="bg-red-100 p-6 rounded-lg">
+                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
                     <h2 className="text-xl font-semibold mb-2">Failed</h2>
-                    <p className="text-4xl font-bold text-red-600">{stats.failed || 0}</p>
+                    <p className="text-4xl font-bold text-gray-900">{stats.failed || 0}</p>
                 </div>
             </div>
 
             <div className="mb-8">
                 <h2 className="text-2xl font-bold mb-4">Email Tracking Stats</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-purple-100 p-6 rounded-lg">
+                    <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
                         <h3 className="text-xl font-semibold mb-2">
                             Open Rate 
                             <span className="text-sm font-normal text-gray-600 ml-2">
@@ -193,7 +193,7 @@ export default function Dashboard() {
                                  '(All Time)'}
                             </span>
                         </h3>
-                        <p className="text-4xl font-bold text-purple-600">
+                        <p className="text-4xl font-bold text-gray-900">
                             {trackingStats.totalSent ? 
                                 `${Math.round((trackingStats.totalOpened / trackingStats.totalSent) * 100)}%` 
                                 : '0%'}
@@ -203,11 +203,11 @@ export default function Dashboard() {
                         </p>
                     </div>
                     
-                    <div className="bg-indigo-100 p-6 rounded-lg">
+                    <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
                         <h3 className="text-xl font-semibold mb-2">Recent Opens</h3>
                         <div className="space-y-2">
                             {trackingStats.recentOpens?.map((open, index) => (
-                                <div key={index} className="text-sm">
+                                <div key={index} className="text-sm text-gray-700">
                                     {open.email} - {new Date(open.opened_at).toLocaleString()}
                                 </div>
                             ))}
@@ -218,28 +218,28 @@ export default function Dashboard() {
 
             <div className="mt-8">
                 <h2 className="text-2xl font-bold mb-4">Email Click Activity</h2>
-                <div className="bg-white shadow rounded-lg p-6">
+                <div className="bg-white shadow rounded-lg p-6 border border-gray-200">
                     <table className="min-w-full">
                         <thead>
-                            <tr>
-                                <th className="text-left">Email</th>
-                                <th className="text-left">Link</th>
-                                <th className="text-left">Clicked At</th>
+                            <tr className="border-b border-gray-200">
+                                <th className="text-left py-3 text-gray-700">Email</th>
+                                <th className="text-left py-3 text-gray-700">Link</th>
+                                <th className="text-left py-3 text-gray-700">Clicked At</th>
                             </tr>
                         </thead>
                         <tbody>
                             {clickStats.map((click, index) => (
-                                <tr key={index} className="border-t">
-                                    <td className="py-2">{click.to_email}</td>
-                                    <td className="py-2">
+                                <tr key={index} className="border-t border-gray-100 hover:bg-gray-50 transition-colors">
+                                    <td className="py-3">{click.to_email}</td>
+                                    <td className="py-3">
                                         <a href={click.link_url} 
-                                           className="text-blue-500 hover:underline"
+                                           className="text-gray-900 hover:text-gray-600"
                                            target="_blank"
                                            rel="noopener noreferrer">
                                             {click.link_url}
                                         </a>
                                     </td>
-                                    <td className="py-2">
+                                    <td className="py-3 text-gray-700">
                                         {new Date(click.clicked_at).toLocaleString()}
                                     </td>
                                 </tr>
@@ -249,11 +249,11 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            <div className="mt-8 flex justify-end items-center text-sm text-gray-600 border-t pt-4">
+            <div className="mt-8 flex justify-end items-center text-sm text-gray-600 border-t border-gray-200 pt-4">
                 Last updated: {lastUpdated.toLocaleString()}
                 <button
                     onClick={updateAllStats}
-                    className="ml-4 text-blue-500 hover:text-blue-700"
+                    className="ml-4 text-gray-900 hover:text-gray-600 transition-colors"
                 >
                     Refresh
                 </button>
