@@ -15,6 +15,10 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [clickStats, setClickStats] = useState([]);
     const [lastUpdated, setLastUpdated] = useState(new Date());
+    const [tokenHealth, setTokenHealth] = useState({
+        status: 'healthy',
+        lastChecked: new Date().toLocaleString()
+    });
 
     useEffect(() => {
         updateAllStats();
@@ -92,6 +96,49 @@ export default function Dashboard() {
         }
     };
 
+    const TokenHealthCard = ({ tokenHealth }) => {
+        const refreshToken = async () => {
+            window.open('https://developers.google.com/oauthplayground', '_blank');
+        };
+
+        return (
+            <div className={`p-6 rounded-lg ${tokenHealth.status === 'error' ? 'bg-red-50' : 'bg-green-50'}`}>
+                <h2 className="text-xl font-semibold mb-2">Gmail Token Health</h2>
+                <div className="flex items-center gap-2">
+                    {tokenHealth.status === 'error' ? (
+                        <>
+                            <span className="text-red-600 text-xl">✖</span>
+                            <span className="text-red-600 text-xl font-bold">Error</span>
+                        </>
+                    ) : (
+                        <>
+                            <span className="text-green-600 text-xl">✓</span>
+                            <span className="text-green-600 text-xl font-bold">Healthy</span>
+                        </>
+                    )}
+                </div>
+                
+                {tokenHealth.status === 'error' && (
+                    <div className="mt-4">
+                        <p className="text-red-700 text-sm mb-3">
+                            Gmail token needs to be refreshed to continue sending emails.
+                        </p>
+                        <button
+                            onClick={refreshToken}
+                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                        >
+                            Get New Token
+                        </button>
+                    </div>
+                )}
+                
+                <p className="text-gray-600 text-sm mt-4">
+                    Last checked: {tokenHealth.lastChecked}
+                </p>
+            </div>
+        );
+    };
+
     if (loading) return <div>Loading...</div>;
 
     return (
@@ -109,7 +156,9 @@ export default function Dashboard() {
                     <option value="all">All Time</option>
                 </select>
             </div>
-            
+
+            <TokenHealthCard tokenHealth={tokenHealth} />
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 <div className="bg-blue-100 p-6 rounded-lg">
                     <h2 className="text-xl font-semibold mb-2">Pending</h2>
