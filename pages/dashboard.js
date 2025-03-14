@@ -102,16 +102,24 @@ export default function Dashboard() {
         <div className="p-8">
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-3xl font-bold">Email Queue Dashboard</h1>
-                <select 
-                    value={timePeriod}
-                    onChange={(e) => setTimePeriod(e.target.value)}
-                    className="border rounded-md px-3 py-1"
-                >
-                    <option value="day">Last 24 Hours</option>
-                    <option value="hour">Last Hour</option>
-                    <option value="week">Last Week</option>
-                    <option value="all">All Time</option>
-                </select>
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => window.location.href = '/upload'}
+                        className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                    >
+                        Upload Emails
+                    </button>
+                    <select 
+                        value={timePeriod}
+                        onChange={(e) => setTimePeriod(e.target.value)}
+                        className="border rounded-md px-3 py-1"
+                    >
+                        <option value="day">Last 24 Hours</option>
+                        <option value="hour">Last Hour</option>
+                        <option value="week">Last Week</option>
+                        <option value="all">All Time</option>
+                    </select>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
