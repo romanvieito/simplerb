@@ -149,9 +149,10 @@ export default function UploadEmails() {
                     <h2 className="text-lg font-medium mb-2">Instructions</h2>
                     <ul className="list-disc list-inside space-y-2 text-sm text-gray-600">
                         <li>Prepare a CSV file with headers: email,name</li>
-                        <li>The email column is required, name is optional</li>
+                        <li>The email column is required and must be unique in the system</li>
+                        <li>The name column is optional and can be different for each email</li>
                         <li>Each email will be set as active by default</li>
-                        <li>Duplicate emails will update existing records</li>
+                        <li>Duplicate emails will be rejected, even with different names</li>
                         <li>Example format:
                             <pre className="mt-2 bg-gray-100 p-2 rounded">
                                 email,name{'\n'}

@@ -15,11 +15,39 @@ export default async function handler(req, res) {
         const results = [];
         const errors = [];
 
+        // First check for duplicates within the uploaded file itself
+        const emailSet = new Set();
+        for (const entry of emails) {
+            if (emailSet.has(entry.email)) {
+                errors.push({ email: entry.email, error: 'Duplicate email within upload file' });
+                continue;
+            }
+            emailSet.add(entry.email);
+        }
+
         for (const entry of emails) {
             try {
                 // Validate email format
                 if (!entry.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entry.email)) {
                     errors.push({ email: entry.email, error: 'Invalid email format' });
+                    continue;
+                }
+
+                // Skip if it's a duplicate within the upload file
+                if (errors.some(e => e.email === entry.email)) {
+                    continue;
+                }
+
+                // Check if email already exists in database
+                const { rows: existing } = await sql`
+                    SELECT email, name FROM email_list WHERE email = ${entry.email}
+                `;
+
+                if (existing.length > 0) {
+                    errors.push({ 
+                        email: entry.email, 
+                        error: `Email already exists ${existing[0].name ? `with name: ${existing[0].name}` : 'without a name'}`
+                    });
                     continue;
                 }
 
@@ -33,13 +61,9 @@ export default async function handler(req, res) {
                     ) VALUES (
                         ${entry.email},
                         ${entry.name || null},
-                        ${entry.active !== false}, -- defaults to true if not specified
+                        true,
                         ${0}
                     )
-                    ON CONFLICT (email) DO UPDATE
-                    SET 
-                        name = EXCLUDED.name,
-                        active = EXCLUDED.active
                     RETURNING *
                 `;
 
