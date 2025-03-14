@@ -19,6 +19,8 @@ export default function Dashboard() {
         status: 'healthy',
         lastChecked: new Date().toLocaleString()
     });
+    const [testEmail, setTestEmail] = useState('');
+    const [testEmailStatus, setTestEmailStatus] = useState('');
 
     useEffect(() => {
         updateAllStats();
@@ -96,6 +98,33 @@ export default function Dashboard() {
         }
     };
 
+    const sendTestEmail = async () => {
+        if (!testEmail) {
+            setTestEmailStatus('Please enter an email address');
+            return;
+        }
+        try {
+            setTestEmailStatus('Sending...');
+            const response = await fetch('/api/sendTestEmail', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email: testEmail }),
+            });
+            const data = await response.json();
+            if (response.ok) {
+                setTestEmailStatus('Test email sent successfully!');
+                setTestEmail('');
+            } else {
+                setTestEmailStatus(`Error: ${data.error}`);
+            }
+        } catch (error) {
+            setTestEmailStatus('Error sending test email');
+            console.error('Error:', error);
+        }
+    };
+
     if (loading) return <div>Loading...</div>;
 
     return (
@@ -140,6 +169,38 @@ export default function Dashboard() {
                 <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
                     <h2 className="text-xl font-semibold mb-2">Failed</h2>
                     <p className="text-4xl font-bold text-gray-900">{stats.failed || 0}</p>
+                </div>
+            </div>
+
+            <div className="mb-8">
+                <h2 className="text-2xl font-bold mb-4">Test Email</h2>
+                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                    <div className="flex gap-4 items-end">
+                        <div className="flex-1">
+                            <label htmlFor="testEmail" className="block text-sm font-medium text-gray-700 mb-1">
+                                Send test email to:
+                            </label>
+                            <input
+                                type="email"
+                                id="testEmail"
+                                value={testEmail}
+                                onChange={(e) => setTestEmail(e.target.value)}
+                                placeholder="Enter email address"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            />
+                        </div>
+                        <button
+                            onClick={sendTestEmail}
+                            className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                        >
+                            Send Test
+                        </button>
+                    </div>
+                    {testEmailStatus && (
+                        <p className={`mt-2 text-sm ${testEmailStatus.includes('Error') ? 'text-red-600' : 'text-green-600'}`}>
+                            {testEmailStatus}
+                        </p>
+                    )}
                 </div>
             </div>
 
