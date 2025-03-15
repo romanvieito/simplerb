@@ -1,11 +1,74 @@
 import React, { useState, useContext } from "react";
 import EmailModal from "./EmailModal";
-import styles from "../components/CardsPricing.module.css";
+import styles from "./CardsPricing.module.css";
 import mixpanel from "../utils/mixpanel-config";
-import { useClerk, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
+import { useClerk, useUser } from "@clerk/nextjs";
 import Snackbar from "@mui/joy/Snackbar";
 import SBRContext from "../context/SBRContext";
 import { Box } from "@mui/material";
+import { motion } from "framer-motion";
+
+interface PricingPlan {
+  id: string;
+  name: string;
+  description: string;
+  originalPrice: number;
+  discountedPrice: number | null;
+  features: string[];
+  isPopular?: boolean;
+  ctaText: string;
+}
+
+const pricingPlans: PricingPlan[] = [
+  {
+    id: "FREE",
+    name: "Free",
+    description: "For individuals who want to generate their own domains.",
+    originalPrice: 0,
+    discountedPrice: null,
+    features: [
+      "Generate domains",
+      "See domain availability",
+      "Best effort support"
+    ],
+    ctaText: "Get started"
+  },
+  {
+    id: "STARTER",
+    name: "Starter",
+    description: "For hobbyists bringing ideas to life with AI by their side.",
+    originalPrice: 10,
+    discountedPrice: 5,
+    features: [
+      "Everything in free, plus",
+      "Generate only available domains",
+      "Get customers with quick ads",
+      "Priority support"
+    ],
+    isPopular: true,
+    ctaText: "Get starter"
+  },
+  {
+    id: "CREATOR",
+    name: "Creator",
+    description: "For passionate creators building the apps they want to see in the world.",
+    originalPrice: 22,
+    discountedPrice: 11,
+    features: [
+      "Everything in starter, plus",
+      "Website builder",
+      "Email marketing",
+      "Priority support"
+    ],
+    ctaText: "Get creator"
+  }
+];
+
+interface ToastState {
+  open: boolean;
+  message: string;
+  severity: "success" | "danger";
+}
 
 export default function CPricing() {
   const context = useContext(SBRContext);
@@ -16,9 +79,12 @@ export default function CPricing() {
 
   const { isLoaded, user } = useUser();
   const [modalOpenLetsTalk, setModalOpenLetsTalk] = useState(false);
-  const [openSuccess, setOpenSuccess] = useState(false);
-  const [openDanger, setOpenDanger] = useState(false);
-  const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastState>({
+    open: false,
+    message: "",
+    severity: "success"
+  });
   const { openSignIn } = useClerk();
 
   const handleSubscriptionFreeClick = async (
@@ -26,87 +92,144 @@ export default function CPricing() {
   ) => {
     if (!isLoaded || !user) {
       openSignIn();
-    } else {
-      try {
-        const substplan = "FREE";
-        const subscancel = false;
+      return;
+    }
 
-        const data = {
-          substplan,
-          subscancel,
-        };
+    setIsLoading("FREE");
+    try {
+      const data = {
+        substplan: "FREE",
+        subscancel: false
+      };
 
-        const resp = await fetch(
-          `/api/user-subscription?email=${dataUser.email}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data),
-          }
-        );
-
-        if (!resp.ok) {
-          setMessage(
-            "Network response was not ok. Failed to set users subscription"
-          );
-          setOpenDanger(true);
-        } else {
-          setMessage("FREE subscription success");
-          setOpenSuccess(true);
-          setSubsTplan("FREE");
-          setSubsCancel(false);
-          mixpanel.track("Subscription", {
-            plan_subscription: "FREE",
-          });
+      const resp = await fetch(
+        `/api/user-subscription?email=${dataUser.email}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(data)
         }
-      } catch (error) {
-        console.error("Subscription with error: ", error);
-        mixpanel.track("Subscription with error", {
-          plan_subscription: "FREE",
-          error: error,
-        });
+      );
+
+      if (!resp.ok) {
+        throw new Error("Failed to set user subscription");
       }
+
+      setToast({
+        open: true,
+        message: "FREE subscription activated successfully",
+        severity: "success"
+      });
+      setSubsTplan("FREE");
+      setSubsCancel(false);
+      mixpanel.track("Subscription", {
+        plan_subscription: "FREE"
+      });
+    } catch (error) {
+      console.error("Subscription error:", error);
+      setToast({
+        open: true,
+        message: "Failed to activate subscription. Please try again.",
+        severity: "danger"
+      });
+      mixpanel.track("Subscription error", {
+        plan_subscription: "FREE",
+        error: error
+      });
+    } finally {
+      setIsLoading(null);
     }
   };
 
-  // Handler function to track the event when the button is clicked
-  const handleSubsStarterCreatorClick = (
-    event: React.MouseEvent<HTMLButtonElement>
+  const handlePaidSubscriptionClick = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    planId: string
   ) => {
-    // Prevent the form from submitting traditionally
     event.preventDefault();
 
-    // The Google Ads event snippet
-    window.gtag &&
-      window.gtag("event", "conversion", {
-        send_to: "16510475658/ZCyECJS9tqYZEIq758A9", // Your conversion ID and conversion label
-      });
+    // Track Google Ads conversion
+    window.gtag?.("event", "conversion", {
+      send_to: "16510475658/ZCyECJS9tqYZEIq758A9"
+    });
 
-    // Safely access the form and submit it
     const form = event.currentTarget.form;
-
     if (form) {
-      const formData = new FormData(form); // Crea un objeto FormData con los datos del formulario
-      const tipo = formData.get("tipo");
       mixpanel.track("Subscription", {
-        plan_subscription: tipo?.toString(),
+        plan_subscription: planId
       });
       form.submit();
-    } else {
-      // Handle the case where for some reason the form isn't available
-      console.error("Form not found");
     }
   };
 
-  const letsTalk = () => {
-    mixpanel.track("Lets Talk Click", {});
-    setModalOpenLetsTalk(true);
+  const renderPriceDisplay = (plan: PricingPlan) => {
+    return (
+      <div className={styles.cardPrice}>
+        <h2>
+          <sup>$</sup>
+          {plan.discountedPrice !== null && (
+            <span className={styles.discountPrice}>{plan.originalPrice}</span>
+          )}
+          <span className={styles.ml2}>
+            <sup>$</sup>
+            {plan.discountedPrice ?? plan.originalPrice}
+            <small>{plan.originalPrice === 0 ? "forever" : "/month"}</small>
+          </span>
+        </h2>
+      </div>
+    );
   };
 
-  const handleCloseModalLetsTalk = () => {
-    setModalOpenLetsTalk(false);
+  const renderPlanFeatures = (features: string[]) => (
+    <div className={styles.cardDescription}>
+      <ul>
+        {features.map((feature, index) => (
+          <li key={index} className={styles.ok}>
+            {feature}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
+  const renderSubscriptionButton = (plan: PricingPlan) => {
+    if (subsTplan === plan.id) {
+      return (
+        <div className={styles.cardTitle}>
+          <h3>Your Current Plan</h3>
+        </div>
+      );
+    }
+
+    if (plan.id === "FREE") {
+      return (
+        <div className={styles.cardAction}>
+          <button
+            type="button"
+            onClick={handleSubscriptionFreeClick}
+            disabled={isLoading === "FREE"}
+            aria-busy={isLoading === "FREE"}
+          >
+            {isLoading === "FREE" ? "Activating..." : plan.ctaText}
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className={styles.cardAction}>
+        <form action="/api/checkout_sessions" method="POST">
+          <input type="hidden" name="tipo" value={plan.id} />
+          <button
+            type="submit"
+            onClick={(e) => handlePaidSubscriptionClick(e, plan.id)}
+          >
+            {plan.ctaText}
+          </button>
+        </form>
+      </div>
+    );
   };
 
   return (
@@ -118,201 +241,52 @@ export default function CPricing() {
       </div>
 
       <div className={styles.wrapperCard}>
-        <div className={styles.card}>
-          <div className={styles.cardTitle}>
-            <h3>Free</h3>
-            <h4>
-              For individuals who want to generate their own domains.
-            </h4>
-          </div>
-          <div className={styles.cardPrice}>
-            <h2>
-              <sup>$</sup>0<small>forever</small>
-            </h2>
-          </div>
-          <div className={styles.cardDescription}>
-            <ul>
-              <li className={styles.ok}>
-                Generate domains
-              </li>
-              <li className={styles.ok}>See domain availability</li>  
-              <li className={styles.ok}>Best effort support</li>
-            </ul>
-          </div>
-        </div>
-
-        <div className={`${styles.card} ${styles.popular}`}>
-          <div className={styles.cardRibbon}>
-            <span>most popular</span>
-          </div>
-          <div className={styles.cardTitle}>
-            <h3>Starter</h3>
-            <span className={styles.off}>50% OFF today!</span>
-            <h4>For hobbyists bringing ideas to life with AI by their side.</h4>
-          </div>
-          <div className={styles.cardPrice}>
-            <h2>
-              <sup>$</sup>
-              <span className={styles.discountPrice}>10</span>
-              <span className={styles.ml2}>
-                <sup>$</sup>5<small>/month</small>
-              </span>
-            </h2>
-          </div>
-          <div className={styles.cardDescription}>
-            <ul>
-              <li>Everything in free, plus</li>
-              <li className={styles.ok}>
-                Generate only available domains
-              </li>
-              {/* <li className={styles.ok}>Website creator</li> */}
-              <li className={styles.ok}>Get customers with quick ads</li>
-              <li className={styles.ok}>Priority support</li>
-            </ul>
-          </div>
-          {subsTplan !== "STARTER" ? (
-            <>
-              {
-                /*!isLoaded || !user ? (
-                        <div className={styles.cardAction}>
-                            <button type="button" onClick={() => openSignIn()}>
-                            Get starter
-                            </button>
-                        </div>
-                        ) : */ <div className={styles.cardAction}>
-                  <form action="/api/checkout_sessions" method="POST">
-                    <input type="hidden" name="tipo" value="STARTER" />
-                    <button
-                      type="submit"
-                      onClick={handleSubsStarterCreatorClick}
-                    >
-                      Get starter
-                    </button>
-                  </form>
-                </div>
-              }
-            </>
-          ) : (
-            <>
-              <div className={styles.cardTitle}>
-                <h3>Your Plan!</h3>
+        {pricingPlans.map((plan) => (
+          <motion.div
+            key={plan.id}
+            className={`${styles.card} ${plan.isPopular ? styles.popular : ""}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            {plan.isPopular && (
+              <div className={styles.cardRibbon}>
+                <span>most popular</span>
               </div>
-            </>
-          )}
-        </div>
-
-        <Box className={styles.card}>
-          <div className={styles.cardTitle}>
-            <h3>Creator</h3>
-            <span className={styles.off}>50% OFF today!</span>
-            <h4>
-              For passionate creators building the apps they want to see in the
-              world.
-            </h4>
-          </div>
-          <div className={styles.cardPrice}>
-            <h2>
-              <sup>$</sup>
-              <span className={styles.discountPrice}>22</span>
-              <span className={styles.ml2}>
-                <sup>$</sup>
-                11
-                <small>/month</small>
-              </span>
-            </h2>
-          </div>
-          <div className={styles.cardDescription}>
-            <ul>
-              <li>Everything in starter, plus</li>
-              <li className={styles.ok}>Website builder</li>
-              <li className={styles.ok}>Email marketing</li>
-              <li className={styles.ok}>Priority support</li>
-            </ul>
-          </div>
-          {subsTplan !== "CREATOR" ? (
-            <>
-              {
-                /*!isLoaded || !user ? (
-                        <div className={styles.cardAction}>
-                            <button type="button" onClick={() => openSignIn()}>
-                            Get creator
-                            </button>
-                        </div>
-                        ) : */ <div className={styles.cardAction}>
-                  <form action="/api/checkout_sessions" method="POST">
-                    <input type="hidden" name="tipo" value="CREATOR" />
-                    <button
-                      type="submit"
-                      onClick={handleSubsStarterCreatorClick}
-                    >
-                      Get creator
-                    </button>
-                  </form>
-                </div>
-              }
-            </>
-          ) : (
-            <>
-              <div className={styles.cardTitle}>
-                <h3>Your Plan!</h3>
-              </div>
-            </>
-          )}
-        </Box>
+            )}
+            <div className={styles.cardTitle}>
+              <h3>{plan.name}</h3>
+              {plan.discountedPrice && (
+                <span className={styles.off}>50% OFF today!</span>
+              )}
+              <h4>{plan.description}</h4>
+            </div>
+            {renderPriceDisplay(plan)}
+            {renderPlanFeatures(plan.features)}
+            {renderSubscriptionButton(plan)}
+          </motion.div>
+        ))}
       </div>
-
-      {/* <Box className="flex">
-                <div className={styles.card}>
-                    <div className={styles.cardTitle}>
-                    <p>Need more?</p>
-                    <h3 className="mt-3">Custom Plans</h3>
-                    <h4 className="mt-3">
-                        For custom requirements and tailored services, contact us for
-                        dedicated support and precise control over your needs.
-                    </h4>
-                    </div>
-                    <div className={styles.cardAction} style={{ display: "flex", justifyContent: "center", width: "100%", marginTop:"30px" }}>
-                    <button type="button" onClick={() => letsTalk()} style={{ width:"300px"}}>
-                        Let's talk
-                    </button>
-                    <EmailModal open={modalOpenLetsTalk} onClose={handleCloseModalLetsTalk} subjectType='custom requirements' />
-                    </div>
-                    <div className={styles.cardDescription}>
-                    <ul>
-                        <li className={styles.ok}>Custom Website Support</li>
-                        <li className={styles.ok}>Custom Google Ads Support</li>
-                        <li className={styles.ok}>Api Access (coming soon)</li>
-                    </ul>
-                    </div>
-                </div>
-            </Box> */}
 
       <Snackbar
         autoHideDuration={3000}
         anchorOrigin={{
           vertical: "top",
-          horizontal: "center",
+          horizontal: "center"
         }}
-        open={openSuccess}
+        open={toast.open}
         variant="soft"
-        color="success"
-        onClose={() => setOpenSuccess(false)}
+        color={toast.severity}
+        onClose={() => setToast({ ...toast, open: false })}
       >
-        {message}
+        {toast.message}
       </Snackbar>
-      <Snackbar
-        autoHideDuration={2500}
-        anchorOrigin={{
-          vertical: "top",
-          horizontal: "center",
-        }}
-        open={openDanger}
-        variant="soft"
-        color="danger"
-        onClose={() => setOpenDanger(false)}
-      >
-        {message}
-      </Snackbar>
+
+      <EmailModal
+        open={modalOpenLetsTalk}
+        onClose={() => setModalOpenLetsTalk(false)}
+        subjectType="custom requirements"
+      />
     </div>
   );
 }

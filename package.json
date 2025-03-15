@@ -28,6 +28,7 @@
     "cheerio": "^1.0.0",
     "dotenv": "^16.4.7",
     "eventsource-parser": "^0.0.5",
+    "framer-motion": "^12.5.0",
     "git": "^0.1.5",
     "google-ads-api": "^17.1.0",
     "google-auth-library": "^9.14.1",
