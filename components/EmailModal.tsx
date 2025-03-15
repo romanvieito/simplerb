@@ -1,8 +1,21 @@
-import React, { useEffect, useState, useContext } from 'react';
-import { Button, TextField, Dialog, DialogActions, DialogContent, DialogTitle, CircularProgress } from '@mui/material';
+import React, { useEffect, useContext } from 'react';
+import { 
+  Button, 
+  TextField, 
+  Dialog, 
+  DialogActions, 
+  DialogContent, 
+  DialogTitle, 
+  Typography,
+  Box,
+  styled,
+  useTheme,
+  alpha
+} from '@mui/material';
 import { Toaster, toast } from "react-hot-toast";
 import LoadingButton from '@mui/lab/LoadingButton';
 import SendIcon from '@mui/icons-material/Send';
+import CloseIcon from '@mui/icons-material/Close';
 import { useForm, Controller } from 'react-hook-form';
 import mixpanel from "../utils/mixpanel-config";
 import { EmailModalProps } from "../utils/Definitions";
@@ -12,7 +25,60 @@ interface FormInputs {
   message: string;
 }
 
+const StyledDialog = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialog-paper': {
+    borderRadius: 16,
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+    background: theme.palette.mode === 'dark' 
+      ? alpha(theme.palette.background.paper, 0.9)
+      : alpha(theme.palette.background.paper, 0.95),
+    backdropFilter: 'blur(10px)',
+  },
+  '& .MuiDialogTitle-root': {
+    padding: theme.spacing(3),
+    background: theme.palette.mode === 'dark'
+      ? alpha(theme.palette.primary.dark, 0.1)
+      : alpha(theme.palette.primary.light, 0.1),
+  },
+  '& .MuiDialogContent-root': {
+    padding: theme.spacing(3),
+  },
+  '& .MuiDialogActions-root': {
+    padding: theme.spacing(2, 3),
+    background: theme.palette.mode === 'dark'
+      ? alpha(theme.palette.background.paper, 0.6)
+      : alpha(theme.palette.background.paper, 0.8),
+  }
+}));
+
+const StyledTextField = styled(TextField)(({ theme }) => ({
+  '& .MuiOutlinedInput-root': {
+    transition: 'all 0.2s ease-in-out',
+    '& .MuiOutlinedInput-notchedOutline': {
+      border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+    },
+    '&:hover .MuiOutlinedInput-notchedOutline': {
+      borderColor: theme.palette.primary.main,
+      borderWidth: '1px'
+    },
+    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: theme.palette.primary.main,
+      borderWidth: '0px'
+    },
+    '&.Mui-error .MuiOutlinedInput-notchedOutline': {
+      borderColor: theme.palette.error.main,
+      borderWidth: '1px'
+    }
+  },
+  '& .MuiInputLabel-root': {
+    '&.Mui-focused': {
+      color: theme.palette.primary.main
+    }
+  }
+}));
+
 const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subjectType }) => {
+  const theme = useTheme();
   const [loading, setLoading] = React.useState(false);
   const { control, handleSubmit, reset, formState: { errors } } = useForm<FormInputs>({
     defaultValues: {
@@ -30,7 +96,6 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subjectType }) =
     if (open) {
       reset();
     }
-    // Cleanup function
     return () => {
       reset();
     };
@@ -66,11 +131,26 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subjectType }) =
       });
 
       toast.success(
-        <div>
-          <p>Mail sent successfully</p>
-          <p>Thank you for your feedback!</p>
-        </div>,
-        { duration: 5000 }
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1,
+          p: 1,
+          fontWeight: 500
+        }}>
+          <Typography variant="body1">Message sent successfully!</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Thank you for your feedback
+          </Typography>
+        </Box>,
+        { 
+          duration: 5000,
+          style: {
+            background: theme.palette.mode === 'dark' ? '#2D3748' : '#ffffff',
+            color: theme.palette.mode === 'dark' ? '#ffffff' : '#1A202C',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+          }
+        }
       );
 
       onClose();
@@ -83,10 +163,27 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subjectType }) =
       });
 
       toast.error(
-        <div>
-          <span>Failed to send email: {errorMessage}</span>
-        </div>,
-        { duration: 5000 }
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1,
+          p: 1
+        }}>
+          <Typography variant="body1" color="error">
+            Failed to send email:
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {errorMessage}
+          </Typography>
+        </Box>,
+        { 
+          duration: 5000,
+          style: {
+            background: theme.palette.mode === 'dark' ? '#2D3748' : '#ffffff',
+            color: theme.palette.mode === 'dark' ? '#ffffff' : '#1A202C',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+          }
+        }
       );
     } finally {
       setLoading(false);
@@ -95,15 +192,60 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subjectType }) =
 
   return (
     <>
-      <Toaster position="top-center" />
-      <Dialog 
+      <Toaster 
+        position="top-center"
+        toastOptions={{
+          style: {
+            borderRadius: '8px',
+            background: theme.palette.mode === 'dark' ? '#2D3748' : '#ffffff',
+            color: theme.palette.mode === 'dark' ? '#ffffff' : '#1A202C',
+          },
+        }}
+      />
+      <StyledDialog 
         open={open} 
         onClose={loading ? undefined : onClose}
-        fullWidth={true}
+        fullWidth
         maxWidth="md"
         aria-labelledby="email-modal-title"
+        TransitionProps={{
+          timeout: 300
+        }}
       >
-        <DialogTitle id="email-modal-title">Your {subjectType}</DialogTitle>
+        <DialogTitle id="email-modal-title">
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between'
+          }}>
+            <Typography variant="h5" component="h2" sx={{ 
+              fontWeight: 600,
+              background: theme.palette.mode === 'dark'
+                ? 'linear-gradient(45deg, #90caf9, #64b5f6)'
+                : 'linear-gradient(45deg, #1976d2, #2196f3)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              color: 'transparent'
+            }}>
+              Your {subjectType}
+            </Typography>
+            <Button
+              onClick={onClose}
+              disabled={loading}
+              sx={{ 
+                minWidth: 'auto', 
+                p: 1,
+                color: 'text.secondary',
+                '&:hover': {
+                  color: 'text.primary',
+                }
+              }}
+              aria-label="Close dialog"
+            >
+              <CloseIcon />
+            </Button>
+          </Box>
+        </DialogTitle>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogContent>
             <Controller
@@ -117,7 +259,7 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subjectType }) =
                 }
               }}
               render={({ field }) => (
-                <TextField
+                <StyledTextField
                   {...field}
                   autoFocus
                   margin="dense"
@@ -130,16 +272,30 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subjectType }) =
                   helperText={errors.message?.message}
                   disabled={loading}
                   aria-describedby="message-error"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                    }
+                  }}
                 />
               )}
             />
           </DialogContent>
-          <DialogActions>
+          <DialogActions sx={{ 
+            gap: 1,
+            borderTop: 1,
+            borderColor: 'divider'
+          }}>
             <Button 
               onClick={onClose} 
               variant="outlined" 
               disabled={loading}
               aria-label="Cancel"
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                px: 3
+              }}
             >
               Cancel
             </Button>
@@ -152,12 +308,25 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subjectType }) =
               color="primary"
               disabled={loading}
               aria-label="Send message"
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                px: 3,
+                background: theme.palette.mode === 'dark'
+                  ? 'linear-gradient(45deg, #90caf9, #64b5f6)'
+                  : 'linear-gradient(45deg, #1976d2, #2196f3)',
+                '&:hover': {
+                  background: theme.palette.mode === 'dark'
+                    ? 'linear-gradient(45deg, #64b5f6, #42a5f5)'
+                    : 'linear-gradient(45deg, #1565c0, #1976d2)',
+                }
+              }}
             >
               <span>Send</span>
             </LoadingButton>
           </DialogActions>
         </form>
-      </Dialog>
+      </StyledDialog>
     </>
   );
 };
