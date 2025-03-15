@@ -37,8 +37,8 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
   '& .MuiDialogTitle-root': {
     padding: theme.spacing(3),
     background: theme.palette.mode === 'dark'
-      ? alpha(theme.palette.primary.dark, 0.1)
-      : alpha(theme.palette.primary.light, 0.1),
+      ? alpha('#ef5350', 0.1)
+      : alpha('#ffebee', 0.3),
   },
   '& .MuiDialogContent-root': {
     padding: theme.spacing(3),
@@ -55,14 +55,14 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
   '& .MuiOutlinedInput-root': {
     transition: 'all 0.2s ease-in-out',
     '& .MuiOutlinedInput-notchedOutline': {
-      border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+      border: `1px solid ${alpha('#ef5350', 0.2)}`,
     },
     '&:hover .MuiOutlinedInput-notchedOutline': {
-      borderColor: theme.palette.primary.main,
+      borderColor: '#ef5350',
       borderWidth: '1px'
     },
     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-      borderColor: theme.palette.primary.main,
+      borderColor: '#ef5350',
       borderWidth: '0px'
     },
     '&.Mui-error .MuiOutlinedInput-notchedOutline': {
@@ -72,7 +72,7 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
   },
   '& .MuiInputLabel-root': {
     '&.Mui-focused': {
-      color: theme.palette.primary.main
+      color: '#ef5350'
     }
   }
 }));
@@ -221,8 +221,8 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subjectType }) =
             <Typography variant="h5" component="h2" sx={{ 
               fontWeight: 600,
               background: theme.palette.mode === 'dark'
-                ? 'linear-gradient(45deg, #90caf9, #64b5f6)'
-                : 'linear-gradient(45deg, #1976d2, #2196f3)',
+                ? 'linear-gradient(45deg, #ef5350, #e57373)'
+                : 'linear-gradient(45deg, #d32f2f, #ef5350)',
               backgroundClip: 'text',
               WebkitBackgroundClip: 'text',
               color: 'transparent'
@@ -237,7 +237,7 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subjectType }) =
                 p: 1,
                 color: 'text.secondary',
                 '&:hover': {
-                  color: 'text.primary',
+                  color: '#ef5350',
                 }
               }}
               aria-label="Close dialog"
@@ -294,7 +294,13 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subjectType }) =
               sx={{
                 borderRadius: 2,
                 textTransform: 'none',
-                px: 3
+                px: 3,
+                borderColor: alpha('#ef5350', 0.5),
+                color: '#ef5350',
+                '&:hover': {
+                  borderColor: '#ef5350',
+                  background: alpha('#ef5350', 0.04)
+                }
               }}
             >
               Cancel
@@ -305,7 +311,6 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subjectType }) =
               loading={loading}
               loadingPosition="end"
               variant="contained"
-              color="primary"
               disabled={loading}
               aria-label="Send message"
               sx={{
@@ -313,12 +318,12 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subjectType }) =
                 textTransform: 'none',
                 px: 3,
                 background: theme.palette.mode === 'dark'
-                  ? 'linear-gradient(45deg, #90caf9, #64b5f6)'
-                  : 'linear-gradient(45deg, #1976d2, #2196f3)',
+                  ? 'linear-gradient(45deg, #ef5350, #e57373)'
+                  : 'linear-gradient(45deg, #d32f2f, #ef5350)',
                 '&:hover': {
                   background: theme.palette.mode === 'dark'
-                    ? 'linear-gradient(45deg, #64b5f6, #42a5f5)'
-                    : 'linear-gradient(45deg, #1565c0, #1976d2)',
+                    ? 'linear-gradient(45deg, #e57373, #ef5350)'
+                    : 'linear-gradient(45deg, #c62828, #d32f2f)',
                 }
               }}
             >
