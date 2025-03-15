@@ -2,19 +2,13 @@ import React from 'react';
 import Head from "next/head";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
-import { Box, Button, Tooltip, Container, Grid } from "@mui/material";
+import { Box, Button, Container, Grid } from "@mui/material";
 import { useClerk, SignedOut } from "@clerk/nextjs";
 import type { NextPage } from "next";
-
-import Card from '@mui/material/Card';
-import CardActions from '@mui/material/CardActions';
-import CardContent from '@mui/material/CardContent';
-import Typography from '@mui/material/Typography';
 import CPricing from '../components/CPricing';
 import CFAQ from '../components/CFAQ';
 
 const Home: NextPage = () => {
-
   const pages = [{
     name: 'Domain', 
     link: '/domain'
@@ -26,7 +20,7 @@ const Home: NextPage = () => {
   const { openSignIn } = useClerk();
 
   return (
-    <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
+    <div className="min-h-screen bg-black text-white">
       <Head>
         <title>Domain Generator</title>
         <link rel="icon" href="/favicon.ico" />
@@ -34,60 +28,67 @@ const Home: NextPage = () => {
       <Header />
       
       {/* Hero Section */}
-      <section className="w-full bg-gradient-to-r from-black to-blue-900 text-white py-20">
-        <Container maxWidth="lg">
-          <h1 className="sm:text-6xl text-5xl max-w-[708px] font-bold mb-6">
-            Launch Your Business in Just {" "}
-            <span className="text-yellow-300">3 Clicks</span>
-          </h1>
-          <h2 className="sm:text-2xl text-xl mb-8">
-            It all starts with the right domain: Set your brand apart, build your website, and attract customers with targeted ads.
-          </h2>
-          <div className="flex">
-            <div className="mr-2">
+      <section className="relative min-h-[90vh] flex items-center">
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/20 to-black/95 z-0"></div>
+        <Container maxWidth="lg" className="relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-7xl font-bold mb-8 tracking-tight">
+              Launch Your Business in{" "}
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
+                Three Clicks
+              </span>
+            </h1>
+            <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed">
+              Set your brand apart with the perfect domain. Build your presence. Attract your audience.
+              All in one seamless experience.
+            </p>
+            <div className="flex gap-4 justify-center">
               <a
                 href={pages[0].link}
-                className="bg-blue-600 cursor-pointer rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-blue-700 w-full"
+                className="group relative px-8 py-4 bg-white text-black rounded-full font-medium hover:bg-gray-100 transition-all duration-300"
               >
                 Get Started
+                <span className="absolute inset-x-0 w-1/2 mx-auto -bottom-px h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent"></span>
               </a>
-            </div>
-            <SignedOut>
-              <div className="">
-                <a
+              <SignedOut>
+                <button
                   onClick={() => openSignIn()}
-                  className="bg-black cursor-pointer rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+                  className="px-8 py-4 border border-gray-700 rounded-full font-medium hover:bg-white/10 transition-all duration-300"
                 >
-                  Sign in / up
-                </a>
-              </div>
-            </SignedOut>
+                  Sign in
+                </button>
+              </SignedOut>
+            </div>
           </div>
         </Container>
       </section>
 
-      {/* Features Section (Our Services) */}
-      <section className="w-full bg-gray-100 py-16">
+      {/* Features Section */}
+      <section className="py-32 bg-black">
         <Container maxWidth="lg">
-          <h2 className="text-3xl font-semibold mb-12 text-center">Our Services</h2>
-          <Grid container spacing={4} justifyContent="center">
+          <h2 className="text-4xl font-bold text-center mb-20">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
+              Our Services
+            </span>
+          </h2>
+          <Grid container spacing={6} justifyContent="center">
             {pages.map((page, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index} className="flex justify-center">
-                <div className="w-64 p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
-                  <h3 className="text-xl font-semibold mb-4 text-center">{page.name}</h3>
-                  <p className="text-gray-600 mb-6 text-center">
-                    {page.name === 'Domain' && 'Find the right domain for your brand.'}
-                    {page.name === 'Website Generator' && 'Create a faster website in seconds.'}
-                    {page.name === 'Ads Generator' && 'Try quick ads to attract customers.'}
+              <Grid item xs={12} sm={6} key={index}>
+                <div className="p-8 rounded-2xl bg-gradient-to-b from-gray-900 to-black border border-gray-800 hover:border-gray-700 transition-all duration-300">
+                  <h3 className="text-2xl font-bold mb-4">{page.name}</h3>
+                  <p className="text-gray-400 mb-6">
+                    {page.name === 'Domain' && 'Find the perfect domain that resonates with your brand identity and vision.'}
+                    {page.name === 'Ads Generator' && 'Create compelling ad campaigns that connect with your target audience.'}
                   </p>
-                  <div className="text-center">
-                    <a
-                      href={page.link}
-                      className="inline-block bg-blue-600 text-white font-medium px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-300"
-                    >
-                      Try {page.name}
-                    </a>
-                  </div>
+                  <a
+                    href={page.link}
+                    className="inline-flex items-center text-sm font-medium text-blue-400 hover:text-blue-300"
+                  >
+                    Explore {page.name}
+                    <svg className="ml-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </a>
                 </div>
               </Grid>
             ))}
@@ -96,44 +97,47 @@ const Home: NextPage = () => {
       </section>
 
       {/* Video Section */}
-      <section className="w-full bg-white py-16">
+      <section className="py-32 bg-gradient-to-b from-black to-gray-900">
         <Container maxWidth="lg">
-          <h2 className="text-3xl font-semibold mb-8 text-center">See How It Works</h2>
-          <div className="relative" style={{ paddingBottom: '56.25%', height: 0 }}>
-            <video 
-              className="absolute top-0 left-0 w-full h-full rounded-lg shadow-lg"
-              controls
-              autoPlay
-              muted
-              loop
-              poster="/video-thumbnail.jpg"
-            >
-              <source src="/simplerB.mp4" type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-4xl font-bold text-center mb-8">Experience the Simplicity</h2>
+            <p className="text-gray-400 text-center mb-12">Watch how our platform transforms your business journey</p>
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl" style={{ paddingBottom: '56.25%', height: 0 }}>
+              <video 
+                className="absolute top-0 left-0 w-full h-full"
+                controls
+                autoPlay
+                muted
+                loop
+                poster="/video-thumbnail.jpg"
+              >
+                <source src="/simplerB.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            </div>
           </div>
-          <p className="mt-4 text-gray-600 text-center">
-            Watch our quick demo to see how easy it is to launch your business with our platform.
-          </p>
         </Container>
       </section>
 
       {/* Pricing Section */}
-      <section className="w-full bg-gray-50 py-16">
+      <section className="py-32 bg-black">
         <Container maxWidth="lg">
-          <h2 className="text-3xl font-semibold mb-8 text-center">Choose Your Plan</h2>
+          <h2 className="text-4xl font-bold text-center mb-20">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
+              Choose Your Plan
+            </span>
+          </h2>
           <CPricing />
         </Container>
       </section>
 
-
       {/* FAQ Section */}
-      <section className="w-full bg-white py-16">
+      <section className="py-32 bg-gradient-to-b from-gray-900 to-black">
         <Container maxWidth="lg">
-          {/* <h2 className="text-3xl font-semibold mb-8 text-center">Choose Your Plan</h2> */}
-        <CFAQ />
+          <CFAQ />
         </Container>
       </section>
+      
       <Footer />
     </div>
   );
