@@ -42,29 +42,35 @@ const AdsPage = () => {
         body: JSON.stringify({ description: adDescription, image: uploadedImage }),
       });
       
+      const data = await response.json();
+      
       if (response.ok) {
-        // Handle success (e.g., show a success message, redirect, etc.)
-        console.log('Ad information saved successfully');
+        console.log('Ad created with ID:', data.adId);
+        setAdDescription('');
+        setUploadedImage('');
+        
+        toast(
+          `Ad #${data.adId} created! We'll craft your ad content and notify you when it's ready.`,
+          {
+            icon: "🎯",
+            duration: 6000,
+            style: {
+              border: "1px solid #000",
+              padding: "16px",
+              color: "#000",
+            },
+          }
+        );
       } else {
-        // Handle error
         console.error('Failed to save ad information');
+        toast.error(data.error || 'Failed to create ad. Please try again.');
       }
-
-      toast(
-        "Awesome! Your ad is being crafted to boost your reach. Stay tuned—details are coming to your inbox!",
-        {
-          icon: "🚀",
-          style: {
-            border: "1px solid #000",
-            padding: "16px",
-            color: "#000",
-          },
-        }
-      );
     } catch (error) {
       console.error('Error:', error);
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
+      setIsUploading(false);
     }
   };
 
