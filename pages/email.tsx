@@ -26,25 +26,32 @@ const EmailPage = () => {
         }),
       });
       
+      const data = await response.json();
+      
       if (response.ok) {
-        console.log('Email information saved successfully');
+        console.log('Email campaign created with ID:', data.campaignId);
+        setEmailContent('');
+        setTargetAudience('');
+        
+        toast(
+          `Campaign #${data.campaignId} created! We'll craft your email content and notify you when it's ready.`,
+          {
+            icon: "✉️",
+            duration: 6000,
+            style: {
+              border: "1px solid #000",
+              padding: "16px",
+              color: "#000",
+            },
+          }
+        );
       } else {
         console.error('Failed to save email information');
+        toast.error(data.error || 'Failed to create email campaign. Please try again.');
       }
-
-      toast(
-        "Great! Your email campaign is being crafted. We'll send you the generated content shortly!",
-        {
-          icon: "✉️",
-          style: {
-            border: "1px solid #000",
-            padding: "16px",
-            color: "#000",
-          },
-        }
-      );
     } catch (error) {
       console.error('Error:', error);
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
