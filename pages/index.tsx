@@ -29,12 +29,12 @@ const Home: NextPage = () => {
       
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center">
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/20 to-black/95 z-0"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-red-900/20 to-black/95 z-0"></div>
         <Container maxWidth="lg" className="relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-8xl font-bold mb-8 tracking-tight">
               Grow digital with {" "}
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-rose-600">
                 ease
               </span>
             </h1>
@@ -47,7 +47,7 @@ const Home: NextPage = () => {
                 className="group relative px-8 py-4 bg-white text-black rounded-full font-medium hover:bg-gray-100 transition-all duration-300"
               >
                 Get Started
-                <span className="absolute inset-x-0 w-1/2 mx-auto -bottom-px h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent"></span>
+                <span className="absolute inset-x-0 w-1/2 mx-auto -bottom-px h-px bg-gradient-to-r from-transparent via-red-500 to-transparent"></span>
               </a>
               <SignedOut>
                 <button
@@ -66,7 +66,7 @@ const Home: NextPage = () => {
       <section className="py-32 bg-black">
         <Container maxWidth="lg">
           <h2 className="text-4xl font-bold text-center mb-20">
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-rose-600">
               Our Services
             </span>
           </h2>
@@ -81,7 +81,7 @@ const Home: NextPage = () => {
                   </p>
                   <a
                     href={page.link}
-                    className="inline-flex items-center text-sm font-medium text-blue-400 hover:text-blue-300"
+                    className="inline-flex items-center text-sm font-medium text-red-400 hover:text-red-300"
                   >
                     Explore {page.name}
                     <svg className="ml-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -122,7 +122,7 @@ const Home: NextPage = () => {
       <section className="py-32 bg-black">
         <Container maxWidth="lg">
           <h2 className="text-4xl font-bold text-center mb-20">
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-rose-600">
               Choose Your Plan
             </span>
           </h2>

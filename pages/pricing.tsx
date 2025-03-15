@@ -17,12 +17,12 @@ export default function PricingPage() {
       
       {/* Hero Section */}
       <section className="relative pt-20 pb-16">
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/20 to-black/95 z-0"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-red-900/20 to-black/95 z-0"></div>
         <Container maxWidth="lg" className="relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-6xl font-bold mb-6 tracking-tight">
               Simple{" "}
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-rose-600">
                 Transparent
               </span>{" "}
               Pricing
@@ -49,7 +49,7 @@ export default function PricingPage() {
       <section className="py-32 bg-gradient-to-b from-gray-900 to-black">
         <Container maxWidth="lg">
           <h2 className="text-4xl font-bold text-center mb-16">
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-rose-600">
               Frequently Asked Questions
             </span>
           </h2>
