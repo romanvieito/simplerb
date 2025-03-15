@@ -51,7 +51,7 @@ const AdsPage = () => {
       }
 
       toast(
-        "Success! We’ve saved your details and are now creating your ads. Keep an eye on your email for further updates.",
+        "Awesome! Your ad is being crafted to boost your reach. Stay tuned—details are coming to your inbox!",
         {
           icon: "🚀",
           style: {
