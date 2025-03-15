@@ -84,27 +84,31 @@ const Home: NextPage = () => {
           <Grid container spacing={6} justifyContent="center">
             {pages.map((page, index) => (
               <Grid item xs={12} sm={6} key={index}>
-                <div className="p-8 rounded-2xl bg-gradient-to-b from-gray-900 to-black border border-gray-800 hover:border-gray-700 transition-all duration-300">
-                  <div className="flex items-center gap-3 mb-4">
-                    {React.createElement(page.icon, { className: "text-red-400 text-3xl" })}
-                    <h3 className="text-2xl font-bold">{page.name}</h3>
+                <a
+                  href={page.link}
+                  className="block group"
+                >
+                  <div className="p-8 rounded-2xl bg-gradient-to-b from-gray-900 to-black border border-gray-800 group-hover:border-gray-700 transition-all duration-300">
+                    <div className="flex items-center gap-3 mb-4">
+                      {React.createElement(page.icon, { className: "text-red-400 text-3xl" })}
+                      <h3 className="text-2xl font-bold">{page.name}</h3>
+                    </div>
+                    <p className="text-gray-400 mb-6">
+                      {page.name === 'Domain' && 'Find a domain that matches your channel\'s vibe and vision.'}
+                      {page.name === 'Website Builder' && 'Create a simple website to engage with your audience.'}
+                      {page.name === 'Email Marketing' && 'Boost your subscriber base with emails that inspire action.'}
+                      {page.name === 'Ads Generator' && 'Craft ads that drive views and revenue for your channel.'}
+                    </p>
+                    <span
+                      className="inline-flex items-center text-sm font-medium text-red-400 group-hover:text-red-300"
+                    >
+                      Explore {page.name}
+                      <svg className="ml-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </span>
                   </div>
-                  <p className="text-gray-400 mb-6">
-                    {page.name === 'Domain' && 'Find a domain that matches your channel\'s vibe and vision.'}
-                    {page.name === 'Website Builder' && 'Create a simple website to engage with your audience.'}
-                    {page.name === 'Email Marketing' && 'Boost your subscriber base with emails that inspire action.'}
-                    {page.name === 'Ads Generator' && 'Craft ads that drive views and revenue for your channel.'}
-                  </p>
-                  <a
-                    href={page.link}
-                    className="inline-flex items-center text-sm font-medium text-red-400 hover:text-red-300"
-                  >
-                    Explore {page.name}
-                    <svg className="ml-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </a>
-                </div>
+                </a>
               </Grid>
             ))}
           </Grid>
