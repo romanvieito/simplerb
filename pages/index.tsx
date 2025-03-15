@@ -32,7 +32,6 @@ const Home: NextPage = () => {
   const { openSignIn } = useClerk();
 
   const handleGetStarted = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
     trackConversion('get_started', pages[0].link);
   };
 
