@@ -7,53 +7,35 @@ import Header from "../components/Header";
 import { Toaster, toast } from "react-hot-toast";
 import { useClerk, SignedIn, SignedOut } from "@clerk/nextjs";
 
-const AdsPage = () => {
-  const [adDescription, setAdDescription] = useState('');
-  const [uploadedImage, setUploadedImage] = useState('');
+const EmailPage = () => {
+  const [emailContent, setEmailContent] = useState('');
+  const [targetAudience, setTargetAudience] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { openSignIn } = useClerk();
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setIsUploading(true);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUploadedImage(reader.result as string);
-        setIsUploading(false);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const triggerFileInput = () => {
-    fileInputRef.current?.click();
-  };
 
   const sendInformationToBackend = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/save-ads-information', {
+      const response = await fetch('/api/generate-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: adDescription, image: uploadedImage }),
+        body: JSON.stringify({ 
+          content: emailContent,
+          audience: targetAudience 
+        }),
       });
       
       if (response.ok) {
-        // Handle success (e.g., show a success message, redirect, etc.)
-        console.log('Ad information saved successfully');
+        console.log('Email information saved successfully');
       } else {
-        // Handle error
-        console.error('Failed to save ad information');
+        console.error('Failed to save email information');
       }
 
       toast(
-        "Awesome! Your ad is being crafted to boost your reach. Stay tuned—details are coming to your inbox!",
+        "Great! Your email campaign is being crafted. We'll send you the generated content shortly!",
         {
-          icon: "🚀",
+          icon: "✉️",
           style: {
             border: "1px solid #000",
             padding: "16px",
@@ -71,64 +53,49 @@ const AdsPage = () => {
   return (
     <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
       <Head>
-        <title>Ad Generator</title>
+        <title>Email Marketing Generator</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <Header/>
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4">
         <div className="flex justify-center items-center w-full max-w-xl">
-          {/* <Link href="/domain" className="text-black hover:text-gray-700 mr-auto">
-            ← Back
-          </Link> */}
           <Toaster
             position="top-center"
             reverseOrder={false}
             toastOptions={{ duration: 5000 }}
           />
           <h1 className="sm:text-2xl text-1xl max-w-[708px] font-bold text-slate-900">
-            Generate Your Google Ads
+            Create Your Email Campaign
           </h1>
-          <div className="ml-auto w-8"></div> {/* This empty div balances the layout */}
+          <div className="ml-auto w-8"></div>
         </div>
         <div className="max-w-xl w-full mt-6">
           <div className="flex mb-5 items-center space-x-3">
             <Image src="/1-black.png" width={30} height={30} alt="1 icon" />
             <p className="text-left font-medium">
-              Describe your ad campaign
+              Define your target audience
             </p>
           </div>
           <textarea
-            value={adDescription}
-            onChange={(e) => setAdDescription(e.target.value)}
-            rows={4}
+            value={targetAudience}
+            onChange={(e) => setTargetAudience(e.target.value)}
+            rows={2}
             className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
-            placeholder="e.g., Summer sale for outdoor furniture, 20% off all items"
+            placeholder="e.g., Tech enthusiasts aged 25-34 interested in software development"
           />
 
           <div className="flex mb-5 items-center space-x-3">
             <Image src="/2-black.png" width={30} height={30} alt="2 icon" />
-            <p className="text-left font-medium">Upload an image (optional)</p>
+            <p className="text-left font-medium">Email content brief</p>
           </div>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleImageUpload}
-            accept="image/*"
-            style={{ display: 'none' }}
+          <textarea
+            value={emailContent}
+            onChange={(e) => setEmailContent(e.target.value)}
+            rows={4}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
+            placeholder="Describe what you want to communicate in your email (e.g., Announcing a new course launch with early bird pricing)"
           />
-          <button
-            className="bg-gray-200 rounded-md text-black font-medium px-4 py-2 hover:bg-gray-300"
-            onClick={triggerFileInput}
-          >
-            {uploadedImage ? "Change image" : "Choose image"}
-          </button>
-          
-          {uploadedImage && (
-            <div className="mt-4">
-              <Image src={uploadedImage} alt="Uploaded image" width={200} height={200} objectFit="contain" />
-            </div>
-          )}
 
           <SignedOut>  
             <button
@@ -142,9 +109,9 @@ const AdsPage = () => {
             <button
               className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
               onClick={sendInformationToBackend}
-              disabled={loading || isUploading}
+              disabled={loading}
             >
-              {loading ? "Generating..." : "Generate Ad"}
+              {loading ? "Generating..." : "Generate Email Campaign"}
             </button> 
           </SignedIn>                   
         </div>
@@ -154,4 +121,4 @@ const AdsPage = () => {
   );
 };
 
-export default AdsPage;
+export default EmailPage;
