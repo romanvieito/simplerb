@@ -224,7 +224,8 @@ export default function CPricing() {
           <div className={styles.cardDescription}>
             <ul>
               <li>Everything in starter, plus</li>
-              <li className={styles.ok}>Unlock the best AI model</li>
+              <li className={styles.ok}>Website builder</li>
+              <li className={styles.ok}>Email marketing</li>
               <li className={styles.ok}>Priority support</li>
             </ul>
           </div>
