@@ -28,7 +28,7 @@ export default function PricingPage() {
               Pricing
             </h1>
             <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed">
-              Choose the perfect plan for your business needs. No hidden fees, just straightforward value.
+              Pick the perfect plan for you—clear value, no hidden fees.
             </p>
           </div>
         </Container>

@@ -41,8 +41,8 @@ const pricingPlans: PricingPlan[] = [
     discountedPrice: 5,
     features: [
       "Everything in free, plus",
-      "Generate only available domains",
-      "Get customers with quick ads",
+      "Generate only free domains",
+      "Ads generator",
       "Priority support"
     ],
     isPopular: true,
