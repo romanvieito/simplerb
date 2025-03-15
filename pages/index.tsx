@@ -32,15 +32,14 @@ const Home: NextPage = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-blue-900/20 to-black/95 z-0"></div>
         <Container maxWidth="lg" className="relative z-10">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-7xl font-bold mb-8 tracking-tight">
-              Launch Your Business in{" "}
+            <h1 className="text-8xl font-bold mb-8 tracking-tight">
+              Grow digital with {" "}
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
-                Three Clicks
+                ease
               </span>
             </h1>
             <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed">
-              Set your brand apart with the perfect domain. Build your presence. Attract your audience.
-              All in one seamless experience.
+              Take your channel to the next level with a simple creator toolkit to own your domain, launch a site, promote with ads, and connect via email.
             </p>
             <div className="flex gap-4 justify-center">
               <a
