@@ -7,20 +7,25 @@ import { useClerk, SignedOut } from "@clerk/nextjs";
 import type { NextPage } from "next";
 import CPricing from '../components/CPricing';
 import CFAQ from '../components/CFAQ';
+import { Language, Web, Email, Campaign } from '@mui/icons-material';
 
 const Home: NextPage = () => {
   const pages = [{
-    name: 'Domain', 
-    link: '/domain'
-  },  {
+    name: 'Domain',
+    link: '/domain',
+    icon: Language
+  }, {
     name: 'Website Builder',
-    link: '/web'
+    link: '/web',
+    icon: Web
   }, {
     name: 'Email Marketing',
-    link: '/email'
+    link: '/email',
+    icon: Email
   }, {
-    name: 'Ads Generator', 
-    link: '/ads'
+    name: 'Ads Generator',
+    link: '/ads',
+    icon: Campaign
   },];
 
   const { openSignIn } = useClerk();
@@ -80,7 +85,10 @@ const Home: NextPage = () => {
             {pages.map((page, index) => (
               <Grid item xs={12} sm={6} key={index}>
                 <div className="p-8 rounded-2xl bg-gradient-to-b from-gray-900 to-black border border-gray-800 hover:border-gray-700 transition-all duration-300">
-                  <h3 className="text-2xl font-bold mb-4">{page.name}</h3>
+                  <div className="flex items-center gap-3 mb-4">
+                    {React.createElement(page.icon, { className: "text-red-400 text-3xl" })}
+                    <h3 className="text-2xl font-bold">{page.name}</h3>
+                  </div>
                   <p className="text-gray-400 mb-6">
                     {page.name === 'Domain' && 'Find a domain that matches your channel\'s vibe and vision.'}
                     {page.name === 'Website Builder' && 'Create a simple website to engage with your audience.'}
