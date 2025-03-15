@@ -67,7 +67,7 @@ const Home: NextPage = () => {
         <Container maxWidth="lg">
           <h2 className="text-4xl font-bold text-center mb-20">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-rose-600">
-              Our Services
+              Everything You Need to Grow Your Channel
             </span>
           </h2>
           <Grid container spacing={6} justifyContent="center">
@@ -76,8 +76,8 @@ const Home: NextPage = () => {
                 <div className="p-8 rounded-2xl bg-gradient-to-b from-gray-900 to-black border border-gray-800 hover:border-gray-700 transition-all duration-300">
                   <h3 className="text-2xl font-bold mb-4">{page.name}</h3>
                   <p className="text-gray-400 mb-6">
-                    {page.name === 'Domain' && 'Find the perfect domain that resonates with your brand identity and vision.'}
-                    {page.name === 'Ads Generator' && 'Create compelling ad campaigns that connect with your target audience.'}
+                    {page.name === 'Domain' && 'Find a domain that matches your channel’s vibe and vision.'}
+                    {page.name === 'Ads Generator' && 'Craft ads that drive views and revenue for your channel.'}
                   </p>
                   <a
                     href={page.link}
