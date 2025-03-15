@@ -15,6 +15,12 @@ const Home: NextPage = () => {
   }, {
     name: 'Ads Generator', 
     link: '/ads'
+  }, {
+    name: 'Website Builder',
+    link: '/web'
+  }, {
+    name: 'Email Marketing',
+    link: '/email'
   }];
 
   const { openSignIn } = useClerk();
@@ -76,8 +82,10 @@ const Home: NextPage = () => {
                 <div className="p-8 rounded-2xl bg-gradient-to-b from-gray-900 to-black border border-gray-800 hover:border-gray-700 transition-all duration-300">
                   <h3 className="text-2xl font-bold mb-4">{page.name}</h3>
                   <p className="text-gray-400 mb-6">
-                    {page.name === 'Domain' && 'Find a domain that matches your channel’s vibe and vision.'}
+                    {page.name === 'Domain' && 'Find a domain that matches your channel\'s vibe and vision.'}
                     {page.name === 'Ads Generator' && 'Craft ads that drive views and revenue for your channel.'}
+                    {page.name === 'Website Builder' && 'Create a simple website to engage with your audience.'}
+                    {page.name === 'Email Marketing' && 'Boost your subscriber base with emails that inspire action.'}
                   </p>
                   <a
                     href={page.link}
