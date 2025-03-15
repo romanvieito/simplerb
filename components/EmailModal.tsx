@@ -1,15 +1,24 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { Button, TextField, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import { Button, TextField, Dialog, DialogActions, DialogContent, DialogTitle, CircularProgress } from '@mui/material';
 import { Toaster, toast } from "react-hot-toast";
 import LoadingButton from '@mui/lab/LoadingButton';
 import SendIcon from '@mui/icons-material/Send';
+import { useForm, Controller } from 'react-hook-form';
 import mixpanel from "../utils/mixpanel-config";
 import { EmailModalProps } from "../utils/Definitions";
 import SBRContext from "../context/SBRContext";
 
+interface FormInputs {
+  message: string;
+}
+
 const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subjectType }) => {
-  const [textemail, setTextEmail] = useState<string>('');
   const [loading, setLoading] = React.useState(false);
+  const { control, handleSubmit, reset, formState: { errors } } = useForm<FormInputs>({
+    defaultValues: {
+      message: ''
+    }
+  });
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -19,137 +28,137 @@ const EmailModal: React.FC<EmailModalProps> = ({ open, onClose, subjectType }) =
 
   useEffect(() => {
     if (open) {
-      setTextEmail('');
+      reset();
     }
-  }, [open]);
-
-  const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setTextEmail(event.target.value);
-  };
-
-  const handleSendEmail = async () => {
-    if(textemail === '') {
-      toast(
-        (t) => (
-          <div>
-            <span>Please write us something</span>
-          </div>
-        ),
-        {
-          icon: "🔴",
-          duration: 2500,
-        }
-      );      
-      return;
-    }
-    const username = dataUser.name;
-    const useremail = dataUser.email;
-    const subject = subjectType;
-    const content = textemail;
-    const data = {
-      username,
-      useremail,
-      subject,
-      content
+    // Cleanup function
+    return () => {
+      reset();
     };
-    setLoading(true);
-    const response = await fetch('/api/mail-mailtrap', {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-    setLoading(false);  
+  }, [open, reset]);
 
-    if (!response.ok) {
-      mixpanel.track(`Send ${subjectType} by mail`, {
-        message: "Response failed to send email",
+  const onSubmit = async (data: FormInputs) => {
+    try {
+      setLoading(true);
+      const emailData = {
+        username: dataUser.name,
+        useremail: dataUser.email,
+        subject: subjectType,
+        content: data.message
+      };
+
+      const response = await fetch('/api/mail-mailtrap', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(emailData),
       });
-      toast(
-        (t) => (
-          <div>
-            <span>Response failed to send email</span>
-          </div>
-        ),
-        {
-          icon: "🔴",
-          duration: 5000,
-        }
-      );
-      return;         
-    }
 
-    const result = await response.json();
+      const result = await response.json();
 
-    mixpanel.track(`Send ${subjectType} by mail`, {
-      message: result.data ? "Mail send successfully" : "Data failed to send email",
-    }, function(err) {
-      if (err) {
-        console.error('Error al enviar evento a mixpanel:', err);
-      } else {
-        console.log('Evento enviado a mixpanel');
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to send email');
       }
-    });
 
-    toast(
-      (t) => (
+      mixpanel.track(`Send ${subjectType} by mail`, {
+        status: 'success',
+        message: 'Mail sent successfully'
+      });
+
+      toast.success(
         <div>
-          <span>{
-            result.data ? 
-            <>
-              <p>Mail send successfully</p>
-              <p>Thank you so much</p>
-            </> : 
-            <p>Data Failed to send email</p>}
-          </span>
-        </div>
-      ),
-      {
-        icon: result.data ? "🟢" : "🔴",
-        duration: 5000,
-      }
-    );
+          <p>Mail sent successfully</p>
+          <p>Thank you for your feedback!</p>
+        </div>,
+        { duration: 5000 }
+      );
 
-    onClose();
+      onClose();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send email';
+      
+      mixpanel.track(`Send ${subjectType} by mail`, {
+        status: 'error',
+        message: errorMessage
+      });
+
+      toast.error(
+        <div>
+          <span>Failed to send email: {errorMessage}</span>
+        </div>,
+        { duration: 5000 }
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <Dialog 
+    <>
+      <Toaster position="top-center" />
+      <Dialog 
         open={open} 
-        onClose={onClose}
+        onClose={loading ? undefined : onClose}
         fullWidth={true}
-        maxWidth="md"            
-    >
-      <DialogTitle>Your {subjectType}</DialogTitle>
-      <DialogContent>
-        <TextField
-          autoFocus
-          margin="dense"
-          id="email"
-          label="Tell us ..."
-          type="email"
-          fullWidth
-          variant="standard"
-          value={textemail}
-          onChange={handleEmailChange}
-          multiline
-          rows={4}
-        />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} variant="outlined">Cancel</Button>
-        <LoadingButton
-          onClick={handleSendEmail}
-          endIcon={<SendIcon />}
-          loading={loading}
-          loadingPosition="end"
-          variant="outlined"
-        >
-          <span>Send</span>
-        </LoadingButton>
-      </DialogActions>
-    </Dialog>
+        maxWidth="md"
+        aria-labelledby="email-modal-title"
+      >
+        <DialogTitle id="email-modal-title">Your {subjectType}</DialogTitle>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <DialogContent>
+            <Controller
+              name="message"
+              control={control}
+              rules={{
+                required: 'Please write your message',
+                minLength: {
+                  value: 10,
+                  message: 'Message should be at least 10 characters long'
+                }
+              }}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  autoFocus
+                  margin="dense"
+                  label="Tell us ..."
+                  fullWidth
+                  variant="outlined"
+                  multiline
+                  rows={4}
+                  error={!!errors.message}
+                  helperText={errors.message?.message}
+                  disabled={loading}
+                  aria-describedby="message-error"
+                />
+              )}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button 
+              onClick={onClose} 
+              variant="outlined" 
+              disabled={loading}
+              aria-label="Cancel"
+            >
+              Cancel
+            </Button>
+            <LoadingButton
+              type="submit"
+              endIcon={<SendIcon />}
+              loading={loading}
+              loadingPosition="end"
+              variant="contained"
+              color="primary"
+              disabled={loading}
+              aria-label="Send message"
+            >
+              <span>Send</span>
+            </LoadingButton>
+          </DialogActions>
+        </form>
+      </Dialog>
+    </>
   );
 };
 
