@@ -1,12 +1,17 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Head from "next/head";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import CPricing from "../components/CPricing";
 import { Container } from "@mui/material";
 import CFAQ from "../components/CFAQ";
+import { trackConversion } from "../utils/analytics";
 
 export default function PricingPage() {
+  useEffect(() => {
+    trackConversion('pricing_view');
+  }, []);
+
   return (
     <div className="min-h-screen bg-black text-white">
       <Head>

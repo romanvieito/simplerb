@@ -8,6 +8,7 @@ import type { NextPage } from "next";
 import CPricing from '../components/CPricing';
 import CFAQ from '../components/CFAQ';
 import { Language, Web, Email, Campaign } from '@mui/icons-material';
+import { trackConversion } from '../utils/analytics';
 
 const Home: NextPage = () => {
   const pages = [{
@@ -29,6 +30,21 @@ const Home: NextPage = () => {
   },];
 
   const { openSignIn } = useClerk();
+
+  const handleGetStarted = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    trackConversion('get_started', pages[0].link);
+  };
+
+  const handleSignIn = () => {
+    trackConversion('sign_in');
+    openSignIn();
+  };
+
+  const handleFeatureClick = (e: React.MouseEvent<HTMLAnchorElement>, featureName: string, url: string) => {
+    e.preventDefault();
+    trackConversion('feature_click', url);
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -56,13 +72,13 @@ const Home: NextPage = () => {
               <a
                 href={pages[0].link}
                 className="group relative px-8 py-4 bg-white text-black rounded-full font-medium hover:bg-gray-100 transition-all duration-300"
+                onClick={handleGetStarted}
               >
                 Get Started
                 <span className="absolute inset-x-0 w-1/2 mx-auto -bottom-px h-px bg-gradient-to-r from-transparent via-red-500 to-transparent"></span>
               </a>
               <SignedOut>
                 <button
-                  onClick={() => openSignIn()}
                   className="px-8 py-4 border border-gray-700 rounded-full font-medium hover:bg-white/10 transition-all duration-300"
                 >
                   Sign in
@@ -87,6 +103,7 @@ const Home: NextPage = () => {
                 <a
                   href={page.link}
                   className="block group"
+                  onClick={(e) => handleFeatureClick(e, page.name, page.link)}
                 >
                   <div className="p-8 rounded-2xl bg-gradient-to-b from-gray-900 to-black border border-gray-800 group-hover:border-gray-700 transition-all duration-300">
                     <div className="flex items-center gap-3 mb-4">
