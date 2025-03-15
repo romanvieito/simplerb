@@ -12,16 +12,16 @@ const Home: NextPage = () => {
   const pages = [{
     name: 'Domain', 
     link: '/domain'
-  }, {
-    name: 'Ads Generator', 
-    link: '/ads'
-  }, {
+  },  {
     name: 'Website Builder',
     link: '/web'
   }, {
     name: 'Email Marketing',
     link: '/email'
-  }];
+  }, {
+    name: 'Ads Generator', 
+    link: '/ads'
+  },];
 
   const { openSignIn } = useClerk();
 
@@ -83,9 +83,9 @@ const Home: NextPage = () => {
                   <h3 className="text-2xl font-bold mb-4">{page.name}</h3>
                   <p className="text-gray-400 mb-6">
                     {page.name === 'Domain' && 'Find a domain that matches your channel\'s vibe and vision.'}
-                    {page.name === 'Ads Generator' && 'Craft ads that drive views and revenue for your channel.'}
                     {page.name === 'Website Builder' && 'Create a simple website to engage with your audience.'}
                     {page.name === 'Email Marketing' && 'Boost your subscriber base with emails that inspire action.'}
+                    {page.name === 'Ads Generator' && 'Craft ads that drive views and revenue for your channel.'}
                   </p>
                   <a
                     href={page.link}
