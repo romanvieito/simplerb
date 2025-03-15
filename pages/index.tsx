@@ -42,7 +42,6 @@ const Home: NextPage = () => {
   };
 
   const handleFeatureClick = (e: React.MouseEvent<HTMLAnchorElement>, featureName: string, url: string) => {
-    e.preventDefault();
     trackConversion('feature_click', url);
   };
 
