@@ -6,8 +6,10 @@ import Footer from "../components/Footer";
 import Header from "../components/Header";
 import { Toaster, toast } from "react-hot-toast";
 import { useClerk, SignedIn, SignedOut } from "@clerk/nextjs";
+import { useRouter } from 'next/router';
 
 const EmailPage = () => {
+  const router = useRouter();
   const [emailContent, setEmailContent] = useState('');
   const [targetAudience, setTargetAudience] = useState('');
   const [loading, setLoading] = useState(false);
@@ -66,6 +68,26 @@ const EmailPage = () => {
 
       <Header/>
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4">
+        <button
+          onClick={() => router.back()}
+          className="absolute top-4 left-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+          Back
+        </button>
         <div className="flex justify-center items-center w-full max-w-xl">
           <Toaster
             position="top-center"

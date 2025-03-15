@@ -18,6 +18,7 @@ import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/20/solid";
 import DiamondIcon from '@mui/icons-material/Diamond';
+import { useRouter } from 'next/router';
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -29,6 +30,7 @@ const Transition = React.forwardRef(function Transition(
 });
 
 const WebPage = () => {
+  const router = useRouter();
   const { openSignIn } = useClerk();
   const [loading, setLoading] = useState(false);
   const [textName, setTextName] = useState("");
@@ -208,6 +210,26 @@ const WebPage = () => {
       </Head>
       <Header/>
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4">
+        <button
+          onClick={() => router.back()}
+          className="absolute top-4 left-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4 mr-2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+          Back
+        </button>
         <div className="flex justify-center items-center w-full max-w-xl">
           {generatedSite && (
             <>
