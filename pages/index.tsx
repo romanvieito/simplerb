@@ -50,7 +50,7 @@ const Home: NextPage = () => {
               </span>
             </h1>
             <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed">
-              Take your channel to the next level with a simple creator toolkit to own your domain, launch a site, promote with ads, and connect via email.
+              Take your channel to the next level with a simple creator toolkit to find your domain, launch a site, promote with ads, and connect via email.
             </p>
             <div className="flex gap-4 justify-center">
               <a
