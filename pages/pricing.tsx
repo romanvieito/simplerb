@@ -8,24 +8,55 @@ import CFAQ from "../components/CFAQ";
 
 export default function PricingPage() {
   return (
-    <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
+    <div className="min-h-screen bg-black text-white">
       <Head>
-        <title>Domain Generator</title>
+        <title>Pricing - Domain Generator</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Header />
-      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
-        <div>
-          <CPricing />
-          {/* FAQ Section */}
-          <section className="w-full bg-white py-16">
-            <Container maxWidth="lg">
-              {/* <h2 className="text-3xl font-semibold mb-8 text-center">Choose Your Plan</h2> */}
-              <CFAQ />
-            </Container>
-          </section>
-        </div>
-      </main>
+      
+      {/* Hero Section */}
+      <section className="relative pt-20 pb-16">
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/20 to-black/95 z-0"></div>
+        <Container maxWidth="lg" className="relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-6xl font-bold mb-6 tracking-tight">
+              Simple{" "}
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
+                Transparent
+              </span>{" "}
+              Pricing
+            </h1>
+            <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed">
+              Choose the perfect plan for your business needs. No hidden fees, just straightforward value.
+            </p>
+          </div>
+        </Container>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="py-20 bg-black relative">
+        <Container maxWidth="lg">
+          <div className="relative z-10">
+            <CPricing />
+          </div>
+          {/* Decorative gradient blur */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+        </Container>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-32 bg-gradient-to-b from-gray-900 to-black">
+        <Container maxWidth="lg">
+          <h2 className="text-4xl font-bold text-center mb-16">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-600">
+              Frequently Asked Questions
+            </span>
+          </h2>
+          <CFAQ />
+        </Container>
+      </section>
+
       <Footer />
     </div>
   );
