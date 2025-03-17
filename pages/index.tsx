@@ -77,6 +77,7 @@ const Home: NextPage = () => {
               </a>
               <SignedOut>
                 <button
+                  onClick={handleSignIn}
                   className="px-8 py-4 border border-gray-700 rounded-full font-medium hover:bg-white/10 transition-all duration-300"
                 >
                   Sign in
