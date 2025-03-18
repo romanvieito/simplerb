@@ -275,8 +275,8 @@ const WebPage = () => {
     // Get iframe document
     const iframeDoc = iframeRef.current?.contentDocument;
     if (iframeDoc) {
-      // Prevent all link clicks
-      iframeDoc.addEventListener('click', (e) => {
+      // Add click event listener to the iframe document
+      iframeDoc.body.addEventListener('click', (e) => {
         const target = e.target as HTMLElement;
         const link = target.closest('a');
         
@@ -285,7 +285,7 @@ const WebPage = () => {
           e.preventDefault();
           e.stopPropagation();
         }
-      });
+      }, true); // Add capture phase
 
       // Also prevent default behavior for all links
       const links = iframeDoc.getElementsByTagName('a');
@@ -294,7 +294,8 @@ const WebPage = () => {
         link.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
-        });
+          toast.success("Links are disabled in preview mode, but they'll work on the live site!");
+        }, true); // Add capture phase
       });
     }
   };
@@ -410,6 +411,7 @@ const WebPage = () => {
 
   return (
     <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
+      <Toaster position="top-center" />
       <Head>
         <title>Website Creator</title>
         <link rel="icon" href="/favicon.ico" />
