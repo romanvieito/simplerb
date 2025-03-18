@@ -14,8 +14,8 @@ export default function AIWebCreatorPage() {
       </Head>
       <Header/>
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mb-6 mt-12 sm:mt-20">
-        <h1 className="text-4xl font-bold mb-8">Create Your Website with AI</h1>
-        <p className="text-xl mb-8">Launch your website in seconds. World's easiest website generator.</p>
+        <h1 className="text-4xl font-bold mb-8">Create Your Small Business Website in Seconds</h1>
+        <p className="text-xl mb-8">Digital is more important than ever. World's easiest website generator.</p>
         <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
           <a href="/web" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
             Get Started <span className="inline-block ml-2">➔</span>
