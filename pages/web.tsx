@@ -220,24 +220,6 @@ const WebPage = () => {
 
       let finalWebsite = developerResult.data.content[0].text;
 
-      // Add image attribution footer with default styling
-      const attributionHtml = `
-        <footer style="margin-top: 2rem; padding: 2rem; background: #f5f5f5; color: #333; font-family: system-ui; text-align: center;">
-          <div style="max-width: 1200px; margin: 0 auto;">
-            <p style="margin-bottom: 1rem;">Images provided by <a href="https://www.pexels.com" target="_blank" rel="noopener noreferrer" style="color: #0066cc;">Pexels</a></p>
-            ${images.map(img => 
-              img.pexels ? `<p style="margin: 0.5rem 0;"><strong>${img.type}</strong> image by <a href="${img.pexels.photographer_url}" target="_blank" rel="noopener noreferrer" style="color: #0066cc;">${img.pexels.photographer}</a></p>` : ''
-            ).join('\n')}
-            <p style="margin-top: 1rem;">Design inspired by: <a href="${designPlan.reference_website}" target="_blank" rel="noopener noreferrer" style="color: #0066cc;">${designPlan.reference_website}</a></p>
-          </div>
-        </footer>
-      `;
-
-      // Add attribution to final website
-      finalWebsite = finalWebsite.includes('</body>') 
-        ? finalWebsite.replace('</body>', `${attributionHtml}</body>`)
-        : `${finalWebsite}${attributionHtml}`;
-
       // Sanitize the HTML before setting it
       const sanitizedWebsite = DOMPurify.sanitize(finalWebsite);
       setGeneratedSite(sanitizedWebsite);
