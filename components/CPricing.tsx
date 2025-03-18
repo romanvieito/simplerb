@@ -42,7 +42,7 @@ const pricingPlans: PricingPlan[] = [
     features: [
       "Everything in free, plus",
       "Generate only free domains",
-      "Ads generator",
+      "1-Click Website creator",
       "Priority support"
     ],
     isPopular: true,
@@ -56,7 +56,7 @@ const pricingPlans: PricingPlan[] = [
     discountedPrice: 11,
     features: [
       "Everything in starter, plus",
-      "Website builder",
+      "Ads generator",
       "Email marketing",
       "Priority support"
     ],
