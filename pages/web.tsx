@@ -394,31 +394,31 @@ const WebPage = () => {
   const handleIframeLoad = () => {
     setPreviewLoading(false);
     
-    // Get iframe document
     const iframeDoc = iframeRef.current?.contentDocument;
     if (iframeDoc) {
-      // Add click event listener to the iframe document
-      iframeDoc.body.addEventListener('click', (e) => {
-        const target = e.target as HTMLElement;
-        const link = target.closest('a');
-        
-        if (link) {
-          toast.success("Links are disabled in preview mode, but they'll work on the live site!");
-          e.preventDefault();
-          e.stopPropagation();
-        }
-      }, true); // Add capture phase
+      // Only add link prevention if NOT in edit mode
+      if (!isEditMode) {
+        iframeDoc.body.addEventListener('click', (e) => {
+          const target = e.target as HTMLElement;
+          const link = target.closest('a');
+          
+          if (link) {
+            toast.success("Links are disabled in preview mode, but they'll work on the live site!");
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }, true);
 
-      // Also prevent default behavior for all links
-      const links = iframeDoc.getElementsByTagName('a');
-      Array.from(links).forEach(link => {
-        link.style.cursor = 'not-allowed';
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          toast.success("Links are disabled in preview mode, but they'll work on the live site!");
-        }, true); // Add capture phase
-      });
+        const links = iframeDoc.getElementsByTagName('a');
+        Array.from(links).forEach(link => {
+          link.style.cursor = 'not-allowed';
+          link.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toast.success("Links are disabled in preview mode, but they'll work on the live site!");
+          }, true);
+        });
+      }
     }
   };
 
@@ -552,26 +552,45 @@ const WebPage = () => {
     </div>
   );
 
-  // Add useEffect to handle edit mode
+  // Modify useEffect to handle edit mode
   useEffect(() => {
     const iframeDoc = iframeRef.current?.contentDocument;
     if (!iframeDoc) return;
 
     // Function to make elements editable or non-editable
     const toggleEditMode = (editable: boolean) => {
-      const textElements = iframeDoc.querySelectorAll('p, h1, h2, h3, h4, h5, h6, span');
+      // Include 'a' in the selector for links
+      const textElements = iframeDoc.querySelectorAll('p, h1, h2, h3, h4, h5, h6, span, a');
+      
       textElements.forEach(element => {
         element.contentEditable = editable.toString();
+        
         if (editable) {
           element.style.cursor = 'text';
           element.style.outline = '1px dashed #ddd';
+          
+          // For links, prevent default behavior while in edit mode
+          if (element.tagName.toLowerCase() === 'a') {
+            element.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            });
+          }
         } else {
           element.style.cursor = '';
           element.style.outline = '';
-          // Save changes when exiting edit mode
-          setGeneratedSite(iframeDoc.documentElement.outerHTML);
+          
+          // Restore link behavior when exiting edit mode
+          if (element.tagName.toLowerCase() === 'a') {
+            element.style.cursor = 'not-allowed'; // Maintain the preview mode behavior for links
+          }
         }
       });
+
+      // Save changes when exiting edit mode
+      if (!editable) {
+        setGeneratedSite(iframeDoc.documentElement.outerHTML);
+      }
     };
 
     toggleEditMode(isEditMode);
