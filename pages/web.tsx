@@ -207,7 +207,7 @@ const WebPage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           prompt: developerPrompt,
-          max_tokens: 8000 // Limit response size
+          max_tokens: 4096 // Limit response size
         }),
       });
 
@@ -225,7 +225,15 @@ const WebPage = () => {
 
       // Sanitize the HTML before setting it
       const sanitizedWebsite = DOMPurify.sanitize(finalWebsite);
-      setGeneratedSite(sanitizedWebsite);
+
+      console.log("Sanitized website:", sanitizedWebsite);
+
+      // Clean up any remaining markdown formatting
+      const cleanedWebsite = sanitizedWebsite
+        .replace(/^```html\n/, '')  // Remove opening ```html
+        .replace(/```$/, '');       // Remove closing ```
+
+      setGeneratedSite(cleanedWebsite);
       setOpenWebSite(true);
 
       mixpanel.track("Web Generated", {
