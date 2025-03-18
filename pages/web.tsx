@@ -418,7 +418,7 @@ const WebPage = () => {
         </div>
 
         <div className="max-w-xl w-full mt-6">
-          <div className="flex mb-4 items-center space-x-3 bg-white p-4 rounded-lg shadow-sm">
+          <div className="flex mb-4 items-center space-x-3 bg-white p-4">
             <div className="bg-gray-100 rounded-full p-2">
               <Image
                 src="/1-black.png"
