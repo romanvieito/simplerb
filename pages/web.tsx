@@ -413,13 +413,13 @@ const WebPage = () => {
 
         <div className="flex justify-center items-center w-full max-w-xl">
           <h1 className="text-4xl font-bold text-gray-900 mb-8">
-            Website <span className="text-red-600">Creator</span>
+            Website <span className="text-black">Creator</span>
           </h1>
         </div>
 
         <div className="max-w-xl w-full mt-6">
           <div className="flex mb-4 items-center space-x-3 bg-white p-4 rounded-lg shadow-sm">
-            <div className="bg-red-100 rounded-full p-2">
+            <div className="bg-gray-100 rounded-full p-2">
               <Image
                 src="/1-black.png"
                 width={24}
@@ -436,7 +436,7 @@ const WebPage = () => {
             onChange={(e) => setTextDescription(e.target.value)}
             maxLength={200}
             rows={4}
-            className="w-full rounded-lg border-gray-200 shadow-sm focus:border-red-500 focus:ring-red-500 my-5 p-4 text-gray-700 resize-none transition-all duration-200"
+            className="w-full rounded-lg border-gray-200 shadow-sm focus:border-black focus:ring-black my-5 p-4 text-gray-700 resize-none transition-all duration-200"
             placeholder={"e.g., Modern coffee shop with industrial design, featuring specialty roasts and tasting events"}
           />
           <div className="text-right text-sm text-gray-500 mb-6">
@@ -445,7 +445,7 @@ const WebPage = () => {
           
           <SignedOut>  
             <button
-              className="bg-gradient-to-r from-red-600 to-red-700 rounded-lg text-white font-medium px-6 py-3 sm:mt-6 mt-4 hover:from-red-700 hover:to-red-800 w-full transition-all duration-200 shadow-sm hover:shadow-md"
+              className="bg-black rounded-lg text-white font-medium px-6 py-3 sm:mt-6 mt-4 hover:bg-gray-900 w-full transition-all duration-200 shadow-sm hover:shadow-md"
               onClick={() => openSignIn()}
             >
               Sign in to Create Website
@@ -454,7 +454,7 @@ const WebPage = () => {
           <SignedIn>
           {!loading &&           
              <button
-             className="bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg font-medium px-6 py-3 mt-2 hover:from-red-700 hover:to-red-800 w-full transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center"
+             className="bg-black text-white rounded-lg font-medium px-6 py-3 mt-2 hover:bg-gray-900 w-full transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center"
              onClick={generateWeb}
              disabled={loading}
            >
@@ -464,7 +464,7 @@ const WebPage = () => {
             }
             {loading && (
               <button
-                className="bg-gradient-to-r from-red-600 to-red-700 rounded-lg text-white font-medium px-6 py-3 sm:mt-6 mt-4 w-full shadow-sm"
+                className="bg-black rounded-lg text-white font-medium px-6 py-3 sm:mt-6 mt-4 w-full shadow-sm"
                 disabled
               >
                 <LoadingDots color="white" style="large" />
