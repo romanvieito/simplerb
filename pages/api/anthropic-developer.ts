@@ -1,8 +1,21 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Anthropic from '@anthropic-ai/sdk';
 
+/*
+ * Dedicated endpoint for website HTML generation
+ * 
+ * This endpoint is separated from the main Anthropic API endpoint to:
+ * 1. Handle longer processing times required for HTML generation
+ * 2. Avoid timeout issues in serverless functions
+ * 3. Allow for specific configuration for website development
+ * 
+ * Configuration:
+ * - maxDuration: 300 seconds (5 minutes) to allow for complex HTML generation
+ * - max_tokens: 2000 to balance between detail and processing time
+ * - temperature: 0 for consistent, deterministic output
+ */
 export const config = {
-  maxDuration: 300,
+  maxDuration: 300, // 5 minutes in seconds
 };
 
 export default async function handler(
@@ -25,9 +38,10 @@ export default async function handler(
   }
 
   try {
+    // Configure for website HTML generation
     const message = await anthropic.messages.create({
       model: 'claude-3-7-sonnet-20250219',
-      max_tokens: 4096,
+      max_tokens: 2000,
       temperature: 0,
       messages: [
         { "role": "user", "content": prompt }

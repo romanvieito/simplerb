@@ -91,7 +91,15 @@ const WebPage = () => {
         return;
       }
 
-      // Designer Agent - Optimized prompt with size constraints
+      /*
+       * Website Generation Process - Two-Step Approach
+       * 
+       * Step 1: Design Planning (/api/anthropic)
+       * - Generates the overall design structure and image requirements
+       * - Returns a JSON structure with design specifications
+       * - Uses fewer tokens (1000) for faster response
+       * - Includes: reference website, design style, layout sections, and image queries
+       */
       const designerPrompt = `Design minimal website for: ${textDescription}
       Return raw JSON without any markdown formatting or code blocks. Start with opening brace and end with closing brace:
       {
@@ -122,6 +130,7 @@ const WebPage = () => {
         ]
       }`;
 
+      // First API call - Design Planning
       const designerResponse = await fetch("/api/anthropic", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -129,8 +138,7 @@ const WebPage = () => {
           prompt: designerPrompt,
           max_tokens: 1000
         }),
-        // Add timeout
-        signal: AbortSignal.timeout(30000) // 30 second timeout
+        signal: AbortSignal.timeout(30000) // 30 second timeout for design phase
       });
 
       if (!designerResponse.ok) {
@@ -189,7 +197,18 @@ const WebPage = () => {
         })
       );
 
-      // Developer Agent - Optimized prompt with size constraints
+      /*
+       * Step 2: Website Development (/api/anthropic-developer)
+       * - Separate endpoint to handle the more complex HTML generation
+       * - Takes the design plan and generates the actual website code
+       * - Uses a dedicated endpoint to avoid timeout issues
+       * - Processes: HTML structure, styling, and image integration
+       * 
+       * Note: Split into two endpoints because:
+       * 1. HTML generation takes longer and needs more tokens
+       * 2. Prevents timeout issues in serverless functions
+       * 3. Better error handling for each step
+       */
       const developerPrompt = `Create a minimal landing page.
       Ref: ${designPlan.reference_website}
       Style: ${designPlan.design_style}
@@ -204,6 +223,7 @@ const WebPage = () => {
       
       Please return only the code, nothing else.`;
 
+      // Second API call - Website Development
       const developerResponse = await fetch("/api/anthropic-developer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
