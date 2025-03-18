@@ -178,7 +178,7 @@ const WebPage = () => {
       );
 
       // Developer Agent - Optimized prompt with size constraints
-      const developerPrompt = `Create minimal responsive HTML/CSS. Keep it as short as possible.
+      const developerPrompt = `Create a minimal and simple landing page.
       Ref: ${designPlan.reference_website}
       Style: ${designPlan.design_style}
       Sections: ${designPlan.layout_sections?.join(', ')}
@@ -187,9 +187,8 @@ const WebPage = () => {
       ${images.map(img => `${img.type}: ${img.pexels?.url || 'https://via.placeholder.com/1920x1080'}`).join('\n')}
 
       Requirements:
-      1. Use minimal CSS, no frameworks
-      2. Single page only
-      3. Mobile-first design
+      1. Single page only
+      2. Mobile-first design
       
       Please return only the code, nothing else.
       `;
