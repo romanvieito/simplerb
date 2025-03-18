@@ -494,51 +494,61 @@ const DomainPage: React.FC = () => {
             </div>
 
             {showAdvancedSettings && (
-              <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-                <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-                  <div className="mt-3 text-center">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">
-                      Advanced Settings
-                    </h3>
-                    <div className="mt-2 px-7 py-3">
-                      <div className="mb-4">
-                        <label
-                          className="block text-gray-700 text-sm font-bold mb-2"
-                          htmlFor="temperatureOption"
-                        >
-                          Your domain names should be:
-                        </label>
-                        <div className="flex justify-between">
-                          {["imaginative", "neutral", "reliable"].map((option) => (
-                            <button
-                              key={option}
-                              type="button"
-                              onClick={() => {
-                                setTemperatureOption(option);
-                                mixpanel.track("Temperature Option Set", {
-                                  userId: dataUser?.id || "anonymous",
-                                  option: option
-                                });
-                              }}
-                              className={`px-4 py-2 rounded-md ${
-                                temperatureOption === option
-                                  ? "bg-black text-white"
-                                  : "bg-gray-200 text-gray-800"
-                              } hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400`}
-                            >
-                              {option.charAt(0).toUpperCase() + option.slice(1)}
-                            </button>
-                          ))}
-                        </div>
+              <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+                <div className="relative mx-auto p-8 border w-[450px] shadow-xl rounded-xl bg-white">
+                  {/* Close button */}
+                  <button
+                    onClick={() => setShowAdvancedSettings(false)}
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+
+                  <div className="space-y-6">
+                    <div className="text-center">
+                      <h3 className="text-xl font-bold text-gray-900">
+                        Advanced Settings
+                      </h3>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Customize your domain generation preferences
+                      </p>
+                    </div>
+
+                    {/* Temperature Options */}
+                    <div className="space-y-3">
+                      <label className="block text-gray-700 font-medium">
+                        Domain Name Style
+                      </label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {["imaginative", "neutral", "reliable"].map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => {
+                              setTemperatureOption(option);
+                              mixpanel.track("Temperature Option Set", {
+                                userId: dataUser?.id || "anonymous",
+                                option: option
+                              });
+                            }}
+                            className={`px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
+                              temperatureOption === option
+                                ? "border-black bg-black text-white"
+                                : "border-gray-200 hover:border-gray-300 text-gray-700"
+                            }`}
+                          >
+                            {option.charAt(0).toUpperCase() + option.slice(1)}
+                          </button>
+                        ))}
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-center mb-3">
-                      <label
-                        className="block text-gray-700 text-sm font-bold mb-2 text-center"
-                        htmlFor="domainExtension"
-                      >
-                        Extension:
+                    {/* Domain Extension */}
+                    <div className="space-y-3">
+                      <label className="block text-gray-700 font-medium">
+                        Domain Extension
                       </label>
                       <select
                         id="domainExtension"
@@ -550,9 +560,9 @@ const DomainPage: React.FC = () => {
                             extension: e.target.value
                           });
                         }}
-                        className="shadow appearance-none border rounded w-full max-w-[150px] py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-black focus:ring-black transition-all duration-200"
                       >
-                        <option value="">--</option>
+                        <option value="">Any extension</option>
                         <option value=".com">.com</option>
                         <option value=".net">.net</option>
                         <option value=".org">.org</option>
@@ -560,15 +570,14 @@ const DomainPage: React.FC = () => {
                         <option value=".ai">.ai</option>
                       </select>
                     </div>
-                    
-                    <div className="items-center px-4 py-3">
-                      <button
-                        onClick={() => setShowAdvancedSettings(false)}
-                        className="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300"
-                      >
-                        Done
-                      </button>
-                    </div>
+
+                    {/* Done Button */}
+                    <button
+                      onClick={() => setShowAdvancedSettings(false)}
+                      className="w-full px-4 py-3 bg-black text-white text-base font-medium rounded-lg hover:bg-gray-900 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+                    >
+                      Apply Settings
+                    </button>
                   </div>
                 </div>
               </div>
