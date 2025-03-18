@@ -41,6 +41,9 @@ const WebPage = () => {
   const [textDescription, setTextDescription] = useState("");
   const [generatedSite, setGeneratedSite] = useState("");
   const [openWebSite, setOpenWebSite] = React.useState(false);
+  const [previewViewport, setPreviewViewport] = React.useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [previewLoading, setPreviewLoading] = React.useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const getImageFromPexels = async (query: string) => {
     try {
@@ -271,24 +274,142 @@ const WebPage = () => {
     }
   };
 
-  const closeWebSite = () => {
-    setOpenWebSite(false);
-  }
+  const getViewportWidth = () => {
+    switch (previewViewport) {
+      case 'mobile': return '375px';
+      case 'tablet': return '768px';
+      case 'desktop': return '100%';
+    }
+  };
 
-  const downloadCode = () => {
+  const handlePreviewLoad = () => {
+    setPreviewLoading(false);
+  };
+
+  const refreshPreview = () => {
+    setPreviewLoading(true);
+    if (iframeRef.current) {
+      iframeRef.current.src = iframeRef.current.src;
+    }
+  };
+
+  const downloadPreview = () => {
     const element = document.createElement("a");
     const file = new Blob([generatedSite], { type: "text/html" });
     element.href = URL.createObjectURL(file);
-    element.download = "generated_site.html";
-    document.body.appendChild(element); // Required for this to work in FireFox
+    element.download = `${textName.toLowerCase().replace(/\s+/g, '-')}.html`;
+    document.body.appendChild(element);
     element.click();
+    document.body.removeChild(element);
 
-    //TODO Code se corta, generatedSite es muy largo pa mixpanel
-    mixpanel.track("Download Web Code Button Click", {
+    mixpanel.track("Download Web Preview", {
+      textName: textName,
+      textDescription: textDescription,
+      viewport: previewViewport
+    });
+  };
+
+  const copyCode = () => {
+    navigator.clipboard.writeText(generatedSite);
+    toast.success("Code copied to clipboard!");
+    mixpanel.track("Copy Web Code", {
       textName: textName,
       textDescription: textDescription
     });
   };
+
+  const PreviewToolbar = () => (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: '60px',
+      backgroundColor: 'white',
+      borderBottom: '1px solid #e5e7eb',
+      display: 'flex',
+      alignItems: 'center',
+      padding: '0 1rem',
+      justifyContent: 'space-between',
+      zIndex: 1000,
+      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <button
+          onClick={() => setOpenWebSite(false)}
+          className="text-gray-600 hover:text-gray-900 p-2 rounded-full hover:bg-gray-100"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <div className="text-lg font-medium text-gray-900">{textName}</div>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        {/* Viewport Controls */}
+        <div className="bg-gray-100 rounded-lg p-1 flex">
+          <button
+            onClick={() => setPreviewViewport('mobile')}
+            className={`p-2 rounded ${previewViewport === 'mobile' ? 'bg-white shadow' : 'hover:bg-gray-200'}`}
+            title="Mobile view"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M7 2a2 2 0 00-2 2v12a2 2 0 002 2h6a2 2 0 002-2V4a2 2 0 00-2-2H7zm3 14a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+            </svg>
+          </button>
+          <button
+            onClick={() => setPreviewViewport('tablet')}
+            className={`p-2 rounded ${previewViewport === 'tablet' ? 'bg-white shadow' : 'hover:bg-gray-200'}`}
+            title="Tablet view"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm4 14a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+            </svg>
+          </button>
+          <button
+            onClick={() => setPreviewViewport('desktop')}
+            className={`p-2 rounded ${previewViewport === 'desktop' ? 'bg-white shadow' : 'hover:bg-gray-200'}`}
+            title="Desktop view"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Action Buttons */}
+        <button
+          onClick={refreshPreview}
+          className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+          title="Refresh preview"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+          </svg>
+        </button>
+        <button
+          onClick={copyCode}
+          className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+          title="Copy code"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z" />
+            <path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
+          </svg>
+        </button>
+        <button
+          onClick={downloadPreview}
+          className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+          title="Download HTML"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
@@ -361,7 +482,7 @@ const WebPage = () => {
                     fontSize: 24,
                     zIndex: 9999,
                   }}
-                  onClick={downloadCode}
+                  onClick={downloadPreview}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -457,12 +578,54 @@ const WebPage = () => {
         <Dialog
           fullScreen
           open={openWebSite}
-          onClose={closeWebSite}
+          onClose={() => setOpenWebSite(false)}
           TransitionComponent={Transition}
         >
-          <Box component="section" sx={{ border: '1px dashed grey' }}>
-            <div dangerouslySetInnerHTML={{ __html: generatedSite }} />
-          </Box>          
+          <PreviewToolbar />
+          <div style={{
+            marginTop: '60px',
+            height: 'calc(100vh - 60px)',
+            backgroundColor: '#f3f4f6',
+            display: 'flex',
+            justifyContent: 'center',
+            padding: '2rem',
+            overflow: 'auto'
+          }}>
+            <div style={{
+              width: getViewportWidth(),
+              height: '100%',
+              backgroundColor: 'white',
+              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+              borderRadius: '8px',
+              overflow: 'hidden',
+              transition: 'width 0.3s ease'
+            }}>
+              {previewLoading && (
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: 1
+                }}>
+                  <LoadingDots color="black" style="large" />
+                </div>
+              )}
+              <iframe
+                ref={iframeRef}
+                srcDoc={generatedSite}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  opacity: previewLoading ? 0.5 : 1,
+                  transition: 'opacity 0.3s ease'
+                }}
+                onLoad={handlePreviewLoad}
+                title="Website Preview"
+              />
+            </div>
+          </div>
         </Dialog>       
         </div>        
       </main>
