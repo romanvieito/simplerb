@@ -2,21 +2,14 @@ import React, { useState, useContext, useRef } from "react";
 import Head from "next/head";
 import { Toaster, toast } from "react-hot-toast";
 import Header from "../components/Header";
-import {
-  Box,
-  Tooltip,
-} from "@mui/material";
 import mixpanel from "../utils/mixpanel-config";
 import Image from "next/image";
 import SBRContext from "../context/SBRContext";
 import LoadingDots from "../components/LoadingDots";
 import { useClerk, SignedIn, SignedOut } from "@clerk/nextjs";
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/20/solid";
 import DiamondIcon from '@mui/icons-material/Diamond';
 import { useRouter } from 'next/router';
 import DOMPurify from 'dompurify';
