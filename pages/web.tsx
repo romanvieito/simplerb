@@ -389,10 +389,10 @@ const WebPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Header/>
-      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4">
+      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 bg-gradient-to-b from-white to-gray-50">
         <button
           onClick={() => router.back()}
-          className="absolute top-4 left-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center"
+          className="absolute top-4 left-4 text-gray-600 hover:text-gray-900 font-medium py-2 px-4 rounded-lg inline-flex items-center transition-all duration-200 hover:bg-gray-100"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -410,65 +410,61 @@ const WebPage = () => {
           </svg>
           Back
         </button>
+
         <div className="flex justify-center items-center w-full max-w-xl">
-          <Toaster
-            position="top-center"
-            reverseOrder={false}
-            toastOptions={{ duration: 5000 }}
-          />
-          <h1 className="sm:text-2xl text-1xl  max-w-[708px] font-bold text-slate-900">
-            Website Creator
+          <h1 className="text-4xl font-bold text-gray-900 mb-8">
+            Website <span className="text-red-600">Creator</span>
           </h1>
-          <div className="ml-auto w-8"></div> {/* This empty div balances the layout */}
         </div>
 
-        <div className="max-w-xl w-full mt-10">
-          <div className="flex mb-1 items-center space-x-3">
-            <Image
-              src="/1-black.png"
-              width={30}
-              height={30}
-              alt="1 icon"
-              className="mb-0"
-            />
-            <p className="text-left font-medium">Enter Your Website Description</p>
+        <div className="max-w-xl w-full mt-6">
+          <div className="flex mb-4 items-center space-x-3 bg-white p-4 rounded-lg shadow-sm">
+            <div className="bg-red-100 rounded-full p-2">
+              <Image
+                src="/1-black.png"
+                width={24}
+                height={24}
+                alt="1 icon"
+                className="mb-0"
+              />
+            </div>
+            <p className="text-left font-medium text-gray-800">Enter Your Website Description</p>
           </div>
+          
           <textarea
             value={textDescription}
             onChange={(e) => setTextDescription(e.target.value)}
             maxLength={200}
             rows={4}
-            className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
+            className="w-full rounded-lg border-gray-200 shadow-sm focus:border-red-500 focus:ring-red-500 my-5 p-4 text-gray-700 resize-none transition-all duration-200"
             placeholder={"e.g., Modern coffee shop with industrial design, featuring specialty roasts and tasting events"}
           />
-          <div className="text-right text-sm text-gray-500">
+          <div className="text-right text-sm text-gray-500 mb-6">
             {textDescription.length}/200 characters
           </div>
           
-         
           <SignedOut>  
             <button
-              className="bg-black rounded-md text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+              className="bg-gradient-to-r from-red-600 to-red-700 rounded-lg text-white font-medium px-6 py-3 sm:mt-6 mt-4 hover:from-red-700 hover:to-red-800 w-full transition-all duration-200 shadow-sm hover:shadow-md"
               onClick={() => openSignIn()}
             >
-              Sign in / up
+              Sign in to Create Website
             </button> 
           </SignedOut>
           <SignedIn>
           {!loading &&           
              <button
-             className="bg-black text-white rounded-md font-medium px-4 py-2 mt-2 hover:bg-gray-800 w-full"
+             className="bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg font-medium px-6 py-3 mt-2 hover:from-red-700 hover:to-red-800 w-full transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center"
              onClick={generateWeb}
              disabled={loading}
            >
             <DiamondIcon className="mr-2" />
-
-             {loading ? "Saving..." : "Create Website"}
+             Create Website
            </button>         
             }
             {loading && (
               <button
-                className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+                className="bg-gradient-to-r from-red-600 to-red-700 rounded-lg text-white font-medium px-6 py-3 sm:mt-6 mt-4 w-full shadow-sm"
                 disabled
               >
                 <LoadingDots color="white" style="large" />
@@ -488,7 +484,7 @@ const WebPage = () => {
           <div style={{
             marginTop: '60px',
             height: 'calc(100vh - 60px)',
-            backgroundColor: '#f3f4f6',
+            backgroundColor: '#f8fafc',
             display: 'flex',
             justifyContent: 'center',
             padding: '2rem',
@@ -498,10 +494,10 @@ const WebPage = () => {
               width: getViewportWidth(),
               height: '100%',
               backgroundColor: 'white',
-              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
-              borderRadius: '8px',
+              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.05)',
+              borderRadius: '12px',
               overflow: 'hidden',
-              transition: 'width 0.3s ease',
+              transition: 'all 0.3s ease',
               position: 'relative'
             }}>
               {previewLoading && (
