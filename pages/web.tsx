@@ -197,7 +197,9 @@ const WebPage = () => {
       1. Use minimal CSS, no frameworks
       2. Single page only
       3. Mobile-first design
-      4. Keep code concise`;
+      
+      Please return only the code, nothing else.
+      `;
 
       const developerResponse = await fetch("/api/anthropic", {
         method: "POST",
