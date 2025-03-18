@@ -9,6 +9,7 @@ import { useClerk, SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextj
 import { Button, Box } from "@mui/material";
 import DiamondIcon from '@mui/icons-material/Diamond';
 import SBRContext from "../context/SBRContext";
+import LoadingDots from "../components/LoadingDots";
 
 const DomainPage: React.FC = () => {
   const router = useRouter();
@@ -356,7 +357,7 @@ const DomainPage: React.FC = () => {
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
         <button
           onClick={() => router.back()}
-          className="absolute top-4 left-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center"
+          className="absolute top-4 left-4 text-gray-600 hover:text-gray-900 font-medium py-2 px-4 rounded-lg inline-flex items-center transition-all duration-200 hover:bg-gray-100"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -375,8 +376,8 @@ const DomainPage: React.FC = () => {
           Back
         </button>
 
-        <h1 className="sm:text-6xl text-4xl max-w-[708px] font-bold text-slate-900">
-          Domain Generator
+        <h1 className="text-4xl font-bold text-gray-900 mb-8">
+          Domain <span className="text-black">Generator</span>
         </h1>
 
         <Box
@@ -429,26 +430,32 @@ const DomainPage: React.FC = () => {
         <SignedIn>
           {/* Show this content when the user is signed in */}
           <form onSubmit={generateDomains} className="max-w-xl w-full">
-            <div className="flex mt-10 items-center space-x-3">
-              <p className="text-left font-medium">
-                Describe your business or idea
-              </p>
+            <div className="flex items-center space-x-3 bg-white p-4">
+              <div className="bg-black rounded-full p-2 w-8 h-8 flex items-center justify-center">
+                <span className="text-lg font-bold text-white">1</span>
+              </div>
+              <p className="text-left font-medium text-gray-800">Describe your business or idea</p>
             </div>
+
             <textarea
               value={businessDescription}
               onChange={(e) => setBusinessDescription(e.target.value)}
               rows={4}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
+              className="w-full rounded-lg border-gray-200 shadow-sm focus:border-black focus:ring-black my-5 p-4 text-gray-700 resize-none transition-all duration-200"
               placeholder="e.g. Boutique Coffee Shop"
             />
 
-            <div className="flex mb-5 items-center space-x-3">
-              <p className="text-left font-medium">Select the vibe</p>
+            <div className="flex items-center space-x-3 bg-white p-4">
+              <div className="bg-black rounded-full p-2 w-8 h-8 flex items-center justify-center">
+                <span className="text-lg font-bold text-white">2</span>
+              </div>
+              <p className="text-left font-medium text-gray-800">Select the vibe</p>
             </div>
+
             <select
               value={vibe}
               onChange={(e) => setVibe(e.target.value as VibeType)}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black"
+              className="w-full rounded-lg border-gray-200 shadow-sm focus:border-black focus:ring-black p-3 mb-6 transition-all duration-200"
             >
               <option value="Professional">Professional</option>
               <option value="Friendly">Friendly</option>
@@ -456,49 +463,34 @@ const DomainPage: React.FC = () => {
               <option value="Sophisticated">Sophisticated</option>
             </select>
 
-            <div className="flex items-center mt-6">
-              <div className="flex items-center space-x-1">
+            <div className="flex items-center justify-between bg-white p-4 mb-6">
+              <div className="flex items-center space-x-3">
                 <input
                   type="checkbox"
-                  className="cursor-pointer"
+                  className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black transition-all duration-200"
                   checked={availableOnly}
                   onChange={handleAvailableOnlyChange}
                 />
-                <label
-                  className={`text-left font-medium ${
-                    !isPremiumUser ? "text-gray-400" : ""
-                  }`}
-                >
+                <label className={`text-left font-medium ${!isPremiumUser ? "text-gray-400" : "text-gray-800"}`}>
                   Available only
                 </label>
-                <DiamondIcon sx={{ fontSize: "1rem", color: "gold" }} />
+                <DiamondIcon sx={{ fontSize: "1rem", color: "black" }} />
               </div>
-              <div className="flex justify-end ml-auto">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAdvancedSettings(true);
-                    mixpanel.track("Advanced Settings Opened", {
-                      userId: dataUser?.id || "anonymous"
-                    });
-                  }}
-                  className="text-sm text-gray-600 hover:text-black focus:outline-none"
+
+              <button
+                type="button"
+                onClick={() => setShowAdvancedSettings(true)}
+                className="text-gray-600 hover:text-black transition-all duration-200"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 inline-block mr-1"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <circle cx="12" cy="12" r="3" />
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                  </svg>
-                </button>
-              </div>
+                  <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                </svg>
+              </button>
             </div>
 
             {showAdvancedSettings && (
@@ -583,98 +575,67 @@ const DomainPage: React.FC = () => {
             )}
 
             <button
-              className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+              className="bg-black text-white rounded-lg font-medium px-6 py-3 w-full hover:bg-gray-900 transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center"
               type="submit"
               disabled={loading}
             >
-              {loading ? "Generating..." : "Generate domains"}
+              {loading ? (
+                <LoadingDots color="white" style="large" />
+              ) : (
+                "Generate domains"
+              )}
             </button>
           </form>
 
           <div className="space-y-8 mt-10">
             {generatedDomains.length > 0 && (
-              <h2 className="sm:text-4xl text-3xl font-bold text-slate-900 mx-auto">
+              <h2 className="text-3xl font-bold text-gray-900 mx-auto">
                 {isPremiumUser ? "Available Domains:" : "Generated Domains:"}
               </h2>
             )}
             <ul className="space-y-4">
-              {(availableOnly && isPremiumUser
-                ? filteredDomains
-                : generatedDomains
-              ).map((domain, index) => (
+              {(availableOnly && isPremiumUser ? filteredDomains : generatedDomains).map((domain, index) => (
                 <li
                   key={index}
-                  className="text-xl flex items-center justify-between"
+                  className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
                 >
-                  <span>{domain.domain}</span>
-                  {isPremiumUser && (
+                  <span className="text-xl font-medium text-gray-800">{domain.domain}</span>
+                  {isPremiumUser ? (
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => {
-                          handleCheckAvailability(domain.domain);
-                          mixpanel.track("Buy Domain Click", {
-                            domain: domain.domain,
-                            source: "domain-page",
-                          });
-                        }}
-                        className="bg-black rounded-xl text-white font-medium px-4 py-2 mx-2 hover:bg-gray-300 hover:text-black"
+                        onClick={() => handleCheckAvailability(domain.domain)}
+                        className="bg-black text-white rounded-lg px-4 py-2 hover:bg-gray-900 transition-all duration-200"
                       >
-                        <span className="flex items-center">Buy</span>
+                        Buy
                       </button>
                       <button
                         onClick={() => {
-                          window.open(
-                            `/web?domain=${encodeURIComponent(domain.domain)}`,
-                            "_blank"
-                          );
-                          mixpanel.track("Create Web Click", {
-                            domain: domain.domain,
-                            source: "domain-page",
-                          });
+                          window.open(`/web?domain=${encodeURIComponent(domain.domain)}`, "_blank");
                         }}
-                        className="bg-green-600 rounded-xl text-white font-medium px-4 py-2 hover:bg-green-700"
+                        className="bg-black text-white rounded-lg px-4 py-2 hover:bg-gray-900 transition-all duration-200"
                       >
                         Create Web
                       </button>
                       <button
                         onClick={() => {
-                          window.open(
-                            `/ads?domain=${encodeURIComponent(domain.domain)}`,
-                            "_blank"
-                          );
-                          mixpanel.track("Create Ads Click", {
-                            domain: domain.domain,
-                            source: "domain-page",
-                          });
+                          window.open(`/ads?domain=${encodeURIComponent(domain.domain)}`, "_blank");
                         }}
-                        className="bg-purple-600 rounded-xl text-white font-medium px-4 py-2 hover:bg-purple-700"
+                        className="bg-black text-white rounded-lg px-4 py-2 hover:bg-gray-900 transition-all duration-200"
                       >
                         Create Ads
                       </button>
                     </div>
-                  )}
-                  {!isPremiumUser ? (
+                  ) : (
                     <button
                       onClick={() => handleCheckAvailability(domain.domain)}
-                      className="bg-blue-600 rounded-xl text-white font-medium px-4 py-2 mx-2 hover:bg-gray-300 hover:text-black"
+                      className="bg-black text-white rounded-lg px-4 py-2 hover:bg-gray-900 transition-all duration-200 flex items-center"
                     >
-                      <span className="flex items-center">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5 mr-2"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Check Availability
-                      </span>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                      </svg>
+                      Check Availability
                     </button>
-                  ) : null}
+                  )}
                 </li>
               ))}
             </ul>
