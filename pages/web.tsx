@@ -97,17 +97,27 @@ const WebPage = () => {
       {
         "reference_website": "URL",
         "design_style": "5-word style description",
-        "layout_sections": ["max 4 sections"],
+        "layout_sections": ["simple informative hero, features and pick just one more section"],
         "images": [
           {
             "type": "hero",
             "search_query": "2-3 word query",
-            "alt_text": "5-word alt text"
+            "alt_text": "3-word alt text"
           },
           {
             "type": "feature1",
             "search_query": "2-3 word query",
-            "alt_text": "5-word alt text"
+            "alt_text": "2-word alt text"
+          },
+          {
+            "type": "feature2",
+            "search_query": "2-3 word query",
+            "alt_text": "2-word alt text"
+          },
+          {
+            "type": "feature3",
+            "search_query": "2-3 word query",
+            "alt_text": "2-word alt text"
           }
         ]
       }`;
@@ -178,7 +188,7 @@ const WebPage = () => {
       );
 
       // Developer Agent - Optimized prompt with size constraints
-      const developerPrompt = `Create a minimal and simple landing page.
+      const developerPrompt = `Create a minimal landing page.
       Ref: ${designPlan.reference_website}
       Style: ${designPlan.design_style}
       Sections: ${designPlan.layout_sections?.join(', ')}
@@ -190,15 +200,14 @@ const WebPage = () => {
       1. Single page only
       2. Mobile-first design
       
-      Please return only the code, nothing else.
-      `;
+      Please return only the code, nothing else.`;
 
       const developerResponse = await fetch("/api/anthropic", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           prompt: developerPrompt,
-          max_tokens: 5000 // Limit response size
+          max_tokens: 8000 // Limit response size
         }),
       });
 
