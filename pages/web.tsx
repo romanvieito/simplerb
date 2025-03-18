@@ -269,8 +269,34 @@ const WebPage = () => {
     }
   };
 
-  const handlePreviewLoad = () => {
+  const handleIframeLoad = () => {
     setPreviewLoading(false);
+    
+    // Get iframe document
+    const iframeDoc = iframeRef.current?.contentDocument;
+    if (iframeDoc) {
+      // Prevent all link clicks
+      iframeDoc.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        const link = target.closest('a');
+        
+        if (link) {
+          toast.success("Links are disabled in preview mode, but they'll work on the live site!");
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      });
+
+      // Also prevent default behavior for all links
+      const links = iframeDoc.getElementsByTagName('a');
+      Array.from(links).forEach(link => {
+        link.style.cursor = 'not-allowed';
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        });
+      });
+    }
   };
 
   const downloadPreview = () => {
@@ -514,6 +540,7 @@ const WebPage = () => {
                 <iframe
                   ref={iframeRef}
                   srcDoc={generatedSite}
+                  sandbox="allow-same-origin allow-scripts"
                   style={{
                     width: '100%',
                     height: '100%',
@@ -521,7 +548,7 @@ const WebPage = () => {
                     opacity: previewLoading ? 0.5 : 1,
                     transition: 'opacity 0.3s ease'
                   }}
-                  onLoad={handlePreviewLoad}
+                  onLoad={handleIframeLoad}
                   title="Website Preview"
                 />
             </div>
