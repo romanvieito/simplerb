@@ -37,7 +37,6 @@ const WebPage = () => {
   const router = useRouter();
   const { openSignIn } = useClerk();
   const [loading, setLoading] = useState(false);
-  const [textName, setTextName] = useState("");
   const [textDescription, setTextDescription] = useState("");
   const [generatedSite, setGeneratedSite] = useState("");
   const [openWebSite, setOpenWebSite] = React.useState(false);
@@ -93,62 +92,40 @@ const WebPage = () => {
           }
         );
         mixpanel.track("Free user try Create Website", {
-          textName: textName,
           textDescription: textDescription,
         });
         setLoading(false);
         return;
       }
 
-      // Designer Agent
-      const designerPrompt = `As a web designer, analyze the following website requirements and provide a design direction:
-      Website Name: ${textName}
-      Description: ${textDescription}
-
-      Your tasks:
-      1. Pick ONE specific reference website that would work well for this type of content
-      2. Define the layout sections needed (e.g., hero, features, about, contact)
-      3. List 4 specific images we need for this layout (1 hero image, 3 feature images)
-      
-      Return your response in this exact JSON format:
+      // Designer Agent - Optimized prompt with size constraints
+      const designerPrompt = `Design minimal website for: ${textDescription}
+      Return raw JSON without any markdown formatting or code blocks. Start with opening brace and end with closing brace:
       {
-        "reference_website": "name and URL of the reference website",
-        "design_style": "brief description of the chosen design style",
-        "layout_sections": ["array of section names in order"],
+        "reference_website": "URL",
+        "design_style": "5-word style description",
+        "layout_sections": ["max 4 sections"],
         "images": [
           {
             "type": "hero",
-            "search_query": "specific search query for Pexels",
-            "description": "what this image should show",
-            "alt_text": "SEO-friendly alt text"
+            "search_query": "2-3 word query",
+            "alt_text": "5-word alt text"
           },
           {
             "type": "feature1",
-            "search_query": "specific search query for Pexels",
-            "description": "what this image should show",
-            "alt_text": "SEO-friendly alt text"
-          },
-          {
-            "type": "feature2",
-            "search_query": "specific search query for Pexels",
-            "description": "what this image should show",
-            "alt_text": "SEO-friendly alt text"
-          },
-          {
-            "type": "feature3",
-            "search_query": "specific search query for Pexels",
-            "description": "what this image should show",
-            "alt_text": "SEO-friendly alt text"
+            "search_query": "2-3 word query",
+            "alt_text": "5-word alt text"
           }
         ]
-      }
-
-      Return ONLY the JSON, nothing else.`;
+      }`;
 
       const designerResponse = await fetch("/api/anthropic", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: designerPrompt }),
+        body: JSON.stringify({ 
+          prompt: designerPrompt,
+          max_tokens: 1000 // Limit response size
+        }),
       });
 
       if (!designerResponse.ok) {
@@ -176,7 +153,20 @@ const WebPage = () => {
       }
 
       // Parse the designer's JSON response
-      const designPlan = JSON.parse(designerResult.data.content[0].text) as DesignPlan;
+      let designPlan: DesignPlan;
+      try {
+        // Clean up the response by removing any markdown formatting
+        const cleanJson = designerResult.data.content[0].text
+          .replace(/^```json\s*/, '') // Remove opening ```json
+          .replace(/```\s*$/, '')     // Remove closing ```
+          .trim();                    // Remove any extra whitespace
+        
+        designPlan = JSON.parse(cleanJson) as DesignPlan;
+      } catch (error) {
+        console.error("JSON parsing error:", error);
+        console.log("Raw response:", designerResult.data.content[0].text);
+        throw new Error("Failed to parse design plan. Please try again.");
+      }
 
       // Validate required properties
       if (!designPlan.images) {
@@ -194,29 +184,28 @@ const WebPage = () => {
         })
       );
 
-      // Developer Agent
-      const developerPrompt = `As a web developer, create a responsive website based on this design direction:
-
-      Reference Website: ${designPlan.reference_website}
-      Design Style: ${designPlan.design_style}
-      Layout Sections: ${designPlan.layout_sections?.join(', ') || 'No sections provided'}
+      // Developer Agent - Optimized prompt with size constraints
+      const developerPrompt = `Create minimal responsive HTML/CSS. Keep it as short as possible.
+      Ref: ${designPlan.reference_website}
+      Style: ${designPlan.design_style}
+      Sections: ${designPlan.layout_sections?.join(', ')}
       
       Images:
-      ${images.map(img => `${img.type}: 
-        URL: ${img.pexels?.url || 'https://via.placeholder.com/1920x1080'}
-        Alt: ${img.alt_text}
-        Description: ${img.description}`).join('\n')}
+      ${images.map(img => `${img.type}: ${img.pexels?.url || 'https://via.placeholder.com/1920x1080'}`).join('\n')}
 
       Requirements:
-      1. Create a single minimal landing page
-      2. Follow the reference website's general layout structure
-
-      Just return the code, nothing else.`;
+      1. Use minimal CSS, no frameworks
+      2. Single page only
+      3. Mobile-first design
+      4. Keep code concise`;
 
       const developerResponse = await fetch("/api/anthropic", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: developerPrompt }),
+        body: JSON.stringify({ 
+          prompt: developerPrompt,
+          max_tokens: 5000 // Limit response size
+        }),
       });
 
       if (!developerResponse.ok) {
@@ -255,13 +244,25 @@ const WebPage = () => {
       setOpenWebSite(true);
 
       mixpanel.track("Web Generated", {
-        textName: textName,
         textDescription: textDescription,
         referenceWebsite: designPlan.reference_website
       });
     } catch (error) {
       console.error("Error generating website:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to generate website. Please try again.");
+      let errorMessage = "Failed to generate website. Please try again.";
+      
+      // Check for token limit errors
+      if (error instanceof Error) {
+        if (error.message.includes('token') || error.message.includes('capacity')) {
+          errorMessage = "Text is too long. Please provide a shorter description.";
+        }
+        // Check for other common API errors
+        else if (error.message.includes('rate limit')) {
+          errorMessage = "Too many requests. Please wait a moment and try again.";
+        }
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -290,13 +291,12 @@ const WebPage = () => {
     const element = document.createElement("a");
     const file = new Blob([generatedSite], { type: "text/html" });
     element.href = URL.createObjectURL(file);
-    element.download = `${textName.toLowerCase().replace(/\s+/g, '-')}.html`;
+    element.download = `website-${Date.now()}.html`;
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
 
     mixpanel.track("Download Web Preview", {
-      textName: textName,
       textDescription: textDescription,
       viewport: previewViewport
     });
@@ -306,7 +306,6 @@ const WebPage = () => {
     navigator.clipboard.writeText(generatedSite);
     toast.success("Code copied to clipboard!");
     mixpanel.track("Copy Web Code", {
-      textName: textName,
       textDescription: textDescription
     });
   };
@@ -336,7 +335,9 @@ const WebPage = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-        <div className="text-lg font-medium text-gray-900">{textName}</div>
+        <div className="text-lg font-medium text-gray-900">
+          {textDescription.length > 50 ? `${textDescription.substring(0, 50)}...` : textDescription}
+        </div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -497,29 +498,9 @@ const WebPage = () => {
         </div>
 
         <div className="max-w-xl w-full mt-10">
-        <div className="flex mt-0 items-center space-x-3">
-            <Image
-              src="/1-black.png"
-              width={30}
-              height={30}
-              alt="1 icon"
-              className="mb-0"
-            />
-            <p className="text-left font-medium">
-              Enter Your Website or Brand Name{" "}
-            </p>
-          </div>
-          <input
-            type="text"
-            value={textName}
-            onChange={(e) => setTextName(e.target.value)}
-            className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
-            placeholder={"e.g., mywebsite.com"}
-          />
-          
           <div className="flex mb-1 items-center space-x-3">
             <Image
-              src="/2-black.png"
+              src="/1-black.png"
               width={30}
               height={30}
               alt="1 icon"
@@ -530,10 +511,14 @@ const WebPage = () => {
           <textarea
             value={textDescription}
             onChange={(e) => setTextDescription(e.target.value)}
+            maxLength={200}
             rows={4}
             className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
-            placeholder={"e.g., Boutique Coffee Shop, Personal Fitness"}
+            placeholder={"e.g., Modern coffee shop with industrial design, featuring specialty roasts and tasting events"}
           />
+          <div className="text-right text-sm text-gray-500">
+            {textDescription.length}/200 characters
+          </div>
           
          
           <SignedOut>  
