@@ -1,4 +1,4 @@
-import React, { useState, useContext, useRef } from "react";
+import React, { useState, useContext, useRef, useEffect } from "react";
 import Head from "next/head";
 import { Toaster, toast } from "react-hot-toast";
 import Header from "../components/Header";
@@ -13,6 +13,7 @@ import { TransitionProps } from '@mui/material/transitions';
 import DiamondIcon from '@mui/icons-material/Diamond';
 import { useRouter } from 'next/router';
 import DOMPurify from 'dompurify';
+import { useUser } from "@clerk/nextjs";
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -29,6 +30,7 @@ type SubscriptionPlan = 'CREATOR' | 'STARTER' | 'FREE';
 const WebPage = () => {
   const router = useRouter();
   const { openSignIn } = useClerk();
+  const { isLoaded, user, isSignedIn } = useUser();
   const [loading, setLoading] = useState(false);
   const [textDescription, setTextDescription] = useState("");
   const [generatedSite, setGeneratedSite] = useState("");
@@ -36,6 +38,86 @@ const WebPage = () => {
   const [previewViewport, setPreviewViewport] = React.useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [previewLoading, setPreviewLoading] = React.useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  const context = useContext(SBRContext);
+  if (!context) {
+    throw new Error("SBRContext must be used within a SBRProvider");
+  }
+  const { 
+    dataUser, 
+    setDataUser,    
+    credits, 
+    setCredits, 
+    admin, 
+    setAdmin,
+    subsTplan, 
+    setSubsTplan, 
+    subsCancel, 
+    setSubsCancel    
+  } = context;
+
+  // Use the same isPremiumUser logic as in domain.tsx
+  const isPremiumUser = subsTplan === "STARTER" || subsTplan === "CREATOR";
+
+  // Add fetchUserData function
+  const fetchUserData = async (email: string) => {
+    try {
+      const response = await fetch(`/api/getUser?email=${email}`);
+      if (!response.ok) {
+        const text = await response.text();
+        console.error(`Response status: ${response.status}, text: ${text}`);
+        throw new Error(`Network response was not ok. Status: ${response.status}`);
+      }
+      const userData = await response.json();
+      if (userData.user) {
+        setDataUser({
+          id: userData.user.id,
+          name: userData.user.name,
+          email: userData.user.email
+        });      
+        setCredits(userData.user.credits);
+        setAdmin(userData.user.admin);
+        setSubsTplan(userData.user.subs_tplan);
+        setSubsCancel(userData.user.subs_cancel);
+      }
+    } catch (error) {
+      console.error("Failed to fetch user data:", error);
+    }
+  };
+
+  // Add initPageData function
+  const initPageData = async () => {
+    if (isLoaded && user) {
+      const email = user.emailAddresses[0].emailAddress;
+      if (email) {
+        try {
+          await fetchUserData(email);
+          mixpanel.identify(email);
+        } catch (error) {
+          console.error("Error initializing page data:", error);
+          console.warn("Failed to load user data. Please try refreshing the page.");
+        }
+      } else {
+        console.warn("User email not available");
+      }
+    } else if (isLoaded && !user) {
+      // Reset user data when not signed in
+      setSubsTplan(null);
+      setSubsCancel(null);
+      setCredits(null);
+      setDataUser({
+        id: '0',
+        name: 'anonymous',
+        email: 'anonymous@anonymous.com'
+      });
+      setAdmin(false);
+    }
+  };
+
+  // Add useEffect to load user data
+  useEffect(() => {
+    initPageData();
+  }, [isSignedIn, user]);
 
   const getImageFromPexels = async (query: string) => {
     try {
@@ -60,18 +142,12 @@ const WebPage = () => {
     }
   };
 
-  const context = useContext(SBRContext);
-  if (!context) {
-    throw new Error("SBRContext must be used within a SBRProvider");
-  }
-  const { subsTplan } = context as { subsTplan: SubscriptionPlan };
-
   const generateWeb = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      if (subsTplan !== "CREATOR" && subsTplan !== "STARTER") {
+      if (!isPremiumUser) {
         toast(
           "Premium plan required. Please become a member to generate websites.",
           {
