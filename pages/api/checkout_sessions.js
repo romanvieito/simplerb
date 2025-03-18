@@ -9,7 +9,7 @@ export default async function handler(req, res) {
       // Dependiendo del valor de tipo, puedes ajustar el Price ID u otros parámetros
       let priceId;
       if (tipo === 'STARTER') {
-        priceId = 'price_1PP5Q2HDPeQP87xvdnTlFNBa'; 
+        priceId = 'price_1R46vSHDPeQP87xvOxML8BTi'; 
       } else {
         priceId = 'price_1PP5SMHDPeQP87xvVRmt2sNI'; 
       }
