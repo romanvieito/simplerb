@@ -1,6 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Anthropic from '@anthropic-ai/sdk';
 
+// Add configuration for longer timeout
+export const config = {
+  maxDuration: 300, // 5 minutes in seconds
+};
+
 export default async function handler (
     req: NextApiRequest,
     res: NextApiResponse

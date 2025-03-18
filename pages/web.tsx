@@ -127,8 +127,10 @@ const WebPage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           prompt: designerPrompt,
-          max_tokens: 1000 // Limit response size
+          max_tokens: 1000
         }),
+        // Add timeout
+        signal: AbortSignal.timeout(30000) // 30 second timeout
       });
 
       if (!designerResponse.ok) {
@@ -202,13 +204,12 @@ const WebPage = () => {
       
       Please return only the code, nothing else.`;
 
-      const developerResponse = await fetch("/api/anthropic", {
+      const developerResponse = await fetch("/api/anthropic-developer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          prompt: developerPrompt,
-          max_tokens: 4096 // Limit response size
-        }),
+          prompt: developerPrompt
+        })
       });
 
       if (!developerResponse.ok) {
@@ -248,6 +249,10 @@ const WebPage = () => {
       if (error instanceof Error) {
         if (error.message.includes('token') || error.message.includes('capacity')) {
           errorMessage = "Text is too long. Please provide a shorter description.";
+        }
+        // Check for timeout errors
+        else if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+          errorMessage = "The request took too long. Please try again with a simpler description.";
         }
         // Check for other common API errors
         else if (error.message.includes('rate limit')) {
