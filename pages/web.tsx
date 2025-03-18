@@ -108,25 +108,13 @@ const WebPage = () => {
       Your tasks:
       1. Pick ONE specific reference website that would work well for this type of content
       2. Define the layout sections needed (e.g., hero, features, about, contact)
-      3. Select a color palette (primary, secondary, accent colors)
-      4. List exactly 4 specific images we need for this layout (1 hero image, 3 feature images)
+      3. List 4 specific images we need for this layout (1 hero image, 3 feature images)
       
       Return your response in this exact JSON format:
       {
         "reference_website": "name and URL of the reference website",
         "design_style": "brief description of the chosen design style",
         "layout_sections": ["array of section names in order"],
-        "colors": {
-          "primary": "hex color",
-          "secondary": "hex color",
-          "accent": "hex color",
-          "text": "hex color",
-          "background": "hex color"
-        },
-        "typography": {
-          "headings": "font family name",
-          "body": "font family name"
-        },
         "images": [
           {
             "type": "hero",
@@ -173,14 +161,26 @@ const WebPage = () => {
         throw new Error("Invalid designer response structure");
       }
 
-      // Parse the designer's JSON response
-      const designPlan = JSON.parse(designerResult.data.content[0].text);
-
       interface DesignImage {
         type: string;
         search_query: string;
         description: string;
         alt_text: string;
+      }
+
+      interface DesignPlan {
+        reference_website: string;
+        design_style: string;
+        layout_sections: string[];
+        images: DesignImage[];
+      }
+
+      // Parse the designer's JSON response
+      const designPlan = JSON.parse(designerResult.data.content[0].text) as DesignPlan;
+
+      // Validate required properties
+      if (!designPlan.images) {
+        throw new Error("Designer response missing required properties");
       }
 
       // Fetch all images based on the designer's specifications
@@ -195,19 +195,12 @@ const WebPage = () => {
       );
 
       // Developer Agent
-      const developerPrompt = `As a web developer, create a modern, responsive website based on this design direction:
+      const developerPrompt = `As a web developer, create a responsive website based on this design direction:
 
       Reference Website: ${designPlan.reference_website}
       Design Style: ${designPlan.design_style}
-      Layout Sections: ${designPlan.layout_sections.join(', ')}
+      Layout Sections: ${designPlan.layout_sections?.join(', ') || 'No sections provided'}
       
-      Colors:
-      ${Object.entries(designPlan.colors).map(([key, value]) => `${key}: ${value}`).join('\n')}
-      
-      Typography:
-      Headings: ${designPlan.typography.headings}
-      Body: ${designPlan.typography.body}
-
       Images:
       ${images.map(img => `${img.type}: 
         URL: ${img.pexels?.url || 'https://via.placeholder.com/1920x1080'}
@@ -215,9 +208,9 @@ const WebPage = () => {
         Description: ${img.description}`).join('\n')}
 
       Requirements:
-      1. Follow the reference website's general layout structure
+      1. Create a single minimal landing page
+      2. Follow the reference website's general layout structure
 
-      Return a complete HTML document with embedded CSS and JavaScript.
       Just return the code, nothing else.`;
 
       const developerResponse = await fetch("/api/anthropic", {
@@ -238,15 +231,15 @@ const WebPage = () => {
 
       let finalWebsite = developerResult.data.content[0].text;
 
-      // Add image attribution footer with enhanced styling
+      // Add image attribution footer with default styling
       const attributionHtml = `
-        <footer style="margin-top: 2rem; padding: 2rem; background: ${designPlan.colors.background}; color: ${designPlan.colors.text}; font-family: ${designPlan.typography.body}; text-align: center;">
+        <footer style="margin-top: 2rem; padding: 2rem; background: #f5f5f5; color: #333; font-family: system-ui; text-align: center;">
           <div style="max-width: 1200px; margin: 0 auto;">
-            <p style="margin-bottom: 1rem;">Images provided by <a href="https://www.pexels.com" target="_blank" rel="noopener noreferrer" style="color: ${designPlan.colors.accent};">Pexels</a></p>
+            <p style="margin-bottom: 1rem;">Images provided by <a href="https://www.pexels.com" target="_blank" rel="noopener noreferrer" style="color: #0066cc;">Pexels</a></p>
             ${images.map(img => 
-              img.pexels ? `<p style="margin: 0.5rem 0;"><strong>${img.type}</strong> image by <a href="${img.pexels.photographer_url}" target="_blank" rel="noopener noreferrer" style="color: ${designPlan.colors.accent};">${img.pexels.photographer}</a></p>` : ''
+              img.pexels ? `<p style="margin: 0.5rem 0;"><strong>${img.type}</strong> image by <a href="${img.pexels.photographer_url}" target="_blank" rel="noopener noreferrer" style="color: #0066cc;">${img.pexels.photographer}</a></p>` : ''
             ).join('\n')}
-            <p style="margin-top: 1rem;">Design inspired by: <a href="${designPlan.reference_website}" target="_blank" rel="noopener noreferrer" style="color: ${designPlan.colors.accent};">${designPlan.reference_website}</a></p>
+            <p style="margin-top: 1rem;">Design inspired by: <a href="${designPlan.reference_website}" target="_blank" rel="noopener noreferrer" style="color: #0066cc;">${designPlan.reference_website}</a></p>
           </div>
         </footer>
       `;
@@ -598,7 +591,8 @@ const WebPage = () => {
               boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
               borderRadius: '8px',
               overflow: 'hidden',
-              transition: 'width 0.3s ease'
+              transition: 'width 0.3s ease',
+              position: 'relative'
             }}>
               {previewLoading && (
                 <div style={{
@@ -611,19 +605,19 @@ const WebPage = () => {
                   <LoadingDots color="black" style="large" />
                 </div>
               )}
-              <iframe
-                ref={iframeRef}
-                srcDoc={generatedSite}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  border: 'none',
-                  opacity: previewLoading ? 0.5 : 1,
-                  transition: 'opacity 0.3s ease'
-                }}
-                onLoad={handlePreviewLoad}
-                title="Website Preview"
-              />
+                <iframe
+                  ref={iframeRef}
+                  srcDoc={generatedSite}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    border: 'none',
+                    opacity: previewLoading ? 0.5 : 1,
+                    transition: 'opacity 0.3s ease'
+                  }}
+                  onLoad={handlePreviewLoad}
+                  title="Website Preview"
+                />
             </div>
           </div>
         </Dialog>       
