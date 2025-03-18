@@ -19,6 +19,7 @@ import { TransitionProps } from '@mui/material/transitions';
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/20/solid";
 import DiamondIcon from '@mui/icons-material/Diamond';
 import { useRouter } from 'next/router';
+import DOMPurify from 'dompurify';
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -29,6 +30,9 @@ const Transition = React.forwardRef(function Transition(
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
+// Add type for subscription plan
+type SubscriptionPlan = 'CREATOR' | 'STARTER' | 'FREE';
+
 const WebPage = () => {
   const router = useRouter();
   const { openSignIn } = useClerk();
@@ -38,18 +42,40 @@ const WebPage = () => {
   const [generatedSite, setGeneratedSite] = useState("");
   const [openWebSite, setOpenWebSite] = React.useState(false);
 
+  const getImageFromPexels = async (query: string) => {
+    try {
+      const response = await fetch(`/api/pexels?query=${encodeURIComponent(query)}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch image from Pexels');
+      }
+      const data = await response.json();
+      if (data.photos && data.photos.length > 0) {
+        const photo = data.photos[0];
+        return {
+          url: photo.src.large,
+          alt: photo.alt,
+          photographer: photo.photographer,
+          photographer_url: photo.photographer_url,
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching image from Pexels:', error);
+      return null;
+    }
+  };
+
   const context = useContext(SBRContext);
   if (!context) {
     throw new Error("SBRContext must be used within a SBRProvider");
   }
-  const { subsTplan } = context;
+  const { subsTplan } = context as { subsTplan: SubscriptionPlan };
 
   const generateWeb = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-
       if (subsTplan !== "CREATOR" && subsTplan !== "STARTER") {
         toast(
           "Premium plan required. Please become a member to generate websites.",
@@ -70,9 +96,63 @@ const WebPage = () => {
         setLoading(false);
         return;
       }
-  
+
       // Designer Agent
-      const designerPrompt = `As a web designer, create a visually appealing layout for a landing page with the following name: ${textName} and description: ${textDescription}. Focus on the structure, color scheme, and overall visual elements. Provide a high-level HTML structure with placeholder content. Just return the code, nothing else.`;
+      const designerPrompt = `As a web designer, analyze the following website requirements and provide a design direction:
+      Website Name: ${textName}
+      Description: ${textDescription}
+
+      Your tasks:
+      1. Pick ONE specific reference website that would work well for this type of content
+      2. Define the layout sections needed (e.g., hero, features, about, contact)
+      3. Select a color palette (primary, secondary, accent colors)
+      4. List exactly 4 specific images we need for this layout (1 hero image, 3 feature images)
+      
+      Return your response in this exact JSON format:
+      {
+        "reference_website": "name and URL of the reference website",
+        "design_style": "brief description of the chosen design style",
+        "layout_sections": ["array of section names in order"],
+        "colors": {
+          "primary": "hex color",
+          "secondary": "hex color",
+          "accent": "hex color",
+          "text": "hex color",
+          "background": "hex color"
+        },
+        "typography": {
+          "headings": "font family name",
+          "body": "font family name"
+        },
+        "images": [
+          {
+            "type": "hero",
+            "search_query": "specific search query for Pexels",
+            "description": "what this image should show",
+            "alt_text": "SEO-friendly alt text"
+          },
+          {
+            "type": "feature1",
+            "search_query": "specific search query for Pexels",
+            "description": "what this image should show",
+            "alt_text": "SEO-friendly alt text"
+          },
+          {
+            "type": "feature2",
+            "search_query": "specific search query for Pexels",
+            "description": "what this image should show",
+            "alt_text": "SEO-friendly alt text"
+          },
+          {
+            "type": "feature3",
+            "search_query": "specific search query for Pexels",
+            "description": "what this image should show",
+            "alt_text": "SEO-friendly alt text"
+          }
+        ]
+      }
+
+      Return ONLY the JSON, nothing else.`;
 
       const designerResponse = await fetch("/api/anthropic", {
         method: "POST",
@@ -80,13 +160,62 @@ const WebPage = () => {
         body: JSON.stringify({ prompt: designerPrompt }),
       });
 
-      if (!designerResponse.ok) throw new Error(designerResponse.statusText);
+      if (!designerResponse.ok) {
+        throw new Error(`Designer API error: ${designerResponse.statusText}`);
+      }
+
       const designerResult = await designerResponse.json();
-      console.log("designerResult", designerResult);
-      const designLayout = designerResult.data.content[0].text;
+      
+      if (!designerResult?.data?.content?.[0]?.text) {
+        throw new Error("Invalid designer response structure");
+      }
+
+      // Parse the designer's JSON response
+      const designPlan = JSON.parse(designerResult.data.content[0].text);
+
+      interface DesignImage {
+        type: string;
+        search_query: string;
+        description: string;
+        alt_text: string;
+      }
+
+      // Fetch all images based on the designer's specifications
+      const images = await Promise.all(
+        designPlan.images.map(async (image: DesignImage) => {
+          const pexelsResult = await getImageFromPexels(image.search_query);
+          return {
+            ...image,
+            pexels: pexelsResult
+          };
+        })
+      );
 
       // Developer Agent
-      const developerPrompt = `As a web developer, enhance the following HTML structure with interactive elements and responsive design. Add appropriate CSS and JavaScript to make the page functional and engaging. Here's the initial layout: ${designLayout}. Just return the code, nothing else.`;
+      const developerPrompt = `As a web developer, create a modern, responsive website based on this design direction:
+
+      Reference Website: ${designPlan.reference_website}
+      Design Style: ${designPlan.design_style}
+      Layout Sections: ${designPlan.layout_sections.join(', ')}
+      
+      Colors:
+      ${Object.entries(designPlan.colors).map(([key, value]) => `${key}: ${value}`).join('\n')}
+      
+      Typography:
+      Headings: ${designPlan.typography.headings}
+      Body: ${designPlan.typography.body}
+
+      Images:
+      ${images.map(img => `${img.type}: 
+        URL: ${img.pexels?.url || 'https://via.placeholder.com/1920x1080'}
+        Alt: ${img.alt_text}
+        Description: ${img.description}`).join('\n')}
+
+      Requirements:
+      1. Follow the reference website's general layout structure
+
+      Return a complete HTML document with embedded CSS and JavaScript.
+      Just return the code, nothing else.`;
 
       const developerResponse = await fetch("/api/anthropic", {
         method: "POST",
@@ -94,90 +223,49 @@ const WebPage = () => {
         body: JSON.stringify({ prompt: developerPrompt }),
       });
 
-      if (!developerResponse.ok) throw new Error(developerResponse.statusText);
+      if (!developerResponse.ok) {
+        throw new Error(`Developer API error: ${developerResponse.statusText}`);
+      }
+
       const developerResult = await developerResponse.json();
-      console.log("developerResult", developerResult);
+      
+      if (!developerResult?.data?.content?.[0]?.text) {
+        throw new Error("Invalid developer response structure");
+      }
+
       let finalWebsite = developerResult.data.content[0].text;
 
-      // Reviewer Agent
-      const reviewerPrompt = `As a web quality assurance specialist, review the following website code: ${finalWebsite}. Just focus in:
-      	•	Replace placeholder resources with actual product images and data.
-        •	Update the CTA button functionality and ensure the links point to real destinations.
-        •	Test and optimize for responsiveness on all devices and screen sizes.
-      Analyze the code for potential improvements and provide a short and concise summary of your critical findings and suggested enhancements.`;
-
-      const reviewerResponse = await fetch("/api/openai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: reviewerPrompt }),
-      });
-
-      if (!reviewerResponse.ok) throw new Error(reviewerResponse.statusText);
-
-      const reader = reviewerResponse.body?.getReader();
-      let reviewerResult = '';
-      while (true) {
-        const { done, value } = await reader?.read() ?? { done: true, value: undefined };
-        if (done) break;
-        const chunk = new TextDecoder().decode(value);
-        const lines = chunk.split('\n').filter(line => line.trim() !== '');
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const jsonData = JSON.parse(line.slice(6));
-            reviewerResult += jsonData.text;
-          }
-        }
-      }
-      reviewerResult = reviewerResult.trim();
-      console.log("reviewerResult", reviewerResult);
-
-      // Developer Agent (Fixing Reviewer Feedback)
-      const fixerPrompt = `As a web developer, please address the following QA feedback and improve the website code accordingly:
-
-      ${reviewerResult}
-
-      Here's the current website code:
-
-      ${finalWebsite}
-
-      Please provide the updated code that addresses these issues. Just return the improved code, nothing else.`;
-
-      const fixerResponse = await fetch("/api/anthropic", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: fixerPrompt }),
-      });
-
-      if (!fixerResponse.ok) throw new Error(fixerResponse.statusText);
-      const fixerResult = await fixerResponse.json();
-      console.log("fixerResult", fixerResult);
-      const improvedWebsite = fixerResult.data.content[0].text;
-
-      // Add review summary to the generated site
-      const reviewedWebsite = `
-        ${finalWebsite}
-        <!-- QA Review Summary -->
-        <div style="margin-top: 20px; padding: 10px; background-color: #f0f0f0; border: 1px solid #ccc;">
-          <h3>QA Review Summary:</h3>
-          <pre>${reviewerResult}</pre>
-        </div>
+      // Add image attribution footer with enhanced styling
+      const attributionHtml = `
+        <footer style="margin-top: 2rem; padding: 2rem; background: ${designPlan.colors.background}; color: ${designPlan.colors.text}; font-family: ${designPlan.typography.body}; text-align: center;">
+          <div style="max-width: 1200px; margin: 0 auto;">
+            <p style="margin-bottom: 1rem;">Images provided by <a href="https://www.pexels.com" target="_blank" rel="noopener noreferrer" style="color: ${designPlan.colors.accent};">Pexels</a></p>
+            ${images.map(img => 
+              img.pexels ? `<p style="margin: 0.5rem 0;"><strong>${img.type}</strong> image by <a href="${img.pexels.photographer_url}" target="_blank" rel="noopener noreferrer" style="color: ${designPlan.colors.accent};">${img.pexels.photographer}</a></p>` : ''
+            ).join('\n')}
+            <p style="margin-top: 1rem;">Design inspired by: <a href="${designPlan.reference_website}" target="_blank" rel="noopener noreferrer" style="color: ${designPlan.colors.accent};">${designPlan.reference_website}</a></p>
+          </div>
+        </footer>
       `;
 
-      // Update the final website with improvements
-      finalWebsite = improvedWebsite;
+      // Add attribution to final website
+      finalWebsite = finalWebsite.includes('</body>') 
+        ? finalWebsite.replace('</body>', `${attributionHtml}</body>`)
+        : `${finalWebsite}${attributionHtml}`;
 
-      setGeneratedSite(reviewedWebsite);
-
-      setGeneratedSite(finalWebsite);
+      // Sanitize the HTML before setting it
+      const sanitizedWebsite = DOMPurify.sanitize(finalWebsite);
+      setGeneratedSite(sanitizedWebsite);
       setOpenWebSite(true);
 
       mixpanel.track("Web Generated", {
         textName: textName,
         textDescription: textDescription,
+        referenceWebsite: designPlan.reference_website
       });
     } catch (error) {
       console.error("Error generating website:", error);
-      toast.error("Failed to generate website. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Failed to generate website. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -372,29 +460,6 @@ const WebPage = () => {
           onClose={closeWebSite}
           TransitionComponent={Transition}
         >
-          {/* <AppBar sx={{ position: 'relative', backgroundColor: 'gray' }}>
-            <Toolbar>
-              <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-                <IconButton
-                  edge="start"
-                  color="inherit"
-                  onClick={closeWebSite}
-                  aria-label="close"
-                >
-                  <CloseIcon />
-                </IconButton>
-                <Typography sx={{ ml: 2 }} variant="h6" component="div">
-                  Preview
-                </Typography>
-              </Box>
-              <Button autoFocus color="inherit" onClick={downloadCode}>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 inline-block" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-                Download
-              </Button>
-            </Toolbar>
-          </AppBar> */}
           <Box component="section" sx={{ border: '1px dashed grey' }}>
             <div dangerouslySetInnerHTML={{ __html: generatedSite }} />
           </Box>          
