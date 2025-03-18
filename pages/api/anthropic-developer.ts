@@ -41,7 +41,7 @@ export default async function handler(
     // Configure for website HTML generation
     const message = await anthropic.messages.create({
       model: 'claude-3-7-sonnet-20250219',
-      max_tokens: 2000,
+      max_tokens: 4096,
       temperature: 0,
       messages: [
         { "role": "user", "content": prompt }
