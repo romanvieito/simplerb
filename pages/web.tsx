@@ -441,7 +441,7 @@ const WebPage = () => {
         <title>Website Creator</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Header/>
+      {/* <Header/> */}
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 bg-gradient-to-b from-white to-gray-50">
         <button
           onClick={() => router.back()}
