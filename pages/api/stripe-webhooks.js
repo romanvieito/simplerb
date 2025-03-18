@@ -14,7 +14,6 @@ export const config = {
   },
 };
 
-console.log("aaa")
 const cors = Cors({
   allowMethods: ['POST', 'HEAD'],
 });

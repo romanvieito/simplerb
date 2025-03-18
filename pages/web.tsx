@@ -148,18 +148,38 @@ const WebPage = () => {
 
     try {
       if (!isPremiumUser) {
-        toast(
-          "Premium plan required. Please become a member to generate websites.",
-          {
-            icon: "⏳",
-            style: {
-              border: "1px solid #FFA500",
-              padding: "16px",
-              color: "#FFA500",
-            },  
-            duration: 10000,
-          }
-        );
+        toast((t) => (
+          <div className="flex flex-col items-center">
+            <p className="mb-2">Premium feature. Please become a member.</p>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  mixpanel.track("Become a Member Click", {
+                    source: "Create Website",
+                  });
+                  const form = document.querySelector('form[action="/api/checkout_sessions"]');
+                  if (form instanceof HTMLFormElement) {
+                    form.submit();
+                  }
+                }}
+                className="bg-black text-white font-medium px-4 py-2 rounded-xl hover:bg-black/80 flex items-center"
+              >
+                <DiamondIcon className="mr-2" />
+                Become a Member
+              </button>
+              <button
+                onClick={() => toast.dismiss(t.id)}
+                className="bg-gray-300 text-black font-medium px-4 py-2 rounded-xl hover:bg-gray-400"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        ), {
+          duration: 15000,
+          position: 'top-center',
+        });
         mixpanel.track("Free user try Create Website", {
           textDescription: textDescription,
         });
@@ -517,6 +537,12 @@ const WebPage = () => {
         <title>Website Creator</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
+
+      {/* Add this form */}
+      <form action="/api/checkout_sessions" method="POST" style={{ display: 'none' }}>
+        <input type="hidden" name="tipo" value="STARTER" />
+      </form>
+
       {/* <Header/> */}
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 bg-gradient-to-b from-white to-gray-50">
         <button
