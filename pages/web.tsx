@@ -38,6 +38,7 @@ const WebPage = () => {
   const [previewViewport, setPreviewViewport] = React.useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [previewLoading, setPreviewLoading] = React.useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -526,9 +527,62 @@ const WebPage = () => {
             <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
           </svg>
         </button>
+
+        {/* Add Edit Mode Toggle Button */}
+        <button
+          onClick={() => setIsEditMode(!isEditMode)}
+          className={`p-2 rounded ${isEditMode ? 'bg-blue-100' : ''} hover:bg-gray-100`}
+          title={isEditMode ? "Save changes" : "Edit content"}
+        >
+          {isEditMode ? (
+            <span className="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              Save
+            </span>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793z" />
+              <path d="M11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+            </svg>
+          )}
+        </button>
       </div>
     </div>
   );
+
+  // Add useEffect to handle edit mode
+  useEffect(() => {
+    const iframeDoc = iframeRef.current?.contentDocument;
+    if (!iframeDoc) return;
+
+    // Function to make elements editable or non-editable
+    const toggleEditMode = (editable: boolean) => {
+      const textElements = iframeDoc.querySelectorAll('p, h1, h2, h3, h4, h5, h6, span');
+      textElements.forEach(element => {
+        element.contentEditable = editable.toString();
+        if (editable) {
+          element.style.cursor = 'text';
+          element.style.outline = '1px dashed #ddd';
+        } else {
+          element.style.cursor = '';
+          element.style.outline = '';
+          // Save changes when exiting edit mode
+          setGeneratedSite(iframeDoc.documentElement.outerHTML);
+        }
+      });
+    };
+
+    toggleEditMode(isEditMode);
+
+    // Show toast message when entering/exiting edit mode
+    if (isEditMode) {
+      toast.success("Edit mode enabled. Click elements to edit text.");
+    } else if (generatedSite) {
+      toast.success("Changes saved!");
+    }
+  }, [isEditMode]);
 
   return (
     <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
