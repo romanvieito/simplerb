@@ -280,9 +280,6 @@ const DomainPage: React.FC = () => {
       source: "domain-page",
     });
 
-    toast.success(`Checking availability for ${cleanDomainName}`, {
-      duration: 3000,
-    });
   };
 
   const handleSubsStarterClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -613,7 +610,7 @@ const DomainPage: React.FC = () => {
                     <div className="flex space-x-2">
                       <button
                         onClick={() => handleCheckAvailability(domain.domain)}
-                        className="bg-black text-white rounded-lg px-4 py-2 hover:bg-gray-900 transition-all duration-200"
+                        className="bg-gray-300 text-black rounded-lg px-4 py-2 hover:bg-gray-400 transition-all duration-200"
                       >
                         Buy
                       </button>
@@ -621,23 +618,15 @@ const DomainPage: React.FC = () => {
                         onClick={() => {
                           window.open(`/web?domain=${encodeURIComponent(domain.domain)}`, "_blank");
                         }}
-                        className="bg-black text-white rounded-lg px-4 py-2 hover:bg-gray-900 transition-all duration-200"
+                        className="bg-gray-300 text-black rounded-lg px-4 py-2 hover:bg-gray-400 transition-all duration-200"
                       >
                         Create Web
-                      </button>
-                      <button
-                        onClick={() => {
-                          window.open(`/ads?domain=${encodeURIComponent(domain.domain)}`, "_blank");
-                        }}
-                        className="bg-black text-white rounded-lg px-4 py-2 hover:bg-gray-900 transition-all duration-200"
-                      >
-                        Create Ads
                       </button>
                     </div>
                   ) : (
                     <button
                       onClick={() => handleCheckAvailability(domain.domain)}
-                      className="bg-black text-white rounded-lg px-4 py-2 hover:bg-gray-900 transition-all duration-200 flex items-center"
+                      className="bg-gray-300 text-black rounded-lg ml-3 px-4 py-2 hover:bg-gray-400 transition-all duration-200 flex items-center"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
