@@ -6,54 +6,36 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
-    // Debug: Log all request headers
-    console.log('Request headers:', req.headers);
-    
-    // Get the hostname from the request
+    // Get the hostname and log it for debugging
     const hostname = req.headers.host || '';
     console.log('Incoming request hostname:', hostname);
 
-    // Extract subdomain
+    // Extract subdomain (everything before .simplerb.com)
     const subdomain = hostname.split('.')[0];
     console.log('Attempting to serve site for subdomain:', subdomain);
 
-    if (!subdomain) {
-      console.log('No subdomain found in request');
-      return res.status(404).send('Site not found - No subdomain');
-    }
-
-    // Debug: Log the SQL query we're about to execute
-    console.log('Querying database for subdomain:', subdomain);
-
+    // Fetch the site content
     const result = await sql`
-      SELECT html, updated_at 
+      SELECT html 
       FROM sites 
       WHERE subdomain = ${subdomain}
       ORDER BY created_at DESC 
       LIMIT 1;
     `;
 
-    console.log('Query result count:', result.rows.length);
-    
     if (result.rows.length === 0) {
-      console.log('No site found in database for subdomain:', subdomain);
-      return res.status(404).send('Site not found - No content');
+      console.log('No site found for subdomain:', subdomain);
+      return res.status(404).send('Site not found');
     }
 
-    // Debug: Log that we found the site
-    console.log('Found site, last updated:', result.rows[0].updated_at);
-
-    // Set appropriate headers
+    // Set headers for HTML content
     res.setHeader('Content-Type', 'text/html');
-    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate');
+    res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate');
 
     // Send the HTML content
     return res.send(result.rows[0].html);
   } catch (error) {
-    console.error('Detailed error in serve-site:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
-    });
+    console.error('Error serving site:', error);
     return res.status(500).send('Error serving site');
   }
 } 
