@@ -6,15 +6,18 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
-    // Get the hostname and log it for debugging
     const hostname = req.headers.host || '';
-    console.log('Incoming request hostname:', hostname);
+    console.log('Serving site for hostname:', hostname);
 
-    // Extract subdomain (everything before .simplerb.com)
+    // Only handle subdomain requests
+    if (hostname === 'simplerb.com' || hostname === 'www.simplerb.com') {
+      return res.status(404).send('Not found');
+    }
+
+    // Extract subdomain
     const subdomain = hostname.split('.')[0];
-    console.log('Attempting to serve site for subdomain:', subdomain);
+    console.log('Looking up site for subdomain:', subdomain);
 
-    // Fetch the site content
     const result = await sql`
       SELECT html 
       FROM sites 
@@ -28,11 +31,12 @@ export default async function handler(
       return res.status(404).send('Site not found');
     }
 
-    // Set headers for HTML content
+    // Set headers to prevent caching of the main site
     res.setHeader('Content-Type', 'text/html');
-    res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate');
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Vary', 'host');
 
-    // Send the HTML content
+    // Send the generated site HTML
     return res.send(result.rows[0].html);
   } catch (error) {
     console.error('Error serving site:', error);

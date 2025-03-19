@@ -19,6 +19,16 @@
   ],
   "rewrites": [
     {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "(?<subdomain>[^.]+).simplerb.com"
+        }
+      ],
+      "destination": "/api/serve-site"
+    },
+    {
       "source": "/",
       "has": [
         {
@@ -38,6 +48,18 @@
           "value": "s-maxage=3600, stale-while-revalidate"
         }
       ]
+    }
+  ],
+  "routes": [
+    {
+      "src": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "(?<subdomain>[^.]+).simplerb.com"
+        }
+      ],
+      "dest": "/api/serve-site"
     }
   ]
 } 
