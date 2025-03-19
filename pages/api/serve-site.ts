@@ -6,31 +6,28 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
-    const hostname = req.headers.host || '';
-    const path = req.url || '/';
+    // Get subdomain from query parameter
+    const { subdomain } = req.query;
     
-    console.log('Request details:', {
-      path,
-      hostname,
-      method: req.method
-    });
+    console.log('Serving site for subdomain:', subdomain);
 
-    // Only serve HTML for the root path
-    if (path !== '/' && path !== '/index' && path !== '/index.html') {
-      console.log('Non-root path requested, skipping:', path);
-      return res.status(404).send('Not found');
+    if (!subdomain) {
+      console.log('No subdomain provided');
+      return res.status(400).send('Subdomain is required');
     }
-
-    const subdomain = hostname.split('.')[0];
-    console.log('Serving content for subdomain:', subdomain);
 
     const result = await sql`
       SELECT html 
       FROM sites 
-      WHERE subdomain = ${subdomain}
+      WHERE subdomain = ${subdomain as string}
       ORDER BY created_at DESC 
       LIMIT 1;
     `;
+
+    console.log('Query result:', {
+      found: result.rows.length > 0,
+      subdomain
+    });
 
     if (result.rows.length === 0) {
       return res.status(404).send('Site not found');

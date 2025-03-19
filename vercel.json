@@ -17,16 +17,17 @@
       "schedule": "0 0 */5 * *"
     }
   ],
-  "rewrites": [
+  "redirects": [
     {
-      "source": "/",
+      "source": "/:path*",
       "has": [
         {
           "type": "host",
           "value": "(?<subdomain>[^.]+)\\.simplerb\\.com"
         }
       ],
-      "destination": "/api/serve-site"
+      "permanent": false,
+      "destination": "https://simplerb.com/api/serve-site?subdomain=:subdomain"
     }
   ],
   "headers": [
