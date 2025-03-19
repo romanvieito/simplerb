@@ -27,16 +27,6 @@
         }
       ],
       "destination": "/api/serve-site"
-    },
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "(?<subdomain>[^.]+)\\.simplerb\\.com"
-        }
-      ],
-      "destination": "/api/serve-site"
     }
   ],
   "headers": [

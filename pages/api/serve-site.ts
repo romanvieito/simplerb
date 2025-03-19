@@ -7,21 +7,22 @@ export default async function handler(
 ) {
   try {
     const hostname = req.headers.host || '';
-    console.log('1. Incoming request:', {
-      path: req.url,
+    const path = req.url || '/';
+    
+    console.log('Request details:', {
+      path,
       hostname,
       method: req.method
     });
 
-    // Skip static assets
-    if (req.url?.includes('.')) {
-      console.log('2. Static asset request, passing through');
+    // Only serve HTML for the root path
+    if (path !== '/' && path !== '/index' && path !== '/index.html') {
+      console.log('Non-root path requested, skipping:', path);
       return res.status(404).send('Not found');
     }
 
-    // Extract subdomain
     const subdomain = hostname.split('.')[0];
-    console.log('3. Processing subdomain:', subdomain);
+    console.log('Serving content for subdomain:', subdomain);
 
     const result = await sql`
       SELECT html 
@@ -31,11 +32,6 @@ export default async function handler(
       LIMIT 1;
     `;
 
-    console.log('4. Database result:', {
-      found: result.rows.length > 0,
-      contentLength: result.rows[0]?.html?.length || 0
-    });
-
     if (result.rows.length === 0) {
       return res.status(404).send('Site not found');
     }
@@ -44,9 +40,6 @@ export default async function handler(
     res.setHeader('Content-Type', 'text/html');
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
-
-    // Log the first 100 characters of content
-    console.log('5. Sending content preview:', result.rows[0].html.substring(0, 100));
 
     // Send the HTML content
     return res.send(result.rows[0].html);
