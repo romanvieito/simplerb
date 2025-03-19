@@ -39,6 +39,9 @@ const WebPage = () => {
   const [previewLoading, setPreviewLoading] = React.useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const [customSubdomain, setCustomSubdomain] = useState("");
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -445,6 +448,58 @@ const WebPage = () => {
     });
   };
 
+  const isValidSubdomain = (subdomain: string) => {
+    const subdomainRegex = /^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/;
+    return subdomainRegex.test(subdomain);
+  };
+
+  const publishSite = async () => {
+    if (!user) {
+      toast.error("Please sign in to publish your site");
+      return;
+    }
+
+    setIsPublishing(true);
+    try {
+      // Use user ID for subdomain (simple and reliable)
+      const subdomain = user.id.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+      console.log('Publishing with data:', { subdomain, descriptionLength: textDescription?.length });
+
+      const response = await fetch('/api/publish-site', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          html: generatedSite,
+          subdomain,
+          description: textDescription
+        }),
+      });
+
+      const data = await response.json();
+      console.log('Server response:', data);
+
+      if (!response.ok) {
+        throw new Error(data.error || data.message || 'Failed to publish site');
+      }
+
+      setPublishedUrl(`https://${subdomain}.simplerb.com`);
+      toast.success("Site published successfully!");
+      
+      mixpanel.track("Site Published", {
+        subdomain,
+        description: textDescription
+      });
+    } catch (error) {
+      console.error('Detailed publish error:', error);
+      toast.error(error instanceof Error ? error.message : "Failed to publish site. Please try again.");
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
   const PreviewToolbar = () => (
     <div style={{
       position: 'fixed',
@@ -528,6 +583,43 @@ const WebPage = () => {
           </svg>
         </button>
 
+        {/* Add Publish button before the Edit button */}
+        <button
+          onClick={publishSite}
+          disabled={isPublishing}
+          className={`p-2 rounded flex items-center ${
+            isPublishing ? 'bg-gray-100 cursor-not-allowed' : 'hover:bg-gray-100'
+          }`}
+          title="Publish site"
+        >
+          {isPublishing ? (
+            <LoadingDots color="black" style="small" />
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4 4v2h12V4H4zm0 3v2h12V7H4zm0 3v2h12v-2H4zm0 3v2h12v-2H4z" clipRule="evenodd" />
+              </svg>
+              Publish
+            </>
+          )}
+        </button>
+
+        {/* Show published URL if available */}
+        {publishedUrl && (
+          <a
+            href={publishedUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 flex items-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+              <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+            </svg>
+            View Live Site
+          </a>
+        )}
+
         {/* Add Edit Mode Toggle Button */}
         <button
           onClick={() => setIsEditMode(!isEditMode)}
@@ -602,6 +694,45 @@ const WebPage = () => {
       toast.success("Changes saved!");
     }
   }, [isEditMode]);
+
+  const SubdomainInput = () => (
+    <div className="w-full mb-4">
+      <div className="flex mb-2 items-center space-x-3 bg-white p-4">
+        <div className="bg-gray-100 rounded-full p-2">
+          <Image
+            src="/2-black.png"
+            width={24}
+            height={24}
+            alt="2 icon"
+            className="mb-0"
+          />
+        </div>
+        <p className="text-left font-medium text-gray-800">Choose Your Subdomain</p>
+      </div>
+      
+      <div className="flex items-center">
+        <div className="relative flex-1">
+          <input
+            type="text"
+            value={customSubdomain}
+            onChange={(e) => setCustomSubdomain(e.target.value.toLowerCase())}
+            placeholder="your-site"
+            className="w-full rounded-lg border-gray-200 shadow-sm focus:border-black focus:ring-black p-4 pr-32 text-gray-700"
+            maxLength={63}
+          />
+          <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-gray-500">
+            .simplerb.com
+          </div>
+        </div>
+      </div>
+      
+      <p className="text-sm text-gray-500 mt-2">
+        {customSubdomain && !isValidSubdomain(customSubdomain) ? 
+          "Subdomain can only contain lowercase letters, numbers, and hyphens" :
+          "This will be your site's URL"}
+      </p>
+    </div>
+  );
 
   return (
     <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
@@ -699,6 +830,7 @@ const WebPage = () => {
               </button>
             )}
           </SignedIn>
+          {generatedSite && <SubdomainInput />}
         </div>
 
         <div>
