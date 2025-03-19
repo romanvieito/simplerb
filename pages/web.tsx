@@ -461,7 +461,7 @@ const WebPage = () => {
 
     setIsPublishing(true);
     try {
-      // Use user ID for subdomain (simple and reliable)
+      // Use user ID for subdomain
       const subdomain = user.id.toLowerCase().replace(/[^a-z0-9]/g, '');
 
       console.log('Publishing with data:', { subdomain, descriptionLength: textDescription?.length });
@@ -470,6 +470,7 @@ const WebPage = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.id}` // Add authorization header
         },
         body: JSON.stringify({
           html: generatedSite,
