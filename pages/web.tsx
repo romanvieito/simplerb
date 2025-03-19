@@ -818,7 +818,7 @@ const WebPage = () => {
              onClick={generateWeb}
              disabled={loading}
            >
-            <DiamondIcon className="mr-2" />
+            {/* <DiamondIcon className="mr-2" /> */}
              Create Website
            </button>         
             }
