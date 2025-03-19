@@ -6,17 +6,21 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
-    const hostname = req.headers.host || '';
-    console.log('Serving site for hostname:', hostname);
+    // Debug logging
+    console.log('Request headers:', req.headers);
+    console.log('Request host:', req.headers.host);
 
-    // Only handle subdomain requests
+    const hostname = req.headers.host || '';
+    
+    // Skip if it's the main domain
     if (hostname === 'simplerb.com' || hostname === 'www.simplerb.com') {
+      console.log('Main domain detected, skipping');
       return res.status(404).send('Not found');
     }
 
     // Extract subdomain
     const subdomain = hostname.split('.')[0];
-    console.log('Looking up site for subdomain:', subdomain);
+    console.log('Processing subdomain:', subdomain);
 
     const result = await sql`
       SELECT html 
@@ -26,20 +30,25 @@ export default async function handler(
       LIMIT 1;
     `;
 
+    console.log('Database query result:', {
+      found: result.rows.length > 0,
+      subdomain
+    });
+
     if (result.rows.length === 0) {
-      console.log('No site found for subdomain:', subdomain);
       return res.status(404).send('Site not found');
     }
 
-    // Set headers to prevent caching of the main site
+    // Set headers
     res.setHeader('Content-Type', 'text/html');
-    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
     res.setHeader('Vary', 'host');
 
-    // Send the generated site HTML
+    // Send the HTML content
     return res.send(result.rows[0].html);
   } catch (error) {
-    console.error('Error serving site:', error);
+    console.error('Detailed serve-site error:', error);
     return res.status(500).send('Error serving site');
   }
 } 
