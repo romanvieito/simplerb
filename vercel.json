@@ -49,17 +49,5 @@
         }
       ]
     }
-  ],
-  "routes": [
-    {
-      "src": "/",
-      "has": [
-        {
-          "type": "host",
-          "value": "(?<subdomain>[^.]+).simplerb.com"
-        }
-      ],
-      "dest": "/api/serve-site"
-    }
   ]
 } 
