@@ -1,34 +1,55 @@
 import { sql } from '@vercel/postgres';
 import { NextApiResponse, NextApiRequest } from 'next';
+import { getAuth } from '@clerk/nextjs/server';
 
 export default async function handler(
-  request: NextApiRequest,
-  response: NextApiResponse,
+  req: NextApiRequest,
+  res: NextApiResponse
 ) {
-  if (request.method !== 'GET') {
-    return response.status(405).json({ error: 'Method Not Allowed' });
+  // Add CORS headers
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
+
+  // Handle OPTIONS request
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
   try {
-    const email = request.query.email as string;
+    const { email } = req.query;
+
     if (!email) {
-      return response.status(400).json({ error: 'Email parameter is required' });
+      return res.status(400).json({ error: 'Email is required' });
     }
 
-    const result = await sql`SELECT * FROM users WHERE email=${email}`;
+    // Get user data from database
+    const result = await sql`
+      SELECT * FROM users 
+      WHERE email = ${email as string}
+    `;
 
-    if (result.rowCount === 0) {
-      return response.status(404).json({ error: 'User not found' });
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    return response.status(200).json({ user: result.rows[0] });
-  } catch (error: unknown) {
-    console.error('Error in getUser API:', error);
-    if (error instanceof Error) {
-      return response.status(500).json({ error: 'Internal Server Error', details: error.message });
-    } else {
-      return response.status(500).json({ error: 'Internal Server Error', details: 'An unknown error occurred' });
-    }
+    return res.status(200).json({ 
+      user: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    return res.status(500).json({ 
+      error: 'Error fetching user data'
+    });
   }
 }
 
