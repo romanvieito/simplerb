@@ -2,23 +2,25 @@ import { authMiddleware } from "@clerk/nextjs";
 
 export default authMiddleware({
   publicRoutes: [
-    "/", 
-    "/api/serve-site", 
-    "/api/clerk-webhooks(.*)",
-    "/api/getUser",
-    "/sign-in(.*)",
-    "/sign-up(.*)",
+    "/",
     "/pricing",
-    "/faq"
+    "/faq",
+    "/api/serve-site",
+    "/api/clerk-webhooks(.*)",
+    "/sign-in(.*)",
+    "/sign-up(.*)"
   ],
 });
 
 export const config = {
   matcher: [
-    "/domain",
-    "/web",
-    "/ads",
-    "/email",
-    "/api/((?!serve-site|clerk-webhooks|getUser).*)"
-  ]
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public (public files)
+     */
+    "/((?!_next/static|_next/image|favicon.ico|public).*)",
+  ],
 }; 
