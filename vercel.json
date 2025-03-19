@@ -19,7 +19,17 @@
   ],
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "(?<subdomain>[^.]+)\\.simplerb\\.com"
+        }
+      ],
+      "destination": "/api/serve-site"
+    },
+    {
+      "source": "/:path*",
       "has": [
         {
           "type": "host",
@@ -31,11 +41,17 @@
   ],
   "headers": [
     {
-      "source": "/:path*",
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "(?<subdomain>[^.]+)\\.simplerb\\.com"
+        }
+      ],
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "s-maxage=3600, stale-while-revalidate"
+          "value": "no-store, no-cache, must-revalidate"
         }
       ]
     }

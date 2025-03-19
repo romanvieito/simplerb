@@ -6,21 +6,22 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
-    // Debug logging
-    console.log('Request headers:', req.headers);
-    console.log('Request host:', req.headers.host);
-
     const hostname = req.headers.host || '';
-    
-    // Skip if it's the main domain
-    if (hostname === 'simplerb.com' || hostname === 'www.simplerb.com') {
-      console.log('Main domain detected, skipping');
+    console.log('1. Incoming request:', {
+      path: req.url,
+      hostname,
+      method: req.method
+    });
+
+    // Skip static assets
+    if (req.url?.includes('.')) {
+      console.log('2. Static asset request, passing through');
       return res.status(404).send('Not found');
     }
 
     // Extract subdomain
     const subdomain = hostname.split('.')[0];
-    console.log('Processing subdomain:', subdomain);
+    console.log('3. Processing subdomain:', subdomain);
 
     const result = await sql`
       SELECT html 
@@ -30,9 +31,9 @@ export default async function handler(
       LIMIT 1;
     `;
 
-    console.log('Database query result:', {
+    console.log('4. Database result:', {
       found: result.rows.length > 0,
-      subdomain
+      contentLength: result.rows[0]?.html?.length || 0
     });
 
     if (result.rows.length === 0) {
@@ -43,12 +44,14 @@ export default async function handler(
     res.setHeader('Content-Type', 'text/html');
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Vary', 'host');
+
+    // Log the first 100 characters of content
+    console.log('5. Sending content preview:', result.rows[0].html.substring(0, 100));
 
     // Send the HTML content
     return res.send(result.rows[0].html);
   } catch (error) {
-    console.error('Detailed serve-site error:', error);
+    console.error('Error in serve-site:', error);
     return res.status(500).send('Error serving site');
   }
 } 
