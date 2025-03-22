@@ -40,6 +40,7 @@
     "micro": "^10.0.1",
     "micro-cors": "^0.1.1",
     "mixpanel-browser": "^2.49.0",
+    "nanoid": "^5.1.5",
     "next": "^14.2.4",
     "nodemailer": "^6.10.0",
     "oauth-1.0a": "^2.2.6",

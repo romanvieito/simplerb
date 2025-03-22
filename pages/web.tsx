@@ -454,193 +454,141 @@ const WebPage = () => {
   };
 
   const publishSite = async () => {
-    if (!user) {
-      toast.error("Please sign in to publish your site");
+    if (!generatedSite) {
+      toast.error('Please generate a site first');
+      return;
+    }
+
+    if (!isSignedIn) {
+      toast.error('Please sign in to publish your site');
+      return;
+    }
+
+    if (!dataUser?.id) {
+      console.error('No user ID available:', dataUser);
+      toast.error('User data not loaded. Please refresh the page.');
       return;
     }
 
     setIsPublishing(true);
     try {
-      // Use user ID for subdomain
-      const subdomain = user.id.toLowerCase().replace(/[^a-z0-9]/g, '');
+      console.log('Publishing site with data:', {
+        contentLength: generatedSite.length,
+        title: textDescription,
+        userId: dataUser.id
+      });
 
-      console.log('Publishing with data:', { subdomain, descriptionLength: textDescription?.length });
-
-      const response = await fetch('/api/publish-site', {
+      const response = await fetch('/api/publish-page', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.id}` // Add authorization header
         },
         body: JSON.stringify({
-          html: generatedSite,
-          subdomain,
-          description: textDescription
+          content: generatedSite,
+          title: textDescription || 'Untitled',
+          userId: dataUser.id
         }),
       });
 
       const data = await response.json();
-      console.log('Server response:', data);
 
       if (!response.ok) {
-        throw new Error(data.error || data.message || 'Failed to publish site');
+        console.error('Publish failed:', data);
+        throw new Error(data.error || data.details || 'Failed to publish site');
       }
 
-      setPublishedUrl(`https://${subdomain}.simplerb.com`);
-      toast.success("Site published successfully!");
+      setPublishedUrl(data.url);
       
-      mixpanel.track("Site Published", {
-        subdomain,
-        description: textDescription
+      toast.success('Site published successfully!');
+      mixpanel.track('Site Published', {
+        userId: dataUser.id,
+        siteUrl: data.url
       });
     } catch (error) {
-      console.error('Detailed publish error:', error);
-      toast.error(error instanceof Error ? error.message : "Failed to publish site. Please try again.");
+      console.error('Error publishing site:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to publish site');
     } finally {
       setIsPublishing(false);
     }
   };
 
   const PreviewToolbar = () => (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      height: '60px',
-      backgroundColor: 'white',
-      borderBottom: '1px solid #e5e7eb',
-      display: 'flex',
-      alignItems: 'center',
-      padding: '0 1rem',
-      justifyContent: 'space-between',
-      zIndex: 1000,
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <button
-          onClick={() => setOpenWebSite(false)}
-          className="text-gray-600 hover:text-gray-900 p-2 rounded-full hover:bg-gray-100"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-        <div className="text-lg font-medium text-gray-900">
-          {textDescription.length > 50 ? `${textDescription.substring(0, 50)}...` : textDescription}
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        {/* Viewport Controls */}
-        <div className="bg-gray-100 rounded-lg p-1 flex">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50">
+      <div className="container mx-auto flex items-center justify-between">
+        <div className="flex items-center space-x-4">
           <button
-            onClick={() => setPreviewViewport('mobile')}
-            className={`p-2 rounded ${previewViewport === 'mobile' ? 'bg-white shadow' : 'hover:bg-gray-200'}`}
-            title="Mobile view"
+            onClick={() => setPreviewViewport('desktop')}
+            className={`px-4 py-2 rounded-lg ${
+              previewViewport === 'desktop'
+                ? 'bg-black text-white'
+                : 'bg-gray-100 text-gray-700'
+            }`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M7 2a2 2 0 00-2 2v12a2 2 0 002 2h6a2 2 0 002-2V4a2 2 0 00-2-2H7zm3 14a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-            </svg>
+            Desktop
           </button>
           <button
             onClick={() => setPreviewViewport('tablet')}
-            className={`p-2 rounded ${previewViewport === 'tablet' ? 'bg-white shadow' : 'hover:bg-gray-200'}`}
-            title="Tablet view"
+            className={`px-4 py-2 rounded-lg ${
+              previewViewport === 'tablet'
+                ? 'bg-black text-white'
+                : 'bg-gray-100 text-gray-700'
+            }`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm4 14a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-            </svg>
+            Tablet
           </button>
           <button
-            onClick={() => setPreviewViewport('desktop')}
-            className={`p-2 rounded ${previewViewport === 'desktop' ? 'bg-white shadow' : 'hover:bg-gray-200'}`}
-            title="Desktop view"
+            onClick={() => setPreviewViewport('mobile')}
+            className={`px-4 py-2 rounded-lg ${
+              previewViewport === 'mobile'
+                ? 'bg-black text-white'
+                : 'bg-gray-100 text-gray-700'
+            }`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z" clipRule="evenodd" />
-            </svg>
+            Mobile
           </button>
         </div>
-
-        {/* Action Buttons */}
-        <button
-          onClick={copyCode}
-          className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
-          title="Copy code"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z" />
-            <path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
-          </svg>
-        </button>
-        <button
-          onClick={downloadPreview}
-          className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
-          title="Download HTML"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-          </svg>
-        </button>
-
-        {/* Add Publish button before the Edit button */}
-        <button
-          onClick={publishSite}
-          disabled={isPublishing}
-          className={`p-2 rounded flex items-center ${
-            isPublishing ? 'bg-gray-100 cursor-not-allowed' : 'hover:bg-gray-100'
-          }`}
-          title="Publish site"
-        >
-          {isPublishing ? (
-            <LoadingDots color="black" style="small" />
-          ) : (
-            <>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              Publish
-            </>
+        <div className="flex items-center space-x-4">
+          {publishedUrl && (
+            <div className="flex items-center space-x-2">
+              <input
+                type="text"
+                value={publishedUrl}
+                readOnly
+                className="px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm"
+              />
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(publishedUrl);
+                  toast.success('URL copied to clipboard!');
+                }}
+                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-black/80"
+              >
+                Copy URL
+              </button>
+            </div>
           )}
-        </button>
-
-        {/* Show published URL if available */}
-        {publishedUrl && (
-          <a
-            href={publishedUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 flex items-center"
+          <button
+            onClick={downloadPreview}
+            className="px-4 py-2 bg-black text-white rounded-lg hover:bg-black/80"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
-              <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
-            </svg>
-            View Live Site
-          </a>
-        )}
-
-        {/* Add Edit Mode Toggle Button */}
-        <button
-          onClick={() => setIsEditMode(!isEditMode)}
-          className={`p-2 rounded ${isEditMode ? 'bg-blue-100' : ''} hover:bg-gray-100`}
-          title={isEditMode ? "Save changes" : "Edit content"}
-        >
-          {isEditMode ? (
-            <span className="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-              Save
-            </span>
-          ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793z" />
-              <path d="M11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-            </svg>
-          )}
-        </button>
+            Download
+          </button>
+          <button
+            onClick={copyCode}
+            className="px-4 py-2 bg-black text-white rounded-lg hover:bg-black/80"
+          >
+            Copy Code
+          </button>
+          <button
+            onClick={publishSite}
+            disabled={isPublishing}
+            className={`px-4 py-2 bg-black text-white rounded-lg hover:bg-black/80 ${
+              isPublishing ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            {isPublishing ? 'Publishing...' : 'Publish'}
+          </button>
+        </div>
       </div>
     </div>
   );
