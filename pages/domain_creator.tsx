@@ -4,52 +4,89 @@ import Footer from "../components/Footer";
 import Header from "../components/Header";
 import CFAQ from "../components/CFAQ";
 import CPricing from "../components/CPricing";
+import { Container } from "@mui/material";
+import { Language } from '@mui/icons-material';
 
 export default function AIWebCreatorPage() {
   return (
-    <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
+    <div className="min-h-screen bg-black text-white">
       <Head>
         <title>Business Name Generator</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Header />
-      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mb-6 mt-12 sm:mt-20">
-        <h1 className="text-4xl font-bold mb-8">
-          The ideal domain, the first piece of marketing.{" "}
-        </h1>
-        <p className="text-xl mb-8">
-          Find a great brand name and build your business around it.
-        </p>
-        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-          <a
-            href="/domain"
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Get Started <span className="inline-block ml-2">➔</span>
-          </a>
-        </button>
-
-        <div className="mt-16 mb-10">
-          <h2 className="text-3xl font-semibold mb-8">How It Works</h2>
-          <p className="text-xl mb-4">
-            The Simplest Business Name Generator in the World
-          </p>
-          <div className="flex items-center justify-center">
-            <div className="bg-gray-100 rounded-full p-4 mr-4">
-              <span className="text-2xl font-bold">1</span>
+      
+      {/* Hero Section */}
+      <section className="relative min-h-[90vh] flex items-center">
+        <div className="absolute inset-0 bg-gradient-to-b from-red-900/20 to-black/95 z-0"></div>
+        <Container maxWidth="lg" className="relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <Language className="text-red-400 text-4xl" />
+              <h1 className="text-6xl font-bold tracking-tight">
+                The ideal domain, the first piece of{" "}
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-rose-600">
+                  marketing
+                </span>
+              </h1>
             </div>
-            <p className="text-lg">Just One Click Away!</p>
+            <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed">
+              Find a great brand name and build your business around it. Our AI-powered generator helps you discover the perfect domain that resonates with your vision.
+            </p>
+            <a
+              href="/domain"
+              className="group relative inline-block px-8 py-4 bg-white text-black rounded-full font-medium hover:bg-gray-100 transition-all duration-300"
+            >
+              Get Started
+              <span className="absolute inset-x-0 w-1/2 mx-auto -bottom-px h-px bg-gradient-to-r from-transparent via-red-500 to-transparent"></span>
+            </a>
           </div>
-          <p className="mt-4 text-gray-600">
-            Build your business without lifting a finger – our AI-powered business generator does it all.
-          </p>
-        </div>
+        </Container>
+      </section>
 
-        <div className="mt-16">
+      {/* How It Works Section */}
+      <section className="py-32 bg-black">
+        <Container maxWidth="lg">
+          <h2 className="text-4xl font-bold text-center mb-20">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-rose-600">
+              How It Works
+            </span>
+          </h2>
+          <div className="max-w-3xl mx-auto">
+            <div className="p-8 rounded-2xl bg-gradient-to-b from-gray-900 to-black border border-gray-800">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="bg-red-500/10 rounded-full p-4">
+                  <span className="text-2xl font-bold text-red-400">1</span>
+                </div>
+                <h3 className="text-2xl font-bold">Just One Click Away!</h3>
+              </div>
+              <p className="text-gray-400 text-lg">
+                Build your business without lifting a finger – our AI-powered business generator does it all.
+              </p>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="py-32 bg-gradient-to-b from-black to-gray-900">
+        <Container maxWidth="lg">
+          <h2 className="text-4xl font-bold text-center mb-20">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-rose-600">
+              Choose Your Plan
+            </span>
+          </h2>
           <CPricing />
+        </Container>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-32 bg-black">
+        <Container maxWidth="lg">
           <CFAQ />
-        </div>
-      </main>
+        </Container>
+      </section>
+      
       <Footer />
     </div>
   );
