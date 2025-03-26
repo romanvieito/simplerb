@@ -310,7 +310,7 @@ const DomainPage: React.FC = () => {
     } else {
     toast((t) => (
       <div className="flex flex-col items-center">
-        <p className="mb-2">Premium feature. Please become a member.</p>
+        <p className="mb-2">Focus on available domains only! Plus get access to all premium features.</p>
         <div className="flex space-x-2">
           <button
             onClick={() => {
