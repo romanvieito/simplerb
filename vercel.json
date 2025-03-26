@@ -16,41 +16,5 @@
       "path": "/api/cron/refreshGmailToken",
       "schedule": "0 0 */5 * *"
     }
-  ],
-  "redirects": [
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "(?<subdomain>[^.]+)\\.simplerb\\.com"
-        }
-      ],
-      "permanent": false,
-      "destination": "https://simplerb.com/api/serve-site?subdomain=:subdomain"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "has": [
-        {
-          "type": "host",
-          "value": "(?<subdomain>[^.]+)\\.simplerb\\.com"
-        }
-      ],
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, no-cache, must-revalidate"
-        }
-      ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/p/:id",
-      "destination": "/p/[id]"
-    }
   ]
 } 
