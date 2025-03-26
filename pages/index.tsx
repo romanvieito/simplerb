@@ -64,7 +64,7 @@ const Home: NextPage = () => {
               </span>
             </h1>
             <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed">
-              Take your channel to the next level with a simple creator toolkit to find your domain, launch a site, promote with ads, and connect via email.
+              Take your business to the next level with a simple creator toolkit to find your domain, launch a site, promote with ads, and connect via email.
             </p>
             <div className="flex gap-4 justify-center">
               <a
@@ -93,7 +93,7 @@ const Home: NextPage = () => {
         <Container maxWidth="lg">
           <h2 className="text-4xl font-bold text-center mb-20">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-rose-600">
-              Everything You Need to Grow Your Channel
+              Everything You Need to Grow Your Business
             </span>
           </h2>
           <Grid container spacing={6} justifyContent="center">
