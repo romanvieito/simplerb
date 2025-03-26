@@ -61,7 +61,7 @@ export default function AIWebCreatorPage() {
                 <h3 className="text-2xl font-bold">Just One Click Away!</h3>
               </div>
               <p className="text-gray-400 text-lg">
-                Build your business without lifting a finger – our AI-powered business generator does it all.
+                Launch your new business effortlessly – our AI handles everything for you.
               </p>
             </div>
           </div>
