@@ -153,9 +153,16 @@ const WebPage = () => {
     try {
       if (!isPremiumUser) {
         toast((t) => (
-          <div className="flex flex-col items-center">
-            <p className="mb-2">Create your website instantly! Unlock this and all premium features.</p>
-            <div className="flex space-x-2">
+          <div className="flex flex-col items-center p-4">
+            <div className="flex items-center mb-4">
+              <DiamondIcon className="text-black mr-2" sx={{ fontSize: "1.5rem" }} />
+              <h3 className="text-xl font-bold">Premium Feature</h3>
+            </div>
+            <p className="mb-4 text-gray-600 text-center">
+              Create your website instantly!<br/>
+              <span className="text-sm">Plus get access to all premium features.</span>
+            </p>
+            <div className="flex flex-col sm:flex-row w-full sm:w-auto space-y-2 sm:space-y-0 sm:space-x-3">
               <button
                 onClick={() => {
                   toast.dismiss(t.id);
@@ -167,16 +174,16 @@ const WebPage = () => {
                     form.submit();
                   }
                 }}
-                className="bg-black text-white font-medium px-4 py-2 rounded-xl hover:bg-black/80 flex items-center"
+                className="bg-black text-white font-medium px-6 py-2.5 rounded-xl hover:bg-black/80 flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md"
               >
                 <DiamondIcon className="mr-2" />
                 Become a Member
               </button>
               <button
                 onClick={() => toast.dismiss(t.id)}
-                className="bg-gray-300 text-black font-medium px-4 py-2 rounded-xl hover:bg-gray-400"
+                className="bg-gray-100 text-gray-600 font-medium px-6 py-2.5 rounded-xl hover:bg-gray-200 transition-all duration-200"
               >
-                Close
+                Maybe Later
               </button>
             </div>
           </div>
