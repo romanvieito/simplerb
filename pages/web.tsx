@@ -525,51 +525,94 @@ const WebPage = () => {
         <div className="flex items-center space-x-4">
           <button
             onClick={() => setPreviewViewport('desktop')}
-            className={`px-4 py-2 rounded-lg ${
+            className={`px-4 py-2 rounded-lg transition-all duration-200 ${
               previewViewport === 'desktop'
-                ? 'bg-black text-white'
-                : 'bg-gray-100 text-gray-700'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
             Desktop
           </button>
           <button
             onClick={() => setPreviewViewport('tablet')}
-            className={`px-4 py-2 rounded-lg ${
+            className={`px-4 py-2 rounded-lg transition-all duration-200 ${
               previewViewport === 'tablet'
-                ? 'bg-black text-white'
-                : 'bg-gray-100 text-gray-700'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
             Tablet
           </button>
           <button
             onClick={() => setPreviewViewport('mobile')}
-            className={`px-4 py-2 rounded-lg ${
+            className={`px-4 py-2 rounded-lg transition-all duration-200 ${
               previewViewport === 'mobile'
-                ? 'bg-black text-white'
-                : 'bg-gray-100 text-gray-700'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
             Mobile
           </button>
         </div>
         <div className="flex items-center space-x-4">
-          <button
-            onClick={() => setIsEditMode(!isEditMode)}
-            className={`px-4 py-2 rounded-lg ${
-              isEditMode ? 'bg-blue-500 text-white' : 'bg-black text-white'
-            } hover:bg-opacity-80`}
-          >
-            {isEditMode ? 'Save Changes' : 'Edit Text'}
-          </button>
+          <div className="flex items-center space-x-2 border-r border-gray-200 pr-4">
+            <button
+              onClick={() => setIsEditMode(!isEditMode)}
+              className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
+                isEditMode 
+                  ? 'bg-green-600 text-white shadow-md hover:bg-green-700' 
+                  : 'bg-gray-800 text-white hover:bg-gray-900'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              <span>{isEditMode ? 'Save Changes' : 'Edit Text'}</span>
+            </button>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={downloadPreview}
+              className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-all duration-200 flex items-center space-x-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span>Download</span>
+            </button>
+            <button
+              onClick={copyCode}
+              className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-all duration-200 flex items-center space-x-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+              </svg>
+              <span>Copy Code</span>
+            </button>
+            <button
+              onClick={publishSite}
+              disabled={isPublishing}
+              className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
+                isPublishing 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>{isPublishing ? 'Publishing...' : 'Publish'}</span>
+            </button>
+          </div>
+          
           {publishedUrl && (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 border-l border-gray-200 pl-4">
               <a
                 href={publishedUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-black/80 flex items-center space-x-2"
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 flex items-center space-x-2 shadow-md"
               >
                 <span>View Live Site</span>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -578,27 +621,6 @@ const WebPage = () => {
               </a>
             </div>
           )}
-          <button
-            onClick={downloadPreview}
-            className="px-4 py-2 bg-black text-white rounded-lg hover:bg-black/80"
-          >
-            Download
-          </button>
-          <button
-            onClick={copyCode}
-            className="px-4 py-2 bg-black text-white rounded-lg hover:bg-black/80"
-          >
-            Copy Code
-          </button>
-          <button
-            onClick={publishSite}
-            disabled={isPublishing}
-            className={`px-4 py-2 bg-black text-white rounded-lg hover:bg-black/80 ${
-              isPublishing ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            {isPublishing ? 'Publishing...' : 'Publish'}
-          </button>
         </div>
       </div>
     </div>
