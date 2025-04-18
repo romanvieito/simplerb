@@ -565,21 +565,17 @@ const WebPage = () => {
           </button>
           {publishedUrl && (
             <div className="flex items-center space-x-2">
-              <input
-                type="text"
-                value={publishedUrl}
-                readOnly
-                className="px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm"
-              />
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(publishedUrl);
-                  toast.success('URL copied to clipboard!');
-                }}
-                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-black/80"
+              <a
+                href={publishedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-black/80 flex items-center space-x-2"
               >
-                Copy URL
-              </button>
+                <span>View Live Site</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
             </div>
           )}
           <button
