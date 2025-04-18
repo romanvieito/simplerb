@@ -325,7 +325,7 @@ const WebPage = () => {
       ${images.map(img => `${img.type}: ${img.pexels?.url || 'https://via.placeholder.com/1920x1080'}`).join('\n')}
 
       Requirements:
-      1. Single page only
+      1. Single page only (no navigation)
       2. Mobile-first design
       
       Please return only the code, nothing else.`;
