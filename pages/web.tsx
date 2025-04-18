@@ -533,35 +533,46 @@ const WebPage = () => {
       <div className="container mx-auto flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <button
-            onClick={() => setPreviewViewport('desktop')}
-            className={`px-4 py-2 rounded-lg transition-all duration-200 ${
-              previewViewport === 'desktop'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            onClick={() => setOpenWebSite(false)}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 flex items-center space-x-2"
           >
-            Desktop
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span>Close</span>
           </button>
-          <button
-            onClick={() => setPreviewViewport('tablet')}
-            className={`px-4 py-2 rounded-lg transition-all duration-200 ${
-              previewViewport === 'tablet'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Tablet
-          </button>
-          <button
-            onClick={() => setPreviewViewport('mobile')}
-            className={`px-4 py-2 rounded-lg transition-all duration-200 ${
-              previewViewport === 'mobile'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Mobile
-          </button>
+          <div className="border-l border-gray-200 pl-4">
+            <button
+              onClick={() => setPreviewViewport('desktop')}
+              className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+                previewViewport === 'desktop'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Desktop
+            </button>
+            <button
+              onClick={() => setPreviewViewport('tablet')}
+              className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+                previewViewport === 'tablet'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Tablet
+            </button>
+            <button
+              onClick={() => setPreviewViewport('mobile')}
+              className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+                previewViewport === 'mobile'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Mobile
+            </button>
+          </div>
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2 border-r border-gray-200 pr-4">
@@ -576,7 +587,7 @@ const WebPage = () => {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-              <span>{isEditMode ? 'Save Changes' : 'Edit Text'}</span>
+              <span>{isEditMode ? 'Save Changes' : 'Edit'}</span>
             </button>
           </div>
           
