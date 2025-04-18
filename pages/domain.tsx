@@ -460,12 +460,13 @@ const DomainPage: React.FC = () => {
         </Box>
 
         <SignedIn>
-          {/* Parent Grid Container */}
-          <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 mt-10">
+          {/* Parent Grid Container: Columns change conditionally */}
+          <div className={`w-full grid grid-cols-1 ${ (loading || generatedDomains.length > 0) ? 'lg:grid-cols-2' : 'lg:grid-cols-1' } gap-10 lg:gap-16 mt-10`}>
             
-            {/* Left Column: Form */}
-            <div className="lg:col-span-1">
-              <form onSubmit={generateDomains} className="max-w-xl w-full mx-auto lg:mx-0">
+            {/* Left Column: Form - Spans conditionally */}
+            {/* Make sure form inside centers itself using mx-auto */}
+            <div className={`lg:col-span-1 ${(loading || generatedDomains.length > 0) ? '' : 'lg:col-span-1' }`}> {/* Simpler: let grid template handle span */} 
+              <form onSubmit={generateDomains} className="max-w-xl w-full mx-auto">
                 <div className="flex items-center space-x-3 bg-white p-4">
                   <div className="bg-black rounded-full p-2 w-8 h-8 flex items-center justify-center">
                     <span className="text-lg font-bold text-white">1</span>
@@ -641,81 +642,84 @@ const DomainPage: React.FC = () => {
               </form>
             </div>
 
-            {/* Right Column: Results */}
-            <div className="lg:col-span-1">
-              <div className="space-y-8">
-                {loading && (
-                  <div className="space-y-4">
-                    <div className="h-8 w-48 bg-gray-200 rounded-lg animate-pulse mx-auto"></div>
-                    {[...Array(3)].map((_, index) => (
-                      <div key={index} className="flex items-center justify-between bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <div className="flex items-center space-x-4">
-                          <div className="h-8 w-48 bg-gray-200 rounded-lg animate-pulse"></div>
-                          <div className="h-6 w-20 bg-gray-200 rounded-full animate-pulse"></div>
-                        </div>
-                        <div className="flex space-x-3">
-                          <div className="h-10 w-24 bg-gray-200 rounded-lg animate-pulse"></div>
-                          <div className="h-10 w-32 bg-gray-200 rounded-lg animate-pulse"></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                
-                {!loading && generatedDomains.length > 0 && (
-                  <h2 className="text-3xl font-bold text-gray-900 mx-auto">
-                    {isPremiumUser ? "Available Domains:" : "Generated Domains:"}
-                  </h2>
-                )}
-                <ul className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-                  {(availableOnly && isPremiumUser ? filteredDomains : generatedDomains).map((domain, index) => (
-                    <li
-                      key={index}
-                      className="flex flex-col justify-between bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 h-full"
-                    >
-                      <div className="flex-grow mb-4">
-                        <span className="text-2xl font-semibold text-gray-800 block break-words">{domain.domain}</span>
-                      </div>
-                      
-                      {isPremiumUser ? (
-                        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 mt-auto">
-                          <button
-                            onClick={() => handleCheckAvailability(domain.domain)}
-                            className="flex-1 bg-gray-100 text-gray-800 rounded-lg px-4 py-2.5 hover:bg-gray-200 transition-all duration-200 font-medium flex items-center justify-center space-x-2 group text-sm"
+            {/* Right Column: Results - Render conditionally */} 
+            {(loading || generatedDomains.length > 0) && (
+              <div className="lg:col-span-1">
+                <div className="space-y-8">
+                  {loading && (
+                     <div className="space-y-4">
+                       <div className="h-8 w-48 bg-gray-200 rounded-lg animate-pulse mx-auto"></div>
+                       {[...Array(3)].map((_, index) => (
+                         <div key={index} className="flex flex-col justify-between bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-full">
+                            <div className="flex-grow mb-4">
+                              <div className="h-8 w-48 bg-gray-200 rounded-lg animate-pulse mb-4"></div>
+                            </div>
+                            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 mt-auto">
+                              <div className="h-10 flex-1 bg-gray-200 rounded-lg animate-pulse"></div>
+                              <div className="h-10 flex-1 bg-gray-200 rounded-lg animate-pulse"></div>
+                            </div>
+                         </div>
+                        ))}
+                     </div>
+                  )}
+                  
+                  {!loading && generatedDomains.length > 0 && (
+                    <h2 className="text-3xl font-bold text-gray-900 mx-auto">
+                       {isPremiumUser ? "Available Domains:" : "Generated Domains:"}
+                    </h2>
+                  )}
+                  {/* Render list only if not loading AND domains exist */} 
+                  {!loading && generatedDomains.length > 0 && (
+                      <ul className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                        {(availableOnly && isPremiumUser ? filteredDomains : generatedDomains).map((domain, index) => (
+                          <li
+                            key={index}
+                            className="flex flex-col justify-between bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 h-full"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                              <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-                            </svg>
-                            <span>Buy</span>
-                          </button>
-                          <button
-                            onClick={() => {
-                              window.open(`/web?domain=${encodeURIComponent(domain.domain)}`, "_blank");
-                            }}
-                            className="bg-black text-white rounded-lg px-5 py-2.5 hover:bg-gray-800 transition-all duration-200 font-medium flex items-center space-x-2 group"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-                            </svg>
-                            <span>Create Web</span>
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => handleCheckAvailability(domain.domain)}
-                          className="bg-gray-100 text-gray-800 rounded-lg ml-2 px-5 py-2.5 hover:bg-gray-200 transition-all duration-200 font-medium flex items-center space-x-2 group"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                          </svg>
-                          <span>Check Availability</span>
-                        </button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                            <div className="flex-grow mb-4">
+                               <span className="text-2xl font-semibold text-gray-800 block break-words">{domain.domain}</span>
+                            </div>
+                            {isPremiumUser ? (
+                               <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 mt-auto">
+                                 <button
+                                    onClick={() => handleCheckAvailability(domain.domain)}
+                                    className="flex-1 bg-gray-100 text-gray-800 rounded-lg px-4 py-2.5 hover:bg-gray-200 transition-all duration-200 font-medium flex items-center justify-center space-x-2 group text-sm"
+                                   >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                                      <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+                                    </svg>
+                                    <span>Buy</span>
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      window.open(`/web?domain=${encodeURIComponent(domain.domain)}`, "_blank");
+                                    }}
+                                    className="flex-1 bg-black text-white rounded-lg px-4 py-2.5 hover:bg-gray-800 transition-all duration-200 font-medium flex items-center justify-center space-x-2 group text-sm"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                                      <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                                    </svg>
+                                    <span>Create Web</span>
+                                  </button>
+                               </div>
+                             ) : (
+                               <button
+                                 onClick={() => handleCheckAvailability(domain.domain)}
+                                 className="bg-gray-100 text-gray-800 rounded-lg px-5 py-2.5 hover:bg-gray-200 transition-all duration-200 font-medium flex items-center space-x-2 group mt-auto"
+                               >
+                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                                   <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                                 </svg>
+                                 <span>Check Availability</span>
+                               </button>
+                             )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                </div>
               </div>
-            </div>
+            )}
 
           </div> { /* End Parent Grid Container */}
         </SignedIn>
