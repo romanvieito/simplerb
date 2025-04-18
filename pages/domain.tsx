@@ -679,40 +679,29 @@ const DomainPage: React.FC = () => {
                             <div className="flex-grow mb-3">
                                <span className="text-xl font-semibold text-gray-800 block break-words">{domain.domain}</span>
                             </div>
-                            {isPremiumUser ? (
-                               <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 mt-auto">
-                                 <button
-                                    onClick={() => handleCheckAvailability(domain.domain)}
-                                    className="bg-gray-100 text-gray-800 rounded-lg px-3 py-2 hover:bg-gray-200 transition-all duration-200 font-medium flex items-center justify-center space-x-2 group text-sm"
-                                   >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                                      <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-                                    </svg>
-                                    <span>Buy</span>
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      window.open(`/web?domain=${encodeURIComponent(domain.domain)}`, "_blank");
-                                    }}
-                                    className="bg-black text-white rounded-lg px-3 py-2 hover:bg-gray-800 transition-all duration-200 font-medium flex items-center justify-center space-x-2 group text-sm"
-                                  >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                                      <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-                                    </svg>
-                                    <span>Create Web</span>
-                                  </button>
-                               </div>
-                             ) : (
-                               <button
-                                 onClick={() => handleCheckAvailability(domain.domain)}
-                                 className="bg-gray-100 text-gray-800 rounded-lg px-3 py-2 hover:bg-gray-200 transition-all duration-200 font-medium flex items-center justify-center space-x-2 group mt-auto text-sm"
-                               >
-                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                                   <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                                 </svg>
-                                 <span>Check Availability</span>
-                               </button>
-                             )}
+                            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 mt-auto items-center justify-center">
+                              <button
+                                onClick={() => handleCheckAvailability(domain.domain)}
+                                className="bg-gray-100 text-gray-800 rounded-lg px-3 py-2 hover:bg-gray-200 transition-all duration-200 font-medium flex items-center justify-center space-x-2 group text-sm"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                                  <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+                                </svg>
+                                <span>{isPremiumUser ? 'Buy Domain' : 'Check Availability'}</span>
+                              </button>
+
+                                <button
+                                  onClick={() => {
+                                    window.open(`/web?domain=${encodeURIComponent(domain.domain)}`, "_blank");
+                                  }}
+                                  className="bg-black text-white rounded-lg px-3 py-2 hover:bg-gray-800 transition-all duration-200 font-medium flex items-center justify-center space-x-2 group text-sm"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                                  </svg>
+                                  <span>Create Web</span>
+                                </button>
+                            </div>
                           </li>
                         ))}
                       </ul>
