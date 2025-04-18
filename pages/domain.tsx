@@ -11,6 +11,48 @@ import DiamondIcon from '@mui/icons-material/Diamond';
 import SBRContext from "../context/SBRContext";
 import LoadingDots from "../components/LoadingDots";
 
+// --- Local Storage Rate Limiting Helpers ---
+const LOCAL_STORAGE_KEY = 'domainGenerationTimestamps';
+const RATE_LIMIT_COUNT = 10;
+const RATE_LIMIT_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
+
+const getTimestamps = (): number[] => {
+  try {
+    const storedTimestamps = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return storedTimestamps ? JSON.parse(storedTimestamps) : [];
+  } catch (error) {
+    console.error("Error reading timestamps from local storage:", error);
+    return [];
+  }
+};
+
+const addTimestamp = (timestamp: number) => {
+  try {
+    const timestamps = getTimestamps();
+    // Clean up old timestamps while adding the new one
+    const now = Date.now();
+    const recentTimestamps = timestamps.filter(ts => (now - ts) < RATE_LIMIT_WINDOW_MS);
+    recentTimestamps.push(timestamp);
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(recentTimestamps));
+  } catch (error) {
+    console.error("Error saving timestamp to local storage:", error);
+  }
+};
+
+const checkRateLimit = (): boolean => {
+  const now = Date.now();
+  const timestamps = getTimestamps();
+  const recentTimestamps = timestamps.filter(ts => (now - ts) < RATE_LIMIT_WINDOW_MS);
+  // Update storage with only recent timestamps (cleanup)
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(recentTimestamps));
+  } catch (error) {
+     console.error("Error updating timestamps in local storage:", error);
+  }
+  return recentTimestamps.length >= RATE_LIMIT_COUNT;
+};
+// --- End Local Storage Rate Limiting Helpers ---
+
 const DomainPage: React.FC = () => {
   const router = useRouter();
   const { openSignIn } = useClerk();
@@ -169,6 +211,20 @@ const DomainPage: React.FC = () => {
 
   const generateDomains = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // --- Rate Limit Check for Free Users ---
+    if (!isPremiumUser) {
+      if (checkRateLimit()) {
+        toast.error(`Free users are limited to ${RATE_LIMIT_COUNT} generations every 3 hours. Upgrade for unlimited access!`);
+        mixpanel.track("Rate Limit Hit", {
+          userId: dataUser?.id || "anonymous",
+          feature: "Domain Generation"
+        });
+        return; // Stop execution if limit is reached
+      }
+    }
+    // --- End Rate Limit Check ---
+
     setLoading(true);
     setGeneratedDomains([]);
     setFilteredDomains([]); // Reset filtered domains as well
@@ -204,6 +260,13 @@ const DomainPage: React.FC = () => {
       };
 
       const temperature = temperatureMap[temperatureOption as keyof typeof temperatureMap];
+
+      // --- Add Timestamp After Successful Start (but before API call potentially) ---
+      // We add it here to count the attempt, even if the API call fails later.
+      if (!isPremiumUser) {
+        addTimestamp(Date.now());
+      }
+      // --- End Add Timestamp ---
 
       const response = await fetch("/api/openai", {
         method: "POST",
