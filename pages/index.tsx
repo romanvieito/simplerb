@@ -135,8 +135,8 @@ const Home: NextPage = () => {
       <section className="py-32 bg-gradient-to-b from-black to-gray-900">
         <Container maxWidth="lg">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-8">Experience the Simplicity</h2>
-            <p className="text-gray-400 text-center mb-12">Bridge your channel, build your fanbase, and maximize your earnings.</p>
+            <h2 className="text-4xl font-bold text-center mb-8">Keep it Simpler</h2>
+            <p className="text-gray-400 text-center mb-12">Bridge your business, build your fanbase, and maximize your earnings.</p>
             <div className="relative rounded-2xl overflow-hidden shadow-2xl" style={{ paddingBottom: '56.25%', height: 0 }}>
               <video 
                 className="absolute top-0 left-0 w-full h-full"
