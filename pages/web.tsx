@@ -41,7 +41,7 @@ const WebPage = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
-  const [customSubdomain, setCustomSubdomain] = useState("");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -455,11 +455,6 @@ const WebPage = () => {
     });
   };
 
-  const isValidSubdomain = (subdomain: string) => {
-    const subdomainRegex = /^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/;
-    return subdomainRegex.test(subdomain);
-  };
-
   const publishSite = async () => {
     if (!generatedSite) {
       toast.error('Please generate a site first');
@@ -542,91 +537,118 @@ const WebPage = () => {
             <span>Close</span>
           </button>
           <div className="border-l border-gray-200 pl-4">
-            <button
-              onClick={() => setPreviewViewport('desktop')}
-              className={`px-4 py-2 rounded-lg transition-all duration-200 ${
-                previewViewport === 'desktop'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Desktop
-            </button>
-            <button
-              onClick={() => setPreviewViewport('tablet')}
-              className={`px-4 py-2 rounded-lg transition-all duration-200 ${
-                previewViewport === 'tablet'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Tablet
-            </button>
-            <button
-              onClick={() => setPreviewViewport('mobile')}
-              className={`px-4 py-2 rounded-lg transition-all duration-200 ${
-                previewViewport === 'mobile'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Mobile
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setPreviewViewport('desktop')}
+                className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
+                  previewViewport === 'desktop'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <span>Desktop</span>
+              </button>
+              <button
+                onClick={() => setPreviewViewport('tablet')}
+                className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
+                  previewViewport === 'tablet'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                <span>Tablet</span>
+              </button>
+              <button
+                onClick={() => setPreviewViewport('mobile')}
+                className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
+                  previewViewport === 'mobile'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                <span>Mobile</span>
+              </button>
+            </div>
           </div>
         </div>
         <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2 border-r border-gray-200 pr-4">
+          <button
+            onClick={() => setIsEditMode(!isEditMode)}
+            className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
+              isEditMode 
+                ? 'bg-green-600 text-white shadow-md hover:bg-green-700' 
+                : 'bg-gray-800 text-white hover:bg-gray-900'
+            }`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            <span>{isEditMode ? 'Save Changes' : 'Edit'}</span>
+          </button>
+
+          <button
+            onClick={publishSite}
+            disabled={isPublishing}
+            className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
+              isPublishing 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span>{isPublishing ? 'Publishing...' : 'Publish'}</span>
+          </button>
+          <div className="relative">
             <button
-              onClick={() => setIsEditMode(!isEditMode)}
-              className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
-                isEditMode 
-                  ? 'bg-green-600 text-white shadow-md hover:bg-green-700' 
-                  : 'bg-gray-800 text-white hover:bg-gray-900'
-              }`}
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="px-2 py-2 text-black rounded-lg hover:bg-gray-100 transition-all duration-200 flex items-center space-x-2"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
               </svg>
-              <span>{isEditMode ? 'Save Changes' : 'Edit'}</span>
             </button>
+            
+            {isMenuOpen && (
+              <div className="absolute bottom-full right-0 mb-2 w-48 rounded-lg bg-white shadow-lg border border-gray-200">
+                <button
+                  onClick={() => {
+                    downloadPreview();
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 flex items-center space-x-2 rounded-t-lg"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  <span>Download</span>
+                </button>
+                <button
+                  onClick={() => {
+                    copyCode();
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 flex items-center space-x-2 rounded-b-lg"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                  </svg>
+                  <span>Copy Code</span>
+                </button>
+              </div>
+            )}
           </div>
-          
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={downloadPreview}
-              className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-all duration-200 flex items-center space-x-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              <span>Download</span>
-            </button>
-            <button
-              onClick={copyCode}
-              className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-all duration-200 flex items-center space-x-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-              </svg>
-              <span>Copy Code</span>
-            </button>
-            <button
-              onClick={publishSite}
-              disabled={isPublishing}
-              className={`px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
-                isPublishing 
-                  ? 'bg-gray-400 cursor-not-allowed' 
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span>{isPublishing ? 'Publishing...' : 'Publish'}</span>
-            </button>
-          </div>
-          
-          {/* Conditionally render View Live Site link after publish */}
+
           {publishedUrl && (
             <div className="flex items-center space-x-2 border-l border-gray-200 pl-4">
               <a
@@ -697,45 +719,6 @@ const WebPage = () => {
       toast.success("Changes saved!");
     }
   }, [isEditMode]);
-
-  const SubdomainInput = () => (
-    <div className="w-full mb-4">
-      <div className="flex mb-2 items-center space-x-3 bg-white p-4">
-        <div className="bg-gray-100 rounded-full p-2">
-          <Image
-            src="/2-black.png"
-            width={24}
-            height={24}
-            alt="2 icon"
-            className="mb-0"
-          />
-        </div>
-        <p className="text-left font-medium text-gray-800">Choose Your Subdomain</p>
-      </div>
-      
-      <div className="flex items-center">
-        <div className="relative flex-1">
-          <input
-            type="text"
-            value={customSubdomain}
-            onChange={(e) => setCustomSubdomain(e.target.value.toLowerCase())}
-            placeholder="your-site"
-            className="w-full rounded-lg border-gray-200 shadow-sm focus:border-black focus:ring-black p-4 pr-32 text-gray-700"
-            maxLength={63}
-          />
-          <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-gray-500">
-            .simplerb.com
-          </div>
-        </div>
-      </div>
-      
-      <p className="text-sm text-gray-500 mt-2">
-        {customSubdomain && !isValidSubdomain(customSubdomain) ? 
-          "Subdomain can only contain lowercase letters, numbers, and hyphens" :
-          "This will be your site's URL"}
-      </p>
-    </div>
-  );
 
   return (
     <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
@@ -835,7 +818,7 @@ const WebPage = () => {
               </button>
             )}
           </SignedIn>
-          {generatedSite && <SubdomainInput />}
+          {generatedSite && <div className="h-6" />}
         </div>
 
         <div>
