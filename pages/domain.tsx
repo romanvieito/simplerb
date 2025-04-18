@@ -105,32 +105,34 @@ const DomainPage: React.FC = () => {
     initPageData();
   }, [isSignedIn, user]);
 
-  useEffect(() => {
-    if (availableOnly && isPremiumUser && !availabilityChecked && generatedDomains.length > 0) {
-      checkAvailability();
-      setAvailabilityChecked(true);
-    } else {
-      setFilteredDomains(generatedDomains);
-    }
-  }, [generatedDomains, isPremiumUser]);
-
-  const checkAvailability = async () => {
+  const checkAvailability = async (domainsToCheckInput: DomainInfo[]) => {
     try {
+      console.log(
+        "Checking availability for:",
+        domainsToCheckInput.map((d) => d.domain)
+      );
+      const domainsToCheck = domainsToCheckInput.map((domainInfo) => domainInfo.domain);
 
-      // Assuming 'generatedDomains' is an array of your domain objects
-      const domainsToCheck = generatedDomains.map((domainInfo) => domainInfo.domain);
-  
-      if (process.env.NODE_ENV === 'development') {
-      // Mock data for local development
-      const mockAvailabilityResults = generatedDomains.map((domainInfo) => ({
-        domain: domainInfo.domain,
-        available: Math.random() < 0.7, // 70% chance of being available
-      }));
+      // Prevent check if no domains passed
+      if (domainsToCheck.length === 0) {
+        console.log("No domains to check availability for.");
+        setAvailabilityChecked(false); // Ensure it's false if no domains
+        return;
+      }
 
-      setGeneratedDomains(mockAvailabilityResults);
-      setFilteredDomains(mockAvailabilityResults.filter((domain) => domain.available));
-      return;
-    }
+      if (process.env.NODE_ENV === "development") {
+        const mockAvailabilityResults = domainsToCheckInput.map((domainInfo) => ({
+          ...domainInfo, // Keep existing info like favorite status
+          available: Math.random() < 0.7,
+        }));
+        console.log("Mock results:", mockAvailabilityResults);
+        setGeneratedDomains(mockAvailabilityResults);
+        setFilteredDomains(
+          mockAvailabilityResults.filter((domain) => domain.available === true)
+        );
+        setAvailabilityChecked(true); // Mark as checked after mock update
+        return;
+      }
 
       const response = await fetch('/api/check-availability-godaddy', {
         method: 'POST',
@@ -143,22 +145,25 @@ const DomainPage: React.FC = () => {
       }
   
       const availabilityResults = await response.json();
-  
-      // Map the availability results back to your generatedDomains
-      const updatedDomains = generatedDomains.map((domainInfo) => {
-        const availabilityInfo = availabilityResults.find(
-          (result: { domain: string; available: boolean }) => result.domain === domainInfo.domain
-        );
+      console.log("API results:", availabilityResults);
+
+      // Use the passed domainsToCheckInput to map results
+      const updatedDomains = domainsToCheckInput.map((domainInfo) => {
+        const availabilityInfo = availabilityResults.find((result: { domain: string; available: boolean }) => result.domain === domainInfo.domain);
         return {
           ...domainInfo,
-          available: availabilityInfo ? availabilityInfo.available : undefined,
+          available: availabilityInfo ? availabilityInfo.available : undefined, // Keep undefined if lookup fails
         };
       });
-  
-      // Update your state with the new domain information
+      console.log("Updated domains with availability:", updatedDomains);
+
       setGeneratedDomains(updatedDomains);
+      setFilteredDomains(updatedDomains.filter((domain) => domain.available === true)); // Filter strictly for true
+      setAvailabilityChecked(true); // Mark as checked after API update
+
     } catch (error) {
-      console.error('Error checking domain availability:', error);
+      console.error("Error checking domain availability:", error);
+      setAvailabilityChecked(false); // Reset on error to allow potential retry
     }
   };
 
@@ -166,7 +171,8 @@ const DomainPage: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setGeneratedDomains([]);
-    setAvailabilityChecked(false);
+    setFilteredDomains([]); // Reset filtered domains as well
+    setAvailabilityChecked(false); // Reset check status for new generation
 
     let generatedResults: DomainInfo[] = [];
     let tempGeneratedDomains = "";
@@ -215,7 +221,6 @@ const DomainPage: React.FC = () => {
       const reader = data.getReader();
       const decoder = new TextDecoder();
 
-      // Define onParse before using it
       const onParse = (event: ParsedEvent | ReconnectInterval) => {
         if (event.type === "event") {
           const data = event.data;
@@ -238,23 +243,20 @@ const DomainPage: React.FC = () => {
         parser.feed(chunkValue);
       }
 
-      // Process tempGeneratedDomains
       const tempDomainNamesText = tempGeneratedDomains
         .split("\n")
         .map((domain) => domain.replace(/^\d+\.\s*/, "").trim())
         .filter((domain) => domain !== "");
 
-      // Build generatedResults
       generatedResults = tempDomainNamesText.map((domain) => ({
         domain,
         available: undefined,
         favorite: false,
       }));
 
-      // Update state
+      console.log("Generated domains:", generatedResults);
       setGeneratedDomains(generatedResults);
 
-      // Now track the event with the final results
       mixpanel.track("Generated Domains", {
         businessDescription,
         vibe,
@@ -262,9 +264,25 @@ const DomainPage: React.FC = () => {
         userId: dataUser?.id || "anonymous",
         results: generatedResults.map((domain) => domain.domain),
       });
+
+      // Check availability immediately if premium user has the box checked
+      if (isPremiumUser && availableOnly) {
+        console.log(
+          "Premium user and availableOnly=true, checking availability..."
+        );
+        await checkAvailability(generatedResults);
+      } else {
+        // If not checking availability now, ensure filtered list is empty
+        // and availability is marked as not checked for this batch.
+        console.log("Not checking availability immediately.");
+        setFilteredDomains([]); // Start with empty filtered list if not checking
+        setAvailabilityChecked(false);
+      }
+
     } catch (error) {
-      console.error("An error occurred:", error);
+      console.error("An error occurred during generation:", error);
       toast.error("An error occurred while generating domains. Please try again.");
+      setAvailabilityChecked(false); // Reset check status on error
     } finally {
       setLoading(false);
     }
@@ -300,54 +318,64 @@ const DomainPage: React.FC = () => {
   };
 
   const handleAvailableOnlyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Track the change in the "Available only" checkbox
+    const isChecked = e.target.checked;
+    console.log(`AvailableOnly checkbox changed to: ${isChecked}`);
     mixpanel.track("Available Only Checkbox Changed", {
-      checked: e.target.checked,
-      isPremiumUser: isPremiumUser
+      checked: isChecked,
+      isPremiumUser: isPremiumUser,
     });
+
     if (isPremiumUser) {
-      setAvailableOnly(e.target.checked);
+      setAvailableOnly(isChecked);
+      // If user checks the box now, and we have domains generated but haven't checked them yet
+      if (isChecked && generatedDomains.length > 0 && !availabilityChecked) {
+        console.log(
+          "Checkbox checked by premium user, triggering availability check..."
+        );
+        // Pass the current state here, as it should be stable
+        checkAvailability(generatedDomains);
+      }
     } else {
-    toast((t) => (
-      <div className="flex flex-col items-center p-4">
-        <div className="flex items-center mb-4">
-          <DiamondIcon className="text-black mr-2" sx={{ fontSize: "1.5rem" }} />
-          <h3 className="text-xl font-bold">Premium Feature</h3>
+      // Logic for non-premium user trying to check the box (toast message)
+      toast((t) => (
+        <div className="flex flex-col items-center p-4">
+          <div className="flex items-center mb-4">
+            <DiamondIcon className="text-black mr-2" sx={{ fontSize: "1.5rem" }} />
+            <h3 className="text-xl font-bold">Premium Feature</h3>
+          </div>
+          <p className="mb-4 text-gray-600 text-center">
+            See only available domains instantly!<br/>
+            <span className="text-sm">Plus get access to all premium features.</span>
+          </p>
+          <div className="flex flex-col sm:flex-row w-full sm:w-auto space-y-2 sm:space-y-0 sm:space-x-3">
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                mixpanel.track("Become a Member Click", {
+                  source: "Available Only Checkbox",
+                });
+                const form = document.querySelector('form[action="/api/checkout_sessions"]');
+                if (form instanceof HTMLFormElement) {
+                  form.submit();
+                }
+              }}
+              className="bg-black text-white font-medium px-6 py-2.5 rounded-xl hover:bg-black/80 flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              <DiamondIcon className="mr-2" />
+              Become a Member
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="bg-gray-100 text-gray-600 font-medium px-6 py-2.5 rounded-xl hover:bg-gray-200 transition-all duration-200"
+            >
+              Maybe Later
+            </button>
+          </div>
         </div>
-        <p className="mb-4 text-gray-600 text-center">
-          See only available domains instantly!<br/>
-          <span className="text-sm">Plus get access to all premium features.</span>
-        </p>
-        <div className="flex flex-col sm:flex-row w-full sm:w-auto space-y-2 sm:space-y-0 sm:space-x-3">
-          <button
-            onClick={() => {
-              toast.dismiss(t.id);
-              mixpanel.track("Become a Member Click", {
-                source: "Available Only Checkbox",
-              });
-              const form = document.querySelector('form[action="/api/checkout_sessions"]');
-              if (form instanceof HTMLFormElement) {
-                form.submit();
-              }
-            }}
-            className="bg-black text-white font-medium px-6 py-2.5 rounded-xl hover:bg-black/80 flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md"
-          >
-            <DiamondIcon className="mr-2" />
-            Become a Member
-          </button>
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            className="bg-gray-100 text-gray-600 font-medium px-6 py-2.5 rounded-xl hover:bg-gray-200 transition-all duration-200"
-          >
-            Maybe Later
-          </button>
-        </div>
-      </div>
-    ), {
-      duration: 15000,
-      position: 'top-center',
-    });
-      
+      ), {
+        duration: 15000,
+        position: 'top-center',
+      });
     }
   };
 
@@ -640,14 +668,6 @@ const DomainPage: React.FC = () => {
                 >
                   <div className="flex items-center space-x-4">
                     <span className="text-2xl font-semibold text-gray-800">{domain.domain}</span>
-                    {isPremiumUser && domain.available && (
-                      <span className="px-3 py-1 text-sm font-medium text-green-600 bg-green-50 rounded-full flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        Available
-                      </span>
-                    )}
                   </div>
                   {isPremiumUser ? (
                     <div className="flex space-x-3">
