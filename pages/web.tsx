@@ -481,9 +481,18 @@ const WebPage = () => {
     try {
       console.log('Publishing site with data:', {
         contentLength: generatedSite.length,
+        contentSnippet: generatedSite.substring(0, 200), // Log first 200 chars
         title: textDescription,
         userId: dataUser.id
       });
+
+      // Ensure generatedSite looks like HTML
+      if (!generatedSite || !generatedSite.trim().startsWith('<')) {
+          console.error('Error: generatedSite does not look like HTML before publishing:', generatedSite);
+          toast.error('Internal error: Invalid site content before publishing.');
+          setIsPublishing(false);
+          return;
+      }
 
       const response = await fetch('/api/publish-page', {
         method: 'POST',
@@ -606,6 +615,7 @@ const WebPage = () => {
             </button>
           </div>
           
+          {/* Conditionally render View Live Site link after publish */}
           {publishedUrl && (
             <div className="flex items-center space-x-2 border-l border-gray-200 pl-4">
               <a
@@ -614,10 +624,10 @@ const WebPage = () => {
                 rel="noopener noreferrer"
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 flex items-center space-x-2 shadow-md"
               >
-                <span>View Live Site</span>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
+                <span>View Live Site</span>
               </a>
             </div>
           )}

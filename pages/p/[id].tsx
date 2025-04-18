@@ -51,9 +51,9 @@ export default function PublishedPage({ page }: PageProps) {
       </Head>
       <div className="min-h-screen bg-white">
         <main className="container mx-auto px-4 py-8">
-          <h1 className="text-4xl font-bold mb-6">{page.title}</h1>
+          {/* <h1 className="text-4xl font-bold mb-6">{page.title}</h1> */}
           <div 
-            className="prose max-w-none"
+            /* className="prose max-w-none" */
             dangerouslySetInnerHTML={{ __html: page.content }}
           />
         </main>
