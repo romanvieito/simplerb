@@ -555,6 +555,14 @@ const WebPage = () => {
           </button>
         </div>
         <div className="flex items-center space-x-4">
+          <button
+            onClick={() => setIsEditMode(!isEditMode)}
+            className={`px-4 py-2 rounded-lg ${
+              isEditMode ? 'bg-blue-500 text-white' : 'bg-black text-white'
+            } hover:bg-opacity-80`}
+          >
+            {isEditMode ? 'Save Changes' : 'Edit Text'}
+          </button>
           {publishedUrl && (
             <div className="flex items-center space-x-2">
               <input
