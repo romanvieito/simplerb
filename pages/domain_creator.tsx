@@ -31,7 +31,7 @@ export default function AIWebCreatorPage() {
               </h1>
             </div>
             <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed">
-              Find a great brand name and build your business around it. Our AI-powered generator helps you discover the perfect domain that resonates with your vision.
+              Business name generator to find the best domain for your business.
             </p>
             <a
               href="/domain"
@@ -52,17 +52,27 @@ export default function AIWebCreatorPage() {
               How It Works
             </span>
           </h2>
-          <div className="max-w-3xl mx-auto">
-            <div className="p-8 rounded-2xl bg-gradient-to-b from-gray-900 to-black border border-gray-800">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="bg-red-500/10 rounded-full p-4">
-                  <span className="text-2xl font-bold text-red-400">1</span>
-                </div>
-                <h3 className="text-2xl font-bold">Just One Click Away!</h3>
+          <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-3 max-w-5xl mx-auto">
+            <div className="relative rounded-2xl border border-gray-800 p-8 bg-gradient-to-b from-gray-900 to-black hover:border-gray-700 transition-all duration-300">
+              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white">
+                <span className="text-xl font-semibold">1</span>
               </div>
-              <p className="text-gray-400 text-lg">
-                Launch your new business effortlessly – our AI handles everything for you.
-              </p>
+              <h3 className="text-xl font-semibold">Describe Your Business</h3>
+              <p className="mt-4 text-gray-400">Tell us about your business and what you need</p>
+            </div>
+            <div className="relative rounded-2xl border border-gray-800 p-8 bg-gradient-to-b from-gray-900 to-black hover:border-gray-700 transition-all duration-300">
+              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white">
+                <span className="text-xl font-semibold">2</span>
+              </div>
+              <h3 className="text-xl font-semibold">AI Domain Search</h3>
+              <p className="mt-4 text-gray-400">Our AI finds the perfect domain for your business</p>
+            </div>
+            <div className="relative rounded-2xl border border-gray-800 p-8 bg-gradient-to-b from-gray-900 to-black hover:border-gray-700 transition-all duration-300">
+              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white">
+                <span className="text-xl font-semibold">3</span>
+              </div>
+              <h3 className="text-xl font-semibold">Instant Registration</h3>
+              <p className="mt-4 text-gray-400">Get your domain registered and ready to use</p>
             </div>
           </div>
         </Container>
