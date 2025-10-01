@@ -64,7 +64,7 @@ const WebPage = () => {
   const isPremiumUser = subsTplan === "STARTER" || subsTplan === "CREATOR";
 
   // Add fetchUserData function
-  const fetchUserData = async (email: string) => {
+  const fetchUserData = useCallback(async (email: string) => {
     try {
       const response = await fetch(`/api/getUser?email=${email}`);
       if (!response.ok) {
@@ -87,7 +87,7 @@ const WebPage = () => {
     } catch (error) {
       console.error("Failed to fetch user data:", error);
     }
-  };
+  }, [setDataUser, setCredits, setAdmin, setSubsTplan, setSubsCancel]);
 
   // Add initPageData function
   const initPageData = useCallback(async () => {
@@ -120,7 +120,7 @@ const WebPage = () => {
       });
       setAdmin(false);
     }
-  }, [isLoaded, user, fetchUserData, setSubsTplan, setSubsCancel, setCredits, setDataUser, setAdmin]);
+  }, [isLoaded, user, fetchUserData]);
 
   // Add useEffect to load user data
   useEffect(() => {

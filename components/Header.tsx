@@ -104,7 +104,7 @@ export default function Header(): JSX.Element {
    } = context;
 
   // Function to fetch user credits by email
-  const fetchCredits = async (email: string) => {
+  const fetchCredits = useCallback(async (email: string) => {
     try {
       const response = await fetch(`/api/getUser?email=${email}`);
       if (!response.ok) {
@@ -127,7 +127,7 @@ export default function Header(): JSX.Element {
     } catch (error) {
       console.error("Failed to fetch user credits:", error);
     }
-  };
+  }, [setDataUser, setCredits, setAdmin, setSubsTplan, setSubsCancel]);
 
   // Function to initialize header data
   const initHeader = useCallback(async () => {
@@ -162,7 +162,7 @@ export default function Header(): JSX.Element {
       setAdmin(false);
       resetSearch();
     }
-  }, [isLoaded, user, fetchCredits, setSubsTplan, setSubsCancel, setCredits, setDataUser, setAdmin, resetSearch]);
+  }, [isLoaded, user, fetchCredits, resetSearch]);
 
   useEffect(() => {
     initHeader();

@@ -89,7 +89,7 @@ const DomainPage: React.FC = () => {
   const isPremiumUser = subsTplan === "STARTER" || subsTplan === "CREATOR";
 
   // Function to fetch user data by email
-  const fetchUserData = async (email: string) => {
+  const fetchUserData = useCallback(async (email: string) => {
     try {
       const response = await fetch(`/api/getUser?email=${email}`);
       if (!response.ok) {
@@ -112,7 +112,7 @@ const DomainPage: React.FC = () => {
     } catch (error) {
       console.error("Failed to fetch user data:", error);
     }
-  };
+  }, [setDataUser, setCredits, setAdmin, setSubsTplan, setSubsCancel]);
 
   // Function to initialize page data
   const initPageData = useCallback(async () => {
@@ -145,7 +145,7 @@ const DomainPage: React.FC = () => {
       });
       setAdmin(false);
     }
-  }, [isLoaded, user, fetchUserData, setSubsTplan, setSubsCancel, setCredits, setDataUser, setAdmin]);
+  }, [isLoaded, user, fetchUserData]);
 
   useEffect(() => {
     initPageData();
