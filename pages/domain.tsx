@@ -212,13 +212,23 @@ const DomainPage: React.FC = () => {
   const generateDomains = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Check if business description is entered
+    if (!businessDescription.trim()) {
+      toast.error("Please enter a business description to generate domains!", {
+        duration: 3000,
+        position: 'top-center',
+      });
+      return;
+    }
+
     // --- Rate Limit Check for Free Users ---
-    if (!isPremiumUser) {
+    if (!isSignedIn || !isPremiumUser) {
       if (checkRateLimit()) {
-        toast.error(`Free users are limited to ${RATE_LIMIT_COUNT} generations every 3 hours. Upgrade for unlimited access!`);
+        toast.error(`Free users are limited to ${RATE_LIMIT_COUNT} generations every 3 hours. Sign in and upgrade for unlimited access!`);
         mixpanel.track("Rate Limit Hit", {
           userId: dataUser?.id || "anonymous",
-          feature: "Domain Generation"
+          feature: "Domain Generation",
+          isSignedIn: isSignedIn
         });
         return; // Stop execution if limit is reached
       }
@@ -263,7 +273,7 @@ const DomainPage: React.FC = () => {
 
       // --- Add Timestamp After Successful Start (but before API call potentially) ---
       // We add it here to count the attempt, even if the API call fails later.
-      if (!isPremiumUser) {
+      if (!isSignedIn || !isPremiumUser) {
         addTimestamp(Date.now());
       }
       // --- End Add Timestamp ---
@@ -329,7 +339,7 @@ const DomainPage: React.FC = () => {
       });
 
       // Check availability immediately if premium user has the box checked
-      if (isPremiumUser && availableOnly) {
+      if (isSignedIn && isPremiumUser && availableOnly) {
         console.log(
           "Premium user and availableOnly=true, checking availability..."
         );
@@ -385,10 +395,11 @@ const DomainPage: React.FC = () => {
     console.log(`AvailableOnly checkbox changed to: ${isChecked}`);
     mixpanel.track("Available Only Checkbox Changed", {
       checked: isChecked,
-      isPremiumUser: isPremiumUser,
+      isPremiumUser: isSignedIn && isPremiumUser,
+      isSignedIn: isSignedIn,
     });
 
-    if (isPremiumUser) {
+    if (isSignedIn && isPremiumUser) {
       setAvailableOnly(isChecked);
       // If user checks the box now, and we have domains generated but haven't checked them yet
       if (isChecked && generatedDomains.length > 0 && !availabilityChecked) {
@@ -399,7 +410,7 @@ const DomainPage: React.FC = () => {
         checkAvailability(generatedDomains);
       }
     } else {
-      // Logic for non-premium user trying to check the box (toast message)
+      // Logic for non-premium user or anonymous user trying to check the box (toast message)
       toast((t) => (
         <div className="flex flex-col items-center p-4">
           <div className="flex items-center mb-4">
@@ -417,15 +428,19 @@ const DomainPage: React.FC = () => {
                 mixpanel.track("Become a Member Click", {
                   source: "Available Only Checkbox",
                 });
-                const form = document.querySelector('form[action="/api/checkout_sessions"]');
-                if (form instanceof HTMLFormElement) {
-                  form.submit();
+                if (isSignedIn) {
+                  const form = document.querySelector('form[action="/api/checkout_sessions"]');
+                  if (form instanceof HTMLFormElement) {
+                    form.submit();
+                  }
+                } else {
+                  openSignIn();
                 }
               }}
               className="bg-black text-white font-medium px-6 py-2.5 rounded-xl hover:bg-black/80 flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md"
             >
               <DiamondIcon className="mr-2" />
-              Become a Member
+              {isSignedIn ? 'Become a Member' : 'Sign in to Upgrade'}
             </button>
             <button
               onClick={() => toast.dismiss(t.id)}
@@ -485,51 +500,51 @@ const DomainPage: React.FC = () => {
             alignItems: "center",
           }}
         >
-          <SignedIn>
-            <form action="/api/checkout_sessions" method="POST">
-              <input type="hidden" name="tipo" value="STARTER" />
-              <Button
-                className="bg-black cursor-pointer hover:bg-black/80 rounded-xl"
-                style={{ textTransform: "none" }}
-                sx={{
-                  padding: { xs: "3px", sm: 1 },
-                  display:
-                    isSignedIn &&
-                    (subsTplan === "STARTER" || subsTplan === "CREATOR")
-                      ? "none"
-                      : "block",
-                }}
-                type="submit"
-                variant="contained"
-                role="link"
-                onClick={handleSubsStarterClick}
-              >
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <DiamondIcon sx={{ mr: 0.2, fontSize: "1rem" }} />
-                  Become a Member
-                </Box>
-              </Button>
-            </form>
-            <UserButton userProfileUrl="/user" afterSignOutUrl="/" />
-          </SignedIn>
-          <SignedOut>
+          {isSignedIn ? (
+            <>
+              <form action="/api/checkout_sessions" method="POST">
+                <input type="hidden" name="tipo" value="STARTER" />
+                <Button
+                  className="bg-black cursor-pointer hover:bg-black/80 rounded-xl"
+                  style={{ textTransform: "none" }}
+                  sx={{
+                    padding: { xs: "3px", sm: 1 },
+                    display:
+                      isSignedIn &&
+                      (subsTplan === "STARTER" || subsTplan === "CREATOR")
+                        ? "none"
+                        : "block",
+                  }}
+                  type="submit"
+                  variant="contained"
+                  role="link"
+                  onClick={handleSubsStarterClick}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <DiamondIcon sx={{ mr: 0.2, fontSize: "1rem" }} />
+                    Become a Member
+                  </Box>
+                </Button>
+              </form>
+              <UserButton userProfileUrl="/user" afterSignOutUrl="/" />
+            </>
+          ) : (
             <Button
               onClick={() => openSignIn()}
               className="bg-black cursor-pointer rounded-xl text-white font-medium px-4 py-2 hover:bg-black/80"
             >
               Sign in / up
             </Button>
-          </SignedOut>
+          )}
         </Box>
 
-        <SignedIn>
-          {/* Parent Grid Container: Columns change conditionally */}
-          <div className={`w-full grid grid-cols-1 ${ (loading || generatedDomains.length > 0) ? 'lg:grid-cols-2' : 'lg:grid-cols-1' } gap-10 lg:gap-16 mt-10`}>
-            
-            {/* Left Column: Form - Spans conditionally */}
-            {/* Make sure form inside centers itself using mx-auto */}
-            <div className={`lg:col-span-1 ${(loading || generatedDomains.length > 0) ? '' : 'lg:col-span-1' }`}> {/* Simpler: let grid template handle span */} 
-              <form onSubmit={generateDomains} className="max-w-xl w-full mx-auto">
+        {/* Parent Grid Container: Columns change conditionally */}
+        <div className={`w-full grid grid-cols-1 ${ (loading || generatedDomains.length > 0) ? 'lg:grid-cols-2' : 'lg:grid-cols-1' } gap-10 lg:gap-16 mt-10`}>
+          
+          {/* Left Column: Form - Spans conditionally */}
+          {/* Make sure form inside centers itself using mx-auto */}
+          <div className={`lg:col-span-1 ${(loading || generatedDomains.length > 0) ? '' : 'lg:col-span-1' }`}> {/* Simpler: let grid template handle span */} 
+            <form onSubmit={generateDomains} className="max-w-xl w-full mx-auto">
                 <div className="flex items-center space-x-3 bg-white p-4">
                   <div className="bg-black rounded-full p-2 w-8 h-8 flex items-center justify-center">
                     <span className="text-lg font-bold text-white">1</span>
@@ -571,7 +586,7 @@ const DomainPage: React.FC = () => {
                       checked={availableOnly}
                       onChange={handleAvailableOnlyChange}
                     />
-                    <label className={`text-left font-medium ${!isPremiumUser ? "text-gray-400" : "text-gray-800"}`}>
+                    <label className={`text-left font-medium ${!isSignedIn || !isPremiumUser ? "text-gray-400" : "text-gray-800"}`}>
                       Only available domains
                     </label>
                     <DiamondIcon sx={{ fontSize: "1rem", color: "black" }} />
@@ -686,7 +701,7 @@ const DomainPage: React.FC = () => {
                 <button
                   className="bg-black text-white rounded-lg font-medium px-6 py-3 w-full hover:bg-gray-900 transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                   type="submit"
-                  disabled={loading || !businessDescription.trim()}
+                  disabled={loading}
                 >
                   {loading ? (
                     <div className="flex items-center space-x-2">
@@ -728,13 +743,13 @@ const DomainPage: React.FC = () => {
                   
                   {!loading && generatedDomains.length > 0 && (
                     <h2 className="text-3xl font-bold text-gray-900 mx-auto">
-                       {isPremiumUser ? "Available Domains:" : "Generated Domains:"}
+                       {isSignedIn && isPremiumUser ? "Available Domains:" : "Generated Domains:"}
                     </h2>
                   )}
                   {/* Render list only if not loading AND domains exist */} 
                   {!loading && generatedDomains.length > 0 && (
                       <ul className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-                        {(availableOnly && isPremiumUser ? filteredDomains : generatedDomains).map((domain, index) => (
+                        {(availableOnly && isSignedIn && isPremiumUser ? filteredDomains : generatedDomains).map((domain, index) => (
                           <li
                             key={index}
                             className="flex flex-col justify-stretch items-center bg-white p-4 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 h-full"
@@ -750,7 +765,7 @@ const DomainPage: React.FC = () => {
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
                                   <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
                                 </svg>
-                                <span>{isPremiumUser ? 'Buy Domain' : 'Check Availability'}</span>
+                                <span>{isSignedIn && isPremiumUser ? 'Buy Domain' : 'Check Availability'}</span>
                               </button>
 
                                 <button
@@ -773,23 +788,7 @@ const DomainPage: React.FC = () => {
               </div>
             )}
 
-          </div> { /* End Parent Grid Container */}
-        </SignedIn>
-
-        <SignedOut>
-          {/* Show this content when the user is signed out */}
-          <div className="mt-10">
-            <h2 className="text-2xl font-bold mb-5">
-              Sign in to generate domains
-            </h2>
-            <button
-              onClick={() => openSignIn()}
-              className="bg-black rounded-xl text-white font-medium px-4 py-2 hover:bg-black/80"
-            >
-              Sign in
-            </button>
-          </div>
-        </SignedOut>
+        </div> { /* End Parent Grid Container */}
         <Toaster
           position="top-center"
           reverseOrder={false}
