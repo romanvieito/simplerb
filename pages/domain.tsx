@@ -549,7 +549,7 @@ const DomainPage: React.FC = () => {
                   <div className="bg-black rounded-full p-2 w-8 h-8 flex items-center justify-center">
                     <span className="text-lg font-bold text-white">2</span>
                   </div>
-                  <p className="text-left font-medium text-gray-800">Select the vibe</p>
+                  <p className="text-left font-medium text-gray-800">Select vibe</p>
                 </div>
     
                 <select
