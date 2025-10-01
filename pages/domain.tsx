@@ -572,7 +572,7 @@ const DomainPage: React.FC = () => {
                       onChange={handleAvailableOnlyChange}
                     />
                     <label className={`text-left font-medium ${!isPremiumUser ? "text-gray-400" : "text-gray-800"}`}>
-                      Available only
+                      Only available domains
                     </label>
                     <DiamondIcon sx={{ fontSize: "1rem", color: "black" }} />
                   </div>
@@ -609,17 +609,17 @@ const DomainPage: React.FC = () => {
                       <div className="space-y-6">
                         <div className="text-center">
                           <h3 className="text-xl font-bold text-gray-900">
-                            Advanced Settings
+                            Settings
                           </h3>
                           <p className="text-sm text-gray-500 mt-1">
-                            Customize your domain generation preferences
+                            Customize your name generation preferences
                           </p>
                         </div>
     
                         {/* Temperature Options */}
                         <div className="space-y-3">
                           <label className="block text-gray-700 font-medium">
-                            Domain Name Style
+                            Name Style
                           </label>
                           <div className="grid grid-cols-3 gap-2">
                             {["imaginative", "neutral", "reliable"].map((option) => (
@@ -648,7 +648,7 @@ const DomainPage: React.FC = () => {
                         {/* Domain Extension */}
                         <div className="space-y-3">
                           <label className="block text-gray-700 font-medium">
-                            Domain Extension
+                            Extension
                           </label>
                           <select
                             id="domainExtension"
@@ -662,7 +662,7 @@ const DomainPage: React.FC = () => {
                             }}
                             className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-black focus:ring-black transition-all duration-200"
                           >
-                            <option value="">Any extension</option>
+                            <option value="">Any</option>
                             <option value=".com">.com</option>
                             <option value=".net">.net</option>
                             <option value=".org">.org</option>
@@ -676,7 +676,7 @@ const DomainPage: React.FC = () => {
                           onClick={() => setShowAdvancedSettings(false)}
                           className="w-full px-4 py-3 bg-black text-white text-base font-medium rounded-lg hover:bg-gray-900 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
                         >
-                          Apply Settings
+                          Apply
                         </button>
                       </div>
                     </div>
