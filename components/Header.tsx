@@ -13,7 +13,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import Container from '@mui/material/Container';
 import MenuItem from '@mui/material/MenuItem';
 import { createTheme, ThemeProvider, styled } from '@mui/material/styles';
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useCallback } from "react";
 import SBRContext from "../context/SBRContext";
 
 import {
@@ -130,7 +130,7 @@ export default function Header(): JSX.Element {
   };
 
   // Function to initialize header data
-  const initHeader = async () => {
+  const initHeader = useCallback(async () => {
     if (isLoaded && user) {
       const email = user.emailAddresses[0].emailAddress;
       if (email) {
@@ -140,10 +140,14 @@ export default function Header(): JSX.Element {
         } catch (error) {
           console.error("Error initializing header data:", error);
           // Removed toast.error as it's not defined in this context
-          console.warn("Failed to load user data. Please try refreshing the page.");
+          if (process.env.NODE_ENV !== 'production') {
+            console.warn("Failed to load user data. Please try refreshing the page.");
+          }
         }
       } else {
-        console.warn("User email not available");
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn("User email not available");
+        }
       }
     } else if (isLoaded && !user) {
       // Reset user data when not signed in
@@ -158,11 +162,11 @@ export default function Header(): JSX.Element {
       setAdmin(false);
       resetSearch();
     }
-  };
+  }, [isLoaded, user, fetchCredits, setSubsTplan, setSubsCancel, setCredits, setDataUser, setAdmin, resetSearch]);
 
   useEffect(() => {
     initHeader();
-  }, [isSignedIn, user]);
+  }, [isSignedIn, user, initHeader]);
 
 
   return (
@@ -191,7 +195,7 @@ export default function Header(): JSX.Element {
                 fontWeight: 700,
               }}
             >
-              <h1 className="sm:text-3xl text-2xl font-bold mr-2 tracking-tight">
+              <h1 className="sm:text-3xl text-2xl font-bold mr-2 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
                 simplerB
               </h1>
             </Typography>
@@ -274,7 +278,7 @@ export default function Header(): JSX.Element {
                 <form action="/api/checkout_sessions" method="POST">
                   <input type="hidden" name="tipo" value="STARTER" />
                   <Button
-                    className="bg-black cursor-pointer hover:bg-black/80 rounded-xl"
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 cursor-pointer hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-lg hover:shadow-xl"
                     style={{ textTransform: "none" }}
                     sx={{
                       "@media (max-width:600px)": {
@@ -305,7 +309,7 @@ export default function Header(): JSX.Element {
                 <Box>
                   <a
                     onClick={() => openSignIn()}
-                    className="bg-black cursor-pointer rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 cursor-pointer rounded-xl text-white font-semibold px-6 py-3 sm:mt-10 mt-8 hover:from-blue-700 hover:to-indigo-700 w-full shadow-lg hover:shadow-xl transition-all duration-300"
                   >
                     Sign in / up
                   </a>

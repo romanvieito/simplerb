@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export default function Dashboard() {
     const [stats, setStats] = useState({
@@ -22,22 +22,6 @@ export default function Dashboard() {
     const [testEmail, setTestEmail] = useState('');
     const [testEmailStatus, setTestEmailStatus] = useState('');
 
-    useEffect(() => {
-        updateAllStats();
-        // Update every hour (3600000 ms)
-        const interval = setInterval(updateAllStats, 3600000);
-        return () => clearInterval(interval);
-    }, [timePeriod]);
-
-    const updateAllStats = async () => {
-        await Promise.all([
-            fetchStats(),
-            fetchTrackingStats(),
-            fetchClickStats()
-        ]);
-        setLastUpdated(new Date());
-    };
-
     const fetchStats = async () => {
         try {
             const response = await fetch(`/api/emailStats?period=${timePeriod}`);
@@ -49,12 +33,16 @@ export default function Dashboard() {
                 });
                 setStats(statsMap);
             } else {
-                console.error('Expected array but got:', data);
+                if (process.env.NODE_ENV !== 'production') {
+                    console.error('Expected array but got:', data);
+                }
                 setStats({});  // Set empty object as fallback
             }
             setLoading(false);
         } catch (error) {
-            console.error('Error fetching stats:', error);
+            if (process.env.NODE_ENV !== 'production') {
+                console.error('Error fetching stats:', error);
+            }
             setStats({});  // Set empty object on error
             setLoading(false);
         }
@@ -66,7 +54,9 @@ export default function Dashboard() {
             const data = await response.json();
             setTrackingStats(data);
         } catch (error) {
-            console.error('Error fetching tracking stats:', error);
+            if (process.env.NODE_ENV !== 'production') {
+                console.error('Error fetching tracking stats:', error);
+            }
         }
     };
 
@@ -77,11 +67,15 @@ export default function Dashboard() {
             if (Array.isArray(data)) {  // Make sure data is an array
                 setClickStats(data);
             } else {
-                console.error('Expected array but got:', data);
+                if (process.env.NODE_ENV !== 'production') {
+                    console.error('Expected array but got:', data);
+                }
                 setClickStats([]);  // Set empty array as fallback
             }
         } catch (error) {
-            console.error('Error fetching click stats:', error);
+            if (process.env.NODE_ENV !== 'production') {
+                console.error('Error fetching click stats:', error);
+            }
             setClickStats([]);  // Set empty array on error
         }
     };
@@ -94,7 +88,9 @@ export default function Dashboard() {
             const data = await response.json();
             fetchStats(); // Refresh stats after sending
         } catch (error) {
-            console.error('Error sending emails:', error);
+            if (process.env.NODE_ENV !== 'production') {
+                console.error('Error sending emails:', error);
+            }
         }
     };
 
@@ -121,9 +117,27 @@ export default function Dashboard() {
             }
         } catch (error) {
             setTestEmailStatus('Error sending test email');
-            console.error('Error:', error);
+            if (process.env.NODE_ENV !== 'production') {
+                console.error('Error:', error);
+            }
         }
     };
+
+    const updateAllStats = useCallback(async () => {
+        await Promise.all([
+            fetchStats(),
+            fetchTrackingStats(),
+            fetchClickStats()
+        ]);
+        setLastUpdated(new Date());
+    }, [timePeriod]);
+
+    useEffect(() => {
+        updateAllStats();
+        // Update every hour (3600000 ms)
+        const interval = setInterval(updateAllStats, 3600000);
+        return () => clearInterval(interval);
+    }, [timePeriod, updateAllStats]);
 
     if (loading) return <div>Loading...</div>;
 
@@ -199,7 +213,7 @@ export default function Dashboard() {
                         <h3 className="text-xl font-semibold mb-2">Recent Opens</h3>
                         <div className="space-y-2">
                             {trackingStats.recentOpens?.map((open, index) => (
-                                <div key={index} className="text-sm text-gray-700">
+                                <div key={`${open.email}-${open.opened_at}-${index}`} className="text-sm text-gray-700">
                                     {open.email} - {new Date(open.opened_at).toLocaleString()}
                                 </div>
                             ))}
@@ -221,7 +235,7 @@ export default function Dashboard() {
                         </thead>
                         <tbody>
                             {clickStats.map((click, index) => (
-                                <tr key={index} className="border-t border-gray-100 hover:bg-gray-50 transition-colors">
+                                <tr key={`${click.to_email}-${click.clicked_at}-${index}`} className="border-t border-gray-100 hover:bg-gray-50 transition-colors">
                                     <td className="py-3">{click.to_email}</td>
                                     <td className="py-3">
                                         <a href={click.link_url} 

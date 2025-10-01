@@ -83,7 +83,7 @@ const AdsPage = () => {
                 </thead>
                 <tbody>
                   {results.map((result, index) => (
-                    <tr key={index}>
+                    <tr key={`${result.keyword}-${index}`}>
                       <td className="border-b border-slate-100 p-4 pl-8">{result.keyword}</td>
                       <td className="border-b border-slate-100 p-4 pl-8">{result.searchVolume}</td>
                       <td className="border-b border-slate-100 p-4 pl-8">{result.competition}</td>

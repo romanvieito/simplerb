@@ -8,15 +8,16 @@
 }
 
 .loading span {
-  animation-name: blink;
+  animation-name: pulse;
   animation-duration: 1.4s;
   animation-iteration-count: infinite;
   animation-fill-mode: both;
-  width: 5px;
-  height: 5px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   display: inline-block;
-  margin: 0 1px;
+  margin: 0 2px;
+  background: linear-gradient(45deg, #3b82f6, #6366f1);
 }
 
 .loading span:nth-of-type(2) {
@@ -37,15 +38,16 @@
 }
 
 .loading2 span {
-  animation-name: blink;
+  animation-name: pulse;
   animation-duration: 1.4s;
   animation-iteration-count: infinite;
   animation-fill-mode: both;
-  width: 4px;
-  height: 4px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   display: inline-block;
   margin: 0 1px;
+  background: linear-gradient(45deg, #3b82f6, #6366f1);
 }
 
 .loading2 span:nth-of-type(2) {
@@ -56,14 +58,17 @@
   animation-delay: 0.4s;
 }
 
-@keyframes blink {
+@keyframes pulse {
   0% {
-    opacity: 0.2;
+    opacity: 0.3;
+    transform: scale(0.8);
   }
-  20% {
+  50% {
     opacity: 1;
+    transform: scale(1.2);
   }
   100% {
-    opacity: 0.2;
+    opacity: 0.3;
+    transform: scale(0.8);
   }
 }

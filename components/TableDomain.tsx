@@ -749,7 +749,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({
             {rows
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((row, index) => (
-                <TableRow key={index}>
+                <TableRow key={`${row.domain}-${index}`}>
                   <TableCell component="th" scope="row">
                     <section style={{ display: "flex", alignItems: "center" }}>
                       <CellDomain dinfo={row} admin={admin} />

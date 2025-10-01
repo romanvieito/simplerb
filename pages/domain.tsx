@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext, useEffect, useCallback } from "react";
 import Head from "next/head";
 import { toast, Toaster } from "react-hot-toast";
 import { DomainInfo, VibeType } from "../utils/Definitions";
@@ -115,7 +115,7 @@ const DomainPage: React.FC = () => {
   };
 
   // Function to initialize page data
-  const initPageData = async () => {
+  const initPageData = useCallback(async () => {
     if (isLoaded && user) {
       const email = user.emailAddresses[0].emailAddress;
       if (email) {
@@ -124,10 +124,14 @@ const DomainPage: React.FC = () => {
           mixpanel.identify(email);
         } catch (error) {
           console.error("Error initializing page data:", error);
-          console.warn("Failed to load user data. Please try refreshing the page.");
+          if (process.env.NODE_ENV !== 'production') {
+            console.warn("Failed to load user data. Please try refreshing the page.");
+          }
         }
       } else {
-        console.warn("User email not available");
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn("User email not available");
+        }
       }
     } else if (isLoaded && !user) {
       // Reset user data when not signed in
@@ -141,28 +145,32 @@ const DomainPage: React.FC = () => {
       });
       setAdmin(false);
     }
-  };
+  }, [isLoaded, user, fetchUserData, setSubsTplan, setSubsCancel, setCredits, setDataUser, setAdmin]);
 
   useEffect(() => {
     initPageData();
-  }, [isSignedIn, user]);
+  }, [isSignedIn, user, initPageData]);
 
   const checkAvailability = async (domainsToCheckInput: DomainInfo[]) => {
     try {
-      console.log(
-        "Checking availability for:",
-        domainsToCheckInput.map((d) => d.domain)
-      );
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(
+          "Checking availability for:",
+          domainsToCheckInput.map((d) => d.domain)
+        );
+      }
       const domainsToCheck = domainsToCheckInput.map((domainInfo) => domainInfo.domain);
 
       // Prevent check if no domains passed
       if (domainsToCheck.length === 0) {
-        console.log("No domains to check availability for.");
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("No domains to check availability for.");
+        }
         setAvailabilityChecked(false); // Ensure it's false if no domains
         return;
       }
 
-      if (process.env.NODE_ENV === "development") {
+      if (process.env.NODE_ENV !== "production") {
         const mockAvailabilityResults = domainsToCheckInput.map((domainInfo) => ({
           ...domainInfo, // Keep existing info like favorite status
           available: Math.random() < 0.7,
@@ -187,7 +195,9 @@ const DomainPage: React.FC = () => {
       }
   
       const availabilityResults = await response.json();
-      console.log("API results:", availabilityResults);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("API results:", availabilityResults);
+      }
 
       // Use the passed domainsToCheckInput to map results
       const updatedDomains = domainsToCheckInput.map((domainInfo) => {
@@ -197,7 +207,9 @@ const DomainPage: React.FC = () => {
           available: availabilityInfo ? availabilityInfo.available : undefined, // Keep undefined if lookup fails
         };
       });
-      console.log("Updated domains with availability:", updatedDomains);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Updated domains with availability:", updatedDomains);
+      }
 
       setGeneratedDomains(updatedDomains);
       setFilteredDomains(updatedDomains.filter((domain) => domain.available === true)); // Filter strictly for true
@@ -327,7 +339,9 @@ const DomainPage: React.FC = () => {
         favorite: false,
       }));
 
-      console.log("Generated domains:", generatedResults);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Generated domains:", generatedResults);
+      }
       setGeneratedDomains(generatedResults);
 
       mixpanel.track("Generated Domains", {
@@ -340,14 +354,18 @@ const DomainPage: React.FC = () => {
 
       // Check availability immediately if premium user has the box checked
       if (isSignedIn && isPremiumUser && availableOnly) {
-        console.log(
-          "Premium user and availableOnly=true, checking availability..."
-        );
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(
+            "Premium user and availableOnly=true, checking availability..."
+          );
+        }
         await checkAvailability(generatedResults);
       } else {
         // If not checking availability now, ensure filtered list is empty
         // and availability is marked as not checked for this batch.
-        console.log("Not checking availability immediately.");
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Not checking availability immediately.");
+        }
         setFilteredDomains([]); // Start with empty filtered list if not checking
         setAvailabilityChecked(false);
       }
@@ -458,7 +476,7 @@ const DomainPage: React.FC = () => {
   };
 
   return (
-    <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
+    <div className="flex max-w-6xl mx-auto flex-col items-center justify-center py-4 min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <Head>
         <title>Domain Generator</title>
         <link rel="icon" href="/favicon.ico" />
@@ -486,9 +504,12 @@ const DomainPage: React.FC = () => {
           Back
         </button>
 
-        <h1 className="text-4xl font-bold text-gray-900 mb-8">
-          Domain <span className="text-black">Generator</span>
+        <h1 className="text-5xl font-bold text-gray-900 mb-8 tracking-tight">
+          Domain <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Generator</span>
         </h1>
+        <p className="text-lg text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
+          Find the perfect domain name that matches your business vision and brand identity
+        </p>
 
         <Box
           sx={{
@@ -545,32 +566,32 @@ const DomainPage: React.FC = () => {
           {/* Make sure form inside centers itself using mx-auto */}
           <div className={`lg:col-span-1 ${(loading || generatedDomains.length > 0) ? '' : 'lg:col-span-1' }`}> {/* Simpler: let grid template handle span */} 
             <form onSubmit={generateDomains} className="max-w-xl w-full mx-auto">
-                <div className="flex items-center space-x-3 bg-white p-4">
-                  <div className="bg-black rounded-full p-2 w-8 h-8 flex items-center justify-center">
+                <div className="flex items-center space-x-3 bg-gradient-to-r from-gray-50 to-white p-6 rounded-xl border border-gray-100">
+                  <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full p-3 w-10 h-10 flex items-center justify-center shadow-lg">
                     <span className="text-lg font-bold text-white">1</span>
                   </div>
-                  <p className="text-left font-medium text-gray-800">Describe your business or idea</p>
+                  <p className="text-left font-semibold text-gray-800 text-lg">Describe your business or idea</p>
                 </div>
     
                 <textarea
                   value={businessDescription}
                   onChange={(e) => setBusinessDescription(e.target.value)}
                   rows={4}
-                  className="w-full rounded-lg border-gray-200 shadow-sm focus:border-black focus:ring-black my-5 p-4 text-gray-700 resize-none transition-all duration-200"
-                  placeholder="e.g. Boutique Coffee Shop"
+                  className="w-full rounded-xl border-2 border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 my-6 p-5 text-gray-700 resize-none transition-all duration-300 text-lg"
+                  placeholder="e.g. Boutique Coffee Shop with artisanal roasts and cozy atmosphere"
                 />
     
-                <div className="flex items-center space-x-3 bg-white p-4">
-                  <div className="bg-black rounded-full p-2 w-8 h-8 flex items-center justify-center">
+                <div className="flex items-center space-x-3 bg-gradient-to-r from-gray-50 to-white p-6 rounded-xl border border-gray-100">
+                  <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full p-3 w-10 h-10 flex items-center justify-center shadow-lg">
                     <span className="text-lg font-bold text-white">2</span>
                   </div>
-                  <p className="text-left font-medium text-gray-800">Select vibe</p>
+                  <p className="text-left font-semibold text-gray-800 text-lg">Select vibe</p>
                 </div>
     
                 <select
                   value={vibe}
                   onChange={(e) => setVibe(e.target.value as VibeType)}
-                  className="w-full rounded-lg border-gray-200 shadow-sm focus:border-black focus:ring-black p-3 mb-6 transition-all duration-200"
+                  className="w-full rounded-xl border-2 border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-4 mb-6 transition-all duration-300 text-lg"
                 >
                   <option value="Professional">Professional</option>
                   <option value="Friendly">Friendly</option>
@@ -578,24 +599,24 @@ const DomainPage: React.FC = () => {
                   <option value="Sophisticated">Sophisticated</option>
                 </select>
     
-                <div className="flex items-center justify-between bg-white p-4 mb-6">
+                <div className="flex items-center justify-between bg-gradient-to-r from-gray-50 to-white p-6 rounded-xl border border-gray-100 mb-6">
                   <div className="flex items-center space-x-3">
                     <input
                       type="checkbox"
-                      className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black transition-all duration-200"
+                      className="w-5 h-5 rounded border-2 border-gray-300 text-blue-500 focus:ring-blue-500 transition-all duration-200"
                       checked={availableOnly}
                       onChange={handleAvailableOnlyChange}
                     />
-                    <label className={`text-left font-medium ${!isSignedIn || !isPremiumUser ? "text-gray-400" : "text-gray-800"}`}>
+                    <label className={`text-left font-semibold text-lg ${!isSignedIn || !isPremiumUser ? "text-gray-400" : "text-gray-800"}`}>
                       Only available domains
                     </label>
-                    <DiamondIcon sx={{ fontSize: "1rem", color: "black" }} />
+                    <DiamondIcon sx={{ fontSize: "1.2rem", color: "black" }} />
                   </div>
     
                   <button
                     type="button"
                     onClick={() => setShowAdvancedSettings(true)}
-                    className="text-gray-600 hover:text-black transition-all duration-200"
+                    className="text-gray-600 hover:text-blue-500 transition-all duration-200 p-2 rounded-lg hover:bg-gray-100"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -699,7 +720,7 @@ const DomainPage: React.FC = () => {
                 )}
     
                 <button
-                  className="bg-black text-white rounded-lg font-medium px-6 py-3 w-full hover:bg-gray-900 transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold px-8 py-4 w-full hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed text-lg"
                   type="submit"
                   disabled={loading}
                 >
@@ -725,16 +746,19 @@ const DomainPage: React.FC = () => {
               <div className="lg:col-span-1">
                 <div className="space-y-8">
                   {loading && (
-                     <div className="space-y-4">
-                       <div className="h-8 w-48 bg-gray-200 rounded-lg animate-pulse mx-auto"></div>
+                     <div className="space-y-6">
+                       <div className="text-center">
+                         <div className="h-8 w-64 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg animate-pulse mx-auto mb-2"></div>
+                         <div className="h-4 w-48 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg animate-pulse mx-auto"></div>
+                       </div>
                        {[...Array(3)].map((_, index) => (
-                         <div key={index} className="flex flex-col justify-between bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-full">
+                         <div key={index} className="flex flex-col justify-between bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg border border-gray-200 h-full animate-pulse">
                             <div className="flex-grow mb-4">
-                              <div className="h-8 w-48 bg-gray-200 rounded-lg animate-pulse mb-4"></div>
+                              <div className="h-8 w-48 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg mb-4"></div>
                             </div>
-                            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 mt-auto">
-                              <div className="h-10 flex-1 bg-gray-200 rounded-lg animate-pulse"></div>
-                              <div className="h-10 flex-1 bg-gray-200 rounded-lg animate-pulse"></div>
+                            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 mt-auto">
+                              <div className="h-12 flex-1 bg-gradient-to-r from-gray-200 to-gray-300 rounded-xl"></div>
+                              <div className="h-12 flex-1 bg-gradient-to-r from-gray-200 to-gray-300 rounded-xl"></div>
                             </div>
                          </div>
                         ))}
@@ -742,9 +766,14 @@ const DomainPage: React.FC = () => {
                   )}
                   
                   {!loading && generatedDomains.length > 0 && (
-                    <h2 className="text-3xl font-bold text-gray-900 mx-auto">
-                       {isSignedIn && isPremiumUser ? "Available Domains:" : "Generated Domains:"}
-                    </h2>
+                    <div className="text-center mb-8">
+                      <h2 className="text-4xl font-bold text-gray-900 mb-2">
+                        {isSignedIn && isPremiumUser ? "Available Domains" : "Generated Domains"}
+                      </h2>
+                      <p className="text-lg text-gray-600">
+                        {isSignedIn && isPremiumUser ? "Ready to register domains" : "Check availability and register"}
+                      </p>
+                    </div>
                   )}
                   {/* Render list only if not loading AND domains exist */} 
                   {!loading && generatedDomains.length > 0 && (
@@ -752,15 +781,15 @@ const DomainPage: React.FC = () => {
                         {(availableOnly && isSignedIn && isPremiumUser ? filteredDomains : generatedDomains).map((domain, index) => (
                           <li
                             key={index}
-                            className="flex flex-col justify-stretch items-center bg-white p-4 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 h-full"
+                            className="flex flex-col justify-stretch items-center bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 h-full group"
                           >
-                            <div className="flex-grow mb-3">
-                               <span className="text-xl font-semibold text-gray-800 block break-words">{domain.domain}</span>
+                            <div className="flex-grow mb-4">
+                               <span className="text-2xl font-bold text-gray-800 block break-words group-hover:text-blue-600 transition-colors duration-200">{domain.domain}</span>
                             </div>
-                            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 mt-auto items-center justify-center">
+                            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 mt-auto items-center justify-center w-full">
                               <button
                                 onClick={() => handleCheckAvailability(domain.domain)}
-                                className="bg-gray-100 text-gray-800 rounded-lg px-3 py-2 hover:bg-gray-200 transition-all duration-200 font-medium flex items-center justify-center space-x-2 group text-sm"
+                                className="bg-gray-100 text-gray-800 rounded-xl px-4 py-3 hover:bg-gray-200 transition-all duration-200 font-semibold flex items-center justify-center space-x-2 group text-sm w-full sm:w-auto"
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
                                   <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
@@ -772,7 +801,7 @@ const DomainPage: React.FC = () => {
                                   onClick={() => {
                                     window.open(`/web?domain=${encodeURIComponent(domain.domain)}`, "_blank");
                                   }}
-                                  className="bg-black text-white rounded-lg px-3 py-2 hover:bg-gray-800 transition-all duration-200 font-medium flex items-center justify-center space-x-2 group text-sm"
+                                  className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl px-4 py-3 hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-semibold flex items-center justify-center space-x-2 group text-sm w-full sm:w-auto shadow-lg hover:shadow-xl"
                                 >
                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
                                     <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />

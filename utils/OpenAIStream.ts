@@ -53,7 +53,9 @@ export async function OpenAIStream(payload: OpenAIStreamPayload) {
           statusText: res.statusText,
           body: await res.text(),
         }
-        console.log(`Error: recieved non-200 status code, ${JSON.stringify(data)}`);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`Error: recieved non-200 status code, ${JSON.stringify(data)}`);
+        }
         controller.close();
         return
       }

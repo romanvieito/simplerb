@@ -166,9 +166,9 @@ export default function CPricing() {
       <div className="text-center mb-16">
         <h2 className="text-4xl font-bold tracking-tight">
           A perfect fit for{" "}
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-rose-600">
-            creators and small businesses
-          </span>
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">
+              creators and small businesses
+            </span>
         </h2>
       </div>
 
@@ -180,12 +180,12 @@ export default function CPricing() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
             className={`relative rounded-2xl bg-gradient-to-b from-gray-900 to-black border border-gray-800 p-8 ${
-              plan.isPopular ? "ring-2 ring-red-500" : ""
+              plan.isPopular ? "ring-2 ring-blue-500" : ""
             }`}
           >
             {plan.isPopular && (
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <span className="bg-red-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+                <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-medium">
                   Most Popular
                 </span>
               </div>
@@ -209,7 +209,7 @@ export default function CPricing() {
                 <span className="ml-2 text-gray-400">/month</span>
               </div>
               {plan.discountedPrice && (
-                <span className="text-red-400 text-sm font-medium">
+                <span className="text-blue-400 text-sm font-medium">
                   50% OFF today!
                 </span>
               )}
@@ -218,7 +218,7 @@ export default function CPricing() {
             <ul className="space-y-4 mb-8">
               {plan.features.map((feature, i) => (
                 <li key={i} className="flex items-center text-gray-300">
-                  <Check className="h-5 w-5 text-red-500 mr-3" />
+                  <Check className="h-5 w-5 text-blue-500 mr-3" />
                   {feature}
                 </li>
               ))}
@@ -236,8 +236,8 @@ export default function CPricing() {
                   onClick={(e) => handlePaidSubscriptionClick(e, plan.id)}
                   className={`w-full py-3 px-6 rounded-full font-medium transition-all duration-200 ${
                     plan.isPopular
-                      ? "bg-red-500 hover:bg-red-600 text-white"
-                      : "bg-transparent border-2 border-gray-700 hover:border-red-500 text-white"
+                      ? "bg-blue-500 hover:bg-blue-600 text-white"
+                      : "bg-transparent border-2 border-gray-700 hover:border-blue-500 text-white"
                   }`}
                 >
                   {plan.ctaText}

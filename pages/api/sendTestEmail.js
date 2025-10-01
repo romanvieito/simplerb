@@ -75,7 +75,7 @@ export default async function handler(req, res) {
             await transporter.verify();
 
             // Add tracking pixel and wrap links
-            const trackingPixel = `<img src="${baseUrl}/api/track/open/${newEmail.id}" width="1" height="1" alt="" />`;
+            const trackingPixel = `<img src="${baseUrl}/api/track/open/${newEmail.id}" width="1" height="1" alt="Email tracking pixel" />`;
             const htmlWithTracking = `${personalizedBody}${trackingPixel}`;
             
             // Send email with tracking

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useContext } from "react";
+import React, { useRef, useState, useEffect, useContext, useCallback } from "react";
 import Head from "next/head";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
@@ -132,18 +132,35 @@ const DomainPage: NextPage = () => {
   const [vpEndsWith, setVpEndsWith] = useState("");
   const [vpSimilarToThisDomainName, setVpSimilarToThisDomainName] =
     useState("");
-  const handleClearKeyWords = () => {
+  const [vpExtLeft, setVpExtLeft] = useState<string[]>([]);
+  const [vpExtChecked, setVpExtChecked] = useState<string[]>([]);
+  const [vpFilterExtLeft, setVpFilterExtLeft] = useState("");
+  const [vpLoadingTldsDomains, setVpLoadingTldsDomains] = useState(false);
+
+  const handleClearCharacters = useCallback(() => {
+    setVpTransform({
+      vpHiremecom: false,
+      vpFlickercom: false,
+      vpToolcom: false,
+    });
+    setVpMinlength(0);
+    setVpMaxlength(0);
+  }, []);
+
+  const handleClearKeyWords = useCallback(() => {
     setVpContains("");
     setVpStartsWith("");
     setVpEndsWith("");
     setVpSimilarToThisDomainName("");
     handleClearCharacters();
-  };
+  }, [handleClearCharacters]);
 
-  const [vpExtLeft, setVpExtLeft] = useState<string[]>([]);
-  const [vpExtChecked, setVpExtChecked] = useState<string[]>([]);
-  const [vpFilterExtLeft, setVpFilterExtLeft] = useState("");
-  const [vpLoadingTldsDomains, setVpLoadingTldsDomains] = useState(false);
+  const handleClearExtensions = useCallback(() => {
+    setVpExtLeft(default_extensions);
+    setVpExtChecked([]);
+    setVpFilterExtLeft("");
+  }, []);
+
   const handleToggle = (value: string) => () => {
     const currentIndex = vpExtChecked.indexOf(value);
     const newChecked = [...vpExtChecked];
@@ -223,12 +240,6 @@ const DomainPage: NextPage = () => {
     } finally {
     }
   };
-  const handleClearExtensions = () => {
-    setVpExtLeft(default_extensions);
-    setVpExtChecked([]);
-    setVpFilterExtLeft("");
-  };
-
   const [vpTransform, setVpTransform] = useState({
     vpHiremecom: false,
     vpFlickercom: false,
@@ -243,16 +254,6 @@ const DomainPage: NextPage = () => {
     });
   };
   const { vpHiremecom, vpFlickercom, vpToolcom } = vpTransform;
-  const handleClearCharacters = () => {
-    setVpTransform({
-      vpHiremecom: false,
-      vpFlickercom: false,
-      vpToolcom: false,
-    });
-    setVpMinlength(0);
-    setVpMaxlength(0);
-  };
-
   useEffect(() => {
     if (isLoaded && user) {
       setBio(() => {
@@ -324,7 +325,7 @@ const DomainPage: NextPage = () => {
       handleClearExtensions();
       handleClearCharacters();
     }
-  }, [user]);
+  }, [user, isLoaded]);
 
   useEffect(() => {
     if (!isSignedIn && isSignedIn !== undefined) {
@@ -332,7 +333,7 @@ const DomainPage: NextPage = () => {
       handleClearExtensions();
       handleClearCharacters();
     }
-  }, [isSignedIn]);
+  }, [isSignedIn, handleClearKeyWords, handleClearExtensions, handleClearCharacters]);
 
   const countDomainToPrompt = admin
     ? stringGenerateCountDomain(COUNT_DOMAINS_TO_SEARCH_YES_ADMIN)

@@ -1,4 +1,4 @@
-import React, { useState, useContext, useRef, useEffect } from "react";
+import React, { useState, useContext, useRef, useEffect, useCallback } from "react";
 import Head from "next/head";
 import { Toaster, toast } from "react-hot-toast";
 import Header from "../components/Header";
@@ -90,7 +90,7 @@ const WebPage = () => {
   };
 
   // Add initPageData function
-  const initPageData = async () => {
+  const initPageData = useCallback(async () => {
     if (isLoaded && user) {
       const email = user.emailAddresses[0].emailAddress;
       if (email) {
@@ -99,10 +99,14 @@ const WebPage = () => {
           mixpanel.identify(email);
         } catch (error) {
           console.error("Error initializing page data:", error);
-          console.warn("Failed to load user data. Please try refreshing the page.");
+          if (process.env.NODE_ENV !== 'production') {
+            console.warn("Failed to load user data. Please try refreshing the page.");
+          }
         }
       } else {
-        console.warn("User email not available");
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn("User email not available");
+        }
       }
     } else if (isLoaded && !user) {
       // Reset user data when not signed in
@@ -116,12 +120,12 @@ const WebPage = () => {
       });
       setAdmin(false);
     }
-  };
+  }, [isLoaded, user, fetchUserData, setSubsTplan, setSubsCancel, setCredits, setDataUser, setAdmin]);
 
   // Add useEffect to load user data
   useEffect(() => {
     initPageData();
-  }, [isSignedIn, user]);
+  }, [isSignedIn, user, initPageData]);
 
   const getImageFromPexels = async (query: string) => {
     try {
@@ -354,7 +358,9 @@ const WebPage = () => {
       // Sanitize the HTML before setting it
       const sanitizedWebsite = DOMPurify.sanitize(finalWebsite);
 
-      console.log("Sanitized website:", sanitizedWebsite);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Sanitized website:", sanitizedWebsite);
+      }
 
       // Clean up any remaining markdown formatting
       const cleanedWebsite = sanitizedWebsite
@@ -474,12 +480,14 @@ const WebPage = () => {
 
     setIsPublishing(true);
     try {
-      console.log('Publishing site with data:', {
-        contentLength: generatedSite.length,
-        contentSnippet: generatedSite.substring(0, 200), // Log first 200 chars
-        title: textDescription,
-        userId: dataUser.id
-      });
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Publishing site with data:', {
+          contentLength: generatedSite.length,
+          contentSnippet: generatedSite.substring(0, 200), // Log first 200 chars
+          title: textDescription,
+          userId: dataUser.id
+        });
+      }
 
       // Ensure generatedSite looks like HTML
       if (!generatedSite || !generatedSite.trim().startsWith('<')) {
@@ -722,7 +730,7 @@ const WebPage = () => {
   }, [isEditMode]);
 
   return (
-    <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
+    <div className="flex max-w-6xl mx-auto flex-col items-center justify-center py-4 min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <Toaster position="top-center" />
       <Head>
         <title>Website Creator</title>
@@ -735,7 +743,7 @@ const WebPage = () => {
       </form>
 
       {/* <Header/> */}
-      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 bg-gradient-to-b from-white to-gray-50">
+      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4">
         <button
           onClick={() => router.back()}
           className="absolute top-4 left-4 text-gray-600 hover:text-gray-900 font-medium py-2 px-4 rounded-lg inline-flex items-center transition-all duration-200 hover:bg-gray-100"
@@ -758,14 +766,17 @@ const WebPage = () => {
         </button>
 
         <div className="flex justify-center items-center w-full max-w-xl">
-          <h1 className="text-4xl font-bold text-gray-900 mb-8">
-            Website <span className="text-black">Creator</span>
+          <h1 className="text-5xl font-bold text-gray-900 mb-8 tracking-tight">
+            Website <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Creator</span>
           </h1>
         </div>
+        <p className="text-lg text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed text-center">
+          Create stunning websites in minutes with AI-powered design and content generation
+        </p>
 
         <div className="max-w-xl w-full mt-6">
-          <div className="flex mb-4 items-center space-x-3 bg-white p-4">
-            <div className="bg-gray-100 rounded-full p-2">
+          <div className="flex mb-6 items-center space-x-3 bg-gradient-to-r from-gray-50 to-white p-6 rounded-xl border border-gray-100">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full p-3 w-10 h-10 flex items-center justify-center shadow-lg">
               <Image
                 src="/1-black.png"
                 width={24}
@@ -774,7 +785,7 @@ const WebPage = () => {
                 className="mb-0"
               />
             </div>
-            <p className="text-left font-medium text-gray-800">Enter Your Website Description</p>
+            <p className="text-left font-semibold text-gray-800 text-lg">Enter Your Website Description</p>
           </div>
           
           <textarea
@@ -782,16 +793,16 @@ const WebPage = () => {
             onChange={(e) => setTextDescription(e.target.value)}
             maxLength={200}
             rows={4}
-            className="w-full rounded-lg border-gray-200 shadow-sm focus:border-black focus:ring-black my-5 p-4 text-gray-700 resize-none transition-all duration-200"
+            className="w-full rounded-xl border-2 border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 my-6 p-5 text-gray-700 resize-none transition-all duration-300 text-lg"
             placeholder={"e.g., Modern coffee shop with industrial design, featuring specialty roasts and tasting events"}
           />
-          <div className="text-right text-sm text-gray-500 mb-6">
+          <div className="text-right text-sm text-gray-500 mb-6 font-medium">
             {textDescription.length}/200 characters
           </div>
           
           <SignedOut>  
             <button
-              className="bg-black rounded-lg text-white font-medium px-6 py-3 sm:mt-6 mt-4 hover:bg-gray-900 w-full transition-all duration-200 shadow-sm hover:shadow-md"
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl text-white font-semibold px-8 py-4 sm:mt-6 mt-4 hover:from-blue-700 hover:to-indigo-700 w-full transition-all duration-300 shadow-lg hover:shadow-xl text-lg"
               onClick={() => openSignIn()}
             >
               Sign in to Create Website
@@ -800,7 +811,7 @@ const WebPage = () => {
           <SignedIn>
           {!loading &&           
              <button
-             className="bg-black text-white rounded-lg font-medium px-6 py-3 mt-2 hover:bg-gray-900 w-full transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center"
+             className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold px-8 py-4 mt-2 hover:from-blue-700 hover:to-indigo-700 w-full transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center text-lg"
              onClick={generateWeb}
              disabled={loading}
            >
@@ -812,7 +823,7 @@ const WebPage = () => {
             }
             {loading && (
               <button
-                className="bg-black rounded-lg text-white font-medium px-6 py-3 sm:mt-6 mt-4 w-full shadow-sm"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl text-white font-semibold px-8 py-4 sm:mt-6 mt-4 w-full shadow-lg text-lg"
                 disabled
               >
                 <LoadingDots color="white" style="large" />

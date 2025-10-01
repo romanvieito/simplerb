@@ -10,7 +10,7 @@ import { trackConversion } from "../utils/analytics";
 export default function PricingPage() {
   useEffect(() => {
     trackConversion('pricing_view');
-  }, []);
+  }, [trackConversion]);
 
   return (
     <div className="min-h-screen bg-black text-white">

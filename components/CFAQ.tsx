@@ -87,7 +87,7 @@ export default function CFAQ() {
         <div className="max-w-3xl mx-auto">
             {faqItems.map((item, index) => (
                 <motion.div
-                    key={index}
+                    key={item.question}
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}

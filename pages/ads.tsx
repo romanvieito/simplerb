@@ -151,7 +151,7 @@ const AdsPage = () => {
           
           {uploadedImage && (
             <div className="mt-4">
-              <Image src={uploadedImage} alt="Uploaded image" width={200} height={200} objectFit="contain" />
+              <Image src={uploadedImage} alt="Uploaded image" width={200} height={200} style={{ objectFit: 'contain' }} />
             </div>
           )}
 

@@ -82,7 +82,7 @@ export default async function handler(req, res) {
             `;
 
             // Add tracking pixel for open rate
-            const trackingPixel = `<img src="${baseUrl}/api/track/open/${id}" width="1" height="1" alt="" />`;
+            const trackingPixel = `<img src="${baseUrl}/api/track/open/${id}" width="1" height="1" alt="Email tracking pixel" />`;
             const htmlWithTracking = `${emailContent.body}${trackingPixel}`;
             
             console.log('baseUrl:', baseUrl);
