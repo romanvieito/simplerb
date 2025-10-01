@@ -41,8 +41,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       refresh_token: process.env.GOOGLE_ADS_REFRESH_TOKEN,
     });
 
-    const keywordList = keywords.split('\n').map(k => k.trim());
-    const keywordConditions = keywordList.map(k => `keyword.text = '${k}'`).join(' OR ');
+    const keywordList = keywords.split('\n').map((k: string) => k.trim());
+    const keywordConditions = keywordList.map((k: string) => `keyword.text = '${k}'`).join(' OR ');
 
     const query = `
       SELECT
@@ -56,10 +56,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const response = await customer.query(query);
 
     // Process the response and format the results
-    const results = response.map(row => ({
-      keyword: row.keyword_view.keyword,
-      searchVolume: row.keyword_view.avg_monthly_searches || 'N/A',
-      competition: row.keyword_view.competition || 'N/A',
+    const results = response.map((row: any) => ({
+      keyword: row.keyword_view?.keyword || 'N/A',
+      searchVolume: row.keyword_view?.avg_monthly_searches || 'N/A',
+      competition: row.keyword_view?.competition || 'N/A',
     }));
 
     res.status(200).json(results);

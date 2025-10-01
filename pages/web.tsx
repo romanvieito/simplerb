@@ -680,26 +680,27 @@ const WebPage = () => {
       const textElements = iframeDoc.querySelectorAll('p, h1, h2, h3, h4, h5, h6, span, a');
       
       textElements.forEach(element => {
-        element.contentEditable = editable.toString();
+        const htmlElement = element as HTMLElement;
+        htmlElement.contentEditable = editable.toString();
         
         if (editable) {
-          element.style.cursor = 'text';
-          element.style.outline = '1px dashed #ddd';
+          htmlElement.style.cursor = 'text';
+          htmlElement.style.outline = '1px dashed #ddd';
           
           // For links, prevent default behavior while in edit mode
-          if (element.tagName.toLowerCase() === 'a') {
-            element.addEventListener('click', (e) => {
+          if (htmlElement.tagName.toLowerCase() === 'a') {
+            htmlElement.addEventListener('click', (e) => {
               e.preventDefault();
               e.stopPropagation();
             });
           }
         } else {
-          element.style.cursor = '';
-          element.style.outline = '';
+          htmlElement.style.cursor = '';
+          htmlElement.style.outline = '';
           
           // Restore link behavior when exiting edit mode
-          if (element.tagName.toLowerCase() === 'a') {
-            element.style.cursor = 'not-allowed'; // Maintain the preview mode behavior for links
+          if (htmlElement.tagName.toLowerCase() === 'a') {
+            htmlElement.style.cursor = 'not-allowed'; // Maintain the preview mode behavior for links
           }
         }
       });

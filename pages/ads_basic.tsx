@@ -4,9 +4,15 @@ import Head from "next/head";
 import { Toaster, toast } from "react-hot-toast";
 import { useClerk, SignedIn, SignedOut } from "@clerk/nextjs";
 
+interface KeywordResult {
+  keyword: string;
+  searchVolume: number;
+  competition: string;
+}
+
 const AdsPage = () => {
   const [keywords, setKeywords] = useState('');
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState<KeywordResult[]>([]);
   const [loading, setLoading] = useState(false);
 
   const { openSignIn } = useClerk();
