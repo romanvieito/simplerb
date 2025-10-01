@@ -1,16 +1,26 @@
 import { authMiddleware } from "@clerk/nextjs";
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-export default authMiddleware({
-  publicRoutes: [
-    "/",
-    "/pricing",
-    "/faq",
-    "/api/serve-site",
-    "/api/clerk-webhooks(.*)",
-    "/sign-in(.*)",
-    "/sign-up(.*)"
-  ],
-});
+export default function middleware(request: NextRequest) {
+  // Handle root route explicitly
+  if (request.nextUrl.pathname === '/') {
+    return NextResponse.next();
+  }
+  
+  // Use Clerk auth middleware for other routes
+  return authMiddleware({
+    publicRoutes: [
+      "/",
+      "/pricing",
+      "/faq",
+      "/api/serve-site",
+      "/api/clerk-webhooks(.*)",
+      "/sign-in(.*)",
+      "/sign-up(.*)"
+    ],
+  })(request);
+}
 
 export const config = {
   matcher: [
