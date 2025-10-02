@@ -591,7 +591,7 @@ const DomainPage: React.FC = () => {
                 <select
                   value={vibe}
                   onChange={(e) => setVibe(e.target.value as VibeType)}
-                  className="w-full rounded-xl border-2 border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-4 mb-6 transition-all duration-300 text-lg"
+                  className="w-full rounded-xl border-2 border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-4 my-6 transition-all duration-300 text-lg"
                 >
                   <option value="Professional">Professional</option>
                   <option value="Friendly">Friendly</option>
