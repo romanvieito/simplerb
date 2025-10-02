@@ -551,17 +551,16 @@ const DomainPage: React.FC = () => {
               <UserButton userProfileUrl="/user" afterSignOutUrl="/" />
             </>
           ) : (
-            <Button
+            <button
               onClick={() => openSignIn()}
               className="group relative bg-black cursor-pointer rounded-xl text-white font-medium px-4 py-2 hover:bg-black/80 transition-all duration-300 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-black/20 shadow-lg hover:shadow-xl"
-              style={{ textTransform: "none" }}
             >
               <span className="relative z-10 flex items-center justify-center gap-2">
                 <LoginIcon sx={{ fontSize: '1rem' }} />
                 Sign in / up
               </span>
               <div className="absolute inset-0 bg-gradient-to-r from-gray-800 to-black rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </Button>
+            </button>
           )}
         </Box>
 
