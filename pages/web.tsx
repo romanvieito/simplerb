@@ -11,6 +11,7 @@ import Dialog from '@mui/material/Dialog';
 import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
 import DiamondIcon from '@mui/icons-material/Diamond';
+import LoginIcon from '@mui/icons-material/Login';
 import { useRouter } from 'next/router';
 import DOMPurify from 'dompurify';
 import { useUser } from "@clerk/nextjs";
@@ -802,10 +803,14 @@ const WebPage = () => {
           
           <SignedOut>  
             <button
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl text-white font-semibold px-8 py-4 sm:mt-6 mt-4 hover:from-blue-700 hover:to-indigo-700 w-full transition-all duration-300 shadow-lg hover:shadow-xl text-lg"
+              className="group relative bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl text-white font-semibold px-8 py-4 sm:mt-6 mt-4 hover:from-blue-700 hover:to-indigo-700 w-full transition-all duration-300 shadow-lg hover:shadow-xl text-lg transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-blue-300/50"
               onClick={() => openSignIn()}
             >
-              Sign in to Create Website
+              <span className="relative z-10 flex items-center justify-center gap-3">
+                <LoginIcon sx={{ fontSize: '1.25rem' }} />
+                Sign in to Create Website
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </button> 
           </SignedOut>
           <SignedIn>

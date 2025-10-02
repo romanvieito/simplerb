@@ -7,7 +7,7 @@ import { useClerk, SignedOut } from "@clerk/nextjs";
 import type { NextPage } from "next";
 import CPricing from '../components/CPricing';
 import CFAQ from '../components/CFAQ';
-import { Language, Web, Email, Campaign } from '@mui/icons-material';
+import { Language, Web, Email, Campaign, Login } from '@mui/icons-material';
 import { trackConversion } from '../utils/analytics';
 
 const Home: NextPage = () => {
@@ -78,9 +78,13 @@ const Home: NextPage = () => {
               <SignedOut>
                 <button
                   onClick={handleSignIn}
-                  className="px-8 py-4 border-2 border-gray-700 rounded-full font-semibold hover:bg-white/10 hover:border-white transition-all duration-300 text-lg"
+                  className="group relative px-8 py-4 border-2 border-gray-700 rounded-full font-semibold hover:bg-white/10 hover:border-white transition-all duration-300 text-lg transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-white/20"
                 >
-                  Sign in
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    <Login sx={{ fontSize: '1.25rem' }} />
+                    Sign in
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-white/10 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </button>
               </SignedOut>
             </div>

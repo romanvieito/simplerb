@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button, Tooltip, Box } from "@mui/material";
 import DiamondIcon from '@mui/icons-material/Diamond';
+import LoginIcon from '@mui/icons-material/Login';
 import { useClerk, SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
 import styles from "./Header.module.css";
 import mixpanel from "mixpanel-browser";
@@ -307,12 +308,17 @@ export default function Header(): JSX.Element {
               </SignedIn>
               <SignedOut>
                 <Box>
-                  <a
+                  <button
                     onClick={() => openSignIn()}
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 cursor-pointer rounded-xl text-white font-semibold px-6 py-3 sm:mt-10 mt-8 hover:from-blue-700 hover:to-indigo-700 w-full shadow-lg hover:shadow-xl transition-all duration-300"
+                    className="group relative bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-blue-300/50"
+                    style={{ textTransform: "none" }}
                   >
-                    Sign in / up
-                  </a>
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                      <LoginIcon sx={{ fontSize: '1rem' }} />
+                      Sign in / up
+                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </button>
                 </Box>
               </SignedOut>
             </Box>
