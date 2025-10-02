@@ -730,7 +730,7 @@ const WebPage = () => {
   }, [isEditMode]);
 
   return (
-    <div className="flex max-w-6xl mx-auto flex-col items-center justify-center py-4 min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="flex max-w-6xl mx-auto flex-col items-center justify-center py-4 min-h-screen bg-white">
       <Toaster position="top-center" />
       <Head>
         <title>Website Creator</title>

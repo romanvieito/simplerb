@@ -476,7 +476,7 @@ const DomainPage: React.FC = () => {
   };
 
   return (
-    <div className="flex max-w-6xl mx-auto flex-col items-center justify-center py-4 min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="flex max-w-6xl mx-auto flex-col items-center justify-center py-4 min-h-screen bg-white">
       <Head>
         <title>Domain Generator</title>
         <link rel="icon" href="/favicon.ico" />
