@@ -334,10 +334,6 @@ const SitesPage = () => {
           )}
         </Box>
 
-        <h1 className="text-2xl text-gray-900 mb-3 tracking-tight">
-          My <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Sites</span>
-        </h1>
-
         {/* Main Content Area */}
         <div className="w-full max-w-6xl mx-auto mt-8">
           {/* Header Section */}
