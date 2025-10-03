@@ -402,41 +402,45 @@ const SitesPage = () => {
                         <h3 className="font-semibold text-gray-900 mb-2 truncate">
                           {site.description || 'Untitled Site'}
                         </h3>
-                        <div className="text-sm text-gray-600 mb-4">
-                          {editingSubdomain === site.subdomain ? (
-                            <div className="flex items-center space-x-2">
-                              <span className="text-gray-500">https://</span>
-                              <input
-                                type="text"
-                                value={tempSubdomain}
-                                onChange={(e) => setTempSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                                className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="subdomain"
-                                maxLength={50}
-                                autoFocus
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    updateSubdomain(site.id, site.subdomain, tempSubdomain);
-                                  } else if (e.key === 'Escape') {
-                                    cancelEditing();
-                                  }
-                                }}
-                              />
-                              <span className="text-gray-500">.simplerb.com</span>
-                              <button
-                                onClick={() => updateSubdomain(site.id, site.subdomain, tempSubdomain)}
-                                className="text-green-600 hover:text-green-800 text-sm"
-                              >
-                                ✓
-                              </button>
-                              <button
-                                onClick={cancelEditing}
-                                className="text-red-600 hover:text-red-800 text-sm"
-                              >
-                                ✕
-                              </button>
-                            </div>
-                          ) : (
+                         <div className="text-sm text-gray-600 mb-4">
+                           {editingSubdomain === site.subdomain ? (
+                             <div className="space-y-2">
+                               <div className="flex items-center space-x-1">
+                                 <span className="text-gray-500 text-xs">https://</span>
+                                 <input
+                                   type="text"
+                                   value={tempSubdomain}
+                                   onChange={(e) => setTempSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                                   className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0"
+                                   placeholder="subdomain"
+                                   maxLength={50}
+                                   autoFocus
+                                   onKeyDown={(e) => {
+                                     if (e.key === 'Enter') {
+                                       updateSubdomain(site.id, site.subdomain, tempSubdomain);
+                                     } else if (e.key === 'Escape') {
+                                       cancelEditing();
+                                     }
+                                   }}
+                                 />
+                                 <span className="text-gray-500 text-xs">.simplerb.com</span>
+                               </div>
+                               <div className="flex items-center space-x-2 justify-end">
+                                 <button
+                                   onClick={() => updateSubdomain(site.id, site.subdomain, tempSubdomain)}
+                                   className="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
+                                 >
+                                   Save
+                                 </button>
+                                 <button
+                                   onClick={cancelEditing}
+                                   className="px-2 py-1 bg-gray-400 text-white text-xs rounded hover:bg-gray-500 transition-colors"
+                                 >
+                                   Cancel
+                                 </button>
+                               </div>
+                             </div>
+                           ) : (
                             <div className="flex items-center justify-between">
                               <span>{site.subdomain}.simplerb.com</span>
                               <button
