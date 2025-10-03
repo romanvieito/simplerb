@@ -15,6 +15,14 @@
     {
       "path": "/api/cron/refreshGmailToken",
       "schedule": "0 0 */5 * *"
+    },
+    {
+      "path": "/api/google-ads/optimize",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/google-ads/maintenance",
+      "schedule": "0 3 * * 1"
     }
   ]
 } 

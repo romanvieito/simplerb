@@ -44,6 +44,7 @@ const WebPage = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const [editingSite, setEditingSite] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState("");
   const [vibe, setVibe] = useState<VibeType>("Professional");
@@ -127,10 +128,56 @@ const WebPage = () => {
     }
   }, [isLoaded, user, fetchUserData]);
 
+  // Add function to load existing site for editing
+  const loadSiteForEditing = useCallback(async (subdomain: string) => {
+    if (!dataUser?.id) return;
+
+    try {
+      const response = await fetch('/api/get-user-sites', {
+        headers: {
+          'Authorization': `Bearer ${dataUser.id}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch sites');
+      }
+
+      const data = await response.json();
+      const site = data.sites?.find((s: any) => s.subdomain === subdomain);
+      
+      if (site) {
+        // Get the HTML content for this site
+        const htmlResponse = await fetch(`https://${subdomain}.simplerb.com`);
+        if (htmlResponse.ok) {
+          const html = await htmlResponse.text();
+          setGeneratedSite(html);
+          setTextDescription(site.description);
+          setEditingSite(subdomain);
+          setPublishedUrl(site.url);
+          toast.success('Site loaded for editing');
+        }
+      } else {
+        toast.error('Site not found');
+      }
+    } catch (error) {
+      console.error('Error loading site for editing:', error);
+      toast.error('Failed to load site for editing');
+    }
+  }, [dataUser?.id]);
+
   // Add useEffect to load user data
   useEffect(() => {
     initPageData();
   }, [isSignedIn, user, initPageData]);
+
+  // Check for edit parameter in URL
+  useEffect(() => {
+    const { edit } = router.query;
+    if (edit && typeof edit === 'string' && dataUser?.id) {
+      loadSiteForEditing(edit);
+    }
+  }, [router.query, dataUser?.id, loadSiteForEditing]);
 
   // Auto-generate website when domain and description are provided via URL params
   useEffect(() => {
@@ -550,8 +597,8 @@ const WebPage = () => {
           return;
       }
 
-      // Generate subdomain from description
-      const subdomain = generateSubdomain();
+      // Use existing subdomain if editing, otherwise generate new one
+      const subdomain = editingSite || generateSubdomain();
 
       const response = await fetch('/api/publish-site', {
         method: 'POST',
@@ -582,10 +629,12 @@ const WebPage = () => {
 
       setPublishedUrl(data.url);
       
-      toast.success('Site published successfully!');
+      const action = editingSite ? 'Site updated successfully!' : 'Site published successfully!';
+      toast.success(action);
       mixpanel.track('Site Published', {
         userId: dataUser.id,
-        siteUrl: data.url
+        siteUrl: data.url,
+        isEdit: !!editingSite
       });
     } catch (error) {
       console.error('Error publishing site:', error);
