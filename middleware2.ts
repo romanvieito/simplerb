@@ -9,9 +9,12 @@ export default function middleware(request: NextRequest) {
   if (hostname && hostname.includes('.simplerb.com')) {
     const subdomain = hostname.split('.')[0];
     
-    // Skip middleware for subdomain requests (let Edge Function handle them)
+    // Handle subdomain requests directly in middleware
     if (subdomain !== 'www' && subdomain !== 'simplerb') {
-      return NextResponse.next();
+      // Rewrite to subdomain handler
+      const url = request.nextUrl.clone();
+      url.pathname = '/api/subdomain-handler';
+      return NextResponse.rewrite(url);
     }
   }
   
@@ -27,6 +30,7 @@ export default function middleware(request: NextRequest) {
       "/pricing",
       "/faq",
       "/api/serve-site",
+      "/api/subdomain-handler",
       "/api/clerk-webhooks(.*)",
       "/sign-in(.*)",
       "/sign-up(.*)"
