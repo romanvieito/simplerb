@@ -170,12 +170,12 @@ const EmailPage = () => {
       {/* <Header/> */}
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4">
         <div className="absolute top-4 left-4 flex items-center space-x-3">
-          {/* Logo */}
-          <div className="flex items-center space-x-2">
+           {/* Logo */}
+           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">S</span>
+              <span className="text-white font-bold text-sm">B</span>
             </div>
-            <span className="text-gray-800 font-semibold text-lg">simplerB</span>
+            <span className="text-gray-800 font-semibold text-lg">simpler</span>
           </div>
           
           {/* Tool Selector */}
