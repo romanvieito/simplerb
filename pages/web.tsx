@@ -151,6 +151,7 @@ const WebPage = () => {
         setTextDescription(data.description);
         setEditingSite(subdomain);
         setPublishedUrl(`https://${subdomain}.simplerb.com`);
+        setOpenWebSite(true); // Open preview automatically when editing
         toast.success('Site loaded for editing');
       } else {
         toast.error('Site not found');
