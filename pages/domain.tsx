@@ -392,6 +392,73 @@ const DomainPage: React.FC = () => {
 
   };
 
+  const generateWebsiteForDomain = async (domain: string) => {
+    // Check if user is signed in and premium
+    if (!isSignedIn) {
+      toast.error("Please sign in to generate websites");
+      openSignIn();
+      return;
+    }
+
+    if (!isPremiumUser) {
+      toast((t) => (
+        <div className="flex flex-col items-center p-4">
+          <div className="flex items-center mb-4">
+            <DiamondIcon className="text-black mr-2" sx={{ fontSize: "1.5rem" }} />
+            <h3 className="text-xl font-bold">Premium Feature</h3>
+          </div>
+          <p className="mb-4 text-gray-600 text-center">
+            Generate websites instantly!<br/>
+            <span className="text-sm">Plus get access to all premium features.</span>
+          </p>
+          <div className="flex flex-col sm:flex-row w-full sm:w-auto space-y-2 sm:space-y-0 sm:space-x-3">
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                mixpanel.track("Become a Member Click", {
+                  source: "Generate Website from Domain",
+                });
+                const form = document.querySelector('form[action="/api/checkout_sessions"]');
+                if (form instanceof HTMLFormElement) {
+                  form.submit();
+                }
+              }}
+              className="bg-black text-white font-medium px-6 py-2.5 rounded-xl hover:bg-black/80 flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              <DiamondIcon className="mr-2" />
+              Become a Member
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="bg-gray-100 text-gray-600 font-medium px-6 py-2.5 rounded-xl hover:bg-gray-200 transition-all duration-200"
+            >
+              Maybe Later
+            </button>
+          </div>
+        </div>
+      ), {
+        duration: 15000,
+        position: 'top-center',
+      });
+      return;
+    }
+
+    // Generate website description based on domain and business description
+    const websiteDescription = businessDescription 
+      ? `${businessDescription} - Professional website for ${domain}`
+      : `Professional website for ${domain}`;
+
+    // Open web page with auto-generation
+    const webUrl = `/web?domain=${encodeURIComponent(domain)}&description=${encodeURIComponent(websiteDescription)}&autoGenerate=true`;
+    window.open(webUrl, "_blank");
+
+    mixpanel.track("Generate Website from Domain", {
+      domain: domain,
+      businessDescription: businessDescription,
+      source: "domain-page",
+    });
+  };
+
   const handleSubsStarterClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     mixpanel.track("Become a Member Click", {
@@ -732,7 +799,7 @@ const DomainPage: React.FC = () => {
                   {loading ? (
                     <div className="flex items-center space-x-2">
                       <LoadingDots color="white" style="large" />
-                      <span>Generating domains...</span>
+                      <span>Creating magic...</span>
                     </div>
                   ) : (
                     <div className="flex items-center space-x-2">
@@ -804,7 +871,8 @@ const DomainPage: React.FC = () => {
 
                                 <button
                                   onClick={() => {
-                                    window.open(`/web?domain=${encodeURIComponent(domain.domain)}`, "_blank");
+                                    // Directly generate website for the domain
+                                    generateWebsiteForDomain(domain.domain);
                                   }}
                                   className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl px-4 py-3 hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-semibold flex items-center justify-center space-x-2 group text-sm w-full sm:w-auto shadow-lg hover:shadow-xl"
                                 >

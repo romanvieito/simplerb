@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile-First Domain Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+        }
+        
+        .mobile-container {
+            max-width: 375px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        .header {
+            background: white;
+            padding: 16px 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .back-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: #f3f4f6;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .content {
+            padding: 24px 20px;
+        }
+        
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 32px;
+        }
+        
+        .step {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #e5e7eb;
+        }
+        
+        .step.active {
+            background: #667eea;
+        }
+        
+        .step.completed {
+            background: #10b981;
+        }
+        
+        .title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 8px;
+            line-height: 1.2;
+        }
+        
+        .subtitle {
+            color: #6b7280;
+            font-size: 16px;
+            margin-bottom: 32px;
+            line-height: 1.5;
+        }
+        
+        .input-container {
+            position: relative;
+            margin-bottom: 24px;
+        }
+        
+        .smart-input {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 16px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+        }
+        
+        .smart-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+        
+        .quick-templates {
+            margin-bottom: 32px;
+        }
+        
+        .templates-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 16px;
+        }
+        
+        .templates-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        .template-card {
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: white;
+        }
+        
+        .template-card:hover {
+            border-color: #667eea;
+            background: #f9fafb;
+        }
+        
+        .template-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .template-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .generate-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 16px;
+        }
+        
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .preview-info {
+            background: #f0f9ff;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        
+        .preview-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #0369a1;
+            margin-bottom: 4px;
+        }
+        
+        .preview-text {
+            font-size: 14px;
+            color: #0284c7;
+        }
+        
+        /* Results View */
+        .results-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        
+        .results-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+        
+        .results-subtitle {
+            color: #6b7280;
+            font-size: 16px;
+        }
+        
+        .filter-bar {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 20px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        
+        .filter-btn.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+        
+        .domain-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        
+        .domain-item {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #e5e7eb;
+        }
+        
+        .domain-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+        
+        .domain-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .domain-score {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #f0f9ff;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+        
+        .score-bar {
+            width: 24px;
+            height: 3px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .score-fill {
+            height: 100%;
+            background: #10b981;
+            border-radius: 2px;
+        }
+        
+        .score-text {
+            font-size: 12px;
+            font-weight: 600;
+            color: #059669;
+        }
+        
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-available {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .domain-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            flex: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-icon {
+            width: 44px;
+            height: 44px;
+            border: 2px solid #e5e7eb;
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        
+        .floating-action {
+            position: fixed;
+            bottom: 24px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            transition: all 0.3s ease;
+        }
+        
+        .floating-action:hover {
+            transform: scale(1.1);
+        }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-around;
+            z-index: 100;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+            color: #6b7280;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-item.active {
+            color: #667eea;
+        }
+        
+        .nav-icon {
+            font-size: 20px;
+        }
+        
+        .nav-text {
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .swipe-indicator {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+        
+        @media (max-width: 375px) {
+            .mobile-container {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-container">
+        <div class="header">
+            <button class="back-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m15 18-6-6 6-6"/>
+                </svg>
+            </button>
+            <div class="logo">simplerB</div>
+        </div>
+
+        <div class="content">
+            <div class="step-indicator">
+                <div class="step completed"></div>
+                <div class="step active"></div>
+                <div class="step"></div>
+            </div>
+
+            <h1 class="title">Find Your Perfect Domain</h1>
+            <p class="subtitle">Tell us about your business and we'll generate the perfect domain names</p>
+
+            <div class="input-container">
+                <input 
+                    type="text" 
+                    class="smart-input" 
+                    placeholder="e.g., Coffee shop with artisanal roasts"
+                    value="Coffee shop with artisanal roasts"
+                >
+            </div>
+
+            <div class="quick-templates">
+                <h3 class="templates-title">Quick Start Templates</h3>
+                <div class="templates-grid">
+                    <div class="template-card">
+                        <div class="template-icon">☕</div>
+                        <div class="template-text">Coffee Shop</div>
+                    </div>
+                    <div class="template-card">
+                        <div class="template-icon">🛍️</div>
+                        <div class="template-text">E-commerce</div>
+                    </div>
+                    <div class="template-card">
+                        <div class="template-icon">💻</div>
+                        <div class="template-text">SaaS App</div>
+                    </div>
+                    <div class="template-card">
+                        <div class="template-icon">🎨</div>
+                        <div class="template-text">Creative</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="generate-btn">Generate Perfect Domains</button>
+
+            <div class="preview-info">
+                <div class="preview-title">✨ Premium Results</div>
+                <div class="preview-text">Get 5 expertly crafted domain suggestions</div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-header">
+                <h2 class="results-title">Perfect Domains Found</h2>
+                <p class="results-subtitle">Based on your coffee shop description</p>
+            </div>
+
+            <div class="filter-bar">
+                <button class="filter-btn active">All</button>
+                <button class="filter-btn">Available</button>
+                <button class="filter-btn">.com</button>
+                <button class="filter-btn">Premium</button>
+            </div>
+
+            <div class="swipe-indicator">← Swipe to see more →</div>
+
+            <div class="domain-list">
+                <div class="domain-item">
+                    <div class="domain-name">artisanalbrew.com</div>
+                    <div class="domain-meta">
+                        <div class="domain-score">
+                            <div class="score-bar">
+                                <div class="score-fill" style="width: 92%"></div>
+                            </div>
+                            <span class="score-text">92</span>
+                        </div>
+                        <span class="status-badge status-available">Available</span>
+                        <span style="color: #6b7280; font-size: 14px;">$12/year</span>
+                    </div>
+                    <div class="domain-actions">
+                        <button class="btn-primary">Buy</button>
+                        <button class="btn-secondary">Preview</button>
+                        <button class="btn-icon">❤️</button>
+                    </div>
+                </div>
+
+                <div class="domain-item">
+                    <div class="domain-name">craftroast.co</div>
+                    <div class="domain-meta">
+                        <div class="domain-score">
+                            <div class="score-bar">
+                                <div class="score-fill" style="width: 88%"></div>
+                            </div>
+                            <span class="score-text">88</span>
+                        </div>
+                        <span class="status-badge status-available">Available</span>
+                        <span style="color: #6b7280; font-size: 14px;">$8/year</span>
+                    </div>
+                    <div class="domain-actions">
+                        <button class="btn-primary">Buy</button>
+                        <button class="btn-secondary">Preview</button>
+                        <button class="btn-icon">❤️</button>
+                    </div>
+                </div>
+
+                <div class="domain-item">
+                    <div class="domain-name">roastcraft.io</div>
+                    <div class="domain-meta">
+                        <div class="domain-score">
+                            <div class="score-bar">
+                                <div class="score-fill" style="width: 90%"></div>
+                            </div>
+                            <span class="score-text">90</span>
+                        </div>
+                        <span class="status-badge status-available">Available</span>
+                        <span style="color: #6b7280; font-size: 14px;">$15/year</span>
+                    </div>
+                    <div class="domain-actions">
+                        <button class="btn-primary">Buy</button>
+                        <button class="btn-secondary">Preview</button>
+                        <button class="btn-icon">❤️</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button class="floating-action">+</button>
+
+        <div class="bottom-nav">
+            <a href="#" class="nav-item active">
+                <div class="nav-icon">🏠</div>
+                <div class="nav-text">Home</div>
+            </a>
+            <a href="#" class="nav-item">
+                <div class="nav-icon">🌐</div>
+                <div class="nav-text">Domains</div>
+            </a>
+            <a href="#" class="nav-item">
+                <div class="nav-icon">💌</div>
+                <div class="nav-text">Email</div>
+            </a>
+            <a href="#" class="nav-item">
+                <div class="nav-icon">👤</div>
+                <div class="nav-text">Profile</div>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Filter button interactions
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        // Template card interactions
+        document.querySelectorAll('.template-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const text = card.querySelector('.template-text').textContent;
+                document.querySelector('.smart-input').value = `${text.toLowerCase()} business`;
+            });
+        });
+
+        // Floating action button
+        document.querySelector('.floating-action').addEventListener('click', () => {
+            alert('Quick domain generation...');
+        });
+
+        // Bottom navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

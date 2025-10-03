@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimplerB Domain Generator - Improved UX Mockup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 48px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+        }
+        
+        .subtitle {
+            color: #6b7280;
+            font-size: 18px;
+            margin-bottom: 48px;
+            line-height: 1.5;
+        }
+        
+        .input-container {
+            position: relative;
+            margin-bottom: 32px;
+        }
+        
+        .smart-input {
+            width: 100%;
+            padding: 20px 24px;
+            border: 2px solid #e5e7eb;
+            border-radius: 16px;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+        }
+        
+        .smart-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+        
+        .suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            margin-top: 8px;
+            z-index: 10;
+            display: none;
+        }
+        
+        .suggestion-item {
+            padding: 16px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid #f3f4f6;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .suggestion-item:hover {
+            background: #f9fafb;
+        }
+        
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+        
+        .suggestion-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .templates {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+        
+        .template {
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .template:hover {
+            border-color: #667eea;
+            background: #f9fafb;
+        }
+        
+        .template-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .template-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .generate-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .generate-btn:active {
+            transform: translateY(0);
+        }
+        
+        .loading {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .preview-text {
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 16px;
+        }
+        
+        .premium-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        
+        @media (max-width: 640px) {
+            .container {
+                padding: 32px 24px;
+            }
+            
+            .templates {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">simplerB</div>
+        <div class="subtitle">Find the perfect domain name for your business in seconds</div>
+        
+        <div class="input-container">
+            <input 
+                type="text" 
+                class="smart-input" 
+                placeholder="What's your business about? (e.g., Coffee shop with artisanal roasts)"
+                id="businessInput"
+            >
+            <div class="suggestions" id="suggestions">
+                <div class="suggestion-item">
+                    <div class="suggestion-icon">☕</div>
+                    <div>
+                        <div style="font-weight: 500;">Coffee shop with artisanal roasts</div>
+                        <div style="font-size: 12px; color: #6b7280;">Popular choice</div>
+                    </div>
+                </div>
+                <div class="suggestion-item">
+                    <div class="suggestion-icon">🛍️</div>
+                    <div>
+                        <div style="font-weight: 500;">E-commerce fashion store</div>
+                        <div style="font-size: 12px; color: #6b7280;">Trending</div>
+                    </div>
+                </div>
+                <div class="suggestion-item">
+                    <div class="suggestion-icon">💻</div>
+                    <div>
+                        <div style="font-weight: 500;">SaaS productivity tool</div>
+                        <div style="font-size: 12px; color: #6b7280;">Tech startup</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="templates">
+            <div class="template">
+                <div class="template-icon">☕</div>
+                <div class="template-text">Coffee Shop</div>
+            </div>
+            <div class="template">
+                <div class="template-icon">🛍️</div>
+                <div class="template-text">E-commerce</div>
+            </div>
+            <div class="template">
+                <div class="template-icon">💻</div>
+                <div class="template-text">SaaS</div>
+            </div>
+            <div class="template">
+                <div class="template-icon">🎨</div>
+                <div class="template-text">Creative</div>
+            </div>
+            <div class="template">
+                <div class="template-icon">🏥</div>
+                <div class="template-text">Healthcare</div>
+            </div>
+            <div class="template">
+                <div class="template-icon">🍕</div>
+                <div class="template-text">Restaurant</div>
+            </div>
+        </div>
+        
+        <button class="generate-btn" id="generateBtn">
+            <span class="btn-text">Generate Perfect Domains</span>
+            <div class="loading">
+                <div class="spinner"></div>
+                <span>Creating magic...</span>
+            </div>
+        </button>
+        
+        <div class="preview-text">
+            Get 5 premium domain suggestions instantly
+            <span class="premium-badge">✨ Premium</span>
+        </div>
+    </div>
+
+    <script>
+        const input = document.getElementById('businessInput');
+        const suggestions = document.getElementById('suggestions');
+        const generateBtn = document.getElementById('generateBtn');
+        const btnText = generateBtn.querySelector('.btn-text');
+        const loading = generateBtn.querySelector('.loading');
+        
+        input.addEventListener('focus', () => {
+            suggestions.style.display = 'block';
+        });
+        
+        input.addEventListener('blur', (e) => {
+            // Delay hiding to allow clicking on suggestions
+            setTimeout(() => {
+                suggestions.style.display = 'none';
+            }, 200);
+        });
+        
+        // Template clicks
+        document.querySelectorAll('.template').forEach(template => {
+            template.addEventListener('click', () => {
+                const text = template.querySelector('.template-text').textContent;
+                input.value = `${text.toLowerCase()} business`;
+                suggestions.style.display = 'none';
+                input.focus();
+            });
+        });
+        
+        // Generate button
+        generateBtn.addEventListener('click', () => {
+            btnText.style.display = 'none';
+            loading.style.display = 'flex';
+            generateBtn.disabled = true;
+            
+            setTimeout(() => {
+                alert('Redirecting to results page...');
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

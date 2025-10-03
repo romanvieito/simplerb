@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domain Results - Improved UX</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .back-btn:hover {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+        
+        .results-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        
+        .results-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 12px;
+        }
+        
+        .results-subtitle {
+            color: #6b7280;
+            font-size: 18px;
+            margin-bottom: 24px;
+        }
+        
+        .refinement-bar {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        
+        .refinement-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .refinement-label {
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .style-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .style-btn {
+            padding: 8px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 20px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .style-btn.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+        
+        .extension-select {
+            padding: 8px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 20px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .domains-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+        
+        .domain-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .domain-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+        
+        .domain-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        
+        .domain-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 4px;
+        }
+        
+        .domain-score {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f0f9ff;
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+        
+        .score-bar {
+            width: 40px;
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .score-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        
+        .score-text {
+            font-size: 12px;
+            font-weight: 600;
+            color: #059669;
+        }
+        
+        .domain-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-available {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-taken {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .domain-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn-primary {
+            flex: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .btn-icon {
+            width: 44px;
+            height: 44px;
+            border: 2px solid #e5e7eb;
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-icon:hover {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+        
+        .btn-icon.liked {
+            border-color: #ef4444;
+            background: #ef4444;
+            color: white;
+        }
+        
+        .more-options {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        
+        .more-btn {
+            background: white;
+            border: 2px solid #e5e7eb;
+            color: #374151;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .more-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        
+        .premium-upsell {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            margin-top: 48px;
+        }
+        
+        .upsell-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        
+        .upsell-text {
+            font-size: 16px;
+            margin-bottom: 24px;
+            opacity: 0.9;
+        }
+        
+        .upsell-btn {
+            background: white;
+            color: #f59e0b;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .upsell-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        }
+        
+        @media (max-width: 768px) {
+            .domains-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .refinement-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+            
+            .domain-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">simplerB</div>
+            <button class="back-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="m15 18-6-6 6-6"/>
+                </svg>
+                Back
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="results-header">
+            <h1 class="results-title">✨ Perfect Domains Found</h1>
+            <p class="results-subtitle">For your coffee shop with artisanal roasts</p>
+        </div>
+
+        <div class="refinement-bar">
+            <div class="refinement-item">
+                <span class="refinement-label">Style:</span>
+                <div class="style-buttons">
+                    <button class="style-btn active">Professional</button>
+                    <button class="style-btn">Friendly</button>
+                    <button class="style-btn">Creative</button>
+                    <button class="style-btn">Sophisticated</button>
+                </div>
+            </div>
+            <div class="refinement-item">
+                <span class="refinement-label">Extension:</span>
+                <select class="extension-select">
+                    <option>Any</option>
+                    <option>.com</option>
+                    <option>.io</option>
+                    <option>.co</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="domains-grid">
+            <div class="domain-card">
+                <div class="domain-header">
+                    <div>
+                        <div class="domain-name">artisanalbrew.com</div>
+                        <div class="domain-score">
+                            <div class="score-bar">
+                                <div class="score-fill" style="width: 92%"></div>
+                            </div>
+                            <span class="score-text">92/100</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="domain-status">
+                    <span class="status-badge status-available">✅ Available</span>
+                    <span style="color: #6b7280; font-size: 14px;">$12/year</span>
+                </div>
+                <div class="domain-actions">
+                    <button class="btn-primary">Buy Now</button>
+                    <button class="btn-secondary">Preview</button>
+                    <button class="btn-icon">❤️</button>
+                </div>
+            </div>
+
+            <div class="domain-card">
+                <div class="domain-header">
+                    <div>
+                        <div class="domain-name">craftroast.co</div>
+                        <div class="domain-score">
+                            <div class="score-bar">
+                                <div class="score-fill" style="width: 88%"></div>
+                            </div>
+                            <span class="score-text">88/100</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="domain-status">
+                    <span class="status-badge status-available">✅ Available</span>
+                    <span style="color: #6b7280; font-size: 14px;">$8/year</span>
+                </div>
+                <div class="domain-actions">
+                    <button class="btn-primary">Buy Now</button>
+                    <button class="btn-secondary">Preview</button>
+                    <button class="btn-icon">❤️</button>
+                </div>
+            </div>
+
+            <div class="domain-card">
+                <div class="domain-header">
+                    <div>
+                        <div class="domain-name">beanmaster.com</div>
+                        <div class="domain-score">
+                            <div class="score-bar">
+                                <div class="score-fill" style="width: 85%"></div>
+                            </div>
+                            <span class="score-text">85/100</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="domain-status">
+                    <span class="status-badge status-taken">❌ Taken</span>
+                    <span style="color: #6b7280; font-size: 14px;">Alternative: beanmaster.io</span>
+                </div>
+                <div class="domain-actions">
+                    <button class="btn-primary" disabled style="opacity: 0.5;">Buy Now</button>
+                    <button class="btn-secondary">Find Similar</button>
+                    <button class="btn-icon">❤️</button>
+                </div>
+            </div>
+
+            <div class="domain-card">
+                <div class="domain-header">
+                    <div>
+                        <div class="domain-name">roastcraft.io</div>
+                        <div class="domain-score">
+                            <div class="score-bar">
+                                <div class="score-fill" style="width: 90%"></div>
+                            </div>
+                            <span class="score-text">90/100</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="domain-status">
+                    <span class="status-badge status-available">✅ Available</span>
+                    <span style="color: #6b7280; font-size: 14px;">$15/year</span>
+                </div>
+                <div class="domain-actions">
+                    <button class="btn-primary">Buy Now</button>
+                    <button class="btn-secondary">Preview</button>
+                    <button class="btn-icon liked">❤️</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="more-options">
+            <button class="more-btn">+ Show 6 More Options</button>
+        </div>
+
+        <div class="premium-upsell">
+            <h3 class="upsell-title">🚀 Want More?</h3>
+            <p class="upsell-text">
+                Get unlimited domain generations, instant availability checking, 
+                and premium domain suggestions with our Pro plan.
+            </p>
+            <button class="upsell-btn">Upgrade to Pro</button>
+        </div>
+    </div>
+
+    <script>
+        // Style button interactions
+        document.querySelectorAll('.style-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        // Like button interactions
+        document.querySelectorAll('.btn-icon').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.classList.toggle('liked');
+            });
+        });
+
+        // More options button
+        document.querySelector('.more-btn').addEventListener('click', () => {
+            alert('Loading more domain options...');
+        });
+    </script>
+</body>
+</html>

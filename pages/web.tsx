@@ -128,6 +128,29 @@ const WebPage = () => {
     initPageData();
   }, [isSignedIn, user, initPageData]);
 
+  // Auto-generate website when domain and description are provided via URL params
+  useEffect(() => {
+    const { domain, description, autoGenerate } = router.query;
+    
+    if (domain && description && autoGenerate === 'true' && isLoaded && isSignedIn && isPremiumUser) {
+      setTextDescription(description as string);
+      // Show a toast to inform user about auto-generation
+      toast.success(`Generating website for ${domain}...`);
+      // Small delay to ensure the form is ready
+      setTimeout(() => {
+        generateWeb({ preventDefault: () => {} });
+      }, 500);
+    } else if (domain && description && autoGenerate === 'true' && isLoaded && (!isSignedIn || !isPremiumUser)) {
+      // If user is not signed in or not premium, show appropriate message
+      setTextDescription(description as string);
+      if (!isSignedIn) {
+        toast.error("Please sign in to generate websites");
+      } else if (!isPremiumUser) {
+        toast.error("Premium subscription required to generate websites");
+      }
+    }
+  }, [router.query, isLoaded, isSignedIn, isPremiumUser]);
+
   const getImageFromPexels = async (query: string) => {
     try {
       const response = await fetch(`/api/pexels?query=${encodeURIComponent(query)}`);
@@ -772,7 +795,7 @@ const WebPage = () => {
           </h1>
         </div>
         <p className="text-lg text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed text-center">
-          Create stunning websites in minutes with AI-powered design and content generation
+          Create websites in seconds with just 1 click.
         </p>
 
         <div className="max-w-xl w-full mt-6">
