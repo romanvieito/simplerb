@@ -133,30 +133,25 @@ const WebPage = () => {
     if (!dataUser?.id) return;
 
     try {
-      const response = await fetch('/api/get-user-sites', {
+      // Get the site content directly from the database
+      const response = await fetch(`/api/get-site-content?subdomain=${subdomain}`, {
         headers: {
           'Authorization': `Bearer ${dataUser.id}`
         }
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch sites');
+        throw new Error('Failed to fetch site content');
       }
 
       const data = await response.json();
-      const site = data.sites?.find((s: any) => s.subdomain === subdomain);
       
-      if (site) {
-        // Get the HTML content for this site
-        const htmlResponse = await fetch(`https://${subdomain}.simplerb.com`);
-        if (htmlResponse.ok) {
-          const html = await htmlResponse.text();
-          setGeneratedSite(html);
-          setTextDescription(site.description);
-          setEditingSite(subdomain);
-          setPublishedUrl(site.url);
-          toast.success('Site loaded for editing');
-        }
+      if (data.success) {
+        setGeneratedSite(data.html);
+        setTextDescription(data.description);
+        setEditingSite(subdomain);
+        setPublishedUrl(`https://${subdomain}.simplerb.com`);
+        toast.success('Site loaded for editing');
       } else {
         toast.error('Site not found');
       }
