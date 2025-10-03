@@ -509,7 +509,7 @@ const DomainPage: React.FC = () => {
           Domain <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Generator</span>
         </h1>
         <p className="text-lg text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
-          Find the perfect domain name that matches your business vision and brand identity
+          One click. Boom. Your business has a home.
         </p>
 
         <Box
