@@ -23,16 +23,18 @@ export default async function handler(
         subdomain,
         description,
         created_at,
-        updated_at
+        updated_at,
+        screenshot
       FROM sites 
       WHERE user_id = ${userId}
       ORDER BY created_at DESC
     `;
 
-    // Add the full URL to each site
+    // Add the full URL and screenshot data URL to each site
     const sitesWithUrls = result.rows.map(site => ({
       ...site,
-      url: `https://${site.subdomain}.simplerb.com`
+      url: `https://${site.subdomain}.simplerb.com`,
+      screenshot: site.screenshot ? `data:image/png;base64,${site.screenshot}` : null
     }));
 
     return res.status(200).json({ 

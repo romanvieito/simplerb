@@ -67,6 +67,19 @@ export default async function handler(
       `;
     }
 
+    // Generate screenshot asynchronously (don't wait for it)
+    setTimeout(async () => {
+      try {
+        await fetch(`${process.env.VERCEL_URL || 'http://localhost:3000'}/api/generate-screenshot`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subdomain })
+        });
+      } catch (error) {
+        console.error('Error generating screenshot:', error);
+      }
+    }, 1000); // Wait 1 second for site to be available
+
     return res.status(200).json({ 
       success: true, 
       site: result.rows[0],

@@ -17,6 +17,7 @@ interface Site {
   created_at: string;
   updated_at: string;
   url: string;
+  screenshot?: string | null;
 }
 
 const SitesPage = () => {
@@ -28,6 +29,7 @@ const SitesPage = () => {
   const [deletingSite, setDeletingSite] = useState<string | null>(null);
   const [editingSubdomain, setEditingSubdomain] = useState<string | null>(null);
   const [tempSubdomain, setTempSubdomain] = useState('');
+  const [generatingScreenshot, setGeneratingScreenshot] = useState<string | null>(null);
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -172,6 +174,40 @@ const SitesPage = () => {
   const cancelEditing = () => {
     setEditingSubdomain(null);
     setTempSubdomain('');
+  };
+
+  // Generate screenshot for a site
+  const generateScreenshot = async (siteId: string, subdomain: string) => {
+    setGeneratingScreenshot(siteId);
+    try {
+      const response = await fetch('/api/generate-screenshot', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ subdomain })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate screenshot');
+      }
+
+      const data = await response.json();
+      
+      // Update the site in the local state
+      setSites(sites.map(site => 
+        site.id === siteId 
+          ? { ...site, screenshot: data.screenshot }
+          : site
+      ));
+      
+      toast.success('Screenshot generated successfully');
+    } catch (error) {
+      console.error('Error generating screenshot:', error);
+      toast.error('Failed to generate screenshot');
+    } finally {
+      setGeneratingScreenshot(null);
+    }
   };
 
   // Format date
@@ -386,15 +422,40 @@ const SitesPage = () => {
                   {sites.map((site) => (
                     <div key={site.id} className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300">
                       {/* Site Preview */}
-                      <div className="aspect-video bg-gray-100 flex items-center justify-center">
-                        <div className="text-center">
-                          <div className="w-12 h-12 mx-auto mb-2 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
+                      <div className="aspect-video bg-gray-100 flex items-center justify-center overflow-hidden relative">
+                        {site.screenshot ? (
+                          <img 
+                            src={site.screenshot} 
+                            alt={`Preview of ${site.subdomain}.simplerb.com`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              // Fallback to iframe if image fails to load
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const iframe = target.nextElementSibling as HTMLElement;
+                              if (iframe) iframe.style.display = 'block';
+                            }}
+                          />
+                        ) : null}
+                        <iframe
+                          src={`/api/site-preview?subdomain=${site.subdomain}`}
+                          className={`w-full h-full border-0 ${site.screenshot ? 'hidden' : 'block'}`}
+                          style={{ display: site.screenshot ? 'none' : 'block' }}
+                          sandbox="allow-same-origin"
+                          title={`Preview of ${site.subdomain}.simplerb.com`}
+                        />
+                        {!site.screenshot && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                            <div className="text-center">
+                              <div className="w-12 h-12 mx-auto mb-2 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                              </div>
+                              <p className="text-sm text-gray-500">Website Preview</p>
+                            </div>
                           </div>
-                          <p className="text-sm text-gray-500">Website Preview</p>
-                        </div>
+                        )}
                       </div>
 
                       {/* Site Info */}
@@ -464,34 +525,51 @@ const SitesPage = () => {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex items-center space-x-3">
-                          <a
-                            href={site.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex-1 bg-blue-600 text-white text-center px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm shadow-sm hover:shadow-md"
-                          >
-                            View Site
-                          </a>
-                          <Link
-                            href={`/web?edit=${site.subdomain}`}
-                            className="flex-1 bg-gray-100 text-gray-700 text-center px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm shadow-sm hover:shadow-md"
-                          >
-                            Edit
-                          </Link>
-                          <button
-                            onClick={() => deleteSite(site.id, site.subdomain)}
-                            disabled={deletingSite === site.id}
-                            className="bg-red-100 text-red-600 px-3 py-2 rounded-lg hover:bg-red-200 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
-                          >
-                            {deletingSite === site.id ? (
-                              <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                            ) : (
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
+                        <div className="flex flex-col space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <a
+                              href={site.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 bg-blue-600 text-white text-center px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm shadow-sm hover:shadow-md"
+                            >
+                              View Site
+                            </a>
+                            <Link
+                              href={`/web?edit=${site.subdomain}`}
+                              className="flex-1 bg-gray-100 text-gray-700 text-center px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm shadow-sm hover:shadow-md"
+                            >
+                              Edit
+                            </Link>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {!site.screenshot && (
+                              <button
+                                onClick={() => generateScreenshot(site.id, site.subdomain)}
+                                disabled={generatingScreenshot === site.id}
+                                className="flex-1 bg-green-100 text-green-600 px-3 py-2 rounded-lg hover:bg-green-200 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+                              >
+                                {generatingScreenshot === site.id ? (
+                                  <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                                ) : (
+                                  'Generate Preview'
+                                )}
+                              </button>
                             )}
-                          </button>
+                            <button
+                              onClick={() => deleteSite(site.id, site.subdomain)}
+                              disabled={deletingSite === site.id}
+                              className="bg-red-100 text-red-600 px-3 py-2 rounded-lg hover:bg-red-200 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+                            >
+                              {deletingSite === site.id ? (
+                                <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                              ) : (
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              )}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
