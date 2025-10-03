@@ -631,72 +631,72 @@ const DomainPage: React.FC = () => {
         {/* Main Input Area - Mockup Style */}
         <div className="w-full max-w-4xl mx-auto mt-8">
           <form onSubmit={generateDomains} className="space-y-6">
-            {/* Large Input Area */}
-            <div className="relative">
+            {/* Integrated Input Area with Action Bar */}
+            <div className="relative bg-white rounded-2xl border-2 border-gray-200 shadow-sm focus-within:border-blue-500 focus-within:ring-blue-500 transition-all duration-300">
               <textarea
                 value={businessDescription}
                 onChange={(e) => setBusinessDescription(e.target.value)}
                 rows={6}
-                className="w-full rounded-2xl border-2 border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-6 text-gray-700 resize-none transition-all duration-300 text-lg placeholder-gray-400"
+                className="w-full bg-transparent p-6 pb-20 text-gray-700 resize-none transition-all duration-300 text-lg placeholder-gray-400 rounded-2xl border-0 focus:outline-none focus:ring-0"
                 placeholder="Describe your business or idea... e.g. Boutique Coffee Shop with artisanal roasts and cozy atmosphere"
               />
-            </div>
-
-            {/* Action Bar */}
-            <div className="flex items-center justify-between bg-gray-50 rounded-xl p-4">
-              <div className="flex items-center space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setShowAdvancedSettings(true)}
-                  className="flex items-center space-x-2 bg-white rounded-lg px-3 py-2 border border-gray-200 hover:bg-gray-50 transition-colors"
-                >
-                  <span className="text-gray-600 text-sm">+</span>
-                  <span className="text-gray-800 font-medium text-sm">Settings</span>
-                </button>
-                
-                <select
-                  value={vibe}
-                  onChange={(e) => setVibe(e.target.value as VibeType)}
-                  className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:ring-blue-500"
-                >
-                  <option value="Professional">Professional</option>
-                  <option value="Friendly">Friendly</option>
-                  <option value="Creative">Creative</option>
-                  <option value="Sophisticated">Sophisticated</option>
-                </select>
-              </div>
               
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 rounded border-2 border-gray-300 text-blue-500 focus:ring-blue-500 transition-all duration-200"
-                    checked={availableOnly}
-                    onChange={handleAvailableOnlyChange}
-                  />
-                  <label className={`text-sm font-medium ${!isSignedIn || !isPremiumUser ? "text-gray-400" : "text-gray-700"}`}>
-                    Only available
-                  </label>
-                  <DiamondIcon sx={{ fontSize: "1rem", color: "black" }} />
+              {/* Integrated Action Bar */}
+              <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between bg-gray-50 rounded-b-2xl p-4 border-t border-gray-100">
+                <div className="flex items-center space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvancedSettings(true)}
+                    className="flex items-center space-x-2 bg-white rounded-lg px-3 py-2 border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm"
+                  >
+                    <span className="text-gray-600 text-sm">+</span>
+                    <span className="text-gray-800 font-medium text-sm">Settings</span>
+                  </button>
+                  
+                  <select
+                    value={vibe}
+                    onChange={(e) => setVibe(e.target.value as VibeType)}
+                    className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                  >
+                    <option value="Professional">Professional</option>
+                    <option value="Friendly">Friendly</option>
+                    <option value="Creative">Creative</option>
+                    <option value="Sophisticated">Sophisticated</option>
+                  </select>
                 </div>
                 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? (
-                    <>
-                      <LoadingDots color="white" style="small" />
-                    </>
-                  ) : (
-                    <>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612l-3.96 4.158a.75.75 0 11-1.08-1.04l5.25-5.5a.75.75 0 011.08 0l5.25 5.5a.75.75 0 11-1.08 1.04l-3.96-4.158v10.638A.75.75 0 0110 17z" clipRule="evenodd" />
-                      </svg>
-                    </>
-                  )}
-                </button>
+                <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 rounded border-2 border-gray-300 text-blue-500 focus:ring-blue-500 transition-all duration-200"
+                      checked={availableOnly}
+                      onChange={handleAvailableOnlyChange}
+                    />
+                    <label className={`text-sm font-medium ${!isSignedIn || !isPremiumUser ? "text-gray-400" : "text-gray-700"}`}>
+                      Only available
+                    </label>
+                    <DiamondIcon sx={{ fontSize: "1rem", color: "black" }} />
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                  >
+                    {loading ? (
+                      <>
+                        <LoadingDots color="white" style="small" />
+                      </>
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612l-3.96 4.158a.75.75 0 11-1.08-1.04l5.25-5.5a.75.75 0 011.08 0l5.25 5.5a.75.75 0 11-1.08 1.04l-3.96-4.158v10.638A.75.75 0 0110 17z" clipRule="evenodd" />
+                        </svg>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </form>
