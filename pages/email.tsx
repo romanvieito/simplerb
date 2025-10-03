@@ -192,6 +192,12 @@ const EmailPage = () => {
             >
               Website
             </button>
+            <button 
+              onClick={() => router.push('/sites')}
+              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              My Sites
+            </button>
             <button className="px-3 py-1 bg-white rounded-md text-sm font-medium text-gray-800 shadow-sm">
               Email
             </button>

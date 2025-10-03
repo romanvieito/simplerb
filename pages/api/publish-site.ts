@@ -17,24 +17,55 @@ export default async function handler(
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    const { html, subdomain, description } = req.body;
+    const { html, subdomain, description, originalSubdomain } = req.body;
 
     // Validate required fields
     if (!html || !subdomain) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // Use upsert (INSERT ... ON CONFLICT DO UPDATE)
-    const result = await sql`
-      INSERT INTO sites (user_id, subdomain, html, description)
-      VALUES (${userId}, ${subdomain}, ${html}, ${description})
-      ON CONFLICT (subdomain) 
-      DO UPDATE SET 
-        html = EXCLUDED.html,
-        description = EXCLUDED.description,
-        updated_at = CURRENT_TIMESTAMP
-      RETURNING id, subdomain, created_at;
-    `;
+    // Validate subdomain format
+    if (!/^[a-z0-9-]+$/.test(subdomain) || subdomain.length < 3 || subdomain.length > 50) {
+      return res.status(400).json({ message: 'Invalid subdomain format' });
+    }
+
+    let result;
+
+    // If subdomain is being changed, handle it differently
+    if (originalSubdomain && originalSubdomain !== subdomain) {
+      // Check if new subdomain is already taken
+      const existingSite = await sql`
+        SELECT id FROM sites WHERE subdomain = ${subdomain}
+      `;
+
+      if (existingSite.rows.length > 0) {
+        return res.status(409).json({ message: 'Subdomain already taken' });
+      }
+
+      // Update the existing site with new subdomain
+      result = await sql`
+        UPDATE sites 
+        SET subdomain = ${subdomain}, html = ${html}, description = ${description}, updated_at = CURRENT_TIMESTAMP
+        WHERE subdomain = ${originalSubdomain} AND user_id = ${userId}
+        RETURNING id, subdomain, created_at;
+      `;
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ message: 'Original site not found or not authorized' });
+      }
+    } else {
+      // Use upsert (INSERT ... ON CONFLICT DO UPDATE)
+      result = await sql`
+        INSERT INTO sites (user_id, subdomain, html, description)
+        VALUES (${userId}, ${subdomain}, ${html}, ${description})
+        ON CONFLICT (subdomain) 
+        DO UPDATE SET 
+          html = EXCLUDED.html,
+          description = EXCLUDED.description,
+          updated_at = CURRENT_TIMESTAMP
+        RETURNING id, subdomain, created_at;
+      `;
+    }
 
     return res.status(200).json({ 
       success: true, 

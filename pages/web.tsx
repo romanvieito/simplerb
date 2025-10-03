@@ -45,6 +45,7 @@ const WebPage = () => {
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
   const [editingSite, setEditingSite] = useState<string | null>(null);
+  const [customSubdomain, setCustomSubdomain] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState("");
   const [vibe, setVibe] = useState<VibeType>("Professional");
@@ -150,6 +151,7 @@ const WebPage = () => {
         setGeneratedSite(data.html);
         setTextDescription(data.description);
         setEditingSite(subdomain);
+        setCustomSubdomain(subdomain); // Set the current subdomain for editing
         setPublishedUrl(`https://${subdomain}.simplerb.com`);
         setOpenWebSite(true); // Open preview automatically when editing
         toast.success('Site loaded for editing');
@@ -593,8 +595,8 @@ const WebPage = () => {
           return;
       }
 
-      // Use existing subdomain if editing, otherwise generate new one
-      const subdomain = editingSite || generateSubdomain();
+      // Use custom subdomain if editing, otherwise generate new one
+      const subdomain = editingSite ? customSubdomain : generateSubdomain();
 
       const response = await fetch('/api/publish-site', {
         method: 'POST',
@@ -605,7 +607,8 @@ const WebPage = () => {
         body: JSON.stringify({
           html: generatedSite,
           subdomain: subdomain,
-          description: textDescription || 'Untitled'
+          description: textDescription || 'Untitled',
+          originalSubdomain: editingSite // Include original subdomain when editing
         }),
       });
 
@@ -874,6 +877,12 @@ const WebPage = () => {
               Website
             </button>
             <button 
+              onClick={() => router.push('/sites')}
+              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              My Sites
+            </button>
+            <button 
               onClick={() => router.push('/email')}
               className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
             >
@@ -972,6 +981,30 @@ const WebPage = () => {
                 className="w-full bg-transparent p-6 pb-20 text-gray-700 resize-none transition-all duration-300 text-lg placeholder-gray-400 rounded-2xl border-0 focus:outline-none focus:ring-0"
                 placeholder="Describe your website... e.g. Modern coffee shop with industrial design, featuring specialty roasts and tasting events"
               />
+              
+              {/* Subdomain Input - Only show when editing */}
+              {editingSite && (
+                <div className="px-6 pb-4 border-t border-gray-100">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Site URL (subdomain)
+                  </label>
+                  <div className="flex items-center">
+                    <span className="text-gray-500 text-sm mr-2">https://</span>
+                    <input
+                      type="text"
+                      value={customSubdomain}
+                      onChange={(e) => setCustomSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="my-site-name"
+                      maxLength={50}
+                    />
+                    <span className="text-gray-500 text-sm ml-2">.simplerb.com</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Only letters, numbers, and hyphens allowed. Changing this will update your site URL.
+                  </p>
+                </div>
+              )}
               
               {/* Character Counter */}
               <div className="absolute top-4 right-4 text-sm text-gray-400">

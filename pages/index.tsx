@@ -7,7 +7,7 @@ import { useClerk, SignedOut } from "@clerk/nextjs";
 import type { NextPage } from "next";
 import CPricing from '../components/CPricing';
 import CFAQ from '../components/CFAQ';
-import { Language, Web, Email, Campaign, Login } from '@mui/icons-material';
+import { Language, Web, Email, Campaign, Login, Dashboard } from '@mui/icons-material';
 import { trackConversion } from '../utils/analytics';
 
 const Home: NextPage = () => {
@@ -19,6 +19,10 @@ const Home: NextPage = () => {
     name: 'Website Builder',
     link: '/web',
     icon: Web
+  }, {
+    name: 'My Sites',
+    link: '/sites',
+    icon: Dashboard
   }, {
     name: 'Email Marketing',
     link: '/email',
@@ -116,6 +120,7 @@ const Home: NextPage = () => {
                     <p className="text-gray-400 mb-6">
                       {page.name === 'Domain' && 'Find a domain that matches your channel\'s vibe and vision.'}
                       {page.name === 'Website Builder' && 'Create a simple website to engage with your audience.'}
+                      {page.name === 'My Sites' && 'Manage and organize all your published websites in one place.'}
                       {page.name === 'Email Marketing' && 'Boost your subscriber base with emails that inspire action.'}
                       {page.name === 'Ads Generator' && 'Craft ads that drive views and revenue for your channel.'}
                     </p>
