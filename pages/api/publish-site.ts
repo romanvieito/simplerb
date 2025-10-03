@@ -38,7 +38,8 @@ export default async function handler(
 
     return res.status(200).json({ 
       success: true, 
-      site: result.rows[0]
+      site: result.rows[0],
+      url: `https://${subdomain}.simplerb.com`
     });
   } catch (error) {
     console.error('Error publishing site:', error);

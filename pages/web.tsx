@@ -440,6 +440,18 @@ const WebPage = () => {
     }
   };
 
+  // Add this helper function near the top of the component
+  const generateSubdomain = () => {
+    const base = textDescription
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .replace(/\s+/g, '-')
+      .substring(0, 20);
+    
+    const timestamp = Date.now().toString().slice(-4);
+    return `${base}-${timestamp}`;
+  };
+
   const getViewportWidth = () => {
     switch (previewViewport) {
       case 'mobile': return '375px';
@@ -538,15 +550,19 @@ const WebPage = () => {
           return;
       }
 
-      const response = await fetch('/api/publish-page', {
+      // Generate subdomain from description
+      const subdomain = generateSubdomain();
+
+      const response = await fetch('/api/publish-site', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${dataUser.id}`
         },
         body: JSON.stringify({
-          content: generatedSite,
-          title: textDescription || 'Untitled',
-          userId: dataUser.id
+          html: generatedSite,
+          subdomain: subdomain,
+          description: textDescription || 'Untitled'
         }),
       });
 
@@ -554,7 +570,7 @@ const WebPage = () => {
 
       if (!response.ok) {
         console.error('Publish failed:', data);
-        throw new Error(data.error || data.details || 'Failed to publish site');
+        throw new Error(data.message || 'Failed to publish site');
       }
 
       setPublishedUrl(data.url);
