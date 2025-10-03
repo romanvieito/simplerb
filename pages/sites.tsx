@@ -3,10 +3,12 @@ import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
-import { toast } from 'react-hot-toast';
+import { toast, Toaster } from 'react-hot-toast';
+import { useClerk, UserButton } from '@clerk/nextjs';
+import { Button, Box } from "@mui/material";
+import DiamondIcon from '@mui/icons-material/Diamond';
+import LoginIcon from '@mui/icons-material/Login';
 import SBRContext from '../context/SBRContext';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
 
 interface Site {
   id: string;
