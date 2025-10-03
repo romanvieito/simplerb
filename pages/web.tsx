@@ -911,15 +911,21 @@ const WebPage = () => {
               </div>
               
               {/* Integrated Action Bar */}
-              <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between bg-gray-50 rounded-b-2xl p-4 border-t border-gray-100">
-                <div className="flex items-center space-x-3">
-                  <button
-                    type="button"
-                    className="flex items-center space-x-2 bg-white rounded-lg px-3 py-2 border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm"
-                  >
-                    <span className="text-gray-600 text-sm">+</span>
-                    <span className="text-gray-800 font-medium text-sm">Settings</span>
-                  </button>
+              <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between bg-gray-50 rounded-b-2xl p-4 border-t border-gray-100 overflow-visible">
+                <div className="flex items-center space-x-3 overflow-visible">
+                  {/* Vibe Dropdown */}
+                  <div className="relative overflow-visible">
+                    <select
+                      value={vibe}
+                      onChange={(e) => setVibe(e.target.value as VibeType)}
+                      className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:ring-blue-500 shadow-sm appearance-none pr-8"
+                    >
+                      <option value="Professional">Professional</option>
+                      <option value="Friendly">Friendly</option>
+                      <option value="Creative">Creative</option>
+                      <option value="Sophisticated">Sophisticated</option>
+                    </select>
+                  </div>
                 </div>
                 
                 <div className="flex items-center space-x-3">
