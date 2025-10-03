@@ -1,4 +1,4 @@
-import { GoogleAdsApi } from 'google-ads-api';
+const { GoogleAdsApi } = require('google-ads-api');
 
 export function getGoogleAdsClient() {
   const {
