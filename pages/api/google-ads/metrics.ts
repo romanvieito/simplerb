@@ -87,7 +87,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     console.log('Metrics query:', query);
 
     const response = await customer.query(query);
+    console.log('Metrics response:', response);
     const rows = response.rows || [];
+
+    // If no campaigns found, return empty metrics
+    if (rows.length === 0) {
+      return res.status(200).json({
+        success: true,
+        metrics: {
+          totalImpressions: 0,
+          totalClicks: 0,
+          totalCost: 0,
+          totalConversions: 0,
+          averageCtr: 0,
+          averageCpc: 0,
+          averageConversionRate: 0,
+          campaigns: []
+        }
+      });
+    }
 
     // Aggregate metrics
     let totalImpressions = 0;

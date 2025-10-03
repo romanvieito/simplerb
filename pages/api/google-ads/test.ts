@@ -47,12 +47,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Simple test query
     const query = `SELECT customer.id, customer.descriptive_name FROM customer LIMIT 1`;
     
+    console.log('Executing query:', query);
     const response = await customer.query(query);
     
     res.status(200).json({
       success: true,
       message: 'Google Ads API connection successful',
-      customer: response.rows?.[0] || 'No customer data found'
+      customer: response.rows?.[0] || 'No customer data found',
+      response: response
     });
 
   } catch (error) {
