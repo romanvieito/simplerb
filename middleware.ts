@@ -5,6 +5,12 @@ import type { NextRequest } from 'next/server';
 export default function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || '';
   
+  // Skip middleware for API routes on main domain
+  if (request.nextUrl.pathname.startsWith('/api/') && 
+      (hostname === 'simplerb.com' || hostname === 'www.simplerb.com')) {
+    return NextResponse.next();
+  }
+  
   // Check if it's a subdomain request
   if (hostname && hostname.includes('.simplerb.com')) {
     const subdomain = hostname.split('.')[0];
