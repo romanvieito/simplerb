@@ -21,6 +21,7 @@ interface Site {
 
 const SitesPage = () => {
   const router = useRouter();
+  const { openSignIn } = useClerk();
   const { isLoaded, isSignedIn } = useUser();
   const [sites, setSites] = useState<Site[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +33,20 @@ const SitesPage = () => {
   if (!context) {
     throw new Error("SBRContext must be used within a SBRProvider");
   }
-  const { dataUser } = context;
+  const { 
+    dataUser, 
+    setDataUser,    
+    credits, 
+    setCredits, 
+    admin, 
+    setAdmin,
+    subsTplan, 
+    setSubsTplan, 
+    subsCancel, 
+    setSubsCancel    
+  } = context;
+
+  const isPremiumUser = subsTplan === "STARTER" || subsTplan === "CREATOR";
 
   // Redirect if not signed in
   useEffect(() => {
@@ -173,7 +187,7 @@ const SitesPage = () => {
 
   if (!isLoaded || !isSignedIn) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex max-w-6xl mx-auto flex-col items-center justify-center py-4 min-h-screen bg-white">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading...</p>
@@ -183,63 +197,165 @@ const SitesPage = () => {
   }
 
   return (
-    <>
+    <div className="flex max-w-6xl mx-auto flex-col items-center justify-center py-4 min-h-screen bg-white">
+      <Toaster position="top-center" />
       <Head>
         <title>My Sites - SimplerB</title>
         <meta name="description" content="Manage your published websites" />
       </Head>
 
-      <div className="min-h-screen bg-gray-50">
-        <Header credits={0} />
-        
-        {/* Website Builder Navigation */}
-        <div className="bg-white border-b border-gray-200">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center space-x-1 bg-blue-50 rounded-lg p-1 w-fit">
-              <button 
-                onClick={() => router.push('/web')}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                  router.pathname === '/web' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'text-blue-600 hover:bg-blue-100'
-                }`}
-              >
-                Builder
-              </button>
-              <button 
-                onClick={() => router.push('/sites')}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                  router.pathname === '/sites' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'text-blue-600 hover:bg-blue-100'
-                }`}
-              >
-                My Sites
-              </button>
+      {/* Hidden form for checkout */}
+      <form action="/api/checkout_sessions" method="POST" style={{ display: 'none' }}>
+        <input type="hidden" name="tipo" value="STARTER" />
+      </form>
+
+      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-8 sm:mt-12">
+        <div className="absolute top-4 left-4 flex items-center space-x-3">
+          {/* Logo */}
+          <div className="flex items-center space-x-0.5">
+            <span className="text-gray-800 font-semibold text-lg">simpler</span>
+            <div className="w-4 h-5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">B</span>
             </div>
           </div>
-        </div>
-        
-        <main className="container mx-auto px-4 py-8">
-          <div className="max-w-6xl mx-auto">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">My Sites</h1>
-                <p className="text-gray-600 mt-2">Manage your published websites</p>
-              </div>
-              <Link 
-                href="/web"
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                <span>Create New Site</span>
-              </Link>
-            </div>
+          
+          {/* Tool Selector */}
+          <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+            <button 
+              onClick={() => router.push('/domain')}
+              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              Domain
+            </button>
+            <button 
+              onClick={() => router.push('/web')}
+              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              Website
+            </button>
+            <button 
+              onClick={() => router.push('/email')}
+              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              Email
+            </button>
+            <button 
+              onClick={() => router.push('/ads')}
+              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              Ads
+            </button>
+          </div>
 
-            {/* Sites Grid */}
+          {/* Website Builder Navigation */}
+          <div className="flex items-center space-x-1 bg-blue-50 rounded-lg p-1 ml-4">
+            <button 
+              onClick={() => router.push('/web')}
+              className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                router.pathname === '/web' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-blue-600 hover:bg-blue-100'
+              }`}
+            >
+              Builder
+            </button>
+            <button 
+              onClick={() => router.push('/sites')}
+              className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                router.pathname === '/sites' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-blue-600 hover:bg-blue-100'
+              }`}
+            >
+              My Sites
+            </button>
+          </div>
+        </div>
+
+        <Box
+          sx={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            display: "flex",
+            gap: 2,
+            alignItems: "center",
+          }}
+        >
+          {isSignedIn ? (
+            <>
+              <form action="/api/checkout_sessions" method="POST">
+                <input type="hidden" name="tipo" value="STARTER" />
+                <Button
+                  className="bg-black cursor-pointer hover:bg-black/80 rounded-xl"
+                  style={{ textTransform: "none" }}
+                  sx={{
+                    padding: { xs: "3px", sm: 1 },
+                    display:
+                      isSignedIn &&
+                      (subsTplan === "STARTER" || subsTplan === "CREATOR")
+                        ? "none"
+                        : "block",
+                  }}
+                  type="submit"
+                  variant="contained"
+                  role="link"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const form = e.currentTarget.form;
+                    if (form) {
+                      form.submit();
+                    } else {
+                      console.error("Form not found");
+                    }
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <DiamondIcon sx={{ mr: 0.2, fontSize: "1rem" }} />
+                    Become a Member
+                  </Box>
+                </Button>
+              </form>
+              <UserButton userProfileUrl="/user" afterSignOutUrl="/" />
+            </>
+          ) : (
+            <button
+              onClick={() => openSignIn()}
+              className="group relative bg-black cursor-pointer rounded-xl text-white font-medium px-4 py-2 hover:bg-black/80 transition-all duration-300 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-black/20 shadow-lg hover:shadow-xl"
+            >
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                <LoginIcon sx={{ fontSize: '1rem' }} />
+                Sign in / up
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-gray-800 to-black rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </button>
+          )}
+        </Box>
+
+        <h1 className="text-2xl text-gray-900 mb-3 tracking-tight">
+          My <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Sites</span>
+        </h1>
+
+        {/* Main Content Area */}
+        <div className="w-full max-w-6xl mx-auto mt-8">
+          {/* Header Section */}
+          <div className="flex items-center justify-between mb-8">
+            <div className="text-left">
+              <p className="text-gray-600">Manage your published websites</p>
+            </div>
+            <Link 
+              href="/web"
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 shadow-sm hover:shadow-md"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              <span>Create New Site</span>
+            </Link>
+          </div>
+
+          {/* Sites Content */}
+          <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm">
             {loading ? (
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
@@ -256,7 +372,7 @@ const SitesPage = () => {
                 <p className="text-gray-600 mb-6">Create your first website to get started</p>
                 <Link 
                   href="/web"
-                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center space-x-2"
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center space-x-2 shadow-sm hover:shadow-md"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -265,124 +381,124 @@ const SitesPage = () => {
                 </Link>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {sites.map((site) => (
-                  <div key={site.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                    {/* Site Preview */}
-                    <div className="aspect-video bg-gray-100 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="w-12 h-12 mx-auto mb-2 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                        </div>
-                        <p className="text-sm text-gray-500">Website Preview</p>
-                      </div>
-                    </div>
-
-                    {/* Site Info */}
-                    <div className="p-6">
-                      <h3 className="font-semibold text-gray-900 mb-2 truncate">
-                        {site.description || 'Untitled Site'}
-                      </h3>
-                      <div className="text-sm text-gray-600 mb-4">
-                        {editingSubdomain === site.subdomain ? (
-                          <div className="flex items-center space-x-2">
-                            <span className="text-gray-500">https://</span>
-                            <input
-                              type="text"
-                              value={tempSubdomain}
-                              onChange={(e) => setTempSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                              className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              placeholder="subdomain"
-                              maxLength={50}
-                              autoFocus
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  updateSubdomain(site.id, site.subdomain, tempSubdomain);
-                                } else if (e.key === 'Escape') {
-                                  cancelEditing();
-                                }
-                              }}
-                            />
-                            <span className="text-gray-500">.simplerb.com</span>
-                            <button
-                              onClick={() => updateSubdomain(site.id, site.subdomain, tempSubdomain)}
-                              className="text-green-600 hover:text-green-800 text-sm"
-                            >
-                              ✓
-                            </button>
-                            <button
-                              onClick={cancelEditing}
-                              className="text-red-600 hover:text-red-800 text-sm"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-between">
-                            <span>{site.subdomain}.simplerb.com</span>
-                            <button
-                              onClick={() => startEditingSubdomain(site.subdomain)}
-                              className="text-gray-400 hover:text-gray-600 text-sm ml-2"
-                              title="Edit URL"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="text-xs text-gray-500 mb-4">
-                        <p>Created: {formatDate(site.created_at)}</p>
-                        {site.updated_at !== site.created_at && (
-                          <p>Updated: {formatDate(site.updated_at)}</p>
-                        )}
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center space-x-3">
-                        <a
-                          href={site.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-1 bg-blue-600 text-white text-center px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                        >
-                          View Site
-                        </a>
-                        <Link
-                          href={`/web?edit=${site.subdomain}`}
-                          className="flex-1 bg-gray-100 text-gray-700 text-center px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm"
-                        >
-                          Edit
-                        </Link>
-                        <button
-                          onClick={() => deleteSite(site.id, site.subdomain)}
-                          disabled={deletingSite === site.id}
-                          className="bg-red-100 text-red-600 px-3 py-2 rounded-lg hover:bg-red-200 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {deletingSite === site.id ? (
-                            <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                          ) : (
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {sites.map((site) => (
+                    <div key={site.id} className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300">
+                      {/* Site Preview */}
+                      <div className="aspect-video bg-gray-100 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="w-12 h-12 mx-auto mb-2 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
+                          </div>
+                          <p className="text-sm text-gray-500">Website Preview</p>
+                        </div>
+                      </div>
+
+                      {/* Site Info */}
+                      <div className="p-6">
+                        <h3 className="font-semibold text-gray-900 mb-2 truncate">
+                          {site.description || 'Untitled Site'}
+                        </h3>
+                        <div className="text-sm text-gray-600 mb-4">
+                          {editingSubdomain === site.subdomain ? (
+                            <div className="flex items-center space-x-2">
+                              <span className="text-gray-500">https://</span>
+                              <input
+                                type="text"
+                                value={tempSubdomain}
+                                onChange={(e) => setTempSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                                className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="subdomain"
+                                maxLength={50}
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    updateSubdomain(site.id, site.subdomain, tempSubdomain);
+                                  } else if (e.key === 'Escape') {
+                                    cancelEditing();
+                                  }
+                                }}
+                              />
+                              <span className="text-gray-500">.simplerb.com</span>
+                              <button
+                                onClick={() => updateSubdomain(site.id, site.subdomain, tempSubdomain)}
+                                className="text-green-600 hover:text-green-800 text-sm"
+                              >
+                                ✓
+                              </button>
+                              <button
+                                onClick={cancelEditing}
+                                className="text-red-600 hover:text-red-800 text-sm"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-between">
+                              <span>{site.subdomain}.simplerb.com</span>
+                              <button
+                                onClick={() => startEditingSubdomain(site.subdomain)}
+                                className="text-gray-400 hover:text-gray-600 text-sm ml-2"
+                                title="Edit URL"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                              </button>
+                            </div>
                           )}
-                        </button>
+                        </div>
+                        
+                        <div className="text-xs text-gray-500 mb-4">
+                          <p>Created: {formatDate(site.created_at)}</p>
+                          {site.updated_at !== site.created_at && (
+                            <p>Updated: {formatDate(site.updated_at)}</p>
+                          )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center space-x-3">
+                          <a
+                            href={site.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 bg-blue-600 text-white text-center px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm shadow-sm hover:shadow-md"
+                          >
+                            View Site
+                          </a>
+                          <Link
+                            href={`/web?edit=${site.subdomain}`}
+                            className="flex-1 bg-gray-100 text-gray-700 text-center px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm shadow-sm hover:shadow-md"
+                          >
+                            Edit
+                          </Link>
+                          <button
+                            onClick={() => deleteSite(site.id, site.subdomain)}
+                            disabled={deletingSite === site.id}
+                            className="bg-red-100 text-red-600 px-3 py-2 rounded-lg hover:bg-red-200 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+                          >
+                            {deletingSite === site.id ? (
+                              <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </div>
-        </main>
-
-        <Footer />
-      </div>
-    </>
+        </div>
+      </main>
+    </div>
   );
 };
 
