@@ -18,4 +18,18 @@ module.exports = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: '/(.*)',
+        destination: '/api/subdomain-handler',
+        has: [
+          {
+            type: 'host',
+            value: '(?<subdomain>.*).simplerb.com'
+          }
+        ]
+      }
+    ];
+  },
 };
