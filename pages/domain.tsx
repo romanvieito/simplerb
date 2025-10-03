@@ -17,6 +17,9 @@ const LOCAL_STORAGE_KEY = 'domainGenerationTimestamps';
 const RATE_LIMIT_COUNT = 10;
 const RATE_LIMIT_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
 
+// --- Local Storage Domain Search Helpers ---
+const DOMAIN_SEARCH_STORAGE_KEY = 'lastDomainSearch';
+
 const getTimestamps = (): number[] => {
   try {
     const storedTimestamps = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -53,6 +56,61 @@ const checkRateLimit = (): boolean => {
   return recentTimestamps.length >= RATE_LIMIT_COUNT;
 };
 // --- End Local Storage Rate Limiting Helpers ---
+
+// --- Local Storage Domain Search Functions ---
+interface SavedDomainSearch {
+  businessDescription: string;
+  vibe: VibeType;
+  temperatureOption: string;
+  domainExtension: string;
+  availableOnly: boolean;
+  generatedDomains: DomainInfo[];
+  filteredDomains: DomainInfo[];
+  availabilityChecked: boolean;
+  timestamp: number;
+}
+
+const saveDomainSearch = (searchData: Omit<SavedDomainSearch, 'timestamp'>) => {
+  try {
+    const dataToSave: SavedDomainSearch = {
+      ...searchData,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(DOMAIN_SEARCH_STORAGE_KEY, JSON.stringify(dataToSave));
+  } catch (error) {
+    console.error("Error saving domain search to local storage:", error);
+  }
+};
+
+const loadDomainSearch = (): SavedDomainSearch | null => {
+  try {
+    const stored = localStorage.getItem(DOMAIN_SEARCH_STORAGE_KEY);
+    if (!stored) return null;
+    
+    const data: SavedDomainSearch = JSON.parse(stored);
+    
+    // Check if data is older than 24 hours
+    const twentyFourHours = 24 * 60 * 60 * 1000;
+    if (Date.now() - data.timestamp > twentyFourHours) {
+      clearDomainSearch();
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Error loading domain search from local storage:", error);
+    return null;
+  }
+};
+
+const clearDomainSearch = () => {
+  try {
+    localStorage.removeItem(DOMAIN_SEARCH_STORAGE_KEY);
+  } catch (error) {
+    console.error("Error clearing domain search from local storage:", error);
+  }
+};
+// --- End Local Storage Domain Search Functions ---
 
 const DomainPage: React.FC = () => {
   const router = useRouter();
@@ -151,6 +209,25 @@ const DomainPage: React.FC = () => {
     initPageData();
   }, [isSignedIn, user, initPageData]);
 
+  // Load saved domain search data on component mount
+  useEffect(() => {
+    const savedSearch = loadDomainSearch();
+    if (savedSearch) {
+      setBusinessDescription(savedSearch.businessDescription);
+      setVibe(savedSearch.vibe);
+      setTemperatureOption(savedSearch.temperatureOption);
+      setDomainExtension(savedSearch.domainExtension);
+      setAvailableOnly(savedSearch.availableOnly);
+      setGeneratedDomains(savedSearch.generatedDomains);
+      setFilteredDomains(savedSearch.filteredDomains);
+      setAvailabilityChecked(savedSearch.availabilityChecked);
+      
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Restored domain search from localStorage:", savedSearch);
+      }
+    }
+  }, []);
+
   const checkAvailability = async (domainsToCheckInput: DomainInfo[]) => {
     try {
       if (process.env.NODE_ENV !== 'production') {
@@ -214,6 +291,18 @@ const DomainPage: React.FC = () => {
       setGeneratedDomains(updatedDomains);
       setFilteredDomains(updatedDomains.filter((domain) => domain.available === true)); // Filter strictly for true
       setAvailabilityChecked(true); // Mark as checked after API update
+
+      // Save updated domains to localStorage
+      saveDomainSearch({
+        businessDescription,
+        vibe,
+        temperatureOption,
+        domainExtension,
+        availableOnly,
+        generatedDomains: updatedDomains,
+        filteredDomains: updatedDomains.filter((domain) => domain.available === true),
+        availabilityChecked: true
+      });
 
     } catch (error) {
       console.error("Error checking domain availability:", error);
@@ -344,6 +433,18 @@ const DomainPage: React.FC = () => {
       }
       setGeneratedDomains(generatedResults);
 
+      // Save generated domains to localStorage
+      saveDomainSearch({
+        businessDescription,
+        vibe,
+        temperatureOption,
+        domainExtension,
+        availableOnly,
+        generatedDomains: generatedResults,
+        filteredDomains: [],
+        availabilityChecked: false
+      });
+
       mixpanel.track("Generated Domains", {
         businessDescription,
         vibe,
@@ -360,7 +461,7 @@ const DomainPage: React.FC = () => {
           );
         }
         await checkAvailability(generatedResults);
-      } else {
+        } else {
         // If not checking availability now, ensure filtered list is empty
         // and availability is marked as not checked for this batch.
         if (process.env.NODE_ENV !== 'production') {
@@ -368,6 +469,18 @@ const DomainPage: React.FC = () => {
         }
         setFilteredDomains([]); // Start with empty filtered list if not checking
         setAvailabilityChecked(false);
+        
+        // Update localStorage with the current state
+        saveDomainSearch({
+          businessDescription,
+          vibe,
+          temperatureOption,
+          domainExtension,
+          availableOnly,
+          generatedDomains: generatedResults,
+          filteredDomains: [],
+          availabilityChecked: false
+        });
       }
 
     } catch (error) {
@@ -493,6 +606,20 @@ const DomainPage: React.FC = () => {
         );
         // Pass the current state here, as it should be stable
         checkAvailability(generatedDomains);
+      }
+      
+      // Save the updated availableOnly state
+      if (generatedDomains.length > 0) {
+        saveDomainSearch({
+          businessDescription,
+          vibe,
+          temperatureOption,
+          domainExtension,
+          availableOnly: isChecked,
+          generatedDomains,
+          filteredDomains,
+          availabilityChecked
+        });
       }
     } else {
       // Logic for non-premium user or anonymous user trying to check the box (toast message)
@@ -736,6 +863,28 @@ const DomainPage: React.FC = () => {
         {(loading || generatedDomains.length > 0) && (
           <div className="w-full max-w-4xl mx-auto mt-8">
             <div className="space-y-8">
+              {/* Clear Saved Search Button */}
+              {generatedDomains.length > 0 && (
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => {
+                      clearDomainSearch();
+                      setBusinessDescription("");
+                      setGeneratedDomains([]);
+                      setFilteredDomains([]);
+                      setAvailabilityChecked(false);
+                      setAvailableOnly(false);
+                      toast.success("Saved search cleared");
+                    }}
+                    className="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200 flex items-center space-x-1"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                    <span>Clear saved search</span>
+                  </button>
+                </div>
+              )}
               {loading && (
                  <div className="space-y-6">
                    <div className="text-center">
