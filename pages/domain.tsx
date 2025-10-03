@@ -698,12 +698,6 @@ const DomainPage: React.FC = () => {
               Website
             </button>
             <button 
-              onClick={() => router.push('/sites')}
-              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              My Sites
-            </button>
-            <button 
               onClick={() => router.push('/email')}
               className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
             >
