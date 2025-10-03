@@ -82,8 +82,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     
     await new Promise((resolve, reject) => {
       stream
-        .pipe(csv())
-        .on('data', (row) => rows.push(row))
+        .pipe(csv.default())
+        .on('data', (row: any) => rows.push(row))
         .on('end', resolve)
         .on('error', reject);
     });
