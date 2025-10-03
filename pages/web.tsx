@@ -871,7 +871,7 @@ const WebPage = () => {
           )}
         </Box>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-6 tracking-tight">
+        <h1 className="text-2xl text-gray-900 mb-3 tracking-tight">
           Website <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Creator</span>
         </h1>
 
@@ -884,7 +884,7 @@ const WebPage = () => {
                 value={textDescription}
                 onChange={(e) => setTextDescription(e.target.value)}
                 maxLength={200}
-                rows={6}
+                rows={4}
                 className="w-full bg-transparent p-6 pb-20 text-gray-700 resize-none transition-all duration-300 text-lg placeholder-gray-400 rounded-2xl border-0 focus:outline-none focus:ring-0"
                 placeholder="Describe your website... e.g. Modern coffee shop with industrial design, featuring specialty roasts and tasting events"
               />
