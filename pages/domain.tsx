@@ -551,26 +551,40 @@ const DomainPage: React.FC = () => {
       </Head>
 
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-8 sm:mt-12">
-        <button
-          onClick={() => router.back()}
-          className="absolute top-4 left-4 text-gray-600 hover:text-gray-900 font-medium py-2 px-4 rounded-lg inline-flex items-center transition-all duration-200 hover:bg-gray-100"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4 mr-2"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
-            />
-          </svg>
-          Back
-        </button>
+        <div className="absolute top-4 left-4 flex items-center space-x-3">
+          {/* Logo */}
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">S</span>
+            </div>
+            <span className="text-gray-800 font-semibold text-lg">simplerB</span>
+          </div>
+          
+          {/* Tool Selector */}
+          <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+            <button className="px-3 py-1 bg-white rounded-md text-sm font-medium text-gray-800 shadow-sm">
+              Domain
+            </button>
+            <button 
+              onClick={() => router.push('/web')}
+              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              Website
+            </button>
+            <button 
+              onClick={() => router.push('/email')}
+              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              Email
+            </button>
+            <button 
+              onClick={() => router.push('/ads')}
+              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              Ads
+            </button>
+          </div>
+        </div>
 
         <h1 className="text-3xl font-bold text-gray-900 mb-6 tracking-tight">
           Domain <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Generator</span>
