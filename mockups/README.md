@@ -170,3 +170,5 @@ This directory contains interactive mockups demonstrating the improved UX design
 ---
 
 **Note:** These mockups are interactive prototypes demonstrating the improved UX concepts. They should be used as a reference for implementing the actual improvements in the React application.
+
+
