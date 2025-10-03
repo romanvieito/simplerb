@@ -566,11 +566,18 @@ const WebPage = () => {
         }),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError);
+        throw new Error('Invalid response from server');
+      }
 
       if (!response.ok) {
         console.error('Publish failed:', data);
-        throw new Error(data.message || 'Failed to publish site');
+        const errorMessage = data?.message || data?.error || 'Failed to publish site';
+        throw new Error(errorMessage);
       }
 
       setPublishedUrl(data.url);

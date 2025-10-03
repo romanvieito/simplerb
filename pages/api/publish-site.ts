@@ -11,9 +11,9 @@ export default async function handler(
   }
 
   try {
-    // Get the session header
-    const sessionToken = req.headers.authorization?.split(' ')[1];
-    if (!sessionToken) {
+    // Get the user ID from the authorization header
+    const userId = req.headers.authorization?.split(' ')[1];
+    if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
@@ -27,7 +27,7 @@ export default async function handler(
     // Use upsert (INSERT ... ON CONFLICT DO UPDATE)
     const result = await sql`
       INSERT INTO sites (user_id, subdomain, html, description)
-      VALUES (${sessionToken}, ${subdomain}, ${html}, ${description})
+      VALUES (${userId}, ${subdomain}, ${html}, ${description})
       ON CONFLICT (subdomain) 
       DO UPDATE SET 
         html = EXCLUDED.html,
