@@ -113,17 +113,15 @@ const SitesPage = () => {
     }
 
     try {
-      const response = await fetch('/api/publish-site', {
-        method: 'POST',
+      const response = await fetch('/api/update-subdomain', {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${dataUser?.id}`
         },
         body: JSON.stringify({
-          subdomain: newSubdomain,
           originalSubdomain: originalSubdomain,
-          html: '', // We don't need to update content, just subdomain
-          description: '' // We don't need to update description
+          newSubdomain: newSubdomain
         })
       });
 
