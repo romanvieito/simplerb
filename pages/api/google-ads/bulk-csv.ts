@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getGoogleAdsClient, validateAdPilotAccess } from './client';
+import { getGoogleAdsCustomer, validateAdPilotAccess } from './client';
 import * as csv from 'csv-parser';
 import { Readable } from 'stream';
 
@@ -95,11 +95,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       });
     }
 
-    const client = getGoogleAdsClient();
-    const customer = client.customer({ 
-      customer_id: process.env.GADS_LOGIN_CUSTOMER_ID,
-      refresh_token: process.env.GADS_REFRESH_TOKEN
-    });
+    const customer = getGoogleAdsCustomer();
 
     const results: any[] = [];
     const operations: any[] = [];

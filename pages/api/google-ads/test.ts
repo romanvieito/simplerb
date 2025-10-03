@@ -36,8 +36,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('Client created:', typeof client);
     console.log('Client methods:', Object.getOwnPropertyNames(client));
 
-    // Test customer creation
-    const customer = client.customer({
+    // Test customer creation - use correct method name
+    const customer = client.Customer({
       customer_id: GADS_LOGIN_CUSTOMER_ID,
       refresh_token: GADS_REFRESH_TOKEN,
     });

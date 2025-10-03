@@ -23,6 +23,20 @@ export function getGoogleAdsClient() {
   return client;
 }
 
+export function getGoogleAdsCustomer() {
+  const client = getGoogleAdsClient();
+  const {
+    GADS_LOGIN_CUSTOMER_ID,
+    GADS_REFRESH_TOKEN
+  } = process.env;
+
+  // Use the correct method name: Customer (capital C)
+  return client.Customer({
+    customer_id: GADS_LOGIN_CUSTOMER_ID,
+    refresh_token: GADS_REFRESH_TOKEN,
+  });
+}
+
 export function validateAdPilotAccess(userEmail?: string): boolean {
   const adminEmails = process.env.ADPILOT_ADMIN_EMAILS?.split(',') || [];
   
