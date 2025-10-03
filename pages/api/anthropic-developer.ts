@@ -13,6 +13,7 @@ import Anthropic from '@anthropic-ai/sdk';
  * - maxDuration: 300 seconds (5 minutes) to allow for complex HTML generation
  * - max_tokens: 2000 to balance between detail and processing time
  * - temperature: 0 for consistent, deterministic output
+ * - Updated to Claude Sonnet 4.5 for enhanced capabilities
  */
 export const config = {
   maxDuration: 300, // 5 minutes in seconds
@@ -38,15 +39,24 @@ export default async function handler(
   }
 
   try {
-    // Configure for website HTML generation
+    // Configure for website HTML generation with Claude Sonnet 4.5
     const message = await anthropic.messages.create({
-      model: 'claude-3-7-sonnet-20250219',
+      model: 'claude-sonnet-4-5-20250929', // Updated to Claude Sonnet 4.5
       max_tokens: 4096,
       temperature: 0,
       messages: [
         { "role": "user", "content": prompt }
       ]
     });
+
+    // Handle new refusal stop reason from Claude 4
+    if (message.stop_reason === 'refusal' as any) {
+      console.warn('Claude 4 refused to generate content for safety reasons');
+      return res.status(400).json({ 
+        error: 'Content generation was refused for safety reasons',
+        stop_reason: 'refusal'
+      });
+    }
 
     return res.status(200).json({ data: message });
   } catch (error: any) {
