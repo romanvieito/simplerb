@@ -3,6 +3,18 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export default function middleware(request: NextRequest) {
+  const hostname = request.headers.get('host') || '';
+  
+  // Check if it's a subdomain request
+  if (hostname && hostname.includes('.simplerb.com')) {
+    const subdomain = hostname.split('.')[0];
+    
+    // Skip middleware for subdomain requests (let Edge Function handle them)
+    if (subdomain !== 'www' && subdomain !== 'simplerb') {
+      return NextResponse.next();
+    }
+  }
+  
   // Handle root route explicitly
   if (request.nextUrl.pathname === '/') {
     return NextResponse.next();
