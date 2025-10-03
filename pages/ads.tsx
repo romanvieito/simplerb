@@ -348,16 +348,6 @@ const AdsPage = () => {
               >
                 Dashboard
               </button>
-              <button 
-                onClick={() => router.push('/ads_bulk')}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                  router.pathname === '/ads_bulk' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'text-blue-600 hover:bg-blue-100'
-                }`}
-              >
-                Bulk Edit
-              </button>
             </div>
           )}
         </div>
