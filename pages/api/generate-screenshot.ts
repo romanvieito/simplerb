@@ -36,12 +36,17 @@ export default async function handler(
         const buffer = await response.arrayBuffer();
         const base64 = Buffer.from(buffer).toString('base64');
         
-        // Store screenshot in database
-        await sql`
-          UPDATE sites 
-          SET screenshot = ${base64}
-          WHERE subdomain = ${subdomain}
-        `;
+        // Store screenshot in database (if column exists)
+        try {
+          await sql`
+            UPDATE sites 
+            SET screenshot = ${base64}
+            WHERE subdomain = ${subdomain}
+          `;
+        } catch (dbError) {
+          console.error('Screenshot column may not exist:', dbError);
+          // Continue without storing in database
+        }
 
         return res.status(200).json({ 
           success: true,
@@ -67,12 +72,17 @@ export default async function handler(
     
     const base64Placeholder = Buffer.from(placeholderSvg).toString('base64');
     
-    // Store placeholder in database
-    await sql`
-      UPDATE sites 
-      SET screenshot = ${base64Placeholder}
-      WHERE subdomain = ${subdomain}
-    `;
+    // Store placeholder in database (if column exists)
+    try {
+      await sql`
+        UPDATE sites 
+        SET screenshot = ${base64Placeholder}
+        WHERE subdomain = ${subdomain}
+      `;
+    } catch (dbError) {
+      console.error('Screenshot column may not exist:', dbError);
+      // Continue without storing in database
+    }
 
     return res.status(200).json({ 
       success: true,
