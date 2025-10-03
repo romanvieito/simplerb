@@ -877,12 +877,6 @@ const WebPage = () => {
               Website
             </button>
             <button 
-              onClick={() => router.push('/sites')}
-              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              My Sites
-            </button>
-            <button 
               onClick={() => router.push('/email')}
               className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
             >
@@ -893,6 +887,30 @@ const WebPage = () => {
               className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
             >
               Ads
+            </button>
+          </div>
+
+          {/* Website Builder Navigation */}
+          <div className="flex items-center space-x-1 bg-blue-50 rounded-lg p-1 ml-4">
+            <button 
+              onClick={() => router.push('/web')}
+              className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                router.pathname === '/web' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-blue-600 hover:bg-blue-100'
+              }`}
+            >
+              Builder
+            </button>
+            <button 
+              onClick={() => router.push('/sites')}
+              className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                router.pathname === '/sites' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-blue-600 hover:bg-blue-100'
+              }`}
+            >
+              My Sites
             </button>
           </div>
         </div>
@@ -982,29 +1000,6 @@ const WebPage = () => {
                 placeholder="Describe your website... e.g. Modern coffee shop with industrial design, featuring specialty roasts and tasting events"
               />
               
-              {/* Subdomain Input - Only show when editing */}
-              {editingSite && (
-                <div className="px-6 pb-4 border-t border-gray-100">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Site URL (subdomain)
-                  </label>
-                  <div className="flex items-center">
-                    <span className="text-gray-500 text-sm mr-2">https://</span>
-                    <input
-                      type="text"
-                      value={customSubdomain}
-                      onChange={(e) => setCustomSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="my-site-name"
-                      maxLength={50}
-                    />
-                    <span className="text-gray-500 text-sm ml-2">.simplerb.com</span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Only letters, numbers, and hyphens allowed. Changing this will update your site URL.
-                  </p>
-                </div>
-              )}
               
               {/* Character Counter */}
               <div className="absolute top-4 right-4 text-sm text-gray-400">

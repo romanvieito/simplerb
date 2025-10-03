@@ -23,6 +23,8 @@ const SitesPage = () => {
   const [sites, setSites] = useState<Site[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingSite, setDeletingSite] = useState<string | null>(null);
+  const [editingSubdomain, setEditingSubdomain] = useState<string | null>(null);
+  const [tempSubdomain, setTempSubdomain] = useState('');
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -97,6 +99,67 @@ const SitesPage = () => {
     }
   };
 
+  // Update subdomain
+  const updateSubdomain = async (siteId: string, originalSubdomain: string, newSubdomain: string) => {
+    if (!newSubdomain || newSubdomain === originalSubdomain) {
+      setEditingSubdomain(null);
+      return;
+    }
+
+    // Validate subdomain format
+    if (!/^[a-z0-9-]+$/.test(newSubdomain) || newSubdomain.length < 3 || newSubdomain.length > 50) {
+      toast.error('Invalid subdomain format. Use only letters, numbers, and hyphens (3-50 characters)');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/publish-site', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${dataUser?.id}`
+        },
+        body: JSON.stringify({
+          subdomain: newSubdomain,
+          originalSubdomain: originalSubdomain,
+          html: '', // We don't need to update content, just subdomain
+          description: '' // We don't need to update description
+        })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to update subdomain');
+      }
+
+      toast.success('Site URL updated successfully');
+      
+      // Update the sites list
+      setSites(sites.map(site => 
+        site.subdomain === originalSubdomain 
+          ? { ...site, subdomain: newSubdomain, url: `https://${newSubdomain}.simplerb.com` }
+          : site
+      ));
+      
+      setEditingSubdomain(null);
+    } catch (error) {
+      console.error('Error updating subdomain:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to update site URL');
+    }
+  };
+
+  // Start editing subdomain
+  const startEditingSubdomain = (subdomain: string) => {
+    setEditingSubdomain(subdomain);
+    setTempSubdomain(subdomain);
+  };
+
+  // Cancel editing
+  const cancelEditing = () => {
+    setEditingSubdomain(null);
+    setTempSubdomain('');
+  };
+
   // Format date
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -128,6 +191,34 @@ const SitesPage = () => {
 
       <div className="min-h-screen bg-gray-50">
         <Header credits={0} />
+        
+        {/* Website Builder Navigation */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center space-x-1 bg-blue-50 rounded-lg p-1 w-fit">
+              <button 
+                onClick={() => router.push('/web')}
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                  router.pathname === '/web' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-blue-600 hover:bg-blue-100'
+                }`}
+              >
+                Builder
+              </button>
+              <button 
+                onClick={() => router.push('/sites')}
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                  router.pathname === '/sites' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-blue-600 hover:bg-blue-100'
+                }`}
+              >
+                My Sites
+              </button>
+            </div>
+          </div>
+        </div>
         
         <main className="container mx-auto px-4 py-8">
           <div className="max-w-6xl mx-auto">
@@ -194,9 +285,55 @@ const SitesPage = () => {
                       <h3 className="font-semibold text-gray-900 mb-2 truncate">
                         {site.description || 'Untitled Site'}
                       </h3>
-                      <p className="text-sm text-gray-600 mb-4">
-                        {site.subdomain}.simplerb.com
-                      </p>
+                      <div className="text-sm text-gray-600 mb-4">
+                        {editingSubdomain === site.subdomain ? (
+                          <div className="flex items-center space-x-2">
+                            <span className="text-gray-500">https://</span>
+                            <input
+                              type="text"
+                              value={tempSubdomain}
+                              onChange={(e) => setTempSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                              className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="subdomain"
+                              maxLength={50}
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  updateSubdomain(site.id, site.subdomain, tempSubdomain);
+                                } else if (e.key === 'Escape') {
+                                  cancelEditing();
+                                }
+                              }}
+                            />
+                            <span className="text-gray-500">.simplerb.com</span>
+                            <button
+                              onClick={() => updateSubdomain(site.id, site.subdomain, tempSubdomain)}
+                              className="text-green-600 hover:text-green-800 text-sm"
+                            >
+                              ✓
+                            </button>
+                            <button
+                              onClick={cancelEditing}
+                              className="text-red-600 hover:text-red-800 text-sm"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between">
+                            <span>{site.subdomain}.simplerb.com</span>
+                            <button
+                              onClick={() => startEditingSubdomain(site.subdomain)}
+                              className="text-gray-400 hover:text-gray-600 text-sm ml-2"
+                              title="Edit URL"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                          </div>
+                        )}
+                      </div>
                       
                       <div className="text-xs text-gray-500 mb-4">
                         <p>Created: {formatDate(site.created_at)}</p>
