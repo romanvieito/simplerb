@@ -16,6 +16,7 @@ import { useRouter } from 'next/router';
 import DOMPurify from 'dompurify';
 import { useUser } from "@clerk/nextjs";
 import { Button, Box } from "@mui/material";
+import { VibeType } from "../utils/Definitions";
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -44,6 +45,8 @@ const WebPage = () => {
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [selectedDomain, setSelectedDomain] = useState("");
+  const [vibe, setVibe] = useState<VibeType>("Professional");
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -135,6 +138,7 @@ const WebPage = () => {
     
     if (domain && description && autoGenerate === 'true' && isLoaded && isSignedIn && isPremiumUser) {
       setTextDescription(description as string);
+      setSelectedDomain(domain as string);
       // Show a toast to inform user about auto-generation
       toast.success(`Generating website for ${domain}...`);
       // Small delay to ensure the form is ready
@@ -144,11 +148,15 @@ const WebPage = () => {
     } else if (domain && description && autoGenerate === 'true' && isLoaded && (!isSignedIn || !isPremiumUser)) {
       // If user is not signed in or not premium, show appropriate message
       setTextDescription(description as string);
+      setSelectedDomain(domain as string);
       if (!isSignedIn) {
         toast.error("Please sign in to generate websites");
       } else if (!isPremiumUser) {
         toast.error("Premium subscription required to generate websites");
       }
+    } else if (domain && isLoaded) {
+      // Set domain from URL params even if not auto-generating
+      setSelectedDomain(domain as string);
     }
   }, [router.query, isLoaded, isSignedIn, isPremiumUser]);
 
@@ -236,7 +244,10 @@ const WebPage = () => {
        * - Uses fewer tokens (1000) for faster response
        * - Includes: reference website, design style, layout sections, and image queries
        */
-      const designerPrompt = `Design minimal website for: ${textDescription}
+      const domainContext = selectedDomain ? ` for ${selectedDomain}` : "";
+      const vibeContext = vibe !== "Professional" ? ` with a ${vibe.toLowerCase()} vibe` : "";
+      
+      const designerPrompt = `Design minimal website${domainContext}${vibeContext} for: ${textDescription}
       Return raw JSON without any markdown formatting or code blocks. Start with opening brace and end with closing brace:
       {
         "reference_website": "URL",
@@ -345,17 +356,20 @@ const WebPage = () => {
        * 2. Prevents timeout issues in serverless functions
        * 3. Better error handling for each step
        */
+      const domainBranding = selectedDomain ? `\n\nBranding: Use ${selectedDomain} as the main brand/company name throughout the site.` : "";
+      
       const developerPrompt = `Create a minimal landing page.
       Ref: ${designPlan.reference_website}
       Style: ${designPlan.design_style}
       Sections: ${designPlan.layout_sections?.join(', ')}
       
       Images:
-      ${images.map(img => `${img.type}: ${img.pexels?.url || 'https://via.placeholder.com/1920x1080'}`).join('\n')}
+      ${images.map(img => `${img.type}: ${img.pexels?.url || 'https://via.placeholder.com/1920x1080'}`).join('\n')}${domainBranding}
 
       Requirements:
       1. Single page only (no navigation)
       2. Mobile-first design
+      3. ${vibe} tone and style throughout
       
       Please return only the code, nothing else.`;
 
@@ -397,7 +411,9 @@ const WebPage = () => {
 
       mixpanel.track("Web Generated", {
         textDescription: textDescription,
-        referenceWebsite: designPlan.reference_website
+        referenceWebsite: designPlan.reference_website,
+        selectedDomain: selectedDomain,
+        vibe: vibe
       });
     } catch (error) {
       console.error("Error generating website:", error);

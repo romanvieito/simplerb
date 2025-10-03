@@ -66,7 +66,6 @@ const DomainPage: React.FC = () => {
   const [availableOnly, setAvailableOnly] = useState(false);
   const [filteredDomains, setFilteredDomains] = useState<DomainInfo[]>([]);
   const [availabilityChecked, setAvailabilityChecked] = useState(false);
-  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [temperatureOption, setTemperatureOption] = useState("neutral");
   const [domainExtension, setDomainExtension] = useState('');
 
@@ -658,6 +657,7 @@ const DomainPage: React.FC = () => {
               {/* Integrated Action Bar */}
               <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between bg-gray-50 rounded-b-2xl p-4 border-t border-gray-100 overflow-visible">
                 <div className="flex items-center space-x-3 overflow-visible">
+                  {/* Vibe Dropdown */}
                   <div className="relative overflow-visible">
                     <select
                       value={vibe}
@@ -670,18 +670,28 @@ const DomainPage: React.FC = () => {
                       <option value="Sophisticated">Sophisticated</option>
                     </select>
                   </div>
-                  
-                   <button
-                     type="button"
-                     onClick={() => setShowAdvancedSettings(true)}
-                     className="flex items-center space-x-2 bg-white rounded-lg px-3 py-2 border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm"
-                   >
-                     <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                     </svg>
-                     <span className="text-gray-800 font-medium text-sm">Settings</span>
-                   </button>
+
+                  {/* Extension Dropdown */}
+                  <div className="relative overflow-visible">
+                    <select
+                      value={domainExtension}
+                      onChange={(e) => {
+                        setDomainExtension(e.target.value);
+                        mixpanel.track("Domain Extension Set", {
+                          userId: dataUser?.id || "anonymous",
+                          extension: e.target.value
+                        });
+                      }}
+                      className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:ring-blue-500 shadow-sm appearance-none pr-8"
+                    >
+                      <option value="">Any</option>
+                      <option value=".com">.com</option>
+                      <option value=".net">.net</option>
+                      <option value=".org">.org</option>
+                      <option value=".io">.io</option>
+                      <option value=".ai">.ai</option>
+                    </select>
+                  </div>
                 </div>
                 
                 <div className="flex items-center space-x-3">
@@ -721,96 +731,6 @@ const DomainPage: React.FC = () => {
           </form>
         </div>
 
-        {/* Advanced Settings Modal */}
-        {showAdvancedSettings && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-            <div className="relative mx-auto p-8 border w-[450px] shadow-xl rounded-xl bg-white">
-              {/* Close button */}
-              <button
-                onClick={() => setShowAdvancedSettings(false)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-
-              <div className="space-y-6">
-                <div className="text-center">
-                  <h3 className="text-xl font-bold text-gray-900">
-                    Settings
-                  </h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Customize your name generation preferences
-                  </p>
-                </div>
-
-                {/* Temperature Options */}
-                <div className="space-y-3">
-                  <label className="block text-gray-700 font-medium">
-                    Name Style
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {["imaginative", "neutral", "reliable"].map((option) => (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => {
-                          setTemperatureOption(option);
-                          mixpanel.track("Temperature Option Set", {
-                            userId: dataUser?.id || "anonymous",
-                            option: option
-                          });
-                        }}
-                        className={`px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
-                          temperatureOption === option
-                            ? "border-black bg-black text-white"
-                            : "border-gray-200 hover:border-gray-300 text-gray-700"
-                        }`}
-                      >
-                        {option.charAt(0).toUpperCase() + option.slice(1)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Domain Extension */}
-                <div className="space-y-3">
-                  <label className="block text-gray-700 font-medium">
-                    Extension
-                  </label>
-                  <select
-                    id="domainExtension"
-                    value={domainExtension}
-                    onChange={(e) => {
-                      setDomainExtension(e.target.value);
-                      mixpanel.track("Domain Extension Set", {
-                        userId: dataUser?.id || "anonymous",
-                        extension: e.target.value
-                      });
-                    }}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-black focus:ring-black transition-all duration-200"
-                  >
-                    <option value="">Any</option>
-                    <option value=".com">.com</option>
-                    <option value=".net">.net</option>
-                    <option value=".org">.org</option>
-                    <option value=".io">.io</option>
-                    <option value=".ai">.ai</option>
-                  </select>
-                </div>
-
-                {/* Done Button */}
-                <button
-                  onClick={() => setShowAdvancedSettings(false)}
-                  className="w-full px-4 py-3 bg-black text-white text-base font-medium rounded-lg hover:bg-gray-900 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-                >
-                  Apply
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Results Section */}
         {(loading || generatedDomains.length > 0) && (
