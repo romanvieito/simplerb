@@ -7,32 +7,43 @@ import { Toaster, toast } from "react-hot-toast";
 import { useClerk, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { useRouter } from 'next/router';
 import { useUser } from "@clerk/nextjs";
-import { Button, Box, TextField, FormControl, InputLabel, Select, MenuItem, Chip, Typography, Stepper, Step, StepLabel } from "@mui/material";
+import { Button, Box, TextField, FormControl, InputLabel, Select, MenuItem, Chip, Typography, Stepper, Step, StepLabel, Card, CardContent, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress, Alert, IconButton, Menu, ListItemIcon, ListItemText } from "@mui/material";
 import DiamondIcon from '@mui/icons-material/Diamond';
 import LoginIcon from '@mui/icons-material/Login';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import UploadIcon from '@mui/icons-material/Upload';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import TouchAppIcon from '@mui/icons-material/TouchApp';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import CreateIcon from '@mui/icons-material/Create';
+import DraftsIcon from '@mui/icons-material/Drafts';
 import SBRContext from "../context/SBRContext";
 import LoadingDots from "../components/LoadingDots";
 import mixpanel from "../utils/mixpanel-config";
+import { useDropzone } from 'react-dropzone';
 
 const AdsPage = () => {
   const router = useRouter();
   const { openSignIn } = useClerk();
   const { isLoaded, user, isSignedIn } = useUser();
   
-  // Redirect to ads-analyzer by default, but allow direct access to wizard
-  useEffect(() => {
-    if (isLoaded && isSignedIn && router.asPath === '/ads' && !router.query.wizard) {
-      router.replace('/ads-analyzer');
-    }
-  }, [isLoaded, isSignedIn, router]);
+  // Show wizard only when ?wizard=true is present
+  const showWizard = router.query.wizard === 'true';
   
   // Wizard state
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [generatedCopy, setGeneratedCopy] = useState<any>(null);
   const [savingDraft, setSavingDraft] = useState(false);
+  
+  // Dashboard state
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   
   // Campaign data
   const [campaignData, setCampaignData] = useState({
@@ -65,6 +76,92 @@ const AdsPage = () => {
   } = context;
 
   const isPremiumUser = subsTplan === "STARTER" || subsTplan === "CREATOR";
+
+  // Dashboard functions
+  const fetchDashboardData = useCallback(async () => {
+    if (!user?.emailAddresses[0]?.emailAddress) return;
+    
+    setDashboardLoading(true);
+    try {
+      const response = await fetch('/api/google-ads/last-analysis', {
+        headers: {
+          'x-user-email': user.emailAddresses[0].emailAddress
+        }
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        setDashboardData(data);
+      } else {
+        toast.error(data.error || 'Failed to fetch dashboard data');
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast.error('Failed to fetch dashboard data');
+    } finally {
+      setDashboardLoading(false);
+    }
+  }, [user]);
+
+  const handleFileUpload = async (file: File) => {
+    if (!user?.emailAddresses[0]?.emailAddress) return;
+
+    setUploading(true);
+    try {
+      const fileContent = await file.text();
+      
+      const response = await fetch('/api/google-ads/analyze-csv', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-email': user.emailAddresses[0].emailAddress
+        },
+        body: JSON.stringify({
+          fileName: file.name,
+          csv: fileContent,
+          userEmail: user.emailAddresses[0].emailAddress
+        })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        toast.success('Data uploaded and analyzed successfully!');
+        fetchDashboardData(); // Refresh dashboard
+      } else {
+        toast.error(data.error || 'Failed to analyze CSV');
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast.error('Failed to upload file');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  }, [user]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'text/csv': ['.csv']
+    },
+    maxFiles: 1,
+    maxSize: 10 * 1024 * 1024 // 10MB
+  });
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setMenuAnchor(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchor(null);
+  };
 
   // Add fetchUserData function
   const fetchUserData = useCallback(async (email: string) => {
@@ -129,6 +226,13 @@ const AdsPage = () => {
   useEffect(() => {
     initPageData();
   }, [isSignedIn, user, initPageData]);
+
+  // Load dashboard data when not in wizard mode
+  useEffect(() => {
+    if (isSignedIn && admin && !showWizard) {
+      fetchDashboardData();
+    }
+  }, [isSignedIn, admin, showWizard, fetchDashboardData]);
 
   const steps = [
     'Campaign Basics',
@@ -374,41 +478,6 @@ const AdsPage = () => {
             </button>
           </div>
 
-          {/* AdPilot Navigation */}
-          {admin && (
-            <div className="flex items-center space-x-1 bg-blue-50 rounded-lg p-1 ml-4">
-              <button 
-                onClick={() => router.push('/ads-analyzer')}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                  router.pathname === '/ads-analyzer' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'text-blue-600 hover:bg-blue-100'
-                }`}
-              >
-                Analyze
-              </button>
-              <button 
-                onClick={() => router.push('/campaign-drafts')}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                  router.pathname === '/campaign-drafts' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'text-blue-600 hover:bg-blue-100'
-                }`}
-              >
-                Drafts
-              </button>
-              <button 
-                onClick={() => router.push('/ads?wizard=true')}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                  router.pathname === '/ads' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'text-blue-600 hover:bg-blue-100'
-                }`}
-              >
-                Wizard
-              </button>
-            </div>
-          )}
         </div>
 
         <Box
@@ -479,7 +548,9 @@ const AdsPage = () => {
         </Box>
 
         <h1 className="text-2xl text-gray-900 mb-1 tracking-tight">
-          AdPilot <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600"> Wizard</span>
+          AdPilot <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+            {showWizard ? 'Wizard' : 'Dashboard'}
+          </span>
         </h1>
 
         <Toaster
@@ -488,20 +559,22 @@ const AdsPage = () => {
           toastOptions={{ duration: 5000 }}
         />
 
-        {/* Stepper */}
-        <div className="w-full max-w-4xl mx-auto mt-8 mb-8">
-          <Stepper activeStep={currentStep} alternativeLabel>
-            {steps.map((label) => (
-              <Step key={label}>
-                <StepLabel>{label}</StepLabel>
-              </Step>
-            ))}
-          </Stepper>
-        </div>
+        {showWizard ? (
+          <>
+            {/* Stepper */}
+            <div className="w-full max-w-4xl mx-auto mt-8 mb-8">
+              <Stepper activeStep={currentStep} alternativeLabel>
+                {steps.map((label) => (
+                  <Step key={label}>
+                    <StepLabel>{label}</StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
+            </div>
 
-        {/* Wizard Content */}
-        <div className="w-full max-w-4xl mx-auto">
-          <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm p-8">
+            {/* Wizard Content */}
+            <div className="w-full max-w-4xl mx-auto">
+              <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm p-8">
             {currentStep === 0 && (
               <div className="space-y-6">
                 <Typography variant="h5" className="text-gray-900 mb-4">Campaign Basics</Typography>
@@ -726,6 +799,226 @@ const AdsPage = () => {
             </div>
           </div>
         </div>
+          </>
+        ) : (
+          /* Dashboard Content */
+          <div className="w-full max-w-7xl mx-auto space-y-6">
+            {/* Upload Section */}
+            <div className="flex justify-end gap-2">
+              <div {...getRootProps()}>
+                <input {...getInputProps()} />
+                <Button
+                  variant="contained"
+                  startIcon={uploading ? <CircularProgress size={20} /> : <UploadIcon />}
+                  disabled={uploading}
+                >
+                  {uploading ? 'Uploading...' : 'Upload CSV'}
+                </Button>
+              </div>
+              
+              {/* Secondary Menu */}
+              <IconButton
+                onClick={handleMenuOpen}
+                size="small"
+                sx={{ 
+                  border: '1px solid #e0e0e0',
+                  borderRadius: 1,
+                  width: 40,
+                  height: 40
+                }}
+              >
+                <MoreVertIcon fontSize="small" />
+              </IconButton>
+              
+              <Menu
+                anchorEl={menuAnchor}
+                open={Boolean(menuAnchor)}
+                onClose={handleMenuClose}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+              >
+                <MenuItem onClick={() => {
+                  handleMenuClose();
+                  router.push('/ads?wizard=true');
+                }}>
+                  <ListItemIcon>
+                    <CreateIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>New Campaign</ListItemText>
+                </MenuItem>
+                <MenuItem onClick={() => {
+                  handleMenuClose();
+                  router.push('/campaign-drafts');
+                }}>
+                  <ListItemIcon>
+                    <DraftsIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>View Drafts</ListItemText>
+                </MenuItem>
+              </Menu>
+            </div>
+
+            {dashboardLoading ? (
+              <div className="flex justify-center py-12">
+                <CircularProgress size={60} />
+              </div>
+            ) : !dashboardData?.totals ? (
+              /* Empty State */
+              <Card>
+                <CardContent className="text-center py-12">
+                  <Typography variant="h6" className="mb-4">
+                    No data available
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary" className="mb-6">
+                    Upload your first Google Ads CSV to get started with the dashboard.
+                  </Typography>
+                  <div {...getRootProps()}>
+                    <input {...getInputProps()} />
+                    <Button
+                      variant="contained"
+                      startIcon={<UploadIcon />}
+                      disabled={uploading}
+                    >
+                      {uploading ? 'Uploading...' : 'Upload CSV'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                {/* KPI Cards */}
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Card>
+                      <CardContent>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Typography color="textSecondary" gutterBottom>
+                              Impressions
+                            </Typography>
+                            <Typography variant="h4">
+                              {dashboardData.totals.impressions.toLocaleString()}
+                            </Typography>
+                          </div>
+                          <VisibilityIcon color="primary" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Card>
+                      <CardContent>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Typography color="textSecondary" gutterBottom>
+                              Clicks
+                            </Typography>
+                            <Typography variant="h4">
+                              {dashboardData.totals.clicks.toLocaleString()}
+                            </Typography>
+                            <Typography variant="body2" color="textSecondary">
+                              CTR: {(dashboardData.totals.avgCtr * 100).toFixed(2)}%
+                            </Typography>
+                          </div>
+                          <TouchAppIcon color="primary" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Card>
+                      <CardContent>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Typography color="textSecondary" gutterBottom>
+                              Cost
+                            </Typography>
+                            <Typography variant="h4">
+                              ${dashboardData.totals.cost.toFixed(2)}
+                            </Typography>
+                          </div>
+                          <AttachMoneyIcon color="primary" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Card>
+                      <CardContent>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Typography color="textSecondary" gutterBottom>
+                              Avg CTR
+                            </Typography>
+                            <Typography variant="h4">
+                              {(dashboardData.totals.avgCtr * 100).toFixed(2)}%
+                            </Typography>
+                          </div>
+                          <TrendingUpIcon color="primary" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                </Grid>
+
+                {/* Campaigns Table */}
+                {dashboardData.campaigns && dashboardData.campaigns.length > 0 && (
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" className="mb-4">Campaigns</Typography>
+                      <TableContainer component={Paper} variant="outlined">
+                        <Table>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Campaign Name</TableCell>
+                              <TableCell align="right">Impressions</TableCell>
+                              <TableCell align="right">Clicks</TableCell>
+                              <TableCell align="right">CTR</TableCell>
+                              <TableCell align="right">Cost</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {dashboardData.campaigns.map((campaign: any, index: number) => (
+                              <TableRow key={index}>
+                                <TableCell>
+                                  <Typography variant="body2" className="font-medium">
+                                    {campaign.name}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell align="right">
+                                  {campaign.impressions.toLocaleString()}
+                                </TableCell>
+                                <TableCell align="right">
+                                  {campaign.clicks.toLocaleString()}
+                                </TableCell>
+                                <TableCell align="right">
+                                  {(campaign.ctr * 100).toFixed(2)}%
+                                </TableCell>
+                                <TableCell align="right">
+                                  ${campaign.cost.toFixed(2)}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </CardContent>
+                  </Card>
+                )}
+
+              </>
+            )}
+          </div>
+        )}
       </main>
     </div>
   );
