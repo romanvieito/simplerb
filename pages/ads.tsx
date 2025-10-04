@@ -620,7 +620,7 @@ const AdsPage = () => {
                       </Typography>
                     </div>
 
-                    <div className="text-center">
+                    <div className="text-center space-y-4">
                       <Button
                         variant="contained"
                         size="large"
@@ -630,6 +630,35 @@ const AdsPage = () => {
                       >
                         {loading ? 'Creating Campaign...' : 'Create Campaign'}
                       </Button>
+                      
+                      {/* Debug Test Button */}
+                      {admin && (
+                        <div>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={async () => {
+                              try {
+                                const response = await fetch('/api/google-ads/test-create', {
+                                  method: 'POST',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                    'x-user-email': user?.emailAddresses[0]?.emailAddress || ''
+                                  }
+                                });
+                                const data = await response.json();
+                                console.log('Test Result:', data);
+                                alert(`Test Result: ${JSON.stringify(data, null, 2)}`);
+                              } catch (error) {
+                                console.error('Test Error:', error);
+                                alert(`Test Error: ${error}`);
+                              }
+                            }}
+                          >
+                            Test API Connection
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (
