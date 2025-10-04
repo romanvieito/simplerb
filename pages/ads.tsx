@@ -371,16 +371,6 @@ const AdsPage = () => {
           {admin && (
             <div className="flex items-center space-x-1 bg-blue-50 rounded-lg p-1 ml-4">
               <button 
-                onClick={() => router.push('/ads_dashboard')}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                  router.pathname === '/ads_dashboard' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'text-blue-600 hover:bg-blue-100'
-                }`}
-              >
-                Dashboard
-              </button>
-              <button 
                 onClick={() => router.push('/ads')}
                 className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
                   router.pathname === '/ads' 
@@ -673,26 +663,22 @@ const AdsPage = () => {
                     </div>
 
                     <div className="text-center space-y-4">
+                      {/* Only show Save as Draft until Basic approval */}
                       <Button
                         variant="contained"
                         size="large"
-                        onClick={createCampaign}
-                        disabled={loading}
-                        startIcon={loading ? <LoadingDots color="white" style="small" /> : null}
+                        onClick={saveDraft}
+                        disabled={savingDraft}
+                        startIcon={savingDraft ? <LoadingDots color="white" style="small" /> : null}
                       >
-                        {loading ? 'Creating Campaign...' : 'Create Campaign'}
+                        {savingDraft ? 'Saving...' : 'Save as Draft'}
                       </Button>
                       
-                      <div className="flex justify-center space-x-4">
-                        <Button
-                          variant="outlined"
-                          onClick={saveDraft}
-                          disabled={savingDraft}
-                          startIcon={savingDraft ? <LoadingDots color="primary" style="small" /> : null}
-                        >
-                          {savingDraft ? 'Saving...' : 'Save as Draft'}
-                        </Button>
-                      </div>
+                      <Typography variant="body2" color="textSecondary" className="mt-4">
+                        Save your campaign draft and export it to Google Ads Editor for manual import.
+                        <br/>
+                        <strong>Direct campaign creation will be available after Google Ads API approval.</strong>
+                      </Typography>
                       
                       {/* Debug Test Button */}
                       {admin && (

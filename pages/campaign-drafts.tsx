@@ -199,7 +199,7 @@ const CampaignDraftsPage = () => {
             variant="contained"
             onClick={() => router.push('/ads')}
           >
-            Create New Campaign
+            New Campaign
           </Button>
         </div>
 
@@ -216,12 +216,14 @@ const CampaignDraftsPage = () => {
                 </Typography>
                 <Typography variant="body2" color="textSecondary" className="mb-6">
                   Create your first campaign and save it as a draft to get started.
+                  <br/>
+                  Export drafts to Google Ads Editor for manual import.
                 </Typography>
                 <Button
                   variant="contained"
                   onClick={() => router.push('/ads')}
                 >
-                  Create Campaign
+                  New Campaign
                 </Button>
               </CardContent>
             </Card>
