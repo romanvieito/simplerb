@@ -19,6 +19,7 @@ export default authMiddleware({
     "/api/google-ads/optimize-campaigns",
     "/api/google-ads/export-recommendations",
     "/api/migrations/run-campaign-analysis",
+    "/api/migrations/run-normalized-migration",
     "/sign-in(.*)",
     "/sign-up(.*)"
   ]

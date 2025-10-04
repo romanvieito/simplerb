@@ -34,14 +34,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Missing analysisId' });
     }
 
-    // Fetch metrics for the analysis
-    const metricsResult = await sql`
-      SELECT * FROM campaign_metrics 
-      WHERE analysis_id = ${analysisId}
-      ORDER BY campaign_name, ad_group_name, keyword
-    `;
+    // Fetch data from normalized tables
+    const [keywordsResult, adsResult, geographyResult] = await Promise.all([
+      sql`
+        SELECT * FROM campaign_keywords 
+        WHERE analysis_id = ${analysisId}
+        ORDER BY campaign_name, ad_group_name, keyword
+      `,
+      sql`
+        SELECT * FROM campaign_ads 
+        WHERE analysis_id = ${analysisId}
+        ORDER BY campaign_name, ad_group_name, ad_text
+      `,
+      sql`
+        SELECT * FROM campaign_geography 
+        WHERE analysis_id = ${analysisId}
+        ORDER BY campaign_name, location
+      `
+    ]);
 
-    const metrics = metricsResult.rows;
+    const keywords = keywordsResult.rows;
+    const ads = adsResult.rows;
+    const geography = geographyResult.rows;
     const recommendations: Recommendation[] = [];
 
     // Analysis thresholds
@@ -49,40 +63,49 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const LOW_CTR_THRESHOLD = 1.0; // 1%
     const LOW_QUALITY_SCORE_THRESHOLD = 3;
 
-    // Group metrics by campaign for analysis
-    const campaignGroups = new Map<string, any[]>();
-    metrics.forEach(metric => {
-      if (!campaignGroups.has(metric.campaign_name)) {
-        campaignGroups.set(metric.campaign_name, []);
+    // Group keywords by campaign for analysis
+    const campaignKeywordGroups = new Map<string, any[]>();
+    keywords.forEach(keyword => {
+      if (!campaignKeywordGroups.has(keyword.campaign_name)) {
+        campaignKeywordGroups.set(keyword.campaign_name, []);
       }
-      campaignGroups.get(metric.campaign_name)!.push(metric);
+      campaignKeywordGroups.get(keyword.campaign_name)!.push(keyword);
     });
 
-    // Analyze each campaign
-    campaignGroups.forEach((campaignMetrics, campaignName) => {
-      // Calculate campaign-level metrics
-      const totalImpressions = campaignMetrics.reduce((sum: number, m: any) => sum + (m.impressions || 0), 0);
-      const totalClicks = campaignMetrics.reduce((sum: number, m: any) => sum + (m.clicks || 0), 0);
-      const totalCost = campaignMetrics.reduce((sum: number, m: any) => sum + (m.cost || 0), 0);
+    // Group ads by campaign for analysis
+    const campaignAdGroups = new Map<string, any[]>();
+    ads.forEach(ad => {
+      if (!campaignAdGroups.has(ad.campaign_name)) {
+        campaignAdGroups.set(ad.campaign_name, []);
+      }
+      campaignAdGroups.get(ad.campaign_name)!.push(ad);
+    });
+
+    // Analyze keywords for each campaign
+    campaignKeywordGroups.forEach((campaignKeywords, campaignName) => {
+      // Calculate campaign-level metrics from keywords
+      const totalImpressions = campaignKeywords.reduce((sum: number, k: any) => sum + (k.impressions || 0), 0);
+      const totalClicks = campaignKeywords.reduce((sum: number, k: any) => sum + (k.clicks || 0), 0);
+      const totalCost = campaignKeywords.reduce((sum: number, k: any) => sum + (k.cost || 0), 0);
       const campaignCTR = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
 
-      // Group by ad group for ad copy analysis
+      // Group keywords by ad group for analysis
       const adGroupGroups = new Map<string, any[]>();
-      campaignMetrics.forEach((metric: any) => {
-        const adGroup = metric.ad_group_name || 'No Ad Group';
+      campaignKeywords.forEach((keyword: any) => {
+        const adGroup = keyword.ad_group_name || 'No Ad Group';
         if (!adGroupGroups.has(adGroup)) {
           adGroupGroups.set(adGroup, []);
         }
-        adGroupGroups.get(adGroup)!.push(metric);
+        adGroupGroups.get(adGroup)!.push(keyword);
       });
 
-      // Analyze keywords/ads
-      campaignMetrics.forEach((metric: any) => {
-        const impressions = metric.impressions || 0;
-        const clicks = metric.clicks || 0;
-        const ctr = metric.ctr || 0;
-        const qualityScore = metric.quality_score;
-        const keyword = metric.keyword || 'Unknown';
+      // Analyze keywords
+      campaignKeywords.forEach((keyword: any) => {
+        const impressions = keyword.impressions || 0;
+        const clicks = keyword.clicks || 0;
+        const ctr = keyword.ctr || 0;
+        const qualityScore = keyword.quality_score;
+        const keywordText = keyword.keyword || 'Unknown';
 
         // Rule 1: High impressions, zero clicks - suggest pausing
         if (impressions >= HIGH_IMPRESSIONS_THRESHOLD && clicks === 0) {
@@ -90,8 +113,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             type: 'pause',
             entity: 'keyword',
             campaign: campaignName,
-            ad_group: metric.ad_group_name || undefined,
-            keyword_or_ad: keyword,
+            ad_group: keyword.ad_group_name || undefined,
+            keyword_or_ad: keywordText,
             issue: `High impressions (${impressions.toLocaleString()}) but zero clicks`,
             suggestion: 'Consider pausing this keyword as it\'s not generating any traffic',
             evidence: `${impressions.toLocaleString()} impressions, 0 clicks`
@@ -104,8 +127,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             type: 'bid_decrease',
             entity: 'keyword',
             campaign: campaignName,
-            ad_group: metric.ad_group_name || undefined,
-            keyword_or_ad: keyword,
+            ad_group: keyword.ad_group_name || undefined,
+            keyword_or_ad: keywordText,
             issue: `Low quality score: ${qualityScore}`,
             suggestion: 'Consider lowering bids or improving ad relevance and landing page experience',
             evidence: `Quality score: ${qualityScore}`
@@ -118,8 +141,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             type: 'ad_copy',
             entity: 'keyword',
             campaign: campaignName,
-            ad_group: metric.ad_group_name || undefined,
-            keyword_or_ad: keyword,
+            ad_group: keyword.ad_group_name || undefined,
+            keyword_or_ad: keywordText,
             issue: `Low CTR: ${(ctr * 100).toFixed(2)}% with ${impressions.toLocaleString()} impressions`,
             suggestion: 'Improve ad copy relevance and consider A/B testing different headlines',
             evidence: `CTR: ${(ctr * 100).toFixed(2)}%, Impressions: ${impressions.toLocaleString()}`
@@ -132,8 +155,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             type: 'bid_increase',
             entity: 'keyword',
             campaign: campaignName,
-            ad_group: metric.ad_group_name || undefined,
-            keyword_or_ad: keyword,
+            ad_group: keyword.ad_group_name || undefined,
+            keyword_or_ad: keywordText,
             issue: `High performing keyword with limited reach`,
             suggestion: 'Consider increasing bids to capture more impressions',
             evidence: `CTR: ${(ctr * 100).toFixed(2)}%, Clicks: ${clicks}, Impressions: ${impressions.toLocaleString()}`
@@ -182,21 +205,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     });
 
-    // Geographic analysis (if location data available)
-    const locationMetrics = metrics.filter((m: any) => m.location);
-    if (locationMetrics.length > 0) {
+    // Geographic analysis
+    if (geography.length > 0) {
       const locationGroups = new Map<string, any[]>();
-      locationMetrics.forEach((metric: any) => {
-        const location = metric.location;
+      geography.forEach((geo: any) => {
+        const location = geo.location;
         if (!locationGroups.has(location)) {
           locationGroups.set(location, []);
         }
-        locationGroups.get(location)!.push(metric);
+        locationGroups.get(location)!.push(geo);
       });
 
-      locationGroups.forEach((locationMetrics, location) => {
-        const locationImpressions = locationMetrics.reduce((sum: number, m: any) => sum + (m.impressions || 0), 0);
-        const locationClicks = locationMetrics.reduce((sum: number, m: any) => sum + (m.clicks || 0), 0);
+      locationGroups.forEach((locationData, location) => {
+        const locationImpressions = locationData.reduce((sum: number, g: any) => sum + (g.impressions || 0), 0);
+        const locationClicks = locationData.reduce((sum: number, g: any) => sum + (g.clicks || 0), 0);
         const locationCTR = locationImpressions > 0 ? (locationClicks / locationImpressions) * 100 : 0;
 
         if (locationImpressions >= 500 && locationCTR < 0.5) {

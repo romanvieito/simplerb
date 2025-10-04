@@ -103,36 +103,101 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const analysisId = analysisResult.rows[0].id;
 
-    // Insert metrics
-    const metricsToInsert = rows.map(row => ({
-      analysis_id: analysisId,
-      campaign_name: row.Campaign || row.campaign || '',
-      ad_group_name: row['Ad group'] || row['Ad Group'] || row['ad group'] || null,
-      keyword: row.Keyword || row.keyword || row.Ad || row.ad || null,
-      match_type: row['Match type'] || row['match type'] || row['Match Type'] || null,
-      clicks: parseInt(row.Clicks || row.clicks || '0'),
-      impressions: parseInt(row.Impressions || row.impressions || '0'),
-      cost: parseFloat(row.Cost || row.cost || '0'),
-      ctr: (() => {
-        const impressions = parseInt(row.Impressions || row.impressions || '0');
-        const clicks = parseInt(row.Clicks || row.clicks || '0');
-        return impressions > 0 ? (clicks / impressions) : 0;
-      })(),
-      quality_score: row['Quality score'] || row['quality score'] || row['Quality Score'] || null,
-      ad_strength: row['Ad strength'] || row['ad strength'] || row['Ad Strength'] || null,
-      location: row.Location || row.location || row.Geo || row.geo || null
-    }));
+    // Separate data by entity type and insert into appropriate tables
+    const keywordsToInsert = [];
+    const adsToInsert = [];
+    const geographyToInsert = [];
 
-    // Batch insert metrics
-    for (const metric of metricsToInsert) {
+    rows.forEach(row => {
+      const campaignName = row.Campaign || row.campaign || '';
+      const adGroupName = row['Ad group'] || row['Ad Group'] || row['ad group'] || null;
+      const clicks = parseInt(row.Clicks || row.clicks || '0');
+      const impressions = parseInt(row.Impressions || row.impressions || '0');
+      const cost = parseFloat(row.Cost || row.cost || '0');
+      const ctr = impressions > 0 ? (clicks / impressions) : 0;
+
+      // Check if this row represents a keyword
+      if (row.Keyword || row.keyword) {
+        keywordsToInsert.push({
+          analysis_id: analysisId,
+          campaign_name: campaignName,
+          ad_group_name: adGroupName,
+          keyword: row.Keyword || row.keyword,
+          match_type: row['Match type'] || row['match type'] || row['Match Type'] || null,
+          clicks,
+          impressions,
+          cost,
+          ctr,
+          quality_score: row['Quality score'] || row['quality score'] || row['Quality Score'] || null
+        });
+      }
+
+      // Check if this row represents an ad
+      if (row.Ad || row.ad) {
+        adsToInsert.push({
+          analysis_id: analysisId,
+          campaign_name: campaignName,
+          ad_group_name: adGroupName,
+          ad_text: row.Ad || row.ad,
+          clicks,
+          impressions,
+          cost,
+          ctr,
+          ad_strength: row['Ad strength'] || row['ad strength'] || row['Ad Strength'] || null
+        });
+      }
+
+      // Check if this row has geographic data
+      if (row.Location || row.location || row.Geo || row.geo) {
+        geographyToInsert.push({
+          analysis_id: analysisId,
+          campaign_name: campaignName,
+          location: row.Location || row.location || row.Geo || row.geo,
+          clicks,
+          impressions,
+          cost,
+          ctr
+        });
+      }
+    });
+
+    // Insert keywords
+    for (const keyword of keywordsToInsert) {
       await sql`
-        INSERT INTO campaign_metrics (
+        INSERT INTO campaign_keywords (
           analysis_id, campaign_name, ad_group_name, keyword, match_type,
-          clicks, impressions, cost, ctr, quality_score, ad_strength, location
+          clicks, impressions, cost, ctr, quality_score
         ) VALUES (
-          ${metric.analysis_id}, ${metric.campaign_name}, ${metric.ad_group_name},
-          ${metric.keyword}, ${metric.match_type}, ${metric.clicks}, ${metric.impressions},
-          ${metric.cost}, ${metric.ctr}, ${metric.quality_score}, ${metric.ad_strength}, ${metric.location}
+          ${keyword.analysis_id}, ${keyword.campaign_name}, ${keyword.ad_group_name},
+          ${keyword.keyword}, ${keyword.match_type}, ${keyword.clicks}, ${keyword.impressions},
+          ${keyword.cost}, ${keyword.ctr}, ${keyword.quality_score}
+        )
+      `;
+    }
+
+    // Insert ads
+    for (const ad of adsToInsert) {
+      await sql`
+        INSERT INTO campaign_ads (
+          analysis_id, campaign_name, ad_group_name, ad_text,
+          clicks, impressions, cost, ctr, ad_strength
+        ) VALUES (
+          ${ad.analysis_id}, ${ad.campaign_name}, ${ad.ad_group_name},
+          ${ad.ad_text}, ${ad.clicks}, ${ad.impressions},
+          ${ad.cost}, ${ad.ctr}, ${ad.ad_strength}
+        )
+      `;
+    }
+
+    // Insert geography data
+    for (const geo of geographyToInsert) {
+      await sql`
+        INSERT INTO campaign_geography (
+          analysis_id, campaign_name, location,
+          clicks, impressions, cost, ctr
+        ) VALUES (
+          ${geo.analysis_id}, ${geo.campaign_name}, ${geo.location},
+          ${geo.clicks}, ${geo.impressions}, ${geo.cost}, ${geo.ctr}
         )
       `;
     }
