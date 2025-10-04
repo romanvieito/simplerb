@@ -14,6 +14,7 @@ export function getGoogleAdsClient() {
   }
 
   // Create a new client instance each time to avoid issues
+  // Updated for Google Ads API v21
   const client = new GoogleAdsApi({
     client_id: GADS_CLIENT_ID,
     client_secret: GADS_CLIENT_SECRET,
@@ -30,10 +31,11 @@ export function getGoogleAdsCustomer() {
     GADS_REFRESH_TOKEN
   } = process.env;
 
-  // Use the correct method name: Customer (capital C)
+  // Updated initialization for v21
   return client.Customer({
     customer_id: GADS_LOGIN_CUSTOMER_ID,
     refresh_token: GADS_REFRESH_TOKEN,
+    login_customer_id: GADS_LOGIN_CUSTOMER_ID,
   });
 }
 
