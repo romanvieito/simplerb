@@ -46,12 +46,15 @@
     "nodemailer": "^6.10.0",
     "oauth-1.0a": "^2.2.6",
     "openai": "^4.104.0",
+    "papaparse": "^5.4.1",
     "pexels": "^1.4.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-dropzone": "^14.2.3",
     "react-hook-form": "^7.42.0",
     "react-hot-toast": "^2.4.0",
     "react-use-measure": "^2.1.1",
+    "recharts": "^2.8.0",
     "stripe": "^14.24.0",
     "svix": "^1.21.0",
     "together-ai": "^0.5.2"
@@ -59,6 +62,7 @@
   "devDependencies": {
     "@types/mixpanel-browser": "^2.49.0",
     "@types/node": "^20.0.0",
+    "@types/papaparse": "^5.3.16",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.12",

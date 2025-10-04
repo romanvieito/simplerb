@@ -10,9 +10,15 @@ export default authMiddleware({
     "/sites",
     "/email",
     "/ads",
+    "/ads-analyzer",
+    "/campaign-drafts",
     "/api/serve-site",
     "/api/subdomain-handler",
     "/api/clerk-webhooks(.*)",
+    "/api/google-ads/analyze-csv",
+    "/api/google-ads/optimize-campaigns",
+    "/api/google-ads/export-recommendations",
+    "/api/migrations/run-campaign-analysis",
     "/sign-in(.*)",
     "/sign-up(.*)"
   ]
