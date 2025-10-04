@@ -236,7 +236,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     // Actually create the campaign
+    console.log('Creating campaign with', operations.length, 'operations');
+    console.log('Operations:', JSON.stringify(operations, null, 2));
+    
     const response = await customer.mutateResources(operations);
+    console.log('Campaign creation response:', response);
 
     const summary = `
 Campaign created successfully:
@@ -257,9 +261,16 @@ Campaign created successfully:
 
   } catch (error) {
     console.error('Error creating campaign:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: `Failed to create campaign: ${error instanceof Error ? error.message : 'Unknown error'}` 
-    });
+    
+    // Provide more detailed error information
+    const errorDetails = {
+      success: false,
+      error: `Failed to create campaign: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      stack: error instanceof Error ? error.stack : undefined,
+      validateOnly: process.env.ADPILOT_VALIDATE_ONLY === 'true',
+      customerId: process.env.GADS_LOGIN_CUSTOMER_ID
+    };
+    
+    res.status(500).json(errorDetails);
   }
 }
