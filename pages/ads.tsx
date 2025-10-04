@@ -461,8 +461,8 @@ const AdsPage = () => {
           )}
         </Box>
 
-        <h1 className="text-2xl text-gray-900 mb-3 tracking-tight">
-          AdPilot <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Campaign Wizard</span>
+        <h1 className="text-2xl text-gray-900 mb-1 tracking-tight">
+          AdPilot <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600"> Wizard</span>
         </h1>
 
         <Toaster
