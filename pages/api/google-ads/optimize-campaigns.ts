@@ -308,21 +308,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // Add tracking recommendations
-    const campaignsWithoutTracking = Array.from(new Set(keywords.map((k: any) => k.campaign_name)));
-    campaignsWithoutTracking.forEach(campaignName => {
-      recommendations.push({
-        type: 'tracking',
-        entity: 'campaign',
-        campaign: campaignName,
-        keyword_or_ad: campaignName,
-        issue: 'Missing conversion tracking setup',
-        suggestion: 'Enable conversion tracking to measure ROI and optimize for conversions',
-        evidence: 'No conversion data available for analysis',
-        priority: 'high',
-        impact: 'high'
+    // Add tracking recommendations - only if no conversion data is present
+    const hasConversionData = keywords.some((k: any) => 
+      k.conversions || k.cost_per_conversion || k.conversion_rate || 
+      k.conversion_value || k.conversions_by_conversion_action
+    );
+    
+    if (!hasConversionData) {
+      const campaignsWithoutTracking = Array.from(new Set(keywords.map((k: any) => k.campaign_name)));
+      campaignsWithoutTracking.forEach(campaignName => {
+        recommendations.push({
+          type: 'tracking',
+          entity: 'campaign',
+          campaign: campaignName,
+          keyword_or_ad: campaignName,
+          issue: 'Missing conversion tracking setup',
+          suggestion: 'Enable conversion tracking to measure ROI and optimize for conversions',
+          evidence: 'No conversion data found in uploaded CSV - tracking not enabled',
+          priority: 'high',
+          impact: 'high'
+        });
       });
-    });
+    }
 
     // Calculate summary
     const summary = {

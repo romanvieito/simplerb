@@ -104,9 +104,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const analysisId = analysisResult.rows[0].id;
 
     // Separate data by entity type and insert into appropriate tables
-    const keywordsToInsert = [];
-    const adsToInsert = [];
-    const geographyToInsert = [];
+    const keywordsToInsert: any[] = [];
+    const adsToInsert: any[] = [];
+    const geographyToInsert: any[] = [];
 
 
     rows.forEach(row => {
@@ -116,6 +116,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const impressions = parseInt(row.Impressions || row.impressions || '0');
       const cost = parseFloat(row.Cost || row.cost || '0');
       const ctr = impressions > 0 ? (clicks / impressions) : 0;
+      
+      // Check for conversion data
+      const conversions = parseFloat(row.Conversions || row.conversions || row['Conversions (all)'] || row['conversions (all)'] || '0');
+      const costPerConversion = parseFloat(row['Cost per conversion'] || row['cost per conversion'] || row['Cost/conversion'] || row['cost/conversion'] || '0');
+      const conversionRate = parseFloat(row['Conversion rate'] || row['conversion rate'] || row['Conv. rate'] || row['conv. rate'] || '0');
+      const conversionValue = parseFloat(row['Conversion value'] || row['conversion value'] || row['Conv. value'] || row['conv. value'] || '0');
 
       // Check if this row represents a keyword
       if (row.Keyword || row.keyword) {
@@ -129,7 +135,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           impressions,
           cost,
           ctr,
-          quality_score: row['Quality score'] || row['quality score'] || row['Quality Score'] || null
+          quality_score: row['Quality score'] || row['quality score'] || row['Quality Score'] || null,
+          conversions,
+          cost_per_conversion: costPerConversion,
+          conversion_rate: conversionRate,
+          conversion_value: conversionValue
         });
       }
 
@@ -153,7 +163,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           impressions,
           cost,
           ctr,
-          ad_strength: hasAdStrength || null
+          ad_strength: hasAdStrength || null,
+          conversions,
+          cost_per_conversion: costPerConversion,
+          conversion_rate: conversionRate,
+          conversion_value: conversionValue
         });
       }
 
@@ -166,7 +180,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           clicks,
           impressions,
           cost,
-          ctr
+          ctr,
+          conversions,
+          cost_per_conversion: costPerConversion,
+          conversion_rate: conversionRate,
+          conversion_value: conversionValue
         });
       }
     });
