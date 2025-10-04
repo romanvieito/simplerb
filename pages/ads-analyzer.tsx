@@ -400,11 +400,7 @@ const AdsAnalyzerPage = () => {
               </button>
               <button 
                 onClick={() => router.push('/ads-analyzer')}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                  router.pathname === '/ads-analyzer' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'text-blue-600 hover:bg-blue-100'
-                }`}
+                className="px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-md"
               >
                 Analyze
               </button>
@@ -476,7 +472,7 @@ const AdsAnalyzerPage = () => {
                   </Typography>
                 </div>
 
-                <Alert severity="info">
+                {/* <Alert severity="info">
                   <Typography variant="body2">
                     <strong>Required columns:</strong> Campaign, Ad Group, Impressions, Clicks, Cost
                     <br />
@@ -484,7 +480,7 @@ const AdsAnalyzerPage = () => {
                     <br />
                     <em>Column names are case-insensitive and will be matched automatically.</em>
                   </Typography>
-                </Alert>
+                </Alert> */}
               </div>
             )}
 

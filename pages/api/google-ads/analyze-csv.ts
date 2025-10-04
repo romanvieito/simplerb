@@ -108,6 +108,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const adsToInsert = [];
     const geographyToInsert = [];
 
+
     rows.forEach(row => {
       const campaignName = row.Campaign || row.campaign || '';
       const adGroupName = row['Ad group'] || row['Ad Group'] || row['ad group'] || null;
@@ -132,18 +133,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
       }
 
-      // Check if this row represents an ad
-      if (row.Ad || row.ad) {
+      // Check if this row represents an ad (either explicit Ad column or if no keyword but has ad-related data)
+      const hasAdColumn = row.Ad || row.ad;
+      const hasAdStrength = row['Ad strength'] || row['ad strength'] || row['Ad Strength'];
+      const hasKeyword = row.Keyword || row.keyword;
+      
+      if (hasAdColumn || (!hasKeyword && hasAdStrength)) {
+        // Use Ad column if available, otherwise try to construct from other fields
+        const adText = hasAdColumn 
+          ? (row.Ad || row.ad)
+          : `Ad for ${campaignName}${adGroupName ? ` - ${adGroupName}` : ''}`;
+          
         adsToInsert.push({
           analysis_id: analysisId,
           campaign_name: campaignName,
           ad_group_name: adGroupName,
-          ad_text: row.Ad || row.ad,
+          ad_text: adText,
           clicks,
           impressions,
           cost,
           ctr,
-          ad_strength: row['Ad strength'] || row['ad strength'] || row['Ad Strength'] || null
+          ad_strength: hasAdStrength || null
         });
       }
 

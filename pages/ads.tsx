@@ -21,6 +21,13 @@ const AdsPage = () => {
   const { openSignIn } = useClerk();
   const { isLoaded, user, isSignedIn } = useUser();
   
+  // Redirect to ads-analyzer by default
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      router.replace('/ads-analyzer');
+    }
+  }, [isLoaded, isSignedIn, router]);
+  
   // Wizard state
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -372,11 +379,7 @@ const AdsPage = () => {
             <div className="flex items-center space-x-1 bg-blue-50 rounded-lg p-1 ml-4">
               <button 
                 onClick={() => router.push('/ads')}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                  router.pathname === '/ads' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'text-blue-600 hover:bg-blue-100'
-                }`}
+                className="px-3 py-1 text-sm font-medium rounded-md transition-colors text-blue-600 hover:bg-blue-100"
               >
                 Wizard
               </button>
@@ -392,11 +395,7 @@ const AdsPage = () => {
               </button>
               <button 
                 onClick={() => router.push('/ads-analyzer')}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                  router.pathname === '/ads-analyzer' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'text-blue-600 hover:bg-blue-100'
-                }`}
+                className="px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-md"
               >
                 Analyze
               </button>
