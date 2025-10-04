@@ -47,7 +47,7 @@ interface AnalysisResult {
 }
 
 interface Recommendation {
-  type: 'pause' | 'bid_increase' | 'bid_decrease' | 'ad_copy' | 'negative_keyword' | 'budget' | 'geography';
+  type: 'pause' | 'bid_increase' | 'bid_decrease' | 'ad_copy' | 'negative_keyword' | 'budget' | 'geography' | 'budget_boost' | 'tracking';
   entity: 'keyword' | 'ad' | 'campaign' | 'ad_group';
   campaign: string;
   ad_group?: string;
@@ -55,6 +55,8 @@ interface Recommendation {
   issue: string;
   suggestion: string;
   evidence: string;
+  priority?: 'high' | 'medium' | 'low';
+  impact?: 'high' | 'medium' | 'low';
 }
 
 interface OptimizationResult {
@@ -682,15 +684,34 @@ const AdsAnalyzerPage = () => {
                           <CardContent>
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
+                                <div className="flex items-center gap-2 mb-2 flex-wrap">
                                   <Chip 
                                     label={rec.type.replace('_', ' ')} 
                                     size="small" 
                                     color={
                                       rec.type === 'pause' ? 'error' :
+                                      rec.type === 'budget_boost' ? 'secondary' :
+                                      rec.type === 'negative_keyword' ? 'warning' :
+                                      rec.type === 'tracking' ? 'primary' :
                                       rec.type.includes('bid') ? 'warning' : 'info'
                                     }
                                   />
+                                  {rec.priority && (
+                                    <Chip 
+                                      label={`${rec.priority} priority`} 
+                                      size="small" 
+                                      color={rec.priority === 'high' ? 'error' : rec.priority === 'medium' ? 'warning' : 'success'}
+                                      variant="outlined"
+                                    />
+                                  )}
+                                  {rec.impact && (
+                                    <Chip 
+                                      label={`${rec.impact} impact`} 
+                                      size="small" 
+                                      color={rec.impact === 'high' ? 'success' : rec.impact === 'medium' ? 'warning' : 'default'}
+                                      variant="outlined"
+                                    />
+                                  )}
                                   <Typography variant="body2" color="textSecondary">
                                     {rec.campaign} {rec.ad_group && `> ${rec.ad_group}`}
                                   </Typography>

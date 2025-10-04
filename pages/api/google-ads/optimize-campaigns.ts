@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { sql } from '@vercel/postgres';
 
 interface Recommendation {
-  type: 'pause' | 'bid_increase' | 'bid_decrease' | 'ad_copy' | 'negative_keyword' | 'budget' | 'geography';
+  type: 'pause' | 'bid_increase' | 'bid_decrease' | 'ad_copy' | 'negative_keyword' | 'budget' | 'geography' | 'targeting' | 'tracking' | 'cta_improvement' | 'budget_boost' | 'audience_exclusion';
   entity: 'keyword' | 'ad' | 'campaign' | 'ad_group';
   campaign: string;
   ad_group?: string;
@@ -10,6 +10,8 @@ interface Recommendation {
   issue: string;
   suggestion: string;
   evidence: string;
+  priority: 'high' | 'medium' | 'low';
+  impact: 'high' | 'medium' | 'low';
 }
 
 interface OptimizationResult {
@@ -62,6 +64,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const HIGH_IMPRESSIONS_THRESHOLD = 500;
     const LOW_CTR_THRESHOLD = 1.0; // 1%
     const LOW_QUALITY_SCORE_THRESHOLD = 3;
+    const HIGH_CPC_THRESHOLD = 2.0; // $2.00
+    const LOW_CPC_THRESHOLD = 0.5; // $0.50
+    const BUDGET_UTILIZATION_THRESHOLD = 0.8; // 80%
 
     // Group keywords by campaign for analysis
     const campaignKeywordGroups = new Map<string, any[]>();
@@ -116,8 +121,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             ad_group: keyword.ad_group_name || undefined,
             keyword_or_ad: keywordText,
             issue: `High impressions (${impressions.toLocaleString()}) but zero clicks`,
-            suggestion: 'Consider pausing this keyword as it\'s not generating any traffic',
-            evidence: `${impressions.toLocaleString()} impressions, 0 clicks`
+            suggestion: 'Pause this keyword immediately to avoid wasted spend',
+            evidence: `${impressions.toLocaleString()} impressions, 0 clicks`,
+            priority: 'high',
+            impact: 'high'
           });
         }
 
@@ -130,8 +137,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             ad_group: keyword.ad_group_name || undefined,
             keyword_or_ad: keywordText,
             issue: `Low quality score: ${qualityScore}`,
-            suggestion: 'Consider lowering bids or improving ad relevance and landing page experience',
-            evidence: `Quality score: ${qualityScore}`
+            suggestion: 'Lower bids by 20-30% and improve ad relevance, landing page experience, and expected CTR',
+            evidence: `Quality score: ${qualityScore}`,
+            priority: 'high',
+            impact: 'medium'
           });
         }
 
@@ -144,13 +153,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             ad_group: keyword.ad_group_name || undefined,
             keyword_or_ad: keywordText,
             issue: `Low CTR: ${(ctr * 100).toFixed(2)}% with ${impressions.toLocaleString()} impressions`,
-            suggestion: 'Improve ad copy relevance and consider A/B testing different headlines',
-            evidence: `CTR: ${(ctr * 100).toFixed(2)}%, Impressions: ${impressions.toLocaleString()}`
+            suggestion: 'Test 2-3 new responsive ads with stronger CTAs and more relevant headlines',
+            evidence: `CTR: ${(ctr * 100).toFixed(2)}%, Impressions: ${impressions.toLocaleString()}`,
+            priority: 'medium',
+            impact: 'medium'
           });
         }
 
         // Rule 4: High CTR with low impressions - suggest bid increase
         if (impressions >= 50 && ctr >= 3.0 && clicks >= 5) {
+          const cost = keyword.cost || 0;
+          const avgCPC = cost / clicks;
           recommendations.push({
             type: 'bid_increase',
             entity: 'keyword',
@@ -158,8 +171,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             ad_group: keyword.ad_group_name || undefined,
             keyword_or_ad: keywordText,
             issue: `High performing keyword with limited reach`,
-            suggestion: 'Consider increasing bids to capture more impressions',
-            evidence: `CTR: ${(ctr * 100).toFixed(2)}%, Clicks: ${clicks}, Impressions: ${impressions.toLocaleString()}`
+            suggestion: `Increase Max CPC to $${(avgCPC * 1.5).toFixed(2)}-$${(avgCPC * 2).toFixed(2)} to capture more impressions`,
+            evidence: `CTR: ${(ctr * 100).toFixed(2)}%, Avg CPC: $${avgCPC.toFixed(2)}, Impressions: ${impressions.toLocaleString()}`,
+            priority: 'medium',
+            impact: 'high'
           });
         }
       });
@@ -179,8 +194,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             ad_group: adGroupName,
             keyword_or_ad: adGroupName,
             issue: `Ad group underperforming with very low CTR`,
-            suggestion: 'Review and improve ad copy, consider restructuring keywords',
-            evidence: `Ad group CTR: ${adGroupCTR.toFixed(2)}%, Impressions: ${adGroupImpressions.toLocaleString()}`
+            suggestion: 'Create 2-3 new responsive ads with stronger CTAs and test different headlines',
+            evidence: `Ad group CTR: ${adGroupCTR.toFixed(2)}%, Impressions: ${adGroupImpressions.toLocaleString()}`,
+            priority: 'high',
+            impact: 'medium'
           });
         }
       });
@@ -197,8 +214,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               campaign: campaignName,
               keyword_or_ad: campaignName,
               issue: `High cost per click: $${avgCPC.toFixed(2)}`,
-              suggestion: 'Review keyword bids and consider optimizing for better cost efficiency',
-              evidence: `Avg CPC: $${avgCPC.toFixed(2)}, Total cost: $${totalCost.toFixed(2)}`
+              suggestion: 'Lower Max CPC bids by 20-30% and focus on long-tail keywords for better cost efficiency',
+              evidence: `Avg CPC: $${avgCPC.toFixed(2)}, Total cost: $${totalCost.toFixed(2)}`,
+              priority: 'high',
+              impact: 'high'
             });
           }
         }
@@ -228,19 +247,94 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             campaign: 'Multiple Campaigns',
             keyword_or_ad: location,
             issue: `Location underperforming: ${location}`,
-            suggestion: 'Consider excluding this location or adjusting bids',
-            evidence: `Location CTR: ${locationCTR.toFixed(2)}%, Impressions: ${locationImpressions.toLocaleString()}`
+            suggestion: `Exclude ${location} from targeting or reduce location bid adjustments by 50-70%`,
+            evidence: `Location CTR: ${locationCTR.toFixed(2)}%, Impressions: ${locationImpressions.toLocaleString()}`,
+            priority: 'medium',
+            impact: 'medium'
           });
         }
       });
     }
+
+    // Add budget boost recommendations for high-performing campaigns
+    const campaignGroups = new Map<string, any[]>();
+    keywords.forEach((keyword: any) => {
+      if (!campaignGroups.has(keyword.campaign_name)) {
+        campaignGroups.set(keyword.campaign_name, []);
+      }
+      campaignGroups.get(keyword.campaign_name)!.push(keyword);
+    });
+
+    campaignGroups.forEach((campaignKeywords, campaignName) => {
+      const totalImpressions = campaignKeywords.reduce((sum: number, k: any) => sum + (k.impressions || 0), 0);
+      const totalClicks = campaignKeywords.reduce((sum: number, k: any) => sum + (k.clicks || 0), 0);
+      const totalCost = campaignKeywords.reduce((sum: number, k: any) => sum + (k.cost || 0), 0);
+      const campaignCTR = totalImpressions > 0 ? (totalClicks / totalImpressions) : 0;
+      const avgCPC = totalClicks > 0 ? totalCost / totalClicks : 0;
+
+      // Rule 9: Budget boost for high-performing campaigns
+      if (totalImpressions >= 1000 && campaignCTR >= 2.0 && avgCPC <= 1.5) {
+        recommendations.push({
+          type: 'budget_boost',
+          entity: 'campaign',
+          campaign: campaignName,
+          keyword_or_ad: campaignName,
+          issue: `High-performing campaign with good cost efficiency`,
+          suggestion: `Raise daily budget to $${(totalCost * 1.5).toFixed(0)}+ and Max CPC to $${(avgCPC * 1.5).toFixed(2)}-$${(avgCPC * 2).toFixed(2)} for more impressions`,
+          evidence: `Campaign CTR: ${(campaignCTR * 100).toFixed(2)}%, Avg CPC: $${avgCPC.toFixed(2)}, Total cost: $${totalCost.toFixed(2)}`,
+          priority: 'high',
+          impact: 'high'
+        });
+      }
+    });
+
+    // Add negative keyword suggestions
+    const zeroClickKeywords = keywords.filter((k: any) => (k.impressions || 0) >= 100 && (k.clicks || 0) === 0);
+    if (zeroClickKeywords.length > 0) {
+      const topZeroClickKeywords = zeroClickKeywords.slice(0, 5);
+      topZeroClickKeywords.forEach((keyword: any) => {
+        recommendations.push({
+          type: 'negative_keyword',
+          entity: 'keyword',
+          campaign: keyword.campaign_name,
+          ad_group: keyword.ad_group_name || undefined,
+          keyword_or_ad: keyword.keyword,
+          issue: `Zero clicks with ${keyword.impressions} impressions`,
+          suggestion: `Add "${keyword.keyword}" as negative keyword to avoid irrelevant traffic`,
+          evidence: `${keyword.impressions} impressions, 0 clicks`,
+          priority: 'medium',
+          impact: 'medium'
+        });
+      });
+    }
+
+    // Add tracking recommendations
+    const campaignsWithoutTracking = Array.from(new Set(keywords.map((k: any) => k.campaign_name)));
+    campaignsWithoutTracking.forEach(campaignName => {
+      recommendations.push({
+        type: 'tracking',
+        entity: 'campaign',
+        campaign: campaignName,
+        keyword_or_ad: campaignName,
+        issue: 'Missing conversion tracking setup',
+        suggestion: 'Enable conversion tracking to measure ROI and optimize for conversions',
+        evidence: 'No conversion data available for analysis',
+        priority: 'high',
+        impact: 'high'
+      });
+    });
 
     // Calculate summary
     const summary = {
       totalRecommendations: recommendations.length,
       pauseRecommendations: recommendations.filter(r => r.type === 'pause').length,
       bidRecommendations: recommendations.filter(r => r.type.includes('bid')).length,
-      otherRecommendations: recommendations.filter(r => !r.type.includes('pause') && !r.type.includes('bid')).length
+      budgetRecommendations: recommendations.filter(r => r.type.includes('budget')).length,
+      adCopyRecommendations: recommendations.filter(r => r.type === 'ad_copy').length,
+      negativeKeywordRecommendations: recommendations.filter(r => r.type === 'negative_keyword').length,
+      geographyRecommendations: recommendations.filter(r => r.type === 'geography').length,
+      trackingRecommendations: recommendations.filter(r => r.type === 'tracking').length,
+      otherRecommendations: recommendations.filter(r => !['pause', 'bid_increase', 'bid_decrease', 'budget', 'ad_copy', 'negative_keyword', 'geography', 'tracking'].includes(r.type)).length
     };
 
     // Store recommendations in database
