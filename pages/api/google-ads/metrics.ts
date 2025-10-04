@@ -50,12 +50,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const adpilotLabel = process.env.ADPILOT_LABEL || 'AdPilot';
 
-    // Build the query - simplified to avoid GRPC issues
+    // Build the query - now with updated Google Ads API v21
     let query = `
       SELECT 
         campaign.id,
         campaign.name,
-        campaign.status
+        campaign.status,
+        metrics.impressions,
+        metrics.clicks,
+        metrics.cost_micros,
+        metrics.conversions,
+        metrics.ctr,
+        metrics.average_cpc,
+        metrics.conversions_from_interactions_rate
       FROM campaign
       WHERE campaign.status != 'REMOVED'
     `;
@@ -66,34 +73,125 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     console.log('Campaign query:', query);
 
+    // Add date range
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - days);
+
+    query += `
+      AND segments.date BETWEEN '${startDate.toISOString().split('T')[0]}' 
+      AND '${endDate.toISOString().split('T')[0]}'
+    `;
+
+    query += ` ORDER BY metrics.cost_micros DESC`;
+
+    console.log('Metrics query:', query);
+
     const response = await customer.query(query);
-    console.log('Campaigns response:', response);
+    console.log('Metrics response:', response);
     const rows = response.rows || [];
 
-    // For now, return basic campaign info without metrics to test connection
-    const campaigns = rows.map((row: any) => ({
-      id: row.campaign?.id || 'Unknown',
-      name: row.campaign?.name || 'Unknown',
-      status: row.campaign?.status || 'UNKNOWN',
-      impressions: 0,
-      clicks: 0,
-      cost: 0,
-      conversions: 0,
-      ctr: 0,
-      cpc: 0,
-      conversionRate: 0
-    }));
+    // If no campaigns found, return empty metrics
+    if (rows.length === 0) {
+      return res.status(200).json({
+        success: true,
+        metrics: {
+          totalImpressions: 0,
+          totalClicks: 0,
+          totalCost: 0,
+          totalConversions: 0,
+          averageCtr: 0,
+          averageCpc: 0,
+          averageConversionRate: 0,
+          campaigns: []
+        }
+      });
+    }
+
+    // Aggregate metrics
+    let totalImpressions = 0;
+    let totalClicks = 0;
+    let totalCost = 0;
+    let totalConversions = 0;
+    let totalCtr = 0;
+    let totalCpc = 0;
+    let totalConversionRate = 0;
+    let campaignCount = 0;
+
+    const campaigns: any[] = [];
+
+    // Group by campaign
+    const campaignMap = new Map();
+
+    rows.forEach((row: any) => {
+      const campaignId = row.campaign?.id;
+      const campaignName = row.campaign?.name || 'Unknown';
+      const campaignStatus = row.campaign?.status || 'UNKNOWN';
+
+      if (!campaignMap.has(campaignId)) {
+        campaignMap.set(campaignId, {
+          id: campaignId,
+          name: campaignName,
+          status: campaignStatus,
+          impressions: 0,
+          clicks: 0,
+          cost: 0,
+          conversions: 0,
+          ctr: 0,
+          cpc: 0,
+          conversionRate: 0,
+          rowCount: 0
+        });
+      }
+
+      const campaign = campaignMap.get(campaignId);
+      campaign.impressions += parseInt(row.metrics?.impressions || 0);
+      campaign.clicks += parseInt(row.metrics?.clicks || 0);
+      campaign.cost += parseInt(row.metrics?.cost_micros || 0);
+      campaign.conversions += parseFloat(row.metrics?.conversions || 0);
+      campaign.ctr += parseFloat(row.metrics?.ctr || 0);
+      campaign.cpc += parseFloat(row.metrics?.average_cpc || 0);
+      campaign.conversionRate += parseFloat(row.metrics?.conversions_from_interactions_rate || 0);
+      campaign.rowCount += 1;
+    });
+
+    // Calculate averages and totals
+    campaignMap.forEach((campaign) => {
+      if (campaign.rowCount > 0) {
+        campaign.ctr = campaign.ctr / campaign.rowCount;
+        campaign.cpc = campaign.cpc / campaign.rowCount;
+        campaign.conversionRate = campaign.conversionRate / campaign.rowCount;
+        campaign.cost = campaign.cost / 1000000; // Convert from micros to dollars
+        campaign.cpc = campaign.cpc / 1000000; // Convert from micros to dollars
+
+        totalImpressions += campaign.impressions;
+        totalClicks += campaign.clicks;
+        totalCost += campaign.cost;
+        totalConversions += campaign.conversions;
+        totalCtr += campaign.ctr;
+        totalCpc += campaign.cpc;
+        totalConversionRate += campaign.conversionRate;
+        campaignCount += 1;
+
+        campaigns.push(campaign);
+      }
+    });
+
+    // Calculate overall averages
+    const averageCtr = campaignCount > 0 ? totalCtr / campaignCount : 0;
+    const averageCpc = campaignCount > 0 ? totalCpc / campaignCount : 0;
+    const averageConversionRate = campaignCount > 0 ? totalConversionRate / campaignCount : 0;
 
     res.status(200).json({
       success: true,
       metrics: {
-        totalImpressions: 0,
-        totalClicks: 0,
-        totalCost: 0,
-        totalConversions: 0,
-        averageCtr: 0,
-        averageCpc: 0,
-        averageConversionRate: 0,
+        totalImpressions,
+        totalClicks,
+        totalCost,
+        totalConversions,
+        averageCtr,
+        averageCpc,
+        averageConversionRate,
         campaigns
       }
     });

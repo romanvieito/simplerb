@@ -33,7 +33,7 @@
     "eventsource-parser": "^0.0.5",
     "framer-motion": "^12.5.0",
     "git": "^0.1.5",
-    "google-ads-api": "^17.1.0",
+    "google-ads-api": "^21.0.1",
     "google-auth-library": "^9.14.1",
     "googleapis": "^144.0.0",
     "inngest": "^3.16.1",
