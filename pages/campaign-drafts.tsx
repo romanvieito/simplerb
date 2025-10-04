@@ -224,14 +224,14 @@ const CampaignDraftsPage = () => {
           {admin && (
             <div className="flex items-center space-x-1 bg-blue-50 rounded-lg p-1 ml-4">
               <button 
-                onClick={() => router.push('/ads')}
+                onClick={() => router.push('/ads-analyzer')}
                 className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                  router.pathname === '/ads' 
+                  router.pathname === '/ads-analyzer' 
                     ? 'bg-blue-600 text-white' 
                     : 'text-blue-600 hover:bg-blue-100'
                 }`}
               >
-                Wizard
+                Analyze
               </button>
               <button 
                 onClick={() => router.push('/campaign-drafts')}
@@ -244,14 +244,14 @@ const CampaignDraftsPage = () => {
                 Drafts
               </button>
               <button 
-                onClick={() => router.push('/ads-analyzer')}
+                onClick={() => router.push('/ads?wizard=true')}
                 className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                  router.pathname === '/ads-analyzer' 
+                  router.pathname === '/ads' 
                     ? 'bg-blue-600 text-white' 
                     : 'text-blue-600 hover:bg-blue-100'
                 }`}
               >
-                Analyze
+                Wizard
               </button>
             </div>
           )}
@@ -304,7 +304,7 @@ const CampaignDraftsPage = () => {
                 </Typography>
                 <Button
                   variant="contained"
-                  onClick={() => router.push('/ads')}
+                  onClick={() => router.push('/ads?wizard=true')}
                 >
                   New Campaign
                 </Button>

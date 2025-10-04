@@ -381,14 +381,14 @@ const AdsAnalyzerPage = () => {
           {admin && (
             <div className="flex items-center space-x-1 bg-blue-50 rounded-lg p-1 ml-4">
               <button 
-                onClick={() => router.push('/ads')}
+                onClick={() => router.push('/ads-analyzer')}
                 className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                  router.pathname === '/ads' 
+                  router.pathname === '/ads-analyzer' 
                     ? 'bg-blue-600 text-white' 
                     : 'text-blue-600 hover:bg-blue-100'
                 }`}
               >
-                Wizard
+                Analyze
               </button>
               <button 
                 onClick={() => router.push('/campaign-drafts')}
@@ -401,10 +401,14 @@ const AdsAnalyzerPage = () => {
                 Drafts
               </button>
               <button 
-                onClick={() => router.push('/ads-analyzer')}
-                className="px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-md"
+                onClick={() => router.push('/ads?wizard=true')}
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                  router.pathname === '/ads' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-blue-600 hover:bg-blue-100'
+                }`}
               >
-                Analyze
+                Wizard
               </button>
             </div>
           )}
@@ -433,7 +437,7 @@ const AdsAnalyzerPage = () => {
         </Box>
 
         <h1 className="text-2xl text-gray-900 mb-8 tracking-tight">
-          Google Ads <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">CSV Analyzer</span>
+          Ads <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Pilot</span>
         </h1>
 
         {/* Stepper */}
@@ -567,8 +571,6 @@ const AdsAnalyzerPage = () => {
             {/* Step 4: Results */}
             {currentStep === 3 && analysisResult && (
               <div className="space-y-6">
-                <Typography variant="h5" className="text-gray-900 mb-4">Analysis Results</Typography>
-                
                 {/* Summary Cards */}
                 <Grid container spacing={3}>
                   <Grid item xs={12} sm={6} md={3}>

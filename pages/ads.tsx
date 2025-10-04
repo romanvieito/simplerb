@@ -21,9 +21,9 @@ const AdsPage = () => {
   const { openSignIn } = useClerk();
   const { isLoaded, user, isSignedIn } = useUser();
   
-  // Redirect to ads-analyzer by default
+  // Redirect to ads-analyzer by default, but allow direct access to wizard
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
+    if (isLoaded && isSignedIn && router.asPath === '/ads' && !router.query.wizard) {
       router.replace('/ads-analyzer');
     }
   }, [isLoaded, isSignedIn, router]);
@@ -378,10 +378,14 @@ const AdsPage = () => {
           {admin && (
             <div className="flex items-center space-x-1 bg-blue-50 rounded-lg p-1 ml-4">
               <button 
-                onClick={() => router.push('/ads')}
-                className="px-3 py-1 text-sm font-medium rounded-md transition-colors text-blue-600 hover:bg-blue-100"
+                onClick={() => router.push('/ads-analyzer')}
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                  router.pathname === '/ads-analyzer' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-blue-600 hover:bg-blue-100'
+                }`}
               >
-                Wizard
+                Analyze
               </button>
               <button 
                 onClick={() => router.push('/campaign-drafts')}
@@ -394,10 +398,14 @@ const AdsPage = () => {
                 Drafts
               </button>
               <button 
-                onClick={() => router.push('/ads-analyzer')}
-                className="px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-md"
+                onClick={() => router.push('/ads?wizard=true')}
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                  router.pathname === '/ads' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-blue-600 hover:bg-blue-100'
+                }`}
               >
-                Analyze
+                Wizard
               </button>
             </div>
           )}
