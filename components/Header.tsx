@@ -24,7 +24,6 @@ import {
 const pages = [
   { name: 'Domain Generator', link: '/domain' },
   { name: 'Website Creator', link: '/web' },
-  { name: 'My Sites', link: '/sites' },
   { name: 'Email Marketing', link: '/email' },
   { name: 'Google Ads Generator', link: '/ads' },
   { name: 'Pricing', link: '/pricing' }
@@ -234,13 +233,14 @@ export default function Header(): JSX.Element {
               >
                 {pages.map((page) => (
                   <MenuItem key={page.name}>
-                    <ButtonMenu
-                      key={page.name}
-                      href={page.link}
-                      sx={{ my: 0.5, color: "black", display: "block" }}
-                    >
-                      {page.name}
-                    </ButtonMenu>
+                    <Link href={page.link} passHref>
+                      <ButtonMenu
+                        key={page.name}
+                        sx={{ my: 0.5, color: "black", display: "block" }}
+                      >
+                        {page.name}
+                      </ButtonMenu>
+                    </Link>
                   </MenuItem>
                 ))}
               </Menu>
@@ -258,13 +258,13 @@ export default function Header(): JSX.Element {
           />           */}
             <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
               {pages.map((page) => (
-                <ButtonMenu
-                  key={page.name}
-                  href={page.link}
-                  sx={{ my: 2.5, color: "black", display: "block" }}
-                >
-                  {page.name}
-                </ButtonMenu>
+                <Link key={page.name} href={page.link} passHref>
+                  <ButtonMenu
+                    sx={{ my: 2.5, color: "black", display: "block" }}
+                  >
+                    {page.name}
+                  </ButtonMenu>
+                </Link>
               ))}
             </Box>
             <Box
