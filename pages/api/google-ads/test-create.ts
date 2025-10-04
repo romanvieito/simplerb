@@ -59,10 +59,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } catch (error) {
     console.error('Test create error:', error);
     
+    // Get more detailed error information
+    let errorMessage = 'Unknown error';
+    let errorCode = null;
+    let errorDetails = null;
+    
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      errorDetails = error.stack;
+    } else if (typeof error === 'object' && error !== null) {
+      // Handle Google Ads API errors
+      if ('code' in error) {
+        errorCode = error.code;
+      }
+      if ('message' in error) {
+        errorMessage = error.message;
+      }
+      if ('details' in error) {
+        errorDetails = error.details;
+      }
+      // Convert to string if it's an object
+      if (errorMessage === 'Unknown error') {
+        errorMessage = JSON.stringify(error, null, 2);
+      }
+    }
+    
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
+      error: errorMessage,
+      errorCode: errorCode,
+      errorDetails: errorDetails,
       validateOnly: process.env.ADPILOT_VALIDATE_ONLY === 'true',
       customerId: process.env.GADS_LOGIN_CUSTOMER_ID,
       envVars: {
