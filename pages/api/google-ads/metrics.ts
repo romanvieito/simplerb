@@ -30,6 +30,8 @@ interface MetricsResponse {
     }>;
   };
   error?: string;
+  note?: string;
+  queryError?: string;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<MetricsResponse>) {
@@ -87,9 +89,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     console.log('Metrics query:', query);
 
-    const response = await customer.query(query);
-    console.log('Metrics response:', response);
-    const rows = response.rows || [];
+    let response, rows;
+    
+    try {
+      response = await customer.query(query);
+      console.log('Metrics response:', response);
+      rows = response.rows || [];
+    } catch (queryError) {
+      console.error('Metrics query error:', queryError);
+      
+      // If query fails, return empty metrics with error info
+      return res.status(200).json({
+        success: true,
+        metrics: {
+          totalImpressions: 0,
+          totalClicks: 0,
+          totalCost: 0,
+          totalConversions: 0,
+          averageCtr: 0,
+          averageCpc: 0,
+          averageConversionRate: 0,
+          campaigns: []
+        },
+        note: 'Query failed but client works - may need campaigns or different query syntax',
+        queryError: queryError instanceof Error ? queryError.message : 'Unknown query error'
+      });
+    }
 
     // If no campaigns found, return empty metrics
     if (rows.length === 0) {
