@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import Head from "next/head";
 import { useRouter } from 'next/router';
-import { useUser } from "@clerk/nextjs";
+import { useUser, useClerk, UserButton } from "@clerk/nextjs";
 import { 
   Button, 
   Box, 
@@ -54,6 +54,7 @@ interface CampaignDraft {
 const CampaignDraftsPage = () => {
   const router = useRouter();
   const { isLoaded, user, isSignedIn } = useUser();
+  const { openSignIn } = useClerk();
   const [drafts, setDrafts] = useState<CampaignDraft[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDraft, setSelectedDraft] = useState<CampaignDraft | null>(null);
@@ -246,14 +247,34 @@ const CampaignDraftsPage = () => {
           )}
         </div>
 
-        <div className="absolute top-4 right-4">
+        <Box
+          sx={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            display: "flex",
+            gap: 2,
+            alignItems: "center",
+          }}
+        >
           <Button
             variant="contained"
             onClick={() => router.push('/ads')}
           >
             New Campaign
           </Button>
-        </div>
+          
+          {isSignedIn ? (
+            <UserButton userProfileUrl="/user" afterSignOutUrl="/" />
+          ) : (
+            <Button
+              variant="outlined"
+              onClick={() => openSignIn()}
+            >
+              Sign in
+            </Button>
+          )}
+        </Box>
 
         <h1 className="text-2xl text-gray-900 mb-8 tracking-tight">
           Campaign <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Drafts</span>
