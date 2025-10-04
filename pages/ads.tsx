@@ -25,6 +25,7 @@ const AdsPage = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [generatedCopy, setGeneratedCopy] = useState<any>(null);
+  const [savingDraft, setSavingDraft] = useState(false);
   
   // Campaign data
   const [campaignData, setCampaignData] = useState({
@@ -235,6 +236,47 @@ const AdsPage = () => {
     }
   };
 
+  const saveDraft = async () => {
+    if (!generatedCopy) {
+      toast.error('Please generate ad copy first');
+      return;
+    }
+
+    const draftName = prompt('Enter a name for this campaign draft:');
+    if (!draftName) return;
+
+    setSavingDraft(true);
+    try {
+      const response = await fetch('/api/campaign-drafts/save', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-user-email': user?.emailAddresses[0]?.emailAddress || ''
+        },
+        body: JSON.stringify({
+          campaignData,
+          generatedCopy,
+          name: draftName,
+          industry: 'General' // Default industry
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        toast.success('Campaign draft saved successfully!');
+        console.log('Draft saved:', data);
+      } else {
+        toast.error(data.error || 'Failed to save draft');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Something went wrong saving draft');
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
   const nextStep = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
@@ -329,6 +371,16 @@ const AdsPage = () => {
           {admin && (
             <div className="flex items-center space-x-1 bg-blue-50 rounded-lg p-1 ml-4">
               <button 
+                onClick={() => router.push('/ads_dashboard')}
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                  router.pathname === '/ads_dashboard' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-blue-600 hover:bg-blue-100'
+                }`}
+              >
+                Dashboard
+              </button>
+              <button 
                 onClick={() => router.push('/ads')}
                 className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
                   router.pathname === '/ads' 
@@ -339,14 +391,14 @@ const AdsPage = () => {
                 Wizard
               </button>
               <button 
-                onClick={() => router.push('/ads_dashboard')}
+                onClick={() => router.push('/campaign-drafts')}
                 className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                  router.pathname === '/ads_dashboard' 
+                  router.pathname === '/campaign-drafts' 
                     ? 'bg-blue-600 text-white' 
                     : 'text-blue-600 hover:bg-blue-100'
                 }`}
               >
-                Dashboard
+                Drafts
               </button>
             </div>
           )}
@@ -630,6 +682,17 @@ const AdsPage = () => {
                       >
                         {loading ? 'Creating Campaign...' : 'Create Campaign'}
                       </Button>
+                      
+                      <div className="flex justify-center space-x-4">
+                        <Button
+                          variant="outlined"
+                          onClick={saveDraft}
+                          disabled={savingDraft}
+                          startIcon={savingDraft ? <LoadingDots color="primary" style="small" /> : null}
+                        >
+                          {savingDraft ? 'Saving...' : 'Save as Draft'}
+                        </Button>
+                      </div>
                       
                       {/* Debug Test Button */}
                       {admin && (
