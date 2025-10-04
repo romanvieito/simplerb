@@ -44,6 +44,7 @@ const AdsPage = () => {
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [selectedDays, setSelectedDays] = useState(30);
   
   // Campaign data
   const [campaignData, setCampaignData] = useState({
@@ -83,7 +84,7 @@ const AdsPage = () => {
     
     setDashboardLoading(true);
     try {
-      const response = await fetch('/api/google-ads/last-analysis', {
+      const response = await fetch(`/api/google-ads/last-analysis?days=${selectedDays}`, {
         headers: {
           'x-user-email': user.emailAddresses[0].emailAddress
         }
@@ -101,7 +102,7 @@ const AdsPage = () => {
     } finally {
       setDashboardLoading(false);
     }
-  }, [user]);
+  }, [user, selectedDays]);
 
   const handleFileUpload = async (file: File) => {
     if (!user?.emailAddresses[0]?.emailAddress) return;
@@ -233,6 +234,13 @@ const AdsPage = () => {
       fetchDashboardData();
     }
   }, [isSignedIn, admin, showWizard, fetchDashboardData]);
+
+  // Refetch data when date range changes
+  useEffect(() => {
+    if (isSignedIn && admin && !showWizard) {
+      fetchDashboardData();
+    }
+  }, [selectedDays, fetchDashboardData, isSignedIn, admin, showWizard]);
 
   const steps = [
     'Campaign Basics',
@@ -804,65 +812,82 @@ const AdsPage = () => {
           /* Dashboard Content */
           <div className="w-full max-w-7xl mx-auto space-y-6">
             {/* Upload Section */}
-            <div className="flex justify-end gap-2">
-              <div {...getRootProps()}>
-                <input {...getInputProps()} />
-                <Button
-                  variant="contained"
-                  startIcon={uploading ? <CircularProgress size={20} /> : <UploadIcon />}
-                  disabled={uploading}
+            <div className="flex justify-between items-center">
+              {/* Date Filter */}
+              <FormControl size="small" sx={{ minWidth: 140 }}>
+                <InputLabel>Date Range</InputLabel>
+                <Select
+                  value={selectedDays}
+                  onChange={(e) => setSelectedDays(e.target.value as number)}
+                  label="Date Range"
                 >
-                  {uploading ? 'Uploading...' : 'Upload CSV'}
-                </Button>
+                  <MenuItem value={7}>Last 7 days</MenuItem>
+                  <MenuItem value={30}>Last 30 days</MenuItem>
+                  <MenuItem value={90}>Last 90 days</MenuItem>
+                  <MenuItem value={365}>All time</MenuItem>
+                </Select>
+              </FormControl>
+
+              <div className="flex gap-2">
+                <div {...getRootProps()}>
+                  <input {...getInputProps()} />
+                  <Button
+                    variant="contained"
+                    startIcon={uploading ? <CircularProgress size={20} /> : <UploadIcon />}
+                    disabled={uploading}
+                  >
+                    {uploading ? 'Uploading...' : 'Upload CSV'}
+                  </Button>
+                </div>
+                
+                {/* Secondary Menu */}
+                <IconButton
+                  onClick={handleMenuOpen}
+                  size="small"
+                  sx={{ 
+                    border: '1px solid #e0e0e0',
+                    borderRadius: 1,
+                    width: 40,
+                    height: 40
+                  }}
+                >
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
               </div>
-              
-              {/* Secondary Menu */}
-              <IconButton
-                onClick={handleMenuOpen}
-                size="small"
-                sx={{ 
-                  border: '1px solid #e0e0e0',
-                  borderRadius: 1,
-                  width: 40,
-                  height: 40
-                }}
-              >
-                <MoreVertIcon fontSize="small" />
-              </IconButton>
-              
-              <Menu
-                anchorEl={menuAnchor}
-                open={Boolean(menuAnchor)}
-                onClose={handleMenuClose}
-                anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'right',
-                }}
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
-              >
-                <MenuItem onClick={() => {
-                  handleMenuClose();
-                  router.push('/ads?wizard=true');
-                }}>
-                  <ListItemIcon>
-                    <CreateIcon fontSize="small" />
-                  </ListItemIcon>
-                  <ListItemText>New Campaign</ListItemText>
-                </MenuItem>
-                <MenuItem onClick={() => {
-                  handleMenuClose();
-                  router.push('/campaign-drafts');
-                }}>
-                  <ListItemIcon>
-                    <DraftsIcon fontSize="small" />
-                  </ListItemIcon>
-                  <ListItemText>View Drafts</ListItemText>
-                </MenuItem>
-              </Menu>
             </div>
+              
+            <Menu
+              anchorEl={menuAnchor}
+              open={Boolean(menuAnchor)}
+              onClose={handleMenuClose}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+            >
+              <MenuItem onClick={() => {
+                handleMenuClose();
+                router.push('/ads?wizard=true');
+              }}>
+                <ListItemIcon>
+                  <CreateIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>New Campaign</ListItemText>
+              </MenuItem>
+              <MenuItem onClick={() => {
+                handleMenuClose();
+                router.push('/campaign-drafts');
+              }}>
+                <ListItemIcon>
+                  <DraftsIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>View Drafts</ListItemText>
+              </MenuItem>
+            </Menu>
 
             {dashboardLoading ? (
               <div className="flex justify-center py-12">

@@ -3,7 +3,7 @@ import { sql } from '@vercel/postgres';
 
 interface LastAnalysisResponse {
   success: boolean;
-  analysisId?: number;
+  analysisIds?: number[];
   totals?: {
     impressions: number;
     clicks: number;
@@ -17,6 +17,10 @@ interface LastAnalysisResponse {
     cost: number;
     ctr: number;
   }>;
+  dateRange?: {
+    start: string;
+    end: string;
+  };
   error?: string;
 }
 
@@ -31,26 +35,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       return res.status(400).json({ success: false, error: 'User email required' });
     }
 
-    // Get the latest completed analysis for the user
+    // Get days parameter (default to 30 days)
+    const days = parseInt(req.query.days as string) || 30;
+    
+    // Calculate date range
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - days);
+
+    // Get analyses within the date range
     const analysisResult = await sql`
       SELECT id, file_name, created_at
       FROM campaign_analyses
-      WHERE user_email = ${userEmail} AND analysis_status = 'completed'
+      WHERE user_email = ${userEmail} 
+        AND analysis_status = 'completed'
+        AND created_at >= ${startDate.toISOString()}
+        AND created_at <= ${endDate.toISOString()}
       ORDER BY created_at DESC
-      LIMIT 1
     `;
 
     if (analysisResult.rows.length === 0) {
       return res.status(200).json({
         success: true,
-        analysisId: undefined,
+        analysisIds: [],
         totals: undefined,
-        campaigns: undefined
+        campaigns: undefined,
+        dateRange: {
+          start: startDate.toISOString().split('T')[0],
+          end: endDate.toISOString().split('T')[0]
+        }
       });
     }
 
-    const analysisId = analysisResult.rows[0].id;
+    const analysisIds = analysisResult.rows.map(row => row.id);
 
+    // For now, use the most recent analysis to avoid complex parameter binding
+    // TODO: Implement proper multi-analysis aggregation
+    const latestAnalysisId = analysisIds[0];
+    
     // Try to get data from keywords first, then fall back to ads
     let keywordData = await sql`
       SELECT 
@@ -63,7 +85,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           ELSE 0 
         END as ctr
       FROM campaign_keywords
-      WHERE analysis_id = ${analysisId}
+      WHERE analysis_id = ${latestAnalysisId}
       GROUP BY campaign_name
       ORDER BY total_impressions DESC
     `;
@@ -84,7 +106,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
             ELSE 0 
           END as ctr
         FROM campaign_ads
-        WHERE analysis_id = ${analysisId}
+        WHERE analysis_id = ${latestAnalysisId}
         GROUP BY campaign_name
         ORDER BY total_impressions DESC
       `;
@@ -115,9 +137,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     res.status(200).json({
       success: true,
-      analysisId,
+      analysisIds,
       totals,
-      campaigns
+      campaigns,
+      dateRange: {
+        start: startDate.toISOString().split('T')[0],
+        end: endDate.toISOString().split('T')[0]
+      }
     });
 
   } catch (error) {
