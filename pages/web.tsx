@@ -1001,11 +1001,6 @@ const WebPage = () => {
               />
               
               
-              {/* Character Counter */}
-              <div className="absolute top-4 right-4 text-sm text-gray-400">
-                {textDescription.length}/200
-              </div>
-              
               {/* Integrated Action Bar */}
               <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between bg-gray-50 rounded-b-2xl p-4 border-t border-gray-100 overflow-visible">
                 <div className="flex items-center space-x-3 overflow-visible">
