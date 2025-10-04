@@ -948,9 +948,9 @@ const AdsPage = () => {
                             <Typography variant="h4">
                               {dashboardData.totals.clicks.toLocaleString()}
                             </Typography>
-                            <Typography variant="body2" color="textSecondary">
+                            {/* <Typography variant="body2" color="textSecondary">
                               CTR: {(dashboardData.totals.avgCtr * 100).toFixed(2)}%
-                            </Typography>
+                            </Typography> */}
                           </div>
                           <TouchAppIcon color="primary" />
                         </div>
