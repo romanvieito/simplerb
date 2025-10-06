@@ -205,7 +205,7 @@ const EmailPage = () => {
               onClick={() => router.push('/smart-pilot')}
               className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
             >
-              Smart Pilot
+              Pilot
             </button>
           </div>
         </div>

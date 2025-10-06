@@ -24,8 +24,6 @@ import {
   DialogActions,
   CircularProgress
 } from "@mui/material";
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
 import DownloadIcon from '@mui/icons-material/Download';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import SBRContext from "../context/SBRContext";
@@ -222,7 +220,7 @@ const CampaignDraftsPage = () => {
               onClick={() => router.push('/smart-pilot')}
               className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
             >
-              Smart Pilot
+              Pilot
             </button>
           </div>
 

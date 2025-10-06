@@ -330,7 +330,7 @@ const SmartPilotPage = () => {
   return (
     <div className="flex max-w-7xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
       <Head>
-        <title>Smart Pilot - simplerB</title>
+        <title>Pilot - simplerB</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -378,7 +378,7 @@ const SmartPilotPage = () => {
               Ads
             </button>
             <button className="px-3 py-1 bg-white rounded-md text-sm font-medium text-gray-800 shadow-sm">
-              Smart Pilot
+              Pilot
             </button>
           </div>
         </div>
@@ -397,7 +397,7 @@ const SmartPilotPage = () => {
         </Box>
 
         <h1 className="text-2xl text-gray-900 mb-8 tracking-tight">
-          Smart <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Pilot</span>
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Pilot</span>
         </h1>
 
         <div className="w-full max-w-7xl mx-auto flex gap-6 h-[calc(100vh-200px)]">
@@ -478,7 +478,7 @@ const SmartPilotPage = () => {
               {messages.length === 0 && !isStreaming && (
                 <div className="text-center py-12">
                   <Typography variant="h6" color="textSecondary" className="mb-4">
-                    Start a conversation with Smart Pilot
+                    Start a conversation with Pilot
                   </Typography>
                   <div className="flex flex-wrap gap-2 justify-center">
                     {quickPrompts.map((prompt, index) => (
@@ -566,7 +566,7 @@ const SmartPilotPage = () => {
                       sendMessage(messageInput);
                     }
                   }}
-                  placeholder="Ask Smart Pilot anything about domains, websites, emails, or ads..."
+                  placeholder="Ask Pilot anything about domains, websites, emails, or ads..."
                   disabled={isLoading}
                   InputProps={{
                     endAdornment: (
