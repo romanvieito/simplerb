@@ -232,6 +232,9 @@ const AdsPage = () => {
   useEffect(() => {
     if (isSignedIn && admin && !showWizard) {
       fetchDashboardData();
+    } else {
+      // Avoid infinite loading state for first-time or non-admin users
+      setDashboardLoading(false);
     }
   }, [isSignedIn, admin, showWizard, fetchDashboardData]);
 
@@ -927,6 +930,14 @@ const AdsPage = () => {
                       disabled={uploading}
                     >
                       {uploading ? 'Uploading...' : 'Upload CSV'}
+                    </Button>
+                  </div>
+                  <div className="mt-4">
+                    <Button
+                      variant="outlined"
+                      onClick={() => router.push('/ads?wizard=true')}
+                    >
+                      Start New Campaign
                     </Button>
                   </div>
                 </CardContent>
