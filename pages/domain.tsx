@@ -709,12 +709,6 @@ const DomainPage: React.FC = () => {
             >
               Ads
             </button>
-            <button 
-              onClick={() => router.push('/smart-pilot')}
-              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              Pilot
-            </button>
           </div>
         </div>
 

@@ -82,12 +82,10 @@ const SmartPilotPage = () => {
   }
   const { admin } = context;
 
-  // Redirect non-signed-in users
+  // Redirect to ads page (Pilot feature is paused)
   useEffect(() => {
-    if (isLoaded && !isSignedIn) {
-      router.push('/ads');
-    }
-  }, [isLoaded, isSignedIn, router]);
+    router.push('/ads');
+  }, [router]);
 
   // Load sessions on mount
   useEffect(() => {
@@ -376,9 +374,6 @@ const SmartPilotPage = () => {
               className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
             >
               Ads
-            </button>
-            <button className="px-3 py-1 bg-white rounded-md text-sm font-medium text-gray-800 shadow-sm">
-              Pilot
             </button>
           </div>
         </div>
