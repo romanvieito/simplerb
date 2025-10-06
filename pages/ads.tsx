@@ -44,7 +44,7 @@ const AdsPage = () => {
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
-  const [selectedDays, setSelectedDays] = useState(30);
+  const [selectedDays, setSelectedDays] = useState(7);
   
   // Campaign data
   const [campaignData, setCampaignData] = useState({
@@ -484,6 +484,12 @@ const AdsPage = () => {
             <button className="px-3 py-1 bg-white rounded-md text-sm font-medium text-gray-800 shadow-sm">
               Ads
             </button>
+            <button 
+              onClick={() => router.push('/smart-pilot')}
+              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              Smart Pilot
+            </button>
           </div>
 
         </div>
@@ -762,15 +768,26 @@ const AdsPage = () => {
 
                     <div className="text-center space-y-4">
                       {/* Only show Save as Draft until Basic approval */}
-                      <Button
-                        variant="contained"
-                        size="large"
-                        onClick={saveDraft}
-                        disabled={savingDraft}
-                        startIcon={savingDraft ? <LoadingDots color="white" style="small" /> : null}
-                      >
-                        {savingDraft ? 'Saving...' : 'Save as Draft'}
-                      </Button>
+              <Button
+                variant="contained"
+                size="large"
+                onClick={saveDraft}
+                disabled={savingDraft}
+                startIcon={savingDraft ? <LoadingDots color="white" style="small" /> : null}
+              >
+                {savingDraft ? 'Saving...' : 'Save as Draft'}
+              </Button>
+              
+              <Button
+                variant="outlined"
+                size="large"
+                onClick={() => {
+                  const context = `Campaign type: ${campaignData.type}, Brand: ${campaignData.brand}, Keywords: ${campaignData.keywords.join(', ')}`;
+                  router.push(`/smart-pilot?seed=${encodeURIComponent(`Help me improve this campaign: ${context}`)}`);
+                }}
+              >
+                Get AI Help
+              </Button>
                     </div>
                   </div>
                 ) : (
@@ -823,7 +840,6 @@ const AdsPage = () => {
                 >
                   <MenuItem value={7}>Last 7 days</MenuItem>
                   <MenuItem value={30}>Last 30 days</MenuItem>
-                  <MenuItem value={90}>Last 90 days</MenuItem>
                   <MenuItem value={365}>All time</MenuItem>
                 </Select>
               </FormControl>

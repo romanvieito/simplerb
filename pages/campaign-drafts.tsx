@@ -218,6 +218,12 @@ const CampaignDraftsPage = () => {
             <button className="px-3 py-1 bg-white rounded-md text-sm font-medium text-gray-800 shadow-sm">
               Ads
             </button>
+            <button 
+              onClick={() => router.push('/smart-pilot')}
+              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              Smart Pilot
+            </button>
           </div>
 
           {/* AdPilot Navigation */}

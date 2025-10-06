@@ -375,6 +375,12 @@ const AdsAnalyzerPage = () => {
             <button className="px-3 py-1 bg-white rounded-md text-sm font-medium text-gray-800 shadow-sm">
               Ads
             </button>
+            <button 
+              onClick={() => router.push('/smart-pilot')}
+              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              Smart Pilot
+            </button>
           </div>
 
           {/* AdPilot Navigation */}
@@ -751,6 +757,15 @@ const AdsAnalyzerPage = () => {
                         startIcon={exporting ? <CircularProgress size={20} /> : null}
                       >
                         Export JSON
+                      </Button>
+                      <Button
+                        variant="contained"
+                        onClick={() => {
+                          const context = `I have ${analysisResult.campaignCount} campaigns with ${optimizationResult.summary.totalRecommendations} optimization recommendations. Help me prioritize and implement these suggestions.`;
+                          router.push(`/smart-pilot?seed=${encodeURIComponent(context)}`);
+                        }}
+                      >
+                        Get AI Help
                       </Button>
                     </div>
                   </div>
