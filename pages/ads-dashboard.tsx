@@ -85,6 +85,8 @@ function AdsDashboardContent() {
     return {
       campaign: true,
       status: true,
+      impressions: true,
+      clicks: true,
       spend: true,
       conversions: true,
       ctr: true,
@@ -435,7 +437,9 @@ function AdsDashboardContent() {
                         <div className="space-y-1">
                           {Object.entries({
                             campaign: 'Campaign',
-                            status: 'Status', 
+                            status: 'Status',
+                            impressions: 'Impressions',
+                            clicks: 'Clicks',
                             spend: 'Spend',
                             conversions: 'Conversions',
                             ctr: 'CTR',
@@ -476,6 +480,16 @@ function AdsDashboardContent() {
                   {visibleColumns.status && (
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
+                    </th>
+                  )}
+                  {visibleColumns.impressions && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Impressions
+                    </th>
+                  )}
+                  {visibleColumns.clicks && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Clicks
                     </th>
                   )}
                   {visibleColumns.spend && (
@@ -554,6 +568,16 @@ function AdsDashboardContent() {
                         }`}>
                           {campaign.status}
                         </span>
+                      </td>
+                    )}
+                    {visibleColumns.impressions && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatNumber(campaign.impressions)}
+                      </td>
+                    )}
+                    {visibleColumns.clicks && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatNumber(campaign.clicks)}
                       </td>
                     )}
                     {visibleColumns.spend && (
