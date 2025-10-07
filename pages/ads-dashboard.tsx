@@ -70,6 +70,26 @@ function AdsDashboardContent() {
     }
   });
   const [optimizing, setOptimizing] = useState(false);
+  const [showColumnSelector, setShowColumnSelector] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState<{[key: string]: boolean}>(() => {
+    // Load from localStorage on component mount, default all columns visible
+    if (typeof window !== 'undefined') {
+      const savedColumns = localStorage.getItem('ads-dashboard-visible-columns');
+      if (savedColumns) {
+        return JSON.parse(savedColumns);
+      }
+    }
+    return {
+      campaign: true,
+      status: true,
+      spend: true,
+      conversions: true,
+      ctr: true,
+      cpa: true,
+      roas: true,
+      budgetUtil: true
+    };
+  });
 
   // Function to update time filter and save to localStorage
   const updateTimeFilter = (newFilter: 'today' | 'yesterday' | 'last7days') => {
@@ -79,11 +99,37 @@ function AdsDashboardContent() {
     }
   };
 
+  // Function to update column visibility and save to localStorage
+  const updateColumnVisibility = (column: string, isVisible: boolean) => {
+    const newVisibleColumns = { ...visibleColumns, [column]: isVisible };
+    setVisibleColumns(newVisibleColumns);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ads-dashboard-visible-columns', JSON.stringify(newVisibleColumns));
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchMetrics();
     }
   }, [user, timeFilter]);
+
+  // Close column selector when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showColumnSelector) {
+        const target = event.target as HTMLElement;
+        if (!target.closest('.column-selector')) {
+          setShowColumnSelector(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showColumnSelector]);
 
   const getDateRange = (filter: string) => {
     const today = new Date();
@@ -330,38 +376,83 @@ function AdsDashboardContent() {
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-bold text-gray-900">Active Campaigns</h2>
-              <div className="flex space-x-2">
-                <span className="text-sm text-gray-500 mr-3">Time Period:</span>
-                <button
-                  onClick={() => updateTimeFilter('today')}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                    timeFilter === 'today'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Today
-                </button>
-                <button
-                  onClick={() => updateTimeFilter('yesterday')}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                    timeFilter === 'yesterday'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Yesterday
-                </button>
-                <button
-                  onClick={() => updateTimeFilter('last7days')}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                    timeFilter === 'last7days'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Last 7 Days
-                </button>
+              <div className="flex space-x-4 items-center">
+                <div className="flex space-x-2">
+                  <span className="text-sm text-gray-500 mr-3">Time Period:</span>
+                  <button
+                    onClick={() => updateTimeFilter('today')}
+                    className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                      timeFilter === 'today'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Today
+                  </button>
+                  <button
+                    onClick={() => updateTimeFilter('yesterday')}
+                    className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                      timeFilter === 'yesterday'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Yesterday
+                  </button>
+                  <button
+                    onClick={() => updateTimeFilter('last7days')}
+                    className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                      timeFilter === 'last7days'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Last 7 Days
+                  </button>
+                </div>
+                
+                {/* Column Selector */}
+                <div className="relative column-selector">
+                  <button
+                    onClick={() => setShowColumnSelector(!showColumnSelector)}
+                    className="flex items-center space-x-1 px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                  >
+                    <span>Columns</span>
+                    <svg className={`w-4 h-4 transition-transform ${showColumnSelector ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {showColumnSelector && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10 column-selector">
+                      <div className="p-2">
+                        <div className="text-xs font-medium text-gray-500 mb-2">Show/Hide Columns</div>
+                        <div className="space-y-1">
+                          {Object.entries({
+                            campaign: 'Campaign',
+                            status: 'Status', 
+                            spend: 'Spend',
+                            conversions: 'Conversions',
+                            ctr: 'CTR',
+                            cpa: 'CPA',
+                            roas: 'ROAS',
+                            budgetUtil: 'Budget Util'
+                          }).map(([key, label]) => (
+                            <label key={key} className="flex items-center space-x-2 text-sm">
+                              <input
+                                type="checkbox"
+                                checked={visibleColumns[key]}
+                                onChange={(e) => updateColumnVisibility(key, e.target.checked)}
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              />
+                              <span className="text-gray-700">{label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -370,30 +461,46 @@ function AdsDashboardContent() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Campaign
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Spend
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Conversions
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    CTR
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    CPA
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ROAS
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Budget Util
-                  </th>
+                  {visibleColumns.campaign && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Campaign
+                    </th>
+                  )}
+                  {visibleColumns.status && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                  )}
+                  {visibleColumns.spend && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Spend
+                    </th>
+                  )}
+                  {visibleColumns.conversions && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Conversions
+                    </th>
+                  )}
+                  {visibleColumns.ctr && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      CTR
+                    </th>
+                  )}
+                  {visibleColumns.cpa && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      CPA
+                    </th>
+                  )}
+                  {visibleColumns.roas && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      ROAS
+                    </th>
+                  )}
+                  {visibleColumns.budgetUtil && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Budget Util
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -407,58 +514,74 @@ function AdsDashboardContent() {
                       selectedCampaign === campaign.id ? null : campaign.id
                     )}
                   >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {campaign.name}
+                    {visibleColumns.campaign && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {campaign.name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {campaign.type} • {formatNumber(campaign.impressions)} impressions
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {campaign.type} • {formatNumber(campaign.impressions)} impressions
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        campaign.status === 'ENABLED' 
-                          ? 'bg-green-100 text-green-800'
-                          : campaign.status === 'PAUSED'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {campaign.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatCurrency(campaign.cost)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatNumber(campaign.conversions)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatPercentage(campaign.ctr)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatCurrency(campaign.cpa)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {campaign.roas.toFixed(2)}x
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div className="flex items-center">
-                        <div className="w-full bg-gray-200 rounded-full h-2 mr-2">
-                          <div 
-                            className={`h-2 rounded-full ${
-                              campaign.budgetUtilization > 80 ? 'bg-green-500' :
-                              campaign.budgetUtilization > 50 ? 'bg-yellow-500' : 'bg-red-500'
-                            }`}
-                            style={{ width: `${Math.min(campaign.budgetUtilization, 100)}%` }}
-                          ></div>
-                        </div>
-                        <span className="text-xs text-gray-500">
-                          {formatPercentage(campaign.budgetUtilization)}
+                      </td>
+                    )}
+                    {visibleColumns.status && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          campaign.status === 'ENABLED' 
+                            ? 'bg-green-100 text-green-800'
+                            : campaign.status === 'PAUSED'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {campaign.status}
                         </span>
-                      </div>
-                    </td>
+                      </td>
+                    )}
+                    {visibleColumns.spend && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatCurrency(campaign.cost)}
+                      </td>
+                    )}
+                    {visibleColumns.conversions && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatNumber(campaign.conversions)}
+                      </td>
+                    )}
+                    {visibleColumns.ctr && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatPercentage(campaign.ctr)}
+                      </td>
+                    )}
+                    {visibleColumns.cpa && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatCurrency(campaign.cpa)}
+                      </td>
+                    )}
+                    {visibleColumns.roas && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {campaign.roas.toFixed(2)}x
+                      </td>
+                    )}
+                    {visibleColumns.budgetUtil && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div className="flex items-center">
+                          <div className="w-full bg-gray-200 rounded-full h-2 mr-2">
+                            <div 
+                              className={`h-2 rounded-full ${
+                                campaign.budgetUtilization > 80 ? 'bg-green-500' :
+                                campaign.budgetUtilization > 50 ? 'bg-yellow-500' : 'bg-red-500'
+                              }`}
+                              style={{ width: `${Math.min(campaign.budgetUtilization, 100)}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {formatPercentage(campaign.budgetUtilization)}
+                          </span>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
