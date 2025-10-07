@@ -62,17 +62,6 @@ function AdsDashboardContent() {
     }
     return 'last7days';
   });
-  const [optimizationSettings, setOptimizationSettings] = useState({
-    maxCpcIncrease: 20,
-    minCpcDecrease: 15,
-    pauseLowPerforming: true,
-    pauseThreshold: {
-      ctr: 1,
-      conversionRate: 2,
-      cpa: 100
-    }
-  });
-  const [optimizing, setOptimizing] = useState(false);
   const [showColumnSelector, setShowColumnSelector] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<{[key: string]: boolean}>(() => {
     // Load from localStorage on component mount, default all columns visible
@@ -202,41 +191,6 @@ function AdsDashboardContent() {
     }
   };
 
-  const runOptimization = async () => {
-    if (!user?.primaryEmailAddress?.emailAddress) {
-      alert('User email not available');
-      return;
-    }
-
-    try {
-      setOptimizing(true);
-      const response = await fetch('/api/google-ads/optimize-advanced', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-email': user.primaryEmailAddress.emailAddress
-        },
-        body: JSON.stringify({
-          campaignId: selectedCampaign,
-          optimizationType: 'ALL',
-          settings: optimizationSettings
-        })
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        alert(`Optimization completed! Applied ${data.optimizations?.applied.length || 0} changes.`);
-        fetchMetrics(); // Refresh metrics
-      } else {
-        alert('Optimization failed: ' + data.error);
-      }
-    } catch (err) {
-      alert('Optimization error: ' + (err as Error).message);
-    } finally {
-      setOptimizing(false);
-    }
-  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -301,16 +255,12 @@ function AdsDashboardContent() {
               <div className="flex space-x-4">
               <button
                 onClick={fetchMetrics}
-                className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+                className="bg-gray-600 text-white p-2 rounded hover:bg-gray-700"
+                title="Refresh"
               >
-                Refresh
-              </button>
-              <button
-                onClick={runOptimization}
-                disabled={optimizing}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-              >
-                {optimizing ? 'Optimizing...' : 'Run Optimization'}
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
               </button>
               </div>
             </div>
@@ -640,78 +590,6 @@ function AdsDashboardContent() {
           </div>
         </div>
 
-        {/* Optimization Settings */}
-        {selectedCampaign && (
-          <div className="mt-8 bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Optimization Settings</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Max CPC Increase (%)
-                </label>
-                <input
-                  type="number"
-                  value={optimizationSettings.maxCpcIncrease}
-                  onChange={(e) => setOptimizationSettings({
-                    ...optimizationSettings,
-                    maxCpcIncrease: parseInt(e.target.value)
-                  })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Min CPC Decrease (%)
-                </label>
-                <input
-                  type="number"
-                  value={optimizationSettings.minCpcDecrease}
-                  onChange={(e) => setOptimizationSettings({
-                    ...optimizationSettings,
-                    minCpcDecrease: parseInt(e.target.value)
-                  })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Pause CTR Threshold (%)
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={optimizationSettings.pauseThreshold.ctr}
-                  onChange={(e) => setOptimizationSettings({
-                    ...optimizationSettings,
-                    pauseThreshold: {
-                      ...optimizationSettings.pauseThreshold,
-                      ctr: parseFloat(e.target.value)
-                    }
-                  })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Pause Conversion Rate Threshold (%)
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={optimizationSettings.pauseThreshold.conversionRate}
-                  onChange={(e) => setOptimizationSettings({
-                    ...optimizationSettings,
-                    pauseThreshold: {
-                      ...optimizationSettings.pauseThreshold,
-                      conversionRate: parseFloat(e.target.value)
-                    }
-                  })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
