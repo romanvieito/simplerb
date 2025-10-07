@@ -51,7 +51,14 @@ function AdsDashboardContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
-  const [timeFilter, setTimeFilter] = useState<'today' | 'yesterday' | 'last7days'>('last7days');
+  const [timeFilter, setTimeFilter] = useState<'today' | 'yesterday' | 'last7days'>(() => {
+    // Load from localStorage on component mount, default to 'last7days'
+    if (typeof window !== 'undefined') {
+      const savedFilter = localStorage.getItem('ads-dashboard-time-filter');
+      return (savedFilter as 'today' | 'yesterday' | 'last7days') || 'last7days';
+    }
+    return 'last7days';
+  });
   const [optimizationSettings, setOptimizationSettings] = useState({
     maxCpcIncrease: 20,
     minCpcDecrease: 15,
@@ -63,6 +70,14 @@ function AdsDashboardContent() {
     }
   });
   const [optimizing, setOptimizing] = useState(false);
+
+  // Function to update time filter and save to localStorage
+  const updateTimeFilter = (newFilter: 'today' | 'yesterday' | 'last7days') => {
+    setTimeFilter(newFilter);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ads-dashboard-time-filter', newFilter);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -318,7 +333,7 @@ function AdsDashboardContent() {
               <div className="flex space-x-2">
                 <span className="text-sm text-gray-500 mr-3">Time Period:</span>
                 <button
-                  onClick={() => setTimeFilter('today')}
+                  onClick={() => updateTimeFilter('today')}
                   className={`px-3 py-1 text-sm rounded-md transition-colors ${
                     timeFilter === 'today'
                       ? 'bg-blue-600 text-white'
@@ -328,7 +343,7 @@ function AdsDashboardContent() {
                   Today
                 </button>
                 <button
-                  onClick={() => setTimeFilter('yesterday')}
+                  onClick={() => updateTimeFilter('yesterday')}
                   className={`px-3 py-1 text-sm rounded-md transition-colors ${
                     timeFilter === 'yesterday'
                       ? 'bg-blue-600 text-white'
@@ -338,7 +353,7 @@ function AdsDashboardContent() {
                   Yesterday
                 </button>
                 <button
-                  onClick={() => setTimeFilter('last7days')}
+                  onClick={() => updateTimeFilter('last7days')}
                   className={`px-3 py-1 text-sm rounded-md transition-colors ${
                     timeFilter === 'last7days'
                       ? 'bg-blue-600 text-white'
