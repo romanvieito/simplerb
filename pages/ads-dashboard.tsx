@@ -21,6 +21,9 @@ interface Campaign {
   budget: number;
   budgetUtilization: number;
   qualityScore?: number;
+  impressionShare?: number;
+  rankLostImpressionShare?: number;
+  rankLostTopImpressionShare?: number;
 }
 
 interface Metrics {
@@ -87,7 +90,10 @@ function AdsDashboardContent() {
       ctr: true,
       cpa: true,
       roas: true,
-      budgetUtil: true
+      budgetUtil: true,
+      impressionShare: true,
+      rankLostImpressionShare: false,
+      rankLostTopImpressionShare: false
     };
   });
 
@@ -436,7 +442,10 @@ function AdsDashboardContent() {
                             ctr: 'CTR',
                             cpa: 'CPA',
                             roas: 'ROAS',
-                            budgetUtil: 'Budget Util'
+                            budgetUtil: 'Budget Util',
+                            impressionShare: 'Impression Share',
+                            rankLostImpressionShare: 'Rank Lost Imp. Share',
+                            rankLostTopImpressionShare: 'Rank Lost Top Imp. Share'
                           }).map(([key, label]) => (
                             <label key={key} className="flex items-center space-x-2 text-sm">
                               <input
@@ -499,6 +508,21 @@ function AdsDashboardContent() {
                   {visibleColumns.budgetUtil && (
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Budget Util
+                    </th>
+                  )}
+                  {visibleColumns.impressionShare && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Imp. Share
+                    </th>
+                  )}
+                  {visibleColumns.rankLostImpressionShare && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Rank Lost
+                    </th>
+                  )}
+                  {visibleColumns.rankLostTopImpressionShare && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Top Rank Lost
                     </th>
                   )}
                 </tr>
@@ -580,6 +604,21 @@ function AdsDashboardContent() {
                             {formatPercentage(campaign.budgetUtilization)}
                           </span>
                         </div>
+                      </td>
+                    )}
+                    {visibleColumns.impressionShare && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatPercentage((campaign.impressionShare || 0) * 100)}
+                      </td>
+                    )}
+                    {visibleColumns.rankLostImpressionShare && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatPercentage((campaign.rankLostImpressionShare || 0) * 100)}
+                      </td>
+                    )}
+                    {visibleColumns.rankLostTopImpressionShare && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatPercentage((campaign.rankLostTopImpressionShare || 0) * 100)}
                       </td>
                     )}
                   </tr>

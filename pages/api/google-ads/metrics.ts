@@ -308,6 +308,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
           roas: 0,
           budget: budget,
           qualityScore: 0,
+          impressionShare: 0,
+          rankLostImpressionShare: 0,
+          rankLostTopImpressionShare: 0,
           rowCount: 0
         });
       }
@@ -323,6 +326,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       campaign.conversionRate += parseFloat(row.metrics?.conversions_from_interactions_rate || 0);
       campaign.cpa += parseFloat(row.metrics?.cost_per_conversion || 0);
       campaign.roas += parseFloat(row.metrics?.value_per_conversion || 0);
+      campaign.impressionShare += parseFloat(row.metrics?.search_impression_share || 0);
+      campaign.rankLostImpressionShare += parseFloat(row.metrics?.search_rank_lost_impression_share || 0);
+      campaign.rankLostTopImpressionShare += parseFloat(row.metrics?.search_rank_lost_top_impression_share || 0);
       campaign.rowCount += 1;
     });
 
@@ -339,6 +345,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         campaign.conversionRate = campaign.rowCount > 0 ? campaign.conversionRate / campaign.rowCount : 0;
         campaign.cpa = campaign.rowCount > 0 ? campaign.cpa / campaign.rowCount : 0;
         campaign.roas = campaign.rowCount > 0 ? campaign.roas / campaign.rowCount : 0;
+        campaign.impressionShare = campaign.rowCount > 0 ? campaign.impressionShare / campaign.rowCount : 0;
+        campaign.rankLostImpressionShare = campaign.rowCount > 0 ? campaign.rankLostImpressionShare / campaign.rowCount : 0;
+        campaign.rankLostTopImpressionShare = campaign.rowCount > 0 ? campaign.rankLostTopImpressionShare / campaign.rowCount : 0;
         campaign.cost = campaign.cost / 1000000; // Convert from micros to dollars
         campaign.cpc = campaign.cpc / 1000000; // Convert from micros to dollars
         campaign.cpa = campaign.cpa / 1000000; // Convert from micros to dollars
