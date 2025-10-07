@@ -14,6 +14,8 @@ const AdsPage = () => {
   const [keywords, setKeywords] = useState('');
   const [results, setResults] = useState<KeywordResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [countryCode, setCountryCode] = useState('US');
+  const [languageCode, setLanguageCode] = useState('en');
 
   const { openSignIn } = useClerk();
 
@@ -24,7 +26,7 @@ const AdsPage = () => {
       const response = await fetch('/api/keyword-research', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keywords }),
+        body: JSON.stringify({ keywords, countryCode, languageCode }),
       });
       const data = await response.json();
       if (!response.ok) {

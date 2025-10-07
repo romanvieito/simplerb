@@ -1,16 +1,21 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { GoogleAdsApi } from 'google-ads-api';
+
+interface KeywordResult {
+  keyword: string;
+  searchVolume: number;
+  competition: string;
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-    
-    if (req.method !== 'POST') {
-        return res.status(405).json({ message: 'Method not allowed' });
-    }
-    
-    const { keywords } = req.body;
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('Received request:', req.body);
-    }
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
+  
+  const { keywords, countryCode = 'US', languageCode = 'en' } = req.body;
+  
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Received request:', req.body);
+  }
 
   if (!keywords || keywords.length === 0) {
     return res.status(400).json({ message: 'Keywords are required' });
@@ -51,26 +56,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new Error('Missing required environment variables');
     }
 
-    // Remove hyphens from the customer ID
-    const customerId = (CUSTOMER_ID_RAW as string).replace(/-/g, '');
+    // Convert keywords string to array
+    const keywordList = keywords.split('\n').map((k: string) => k.trim()).filter(Boolean);
 
+    // Use the new keyword planning service
+    try {
+      const keywordPlanningResponse = await fetch(`${req.headers.origin || 'http://localhost:3000'}/api/google-ads/keyword-planning`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          keywords: keywordList,
+          countryCode,
+          languageCode
+        }),
+      });
 
-    // Initialize the Google Ads API client
-    const client = new GoogleAdsApi({
-      client_id: CLIENT_ID as string,
-      client_secret: CLIENT_SECRET as string,
-      developer_token: DEVELOPER_TOKEN as string,
-    });
+      if (keywordPlanningResponse.ok) {
+        const keywordPlanningData = await keywordPlanningResponse.json();
+        if (keywordPlanningData.success && keywordPlanningData.keywords) {
+          // Transform the data to match the expected format
+          const results: KeywordResult[] = keywordPlanningData.keywords.map((idea: any) => ({
+            keyword: idea.keyword,
+            searchVolume: idea.searchVolume || 0,
+            competition: idea.competition || 'UNKNOWN'
+          }));
+          
+          return res.status(200).json(results);
+        }
+      }
+    } catch (keywordPlanningError) {
+      console.warn('Keyword planning service failed, falling back to mock data:', keywordPlanningError);
+    }
 
-    const customer = client.Customer({
-      customer_id: customerId,
-      refresh_token: REFRESH_TOKEN as string,
-    });
-
-    const keywordList = keywords.split('\n').map((k: string) => k.trim());
-
-    // Use a simpler approach - return mock data for now since keyword research requires special permissions
-    // The Google Ads API keyword research requires additional setup and permissions
+    // Fallback to mock data if keyword planning service fails
     const results = keywordList.map((keyword: string, index: number) => ({
       keyword: keyword,
       searchVolume: Math.floor(Math.random() * 10000) + 1000, // Mock search volume
