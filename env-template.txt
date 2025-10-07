@@ -14,6 +14,10 @@ GADS_REFRESH_TOKEN=your_refresh_token_here
 # Customer ID (from Google Ads URL, no hyphens)
 GADS_LOGIN_CUSTOMER_ID=your_customer_id_here
 
+# OpenAI API Configuration (for AI-powered features)
+# Get your API key from https://platform.openai.com/api-keys
+OPENAI_API_KEY=sk-proj-your_openai_api_key_here
+
 # Optional: AdPilot Configuration
 ADPILOT_ADMIN_EMAILS=your-email@example.com,admin@example.com
 ADPILOT_LABEL=AdPilot

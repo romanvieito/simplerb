@@ -48,6 +48,165 @@ interface Metrics {
   };
 }
 
+// Helper function to parse inline formatting (bold, percentages, dollar amounts)
+function parseInlineFormatting(text: string): (string | JSX.Element)[] {
+  const parts: (string | JSX.Element)[] = [];
+  let remaining = text;
+  let keyCounter = 0;
+
+  // Pattern to match bold text (**text**), percentages, dollar amounts, and metrics
+  const patterns = [
+    { regex: /\*\*([^*]+)\*\*/g, className: 'font-semibold text-gray-900' },
+    { regex: /(\$[\d,]+\.?\d*)/g, className: 'font-medium text-green-600' },
+    { regex: /(\d+\.?\d*%)/g, className: 'font-medium text-blue-600' },
+    { regex: /(\d+\.?\d*x)/g, className: 'font-medium text-purple-600' },
+  ];
+
+  while (remaining) {
+    interface MatchInfo {
+      index: number;
+      length: number;
+      content: string;
+      className: string;
+    }
+    
+    let earliestMatch: MatchInfo | null = null;
+
+    // Find the earliest match among all patterns
+    for (const { regex, className } of patterns) {
+      regex.lastIndex = 0;
+      const match = regex.exec(remaining);
+      if (match) {
+        if (!earliestMatch || match.index < earliestMatch.index) {
+          earliestMatch = {
+            index: match.index,
+            length: match[0].length,
+            content: match[1] || match[0],
+            className
+          };
+        }
+      }
+    }
+
+    if (!earliestMatch) {
+      parts.push(remaining);
+      break;
+    }
+
+    // Add text before the match
+    if (earliestMatch.index > 0) {
+      parts.push(remaining.substring(0, earliestMatch.index));
+    }
+
+    // Add the formatted match
+    parts.push(
+      <span key={`inline-${keyCounter++}`} className={earliestMatch.className}>
+        {earliestMatch.content}
+      </span>
+    );
+
+    // Continue with remaining text
+    remaining = remaining.substring(earliestMatch.index + earliestMatch.length);
+  }
+
+  return parts;
+}
+
+// Helper function to format AI analysis text into styled React elements
+function formatAnalysis(text: string) {
+  const lines = text.split('\n');
+  const elements: JSX.Element[] = [];
+  let currentSection: JSX.Element[] = [];
+  let sectionKey = 0;
+
+  const flushSection = () => {
+    if (currentSection.length > 0) {
+      elements.push(
+        <div key={`section-${sectionKey++}`} className="space-y-2">
+          {currentSection}
+        </div>
+      );
+      currentSection = [];
+    }
+  };
+
+  lines.forEach((line, idx) => {
+    const trimmedLine = line.trim();
+    
+    // Skip empty lines
+    if (!trimmedLine) {
+      flushSection();
+      return;
+    }
+
+    // Main section headers (all caps or numbered with caps)
+    if (/^\d+\.\s+[A-Z\s&]+$/.test(trimmedLine)) {
+      flushSection();
+      elements.push(
+        <div key={`header-${idx}`} className="mt-6 mb-4 first:mt-0">
+          <h3 className="text-xl font-bold text-gray-900 border-b-2 border-purple-500 pb-2">
+            {trimmedLine}
+          </h3>
+        </div>
+      );
+      return;
+    }
+
+    // Subsection headers (with colons)
+    if (trimmedLine.endsWith(':') && trimmedLine.split(' ').length <= 6) {
+      flushSection();
+      currentSection.push(
+        <h4 key={`subheader-${idx}`} className="text-lg font-semibold text-gray-800 mt-4 mb-2 first:mt-0">
+          {trimmedLine}
+        </h4>
+      );
+      return;
+    }
+
+    // Bullet points (starting with -, *, or •)
+    if (/^[-*•]\s+/.test(trimmedLine)) {
+      const content = trimmedLine.replace(/^[-*•]\s+/, '');
+      currentSection.push(
+        <div key={`bullet-${idx}`} className="flex items-start space-x-3 ml-4">
+          <span className="text-purple-600 mt-1.5 flex-shrink-0 font-bold">•</span>
+          <p className="text-gray-700 leading-relaxed flex-1">
+            {parseInlineFormatting(content)}
+          </p>
+        </div>
+      );
+      return;
+    }
+
+    // Numbered points (but not section headers)
+    if (/^\d+\.\s+/.test(trimmedLine) && !/^[A-Z\s&]+$/.test(trimmedLine)) {
+      const numberMatch = trimmedLine.match(/^(\d+\.)\s+(.+)$/);
+      if (numberMatch) {
+        currentSection.push(
+          <div key={`numbered-${idx}`} className="flex items-start space-x-3 ml-4">
+            <span className="text-purple-600 font-semibold flex-shrink-0 min-w-[1.5rem]">
+              {numberMatch[1]}
+            </span>
+            <p className="text-gray-700 leading-relaxed flex-1">
+              {parseInlineFormatting(numberMatch[2])}
+            </p>
+          </div>
+        );
+        return;
+      }
+    }
+
+    // Regular paragraphs
+    currentSection.push(
+      <p key={`text-${idx}`} className="text-gray-700 leading-relaxed">
+        {parseInlineFormatting(trimmedLine)}
+      </p>
+    );
+  });
+
+  flushSection();
+  return elements;
+}
+
 function AdsDashboardContent() {
   const { user } = useUser();
   const [metrics, setMetrics] = useState<Metrics | null>(null);
@@ -86,6 +245,9 @@ function AdsDashboardContent() {
       rankLostTopImpressionShare: false
     };
   });
+  const [boostLoading, setBoostLoading] = useState(false);
+  const [boostResult, setBoostResult] = useState<string | null>(null);
+  const [showBoostModal, setShowBoostModal] = useState(false);
 
   // Function to update time filter and save to localStorage
   const updateTimeFilter = (newFilter: 'today' | 'yesterday' | 'last7days') => {
@@ -188,6 +350,101 @@ function AdsDashboardContent() {
       setError('Network error: ' + (err as Error).message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const prepareBoostData = () => {
+    if (!metrics) return null;
+
+    // Get visible column labels
+    const visibleColumnLabels = Object.entries(visibleColumns)
+      .filter(([_, isVisible]) => isVisible)
+      .map(([key]) => key);
+
+    // Filter campaign data to only include visible columns
+    const filteredCampaigns = metrics.campaigns.map(campaign => {
+      const filteredCampaign: any = {};
+      
+      if (visibleColumns.campaign) {
+        filteredCampaign.name = campaign.name;
+        filteredCampaign.type = campaign.type;
+      }
+      if (visibleColumns.status) filteredCampaign.status = campaign.status;
+      if (visibleColumns.impressions) filteredCampaign.impressions = campaign.impressions;
+      if (visibleColumns.clicks) filteredCampaign.clicks = campaign.clicks;
+      if (visibleColumns.spend) filteredCampaign.cost = campaign.cost;
+      if (visibleColumns.conversions) {
+        filteredCampaign.conversions = campaign.conversions;
+        filteredCampaign.conversionValue = campaign.conversionValue;
+      }
+      if (visibleColumns.ctr) filteredCampaign.ctr = campaign.ctr;
+      if (visibleColumns.cpa) {
+        filteredCampaign.cpa = campaign.cpa;
+        filteredCampaign.roas = campaign.roas;
+      }
+      if (visibleColumns.budgetUtil) {
+        filteredCampaign.budget = campaign.budget;
+        filteredCampaign.budgetUtilization = campaign.budgetUtilization;
+      }
+      if (visibleColumns.impressionShare) filteredCampaign.impressionShare = campaign.impressionShare;
+      if (visibleColumns.rankLostImpressionShare) filteredCampaign.rankLostImpressionShare = campaign.rankLostImpressionShare;
+      if (visibleColumns.rankLostTopImpressionShare) filteredCampaign.rankLostTopImpressionShare = campaign.rankLostTopImpressionShare;
+      
+      return filteredCampaign;
+    });
+
+    return {
+      timePeriod: timeFilter,
+      visibleColumns: visibleColumnLabels,
+      campaigns: filteredCampaigns,
+      summary: {
+        totalSpend: metrics.totalCost,
+        totalConversions: metrics.totalConversions,
+        totalConversionValue: metrics.totalConversionValue,
+        averageCtr: metrics.averageCtr,
+        averageCpc: metrics.averageCpc,
+        averageConversionRate: metrics.averageConversionRate,
+        averageCpa: metrics.averageCpa,
+        averageRoas: metrics.averageRoas,
+        totalBudget: metrics.totalBudget,
+        budgetUtilization: metrics.budgetUtilization,
+        totalImpressions: metrics.totalImpressions,
+        totalClicks: metrics.totalClicks
+      }
+    };
+  };
+
+  const handleBoostClick = async () => {
+    const boostData = prepareBoostData();
+    if (!boostData) {
+      setError('No data available to analyze');
+      return;
+    }
+
+    try {
+      setBoostLoading(true);
+      setShowBoostModal(true);
+      setBoostResult(null);
+
+      const response = await fetch('/api/google-ads/boost-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(boostData),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setBoostResult(data.analysis);
+      } else {
+        setBoostResult(`Error: ${data.error || 'Failed to analyze campaigns'}`);
+      }
+    } catch (err) {
+      setBoostResult(`Error: ${(err as Error).message}`);
+    } finally {
+      setBoostLoading(false);
     }
   };
 
@@ -367,6 +624,35 @@ function AdsDashboardContent() {
                     Last 7 Days
                   </button>
                 </div>
+
+                {/* Boost Button */}
+                <button
+                  onClick={handleBoostClick}
+                  disabled={boostLoading || !metrics?.campaigns?.length}
+                  className={`flex items-center space-x-2 px-4 py-1 text-sm rounded-md transition-colors ${
+                    boostLoading || !metrics?.campaigns?.length
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700'
+                  }`}
+                  title="AI-powered campaign analysis"
+                >
+                  {boostLoading ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Analyzing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      <span>Boost</span>
+                    </>
+                  )}
+                </button>
                 
                 {/* Column Selector */}
                 <div className="relative column-selector">
@@ -589,6 +875,75 @@ function AdsDashboardContent() {
             </table>
           </div>
         </div>
+
+        {/* Boost Modal */}
+        {showBoostModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+              {/* Modal Header */}
+              <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center space-x-2">
+                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <h2 className="text-2xl font-bold text-gray-900">AI Campaign Analysis</h2>
+                </div>
+                <button
+                  onClick={() => setShowBoostModal(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="flex-1 overflow-y-auto px-6 py-4">
+                {boostLoading ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <svg className="animate-spin h-12 w-12 text-purple-600 mb-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p className="text-gray-600 text-lg">Analyzing your campaigns...</p>
+                    <p className="text-gray-400 text-sm mt-2">This may take a moment</p>
+                  </div>
+                ) : boostResult ? (
+                  <div className="space-y-6">
+                    {formatAnalysis(boostResult)}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center py-12">
+                    <p className="text-gray-500">No analysis available</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              {boostResult && !boostLoading && (
+                <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                  <button
+                    onClick={() => {
+                      if (boostResult) {
+                        navigator.clipboard.writeText(boostResult);
+                      }
+                    }}
+                    className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                  >
+                    Copy to Clipboard
+                  </button>
+                  <button
+                    onClick={() => setShowBoostModal(false)}
+                    className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
