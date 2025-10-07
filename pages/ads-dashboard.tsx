@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
+import { useUser } from '@clerk/nextjs';
+import AuthGuard from '../components/AuthGuard';
 
 interface Campaign {
   id: string;
@@ -43,7 +45,8 @@ interface Metrics {
   };
 }
 
-export default function AdsDashboard() {
+function AdsDashboardContent() {
+  const { user } = useUser();
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,15 +64,22 @@ export default function AdsDashboard() {
   const [optimizing, setOptimizing] = useState(false);
 
   useEffect(() => {
-    fetchMetrics();
-  }, []);
+    if (user) {
+      fetchMetrics();
+    }
+  }, [user]);
 
   const fetchMetrics = async () => {
+    if (!user?.primaryEmailAddress?.emailAddress) {
+      setError('User email not available');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
-      // Use sample data for testing - switch to /api/google-ads/metrics for real data
       const response = await fetch('/api/google-ads/metrics', {
-        headers: { 'x-user-email': 'romanvieito@gmail.com' }
+        headers: { 'x-user-email': user.primaryEmailAddress.emailAddress }
       });
       const data = await response.json();
       
@@ -87,13 +97,18 @@ export default function AdsDashboard() {
   };
 
   const runOptimization = async () => {
+    if (!user?.primaryEmailAddress?.emailAddress) {
+      alert('User email not available');
+      return;
+    }
+
     try {
       setOptimizing(true);
       const response = await fetch('/api/google-ads/optimize-advanced', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-email': 'romanvieito@gmail.com'
+          'x-user-email': user.primaryEmailAddress.emailAddress
         },
         body: JSON.stringify({
           campaignId: selectedCampaign,
@@ -173,6 +188,9 @@ export default function AdsDashboard() {
             <div className="flex justify-between items-center">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Google Ads Dashboard</h1>
+                <p className="text-sm text-gray-500 mt-1">
+                  Welcome, {user?.firstName || user?.emailAddresses[0]?.emailAddress}
+                </p>
               </div>
               <div className="flex space-x-4">
               <button
@@ -434,5 +452,13 @@ export default function AdsDashboard() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AdsDashboard() {
+  return (
+    <AuthGuard>
+      <AdsDashboardContent />
+    </AuthGuard>
   );
 }

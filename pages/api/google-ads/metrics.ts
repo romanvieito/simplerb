@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { getAuth } from '@clerk/nextjs/server';
 import { getGoogleAdsCustomer, validateAdPilotAccess, handleGoogleAdsError, formatCustomerId } from './client';
 
 interface MetricsRequest {
@@ -82,10 +83,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
 
   try {
+    // Check authentication using Clerk
+    const { userId } = getAuth(req);
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized - please sign in' });
+    }
+
     // Validate admin access
     const userEmail = req.headers['x-user-email'] as string;
+    if (!userEmail) {
+      return res.status(400).json({ success: false, error: 'User email required' });
+    }
+    
     if (!validateAdPilotAccess(userEmail)) {
-      return res.status(403).json({ success: false, error: 'Access denied' });
+      return res.status(403).json({ success: false, error: 'Access denied - insufficient permissions' });
     }
 
     const { campaignId, days = 30 }: MetricsRequest = req.query;
