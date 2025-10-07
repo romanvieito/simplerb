@@ -377,7 +377,7 @@ function AdsDashboardContent() {
 
 
         {/* Campaigns Table */}
-        <div className="bg-white shadow rounded-lg overflow-hidden">
+        <div className="bg-white shadow rounded-lg overflow-visible">
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-bold text-gray-900">Active Campaigns</h2>
@@ -429,7 +429,7 @@ function AdsDashboardContent() {
                   </button>
                   
                   {showColumnSelector && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10 column-selector">
+                    <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50 column-selector">
                       <div className="p-2">
                         <div className="text-xs font-medium text-gray-500 mb-2">Show/Hide Columns</div>
                         <div className="space-y-1">
