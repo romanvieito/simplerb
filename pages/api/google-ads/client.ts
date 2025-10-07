@@ -32,14 +32,20 @@ export function getGoogleAdsCustomer() {
   const client = getGoogleAdsClient();
   const {
     GADS_LOGIN_CUSTOMER_ID,
-    GADS_REFRESH_TOKEN
+    GADS_REFRESH_TOKEN,
+    GADS_CUSTOMER_ID
   } = process.env;
+
+  // Use MCC as login, client as customer
+  const loginId = GADS_LOGIN_CUSTOMER_ID ? formatCustomerId(GADS_LOGIN_CUSTOMER_ID) : undefined as any;
+  const customerId = GADS_CUSTOMER_ID ? formatCustomerId(GADS_CUSTOMER_ID) : loginId;
 
   // Updated initialization for v21 with enhanced error handling
   return client.Customer({
-    customer_id: GADS_LOGIN_CUSTOMER_ID,
+    // Use MCC as login, client as customer
+    customer_id: customerId,
     refresh_token: GADS_REFRESH_TOKEN,
-    login_customer_id: GADS_LOGIN_CUSTOMER_ID,
+    login_customer_id: loginId,
     // Add timeout configuration
     timeout: 30000, // 30 seconds
   });
