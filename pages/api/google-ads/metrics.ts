@@ -5,6 +5,8 @@ import { getGoogleAdsCustomer, validateAdPilotAccess, handleGoogleAdsError, form
 interface MetricsRequest {
   campaignId?: string;
   days?: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 interface MetricsResponse {
@@ -99,7 +101,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       return res.status(403).json({ success: false, error: 'Access denied - insufficient permissions' });
     }
 
-    const { campaignId, days = 30 }: MetricsRequest = req.query;
+    const { campaignId, days = 30, startDate: reqStartDate, endDate: reqEndDate }: MetricsRequest = req.query;
 
     const customer = getGoogleAdsCustomer();
 
@@ -138,13 +140,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     console.log('Campaign query:', query);
 
-    // Add date range
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(endDate.getDate() - days);
-
-    const startDateStr = startDate.toISOString().split('T')[0];
-    const endDateStr = endDate.toISOString().split('T')[0];
+    // Add date range - use provided dates or calculate from days parameter
+    let startDateStr: string;
+    let endDateStr: string;
+    
+    if (reqStartDate && reqEndDate) {
+      // Use provided start and end dates
+      startDateStr = reqStartDate;
+      endDateStr = reqEndDate;
+    } else {
+      // Use days parameter (existing behavior)
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(endDate.getDate() - days);
+      startDateStr = startDate.toISOString().split('T')[0];
+      endDateStr = endDate.toISOString().split('T')[0];
+    }
     
     console.log('Date range:', startDateStr, 'to', endDateStr);
 

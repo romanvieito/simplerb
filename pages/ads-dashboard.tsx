@@ -51,6 +51,7 @@ function AdsDashboardContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
+  const [timeFilter, setTimeFilter] = useState<'today' | 'yesterday' | 'last7days'>('last7days');
   const [optimizationSettings, setOptimizationSettings] = useState({
     maxCpcIncrease: 20,
     minCpcDecrease: 15,
@@ -67,7 +68,38 @@ function AdsDashboardContent() {
     if (user) {
       fetchMetrics();
     }
-  }, [user]);
+  }, [user, timeFilter]);
+
+  const getDateRange = (filter: string) => {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const last7days = new Date(today);
+    last7days.setDate(last7days.getDate() - 7);
+
+    switch (filter) {
+      case 'today':
+        return {
+          startDate: today.toISOString().split('T')[0],
+          endDate: today.toISOString().split('T')[0]
+        };
+      case 'yesterday':
+        return {
+          startDate: yesterday.toISOString().split('T')[0],
+          endDate: yesterday.toISOString().split('T')[0]
+        };
+      case 'last7days':
+        return {
+          startDate: last7days.toISOString().split('T')[0],
+          endDate: today.toISOString().split('T')[0]
+        };
+      default:
+        return {
+          startDate: last7days.toISOString().split('T')[0],
+          endDate: today.toISOString().split('T')[0]
+        };
+    }
+  };
 
   const fetchMetrics = async () => {
     if (!user?.primaryEmailAddress?.emailAddress) {
@@ -78,8 +110,14 @@ function AdsDashboardContent() {
 
     try {
       setLoading(true);
-      const response = await fetch('/api/google-ads/metrics', {
-        headers: { 'x-user-email': user.primaryEmailAddress.emailAddress }
+      const dateRange = getDateRange(timeFilter);
+      
+      // Use specific start and end dates for precise filtering
+      const response = await fetch(`/api/google-ads/metrics?startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`, {
+        method: 'GET',
+        headers: { 
+          'x-user-email': user.primaryEmailAddress.emailAddress 
+        }
       });
       const data = await response.json();
       
@@ -275,7 +313,42 @@ function AdsDashboardContent() {
         {/* Campaigns Table */}
         <div className="bg-white shadow rounded-lg overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Active Campaigns</h2>
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-bold text-gray-900">Active Campaigns</h2>
+              <div className="flex space-x-2">
+                <span className="text-sm text-gray-500 mr-3">Time Period:</span>
+                <button
+                  onClick={() => setTimeFilter('today')}
+                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                    timeFilter === 'today'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Today
+                </button>
+                <button
+                  onClick={() => setTimeFilter('yesterday')}
+                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                    timeFilter === 'yesterday'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Yesterday
+                </button>
+                <button
+                  onClick={() => setTimeFilter('last7days')}
+                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                    timeFilter === 'last7days'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Last 7 Days
+                </button>
+              </div>
+            </div>
           </div>
           
           <div className="overflow-x-auto">
