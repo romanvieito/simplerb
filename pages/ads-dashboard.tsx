@@ -89,7 +89,6 @@ function AdsDashboardContent() {
       conversions: true,
       ctr: true,
       cpa: true,
-      roas: true,
       budgetUtil: true,
       impressionShare: true,
       rankLostImpressionShare: false,
@@ -441,7 +440,6 @@ function AdsDashboardContent() {
                             conversions: 'Conversions',
                             ctr: 'CTR',
                             cpa: 'CPA',
-                            roas: 'ROAS',
                             budgetUtil: 'Budget Util',
                             impressionShare: 'Impression Share',
                             rankLostImpressionShare: 'Rank Lost Imp. Share',
@@ -498,11 +496,6 @@ function AdsDashboardContent() {
                   {visibleColumns.cpa && (
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       CPA
-                    </th>
-                  )}
-                  {visibleColumns.roas && (
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ROAS
                     </th>
                   )}
                   {visibleColumns.budgetUtil && (
@@ -581,11 +574,6 @@ function AdsDashboardContent() {
                     {visibleColumns.cpa && (
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {formatCurrency(campaign.cpa)}
-                      </td>
-                    )}
-                    {visibleColumns.roas && (
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {campaign.roas.toFixed(2)}x
                       </td>
                     )}
                     {visibleColumns.budgetUtil && (
