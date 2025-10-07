@@ -112,8 +112,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         metrics.value_per_conversion,
         metrics.search_impression_share,
         metrics.search_rank_lost_impression_share,
-        metrics.search_rank_lost_top_impression_share,
-        metrics.quality_score
+        metrics.search_rank_lost_top_impression_share
       FROM campaign
       WHERE campaign.status != 'REMOVED'
     `;
@@ -129,9 +128,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const startDate = new Date();
     startDate.setDate(endDate.getDate() - days);
 
+    const startDateStr = startDate.toISOString().split('T')[0];
+    const endDateStr = endDate.toISOString().split('T')[0];
+    
+    console.log('Date range:', startDateStr, 'to', endDateStr);
+
+    // Apply dynamic date filter
     query += `
-      AND segments.date BETWEEN '${startDate.toISOString().split('T')[0]}' 
-      AND '${endDate.toISOString().split('T')[0]}'
+      AND segments.date BETWEEN '${startDateStr}' 
+      AND '${endDateStr}'
     `;
 
     query += ` ORDER BY metrics.cost_micros DESC`;
@@ -143,13 +148,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     try {
       response = await customer.query(query);
       console.log('Metrics response:', response);
-      rows = response.rows || [];
+      // Normalize response: some SDK versions return an array of rows directly
+      if (Array.isArray(response)) {
+        rows = response as any[];
+      } else if (response && Array.isArray((response as any).rows)) {
+        rows = (response as any).rows;
+      } else if (response && Array.isArray((response as any).results)) {
+        rows = (response as any).results;
+      } else {
+        rows = [];
+      }
     } catch (queryError) {
       console.error('Metrics query error:', queryError);
       
       // If query fails, return empty metrics with error info
       return res.status(200).json({
         success: true,
+        debug: {
+          error: 'Query failed',
+          errorMessage: queryError instanceof Error ? queryError.message : 'Unknown query error',
+          errorDetails: queryError,
+          query: query
+        },
         metrics: {
           totalImpressions: 0,
           totalClicks: 0,
@@ -180,6 +200,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     if (rows.length === 0) {
       return res.status(200).json({
         success: true,
+        debug: {
+          message: 'No rows returned from query',
+          query: query
+        },
         metrics: {
           totalImpressions: 0,
           totalClicks: 0,
@@ -223,12 +247,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     // Group by campaign
     const campaignMap = new Map();
 
-    rows.forEach((row: any) => {
+    console.log('Processing', rows.length, 'rows');
+    if (rows.length === 0) {
+      console.log('No rows to process');
+    }
+    rows.forEach((row: any, index: number) => {
       const campaignId = row.campaign?.id;
       const campaignName = row.campaign?.name || 'Unknown';
-      const campaignStatus = row.campaign?.status || 'UNKNOWN';
-      const campaignType = row.campaign?.advertising_channel_type || 'UNKNOWN';
+      // Map numeric status to string
+      const statusMap = { 1: 'UNKNOWN', 2: 'ENABLED', 3: 'PAUSED', 4: 'REMOVED' };
+      const campaignStatus = statusMap[row.campaign?.status] || 'UNKNOWN';
+      // Map numeric channel type to string
+      const channelTypeMap = { 1: 'UNKNOWN', 2: 'SEARCH', 3: 'DISPLAY', 4: 'SHOPPING', 5: 'HOTEL', 6: 'VIDEO', 7: 'MULTI_CHANNEL', 8: 'LOCAL', 9: 'SMART', 10: 'PERFORMANCE_MAX' };
+      const campaignType = channelTypeMap[row.campaign?.advertising_channel_type] || 'UNKNOWN';
       const budget = parseInt(row.campaign_budget?.amount_micros || 0);
+      
+      console.log(`Row ${index}: ID=${campaignId}, Name=${campaignName}, Status=${campaignStatus}, Type=${campaignType}`);
 
       if (!campaignMap.has(campaignId)) {
         campaignMap.set(campaignId, {
@@ -263,19 +297,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       campaign.conversionRate += parseFloat(row.metrics?.conversions_from_interactions_rate || 0);
       campaign.cpa += parseFloat(row.metrics?.cost_per_conversion || 0);
       campaign.roas += parseFloat(row.metrics?.value_per_conversion || 0);
-      campaign.qualityScore += parseFloat(row.metrics?.quality_score || 0);
       campaign.rowCount += 1;
     });
 
+    console.log('Campaign map size:', campaignMap.size);
+
     // Calculate averages and totals
+    let processedCount = 0;
     campaignMap.forEach((campaign) => {
-      if (campaign.rowCount > 0) {
-        campaign.ctr = campaign.ctr / campaign.rowCount;
-        campaign.cpc = campaign.cpc / campaign.rowCount;
-        campaign.conversionRate = campaign.conversionRate / campaign.rowCount;
-        campaign.cpa = campaign.cpa / campaign.rowCount;
-        campaign.roas = campaign.roas / campaign.rowCount;
-        campaign.qualityScore = campaign.qualityScore / campaign.rowCount;
+      // Include campaigns even if they have no data in the date range
+      if (campaign.rowCount >= 0) { // Changed from > 0 to >= 0
+        processedCount++;
+        campaign.ctr = campaign.rowCount > 0 ? campaign.ctr / campaign.rowCount : 0;
+        campaign.cpc = campaign.rowCount > 0 ? campaign.cpc / campaign.rowCount : 0;
+        campaign.conversionRate = campaign.rowCount > 0 ? campaign.conversionRate / campaign.rowCount : 0;
+        campaign.cpa = campaign.rowCount > 0 ? campaign.cpa / campaign.rowCount : 0;
+        campaign.roas = campaign.rowCount > 0 ? campaign.roas / campaign.rowCount : 0;
         campaign.cost = campaign.cost / 1000000; // Convert from micros to dollars
         campaign.cpc = campaign.cpc / 1000000; // Convert from micros to dollars
         campaign.cpa = campaign.cpa / 1000000; // Convert from micros to dollars
@@ -298,6 +335,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         campaigns.push(campaign);
       }
     });
+    
+    console.log('Processed campaigns:', processedCount, 'Final campaigns array length:', campaigns.length);
 
     // Calculate overall averages
     const averageCtr = campaignCount > 0 ? totalCtr / campaignCount : 0;
@@ -329,6 +368,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     res.status(200).json({
       success: true,
+      debug: {
+        rawRowsCount: rows.length,
+        campaignMapSize: campaignMap.size,
+        processedCampaigns: campaigns.length,
+        sampleRow: rows[0] || null
+      },
       metrics: {
         totalImpressions,
         totalClicks,
