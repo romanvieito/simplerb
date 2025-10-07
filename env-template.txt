@@ -1,0 +1,20 @@
+# Google Ads API Configuration
+# Copy this to .env.local and replace with your actual values
+
+# Developer Token (from Google Ads API Center)
+GADS_DEVELOPER_TOKEN=your_developer_token_here
+
+# OAuth 2.0 Credentials (from Google Cloud Console)
+GADS_CLIENT_ID=your_oauth_client_id_here
+GADS_CLIENT_SECRET=your_oauth_client_secret_here
+
+# Refresh Token (from the script above)
+GADS_REFRESH_TOKEN=your_refresh_token_here
+
+# Customer ID (from Google Ads URL, no hyphens)
+GADS_LOGIN_CUSTOMER_ID=your_customer_id_here
+
+# Optional: AdPilot Configuration
+ADPILOT_ADMIN_EMAILS=your-email@example.com,admin@example.com
+ADPILOT_LABEL=AdPilot
+ADPILOT_VALIDATE_ONLY=false

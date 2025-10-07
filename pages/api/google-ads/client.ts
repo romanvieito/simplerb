@@ -14,11 +14,15 @@ export function getGoogleAdsClient() {
   }
 
   // Create a new client instance each time to avoid issues
-  // Updated for Google Ads API v21
+  // Updated for Google Ads API v21 with enhanced configuration
   const client = new GoogleAdsApi({
     client_id: GADS_CLIENT_ID,
     client_secret: GADS_CLIENT_SECRET,
     developer_token: GADS_DEVELOPER_TOKEN,
+    // Enable logging for debugging
+    log_level: process.env.NODE_ENV === 'production' ? 'ERROR' : 'INFO',
+    // Set API version explicitly
+    api_version: 'v21',
   });
 
   return client;
@@ -31,11 +35,26 @@ export function getGoogleAdsCustomer() {
     GADS_REFRESH_TOKEN
   } = process.env;
 
-  // Updated initialization for v21
+  // Updated initialization for v21 with enhanced error handling
   return client.Customer({
     customer_id: GADS_LOGIN_CUSTOMER_ID,
     refresh_token: GADS_REFRESH_TOKEN,
     login_customer_id: GADS_LOGIN_CUSTOMER_ID,
+    // Add timeout configuration
+    timeout: 30000, // 30 seconds
+  });
+}
+
+// Enhanced function to get customer with specific customer ID
+export function getGoogleAdsCustomerById(customerId: string) {
+  const client = getGoogleAdsClient();
+  const { GADS_REFRESH_TOKEN } = process.env;
+
+  return client.Customer({
+    customer_id: customerId,
+    refresh_token: GADS_REFRESH_TOKEN,
+    login_customer_id: process.env.GADS_LOGIN_CUSTOMER_ID,
+    timeout: 30000,
   });
 }
 
@@ -48,4 +67,45 @@ export function validateAdPilotAccess(userEmail?: string): boolean {
   }
   
   return userEmail ? adminEmails.includes(userEmail) : false;
+}
+
+// Utility function to format customer ID (remove hyphens)
+export function formatCustomerId(customerId: string): string {
+  return customerId.replace(/-/g, '');
+}
+
+// Utility function to generate resource names
+export function generateResourceName(resourceType: string, customerId: string, resourceId?: string): string {
+  const formattedCustomerId = formatCustomerId(customerId);
+  const id = resourceId || Date.now().toString();
+  return `customers/${formattedCustomerId}/${resourceType}/${id}`;
+}
+
+// Utility function to parse resource name and extract ID
+export function extractResourceId(resourceName: string): string | null {
+  const parts = resourceName.split('/');
+  return parts.length > 0 ? parts[parts.length - 1] : null;
+}
+
+// Enhanced error handling for Google Ads API errors
+export function handleGoogleAdsError(error: any): { message: string; code?: string; details?: any } {
+  if (error?.code) {
+    return {
+      message: error.message || 'Google Ads API error',
+      code: error.code.toString(),
+      details: error.details
+    };
+  }
+  
+  if (error?.message) {
+    return {
+      message: error.message,
+      details: error
+    };
+  }
+  
+  return {
+    message: 'Unknown Google Ads API error',
+    details: error
+  };
 }

@@ -1,5 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getGoogleAdsCustomer, validateAdPilotAccess } from './client';
+import { 
+  getGoogleAdsCustomer, 
+  validateAdPilotAccess, 
+  generateResourceName, 
+  extractResourceId, 
+  handleGoogleAdsError,
+  formatCustomerId 
+} from './client';
 
 interface CreateCampaignRequest {
   type: 'SEARCH' | 'PMAX';
@@ -15,6 +22,38 @@ interface CreateCampaignRequest {
   };
   campaignNameSuffix?: string;
   brand?: string;
+  // Enhanced targeting options
+  demographics?: {
+    ageRanges?: string[];
+    genders?: string[];
+    parentalStatuses?: string[];
+    incomeRanges?: string[];
+  };
+  audiences?: {
+    interests?: string[];
+    remarketing?: string[];
+    customAudiences?: string[];
+  };
+  bidding?: {
+    strategy?: 'TARGET_CPA' | 'TARGET_ROAS' | 'MAXIMIZE_CONVERSIONS' | 'MAXIMIZE_CONVERSION_VALUE' | 'MANUAL_CPC';
+    targetCpa?: number;
+    targetRoas?: number;
+    maxCpc?: number;
+  };
+  adSchedule?: {
+    enabled: boolean;
+    schedule: Array<{
+      dayOfWeek: string;
+      startHour: number;
+      endHour: number;
+      bidModifier?: number;
+    }>;
+  };
+  deviceTargeting?: {
+    mobile?: number; // bid modifier
+    tablet?: number;
+    desktop?: number;
+  };
 }
 
 interface CreateCampaignResponse {
@@ -49,7 +88,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       url,
       copy,
       campaignNameSuffix = '',
-      brand = 'AdPilot'
+      brand = 'AdPilot',
+      demographics,
+      audiences,
+      bidding,
+      adSchedule,
+      deviceTargeting
     }: CreateCampaignRequest = req.body;
 
     // Validate required fields
@@ -61,6 +105,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     const customer = getGoogleAdsCustomer();
+    const customerId = formatCustomerId(process.env.GADS_LOGIN_CUSTOMER_ID!);
 
     const adpilotLabel = process.env.ADPILOT_LABEL || 'AdPilot';
     const validateOnly = process.env.ADPILOT_VALIDATE_ONLY === 'true';
@@ -72,33 +117,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const operations: any[] = [];
 
-    // 1. Create Campaign Budget
-    const budgetResourceName = `customers/${process.env.GADS_LOGIN_CUSTOMER_ID}/campaignBudgets/${Date.now()}`;
+    // 1. Create Campaign Budget with enhanced configuration
+    const budgetResourceName = generateResourceName('campaignBudgets', customerId);
     const budgetOperation = {
       create: {
         name: `${campaignName} Budget`,
         delivery_method: 'STANDARD',
         amount_micros: budgetDaily * 1000000, // Convert to micros
         explicitly_shared: false,
+        // Add budget type for better control
+        type: 'STANDARD',
+        // Add period for daily budget
+        period: 'DAILY'
       }
     };
     operations.push(budgetOperation);
 
-    // 2. Create Campaign
-    const campaignResourceName = `customers/${process.env.GADS_LOGIN_CUSTOMER_ID}/campaigns/${Date.now() + 1}`;
+    // 2. Create Campaign with enhanced configuration
+    const campaignResourceName = generateResourceName('campaigns', customerId);
     const campaignOperation: any = {
       create: {
         name: campaignName,
         advertising_channel_type: type === 'SEARCH' ? 'SEARCH' : 'PERFORMANCE_MAX',
         status: 'PAUSED', // Start paused for review
         campaign_budget: budgetResourceName,
-        manual_cpc: type === 'SEARCH' ? {
-          enhanced_cpc_enabled: true
-        } : undefined,
+        // Enhanced bidding configuration
+        ...(type === 'SEARCH' ? {
+          manual_cpc: {
+            enhanced_cpc_enabled: true,
+            ...(bidding?.maxCpc && { cpc_bid_ceiling_micros: bidding.maxCpc * 1000000 })
+          }
+        } : {}),
         performance_max_setting: type === 'PMAX' ? {
-          final_url_expansion_opt_out: false
+          final_url_expansion_opt_out: false,
+          ...(bidding?.strategy && { bidding_strategy: bidding.strategy })
         } : undefined,
         labels: [adpilotLabel],
+        // Add network settings
+        network_settings: {
+          target_google_search: true,
+          target_search_network: true,
+          target_content_network: type === 'PMAX',
+          target_partner_search_network: false
+        },
+        // Add start and end dates
+        start_date: new Date().toISOString().split('T')[0].replace(/-/g, ''),
+        end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0].replace(/-/g, ''),
       }
     };
 
@@ -112,77 +176,129 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     operations.push(campaignOperation);
 
+    // 3. Add Location Targeting
+    if (locations.length > 0) {
+      locations.forEach(locationId => {
+        operations.push({
+          create: {
+            campaign: campaignResourceName,
+            criterion: {
+              type: 'LOCATION',
+              location: {
+                geo_target_constant: `geoTargetConstants/${locationId}`
+              }
+            },
+            status: 'ENABLED'
+          }
+        });
+      });
+    }
+
+    // 4. Add Language Targeting
+    if (languages.length > 0) {
+      languages.forEach(languageId => {
+        operations.push({
+          create: {
+            campaign: campaignResourceName,
+            criterion: {
+              type: 'LANGUAGE',
+              language: {
+                language_constant: `languageConstants/${languageId}`
+              }
+            },
+            status: 'ENABLED'
+          }
+        });
+      });
+    }
+
     if (type === 'SEARCH') {
-      // 3. Create Ad Group for Search
-      const adGroupResourceName = `customers/${process.env.GADS_LOGIN_CUSTOMER_ID}/adGroups/${Date.now() + 2}`;
+      // 5. Create Ad Group for Search
+      const adGroupResourceName = generateResourceName('adGroups', customerId);
       operations.push({
         create: {
           name: `${campaignName} Ad Group`,
           campaign: campaignResourceName,
-          cpc_bid_micros: 1000000, // $1.00 default bid
+          cpc_bid_micros: (bidding?.maxCpc || 1) * 1000000, // Use provided bid or default $1.00
           status: 'ENABLED',
+          // Add ad group type for better organization
+          type: 'SEARCH_STANDARD',
         }
       });
 
-      // 4. Create Responsive Search Ad
-      const adResourceName = `customers/${process.env.GADS_LOGIN_CUSTOMER_ID}/ads/${Date.now() + 3}`;
+      // 6. Create Responsive Search Ad
+      const adResourceName = generateResourceName('ads', customerId);
       operations.push({
         create: {
           type: 'RESPONSIVE_SEARCH_AD',
           ad_group: adGroupResourceName,
           responsive_search_ad: {
-            headlines: copy.headlines.slice(0, 15).map(headline => ({
+            headlines: copy.headlines.slice(0, 15).map((headline, index) => ({
               text: headline,
-              pinned_field: 'HEADLINE_1'
+              pinned_field: index === 0 ? 'HEADLINE_1' : undefined
             })),
             descriptions: copy.descriptions.slice(0, 4).map(desc => ({
               text: desc
             })),
             path1: 'shop',
             path2: 'now',
+            // Add more ad customization
+            business_name: brand,
+            call_to_action_text: 'LEARN_MORE',
           },
           final_urls: [url],
           status: 'ENABLED',
         }
       });
 
-      // 5. Create Keywords
+      // 7. Create Keywords with enhanced match types
       keywords.forEach((keyword, index) => {
+        const matchType = index < keywords.length * 0.3 ? 'EXACT' : 
+                         index < keywords.length * 0.6 ? 'PHRASE' : 'BROAD';
+        
         operations.push({
           create: {
             ad_group: adGroupResourceName,
             keyword: {
               text: keyword,
-              match_type: index < keywords.length / 2 ? 'EXACT' : 'PHRASE'
+              match_type: matchType
             },
-            cpc_bid_micros: 1000000, // $1.00 default bid
+            cpc_bid_micros: (bidding?.maxCpc || 1) * 1000000,
             status: 'ENABLED',
+            // Add keyword quality score tracking
+            quality_info: {
+              quality_score: 0 // Will be updated by Google
+            }
           }
         });
       });
 
     } else {
       // Performance Max Campaign
-      // 3. Create Asset Group
-      const assetGroupResourceName = `customers/${process.env.GADS_LOGIN_CUSTOMER_ID}/assetGroups/${Date.now() + 2}`;
+      // 5. Create Asset Group
+      const assetGroupResourceName = generateResourceName('assetGroups', customerId);
       operations.push({
         create: {
           name: `${campaignName} Asset Group`,
           campaign: campaignResourceName,
           final_urls: [url],
           status: 'ENABLED',
+          // Add asset group type
+          type: 'PERFORMANCE_MAX',
         }
       });
 
-      // 4. Create Text Assets (Headlines)
+      // 6. Create Text Assets (Headlines)
       copy.headlines.slice(0, 5).forEach((headline, index) => {
+        const assetResourceName = generateResourceName('assets', customerId);
         operations.push({
           create: {
             asset: {
               type: 'TEXT',
               text_asset: {
                 text: headline
-              }
+              },
+              resource_name: assetResourceName,
             },
             asset_group: assetGroupResourceName,
             status: 'ENABLED',
@@ -190,16 +306,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         });
       });
 
-      // 5. Create Long Headlines (if available)
+      // 7. Create Long Headlines (if available)
       if (copy.longHeadlines?.length) {
         copy.longHeadlines.slice(0, 5).forEach(longHeadline => {
+          const assetResourceName = generateResourceName('assets', customerId);
           operations.push({
             create: {
               asset: {
                 type: 'TEXT',
                 text_asset: {
                   text: longHeadline
-                }
+                },
+                resource_name: assetResourceName,
               },
               asset_group: assetGroupResourceName,
               status: 'ENABLED',
@@ -208,15 +326,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         });
       }
 
-      // 6. Create Description Assets
+      // 8. Create Description Assets
       copy.descriptions.slice(0, 5).forEach(description => {
+        const assetResourceName = generateResourceName('assets', customerId);
         operations.push({
           create: {
             asset: {
               type: 'TEXT',
               text_asset: {
                 text: description
-              }
+              },
+              resource_name: assetResourceName,
             },
             asset_group: assetGroupResourceName,
             status: 'ENABLED',
@@ -262,39 +382,23 @@ Campaign created successfully:
   } catch (error) {
     console.error('Error creating campaign:', error);
     
-    // Get more detailed error information
-    let errorMessage = 'Unknown error';
-    let errorCode = null;
-    let errorDetails = null;
-    
-    if (error instanceof Error) {
-      errorMessage = error.message;
-      errorDetails = error.stack;
-    } else if (typeof error === 'object' && error !== null) {
-      // Handle Google Ads API errors
-      if ('code' in error) {
-        errorCode = error.code;
-      }
-      if ('message' in error) {
-        errorMessage = error.message;
-      }
-      if ('details' in error) {
-        errorDetails = error.details;
-      }
-      // Convert to string if it's an object
-      if (errorMessage === 'Unknown error') {
-        errorMessage = JSON.stringify(error, null, 2);
-      }
-    }
+    const errorInfo = handleGoogleAdsError(error);
     
     // Provide more detailed error information
     const response = {
       success: false,
-      error: `Failed to create campaign: ${errorMessage}`,
-      errorCode: errorCode,
-      errorDetails: errorDetails,
+      error: `Failed to create campaign: ${errorInfo.message}`,
+      errorCode: errorInfo.code,
+      errorDetails: errorInfo.details,
       validateOnly: process.env.ADPILOT_VALIDATE_ONLY === 'true',
-      customerId: process.env.GADS_LOGIN_CUSTOMER_ID
+      customerId: process.env.GADS_LOGIN_CUSTOMER_ID,
+      troubleshooting: [
+        'Check that all required fields are provided',
+        'Verify your Google Ads account has sufficient permissions',
+        'Ensure your budget and bid amounts are within valid ranges',
+        'Check that your keywords and copy meet Google Ads policies',
+        'Verify your targeting settings are valid'
+      ]
     };
     
     res.status(500).json(response);
