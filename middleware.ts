@@ -17,6 +17,8 @@ export default authMiddleware({
     "/api/google-ads/analyze-csv",
     "/api/google-ads/test",
     "/api/google-ads/sample-data",
+    "/api/google-ads/keyword-planning",
+    "/api/keyword-research",
     "/api/migrations/run-campaign-analysis",
     "/api/migrations/run-normalized-migration",
     "/api/migrations/run-conversion-migration",
