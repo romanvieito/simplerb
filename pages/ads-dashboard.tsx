@@ -173,9 +173,6 @@ export default function AdsDashboard() {
             <div className="flex justify-between items-center">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Google Ads Dashboard</h1>
-                <p className="text-sm text-gray-600 mt-1">
-                  Showing active campaigns (last 30 days)
-                </p>
               </div>
               <div className="flex space-x-4">
               <button
@@ -241,38 +238,18 @@ export default function AdsDashboard() {
           </div>
         </div>
 
-        {/* Performance Insights */}
-        {metrics?.performance && (
+        {/* Recommendations */}
+        {metrics?.performance?.recommendations && metrics.performance.recommendations.length > 0 && (
           <div className="bg-white p-6 rounded-lg shadow mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Performance Insights</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Best Performing Campaign</h3>
-                <p className="text-lg font-semibold text-green-600">
-                  {metrics.performance.bestPerformingCampaign || 'N/A'}
-                </p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Needs Attention</h3>
-                <p className="text-lg font-semibold text-red-600">
-                  {metrics.performance.worstPerformingCampaign || 'N/A'}
-                </p>
-              </div>
-            </div>
-            
-            {metrics.performance.recommendations.length > 0 && (
-              <div className="mt-6">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Recommendations</h3>
-                <ul className="space-y-2">
-                  {metrics.performance.recommendations.map((rec, index) => (
-                    <li key={index} className="text-sm text-gray-700 flex items-start">
-                      <span className="text-blue-500 mr-2">•</span>
-                      {rec}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Recommendations</h2>
+            <ul className="space-y-2">
+              {metrics.performance.recommendations.map((rec, index) => (
+                <li key={index} className="text-sm text-gray-700 flex items-start">
+                  <span className="text-blue-500 mr-2">•</span>
+                  {rec}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 
