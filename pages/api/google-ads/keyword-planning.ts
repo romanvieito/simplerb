@@ -111,7 +111,7 @@ export default async function handler(
     };
 
     // Generate keyword ideas using the keyword planning service
-    const keywordIdeasResponse = await customer.keywordPlanIdeaService.generateKeywordIdeas(keywordIdeasRequest);
+    const keywordIdeasResponse = await client.service.keywordPlanIdeaService.generateKeywordIdeas(keywordIdeasRequest);
 
     // Process the results
     const keywordIdeas: KeywordIdea[] = keywordIdeasResponse.results.map((idea: any) => {

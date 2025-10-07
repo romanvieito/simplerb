@@ -24,6 +24,7 @@ export default authMiddleware({
             "/api/google-ads/test",
             "/api/google-ads/metrics",
             "/api/google-ads/create-campaign",
+            "/api/google-ads/keyword-planning",
             "/api/google-ads/sample-data",
             "/api/google-ads/whoami",
             "/api/keyword-research",

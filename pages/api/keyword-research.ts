@@ -87,17 +87,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
     } catch (keywordPlanningError) {
-      console.warn('Keyword planning service failed, falling back to mock data:', keywordPlanningError);
+      console.warn('Keyword planning service failed:', keywordPlanningError);
+
+      // Optional deterministic mock fallback to avoid fluctuating values
+      const USE_DETERMINISTIC_MOCK = process.env.GADS_ENABLE_DETERMINISTIC_MOCK === 'true' || process.env.NODE_ENV !== 'production';
+      if (USE_DETERMINISTIC_MOCK) {
+        const keywordListDet = keywordList;
+        const deterministic = (text: string) => {
+          let hash = 0;
+          for (let i = 0; i < text.length; i++) {
+            hash = (hash * 31 + text.charCodeAt(i)) | 0;
+          }
+          const vol = Math.abs(hash % 90000) + 1000; // 1k - 91k stable range
+          const compLevels = ['LOW', 'MEDIUM', 'HIGH'] as const;
+          const comp = compLevels[Math.abs(hash) % compLevels.length];
+          return { volume: vol, competition: comp } as const;
+        };
+
+        const mockResults: KeywordResult[] = keywordListDet.map((k) => {
+          const { volume, competition } = deterministic(`${k}|${countryCode}|${languageCode}`);
+          return { keyword: k, searchVolume: volume, competition };
+        });
+
+        return res.status(200).json(mockResults);
+      }
+
+      // If deterministic mock is disabled, provide a helpful error message
+      console.error('Keyword planning service unavailable and mock disabled');
+      return res.status(503).json({ 
+        message: 'Keyword planning service is currently unavailable. This may be due to API permission limitations or service restrictions. Please try again later or contact support.',
+        error: 'SERVICE_UNAVAILABLE',
+        details: 'Google Ads API keyword planning requires special permissions that may not be available with your current account access level.'
+      });
     }
-
-    // Fallback to mock data if keyword planning service fails
-    const results = keywordList.map((keyword: string, index: number) => ({
-      keyword: keyword,
-      searchVolume: Math.floor(Math.random() * 10000) + 1000, // Mock search volume
-      competition: ['LOW', 'MEDIUM', 'HIGH'][Math.floor(Math.random() * 3)], // Mock competition
-    }));
-
-    res.status(200).json(results);
   } catch (error) {
     console.error('Error:', error);
     let errorMessage = 'An error occurred during keyword research';

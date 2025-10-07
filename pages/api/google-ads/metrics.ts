@@ -72,6 +72,8 @@ interface MetricsResponse {
   errorDetails?: any;
   note?: string;
   queryError?: string;
+  debug?: any;
+  troubleshooting?: string[];
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<MetricsResponse>) {
@@ -86,13 +88,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       return res.status(403).json({ success: false, error: 'Access denied' });
     }
 
-    const { campaignId, days = 7 }: MetricsRequest = req.query;
+    const { campaignId, days = 30 }: MetricsRequest = req.query;
 
     const customer = getGoogleAdsCustomer();
 
     const adpilotLabel = process.env.ADPILOT_LABEL || 'AdPilot';
 
     // Build the enhanced query with more detailed metrics
+    // Only include truly active campaigns (ENABLED + currently serving states)
     let query = `
       SELECT 
         campaign.id,
@@ -114,7 +117,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         metrics.search_rank_lost_impression_share,
         metrics.search_rank_lost_top_impression_share
       FROM campaign
-      WHERE campaign.status != 'REMOVED'
+      WHERE campaign.status = 'ENABLED'
+        AND campaign.serving_status = 'SERVING'
     `;
 
     if (campaignId) {
@@ -135,8 +139,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     // Apply dynamic date filter
     query += `
-      AND segments.date BETWEEN '${startDateStr}' 
-      AND '${endDateStr}'
+      AND segments.date BETWEEN '${startDateStr}' AND '${endDateStr}'
     `;
 
     query += ` ORDER BY metrics.cost_micros DESC`;
@@ -198,6 +201,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     // If no campaigns found, return empty metrics
     if (rows.length === 0) {
+      console.log('No campaigns found in query, returning empty results');
       return res.status(200).json({
         success: true,
         debug: {
@@ -255,11 +259,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       const campaignId = row.campaign?.id;
       const campaignName = row.campaign?.name || 'Unknown';
       // Map numeric status to string
-      const statusMap = { 1: 'UNKNOWN', 2: 'ENABLED', 3: 'PAUSED', 4: 'REMOVED' };
-      const campaignStatus = statusMap[row.campaign?.status] || 'UNKNOWN';
+      const statusMap: { [key: number]: string } = { 1: 'UNKNOWN', 2: 'ENABLED', 3: 'PAUSED', 4: 'REMOVED' };
+      const campaignStatus = statusMap[row.campaign?.status as number] || 'UNKNOWN';
       // Map numeric channel type to string
-      const channelTypeMap = { 1: 'UNKNOWN', 2: 'SEARCH', 3: 'DISPLAY', 4: 'SHOPPING', 5: 'HOTEL', 6: 'VIDEO', 7: 'MULTI_CHANNEL', 8: 'LOCAL', 9: 'SMART', 10: 'PERFORMANCE_MAX' };
-      const campaignType = channelTypeMap[row.campaign?.advertising_channel_type] || 'UNKNOWN';
+      const channelTypeMap: { [key: number]: string } = { 1: 'UNKNOWN', 2: 'SEARCH', 3: 'DISPLAY', 4: 'SHOPPING', 5: 'HOTEL', 6: 'VIDEO', 7: 'MULTI_CHANNEL', 8: 'LOCAL', 9: 'SMART', 10: 'PERFORMANCE_MAX' };
+      const campaignType = channelTypeMap[row.campaign?.advertising_channel_type as number] || 'UNKNOWN';
       const budget = parseInt(row.campaign_budget?.amount_micros || 0);
       
       console.log(`Row ${index}: ID=${campaignId}, Name=${campaignName}, Status=${campaignStatus}, Type=${campaignType}`);

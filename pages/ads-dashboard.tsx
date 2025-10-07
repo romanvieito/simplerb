@@ -132,6 +132,7 @@ export default function AdsDashboard() {
     return `${num.toFixed(2)}%`;
   };
 
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -168,9 +169,15 @@ export default function AdsDashboard() {
 
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <h1 className="text-3xl font-bold text-gray-900">Google Ads Dashboard</h1>
-            <div className="flex space-x-4">
+          <div className="py-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Google Ads Dashboard</h1>
+                <p className="text-sm text-gray-600 mt-1">
+                  Showing active campaigns (last 30 days)
+                </p>
+              </div>
+              <div className="flex space-x-4">
               <button
                 onClick={fetchMetrics}
                 className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
@@ -184,6 +191,7 @@ export default function AdsDashboard() {
               >
                 {optimizing ? 'Optimizing...' : 'Run Optimization'}
               </button>
+              </div>
             </div>
           </div>
         </div>
@@ -268,10 +276,11 @@ export default function AdsDashboard() {
           </div>
         )}
 
+
         {/* Campaigns Table */}
         <div className="bg-white shadow rounded-lg overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Campaigns</h2>
+            <h2 className="text-xl font-bold text-gray-900">Active Campaigns</h2>
           </div>
           
           <div className="overflow-x-auto">
@@ -305,7 +314,7 @@ export default function AdsDashboard() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {metrics?.campaigns.map((campaign) => (
+                {metrics?.campaigns?.map((campaign) => (
                   <tr 
                     key={campaign.id}
                     className={`hover:bg-gray-50 cursor-pointer ${
