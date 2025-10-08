@@ -246,6 +246,22 @@ function AdsDashboardContent() {
       rankLostTopImpressionShare: false
     };
   });
+  const [showCardSelector, setShowCardSelector] = useState(false);
+  const [visibleCards, setVisibleCards] = useState<{[key: string]: boolean}>(() => {
+    // Load from localStorage on component mount, default all cards visible
+    if (typeof window !== 'undefined') {
+      const savedCards = localStorage.getItem('ads-dashboard-visible-cards');
+      if (savedCards) {
+        return JSON.parse(savedCards);
+      }
+    }
+    return {
+      totalSpend: true,
+      conversions: true,
+      averageCtr: true,
+      averageCpa: true
+    };
+  });
   const [boostLoading, setBoostLoading] = useState(false);
   const [boostResult, setBoostResult] = useState<string | null>(null);
   const [showBoostModal, setShowBoostModal] = useState(false);
@@ -267,20 +283,32 @@ function AdsDashboardContent() {
     }
   };
 
+  // Function to update card visibility and save to localStorage
+  const updateCardVisibility = (card: string, isVisible: boolean) => {
+    const newVisibleCards = { ...visibleCards, [card]: isVisible };
+    setVisibleCards(newVisibleCards);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ads-dashboard-visible-cards', JSON.stringify(newVisibleCards));
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchMetrics();
     }
   }, [user, timeFilter]);
 
-  // Close column selector when clicking outside
+  // Close column selector and card selector when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (showColumnSelector) {
-        const target = event.target as HTMLElement;
-        if (!target.closest('.column-selector')) {
-          setShowColumnSelector(false);
-        }
+      const target = event.target as HTMLElement;
+      
+      if (showColumnSelector && !target.closest('.column-selector')) {
+        setShowColumnSelector(false);
+      }
+      
+      if (showCardSelector && !target.closest('.card-selector')) {
+        setShowCardSelector(false);
       }
     };
 
@@ -288,7 +316,7 @@ function AdsDashboardContent() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showColumnSelector]);
+  }, [showColumnSelector, showCardSelector]);
 
   const getDateRange = (filter: string) => {
     const today = new Date();
@@ -623,45 +651,98 @@ Format your response with clear section headers and bullet points. Be specific w
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-gray-500">Total Spend</h3>
-            <p className="text-2xl font-bold text-gray-900">
-              {formatCurrency(metrics?.totalCost || 0)}
-            </p>
-            <p className="text-sm text-gray-600">
-              Budget: {formatCurrency(metrics?.totalBudget || 0)}
-            </p>
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Overview Metrics</h2>
+            
+            {/* Card Selector */}
+            <div className="relative card-selector">
+              <button
+                onClick={() => setShowCardSelector(!showCardSelector)}
+                className="flex items-center space-x-1 px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+              >
+                <span>Cards</span>
+                <svg className={`w-4 h-4 transition-transform ${showCardSelector ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {showCardSelector && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50 card-selector">
+                  <div className="p-2">
+                    <div className="text-xs font-medium text-gray-500 mb-2">Show/Hide Cards</div>
+                    <div className="space-y-1">
+                      {Object.entries({
+                        totalSpend: 'Total Spend',
+                        conversions: 'Conversions',
+                        averageCtr: 'Average CTR',
+                        averageCpa: 'Average CPA'
+                      }).map(([key, label]) => (
+                        <label key={key} className="flex items-center space-x-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={visibleCards[key]}
+                            onChange={(e) => updateCardVisibility(key, e.target.checked)}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-gray-700">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-gray-500">Conversions</h3>
-            <p className="text-2xl font-bold text-gray-900">
-              {formatNumber(metrics?.totalConversions || 0)}
-            </p>
-            <p className="text-sm text-gray-600">
-              Value: {formatCurrency(metrics?.totalConversionValue || 0)}
-            </p>
-          </div>
-          
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-gray-500">Average CTR</h3>
-            <p className="text-2xl font-bold text-gray-900">
-              {formatPercentage(metrics?.averageCtr || 0)}
-            </p>
-            <p className="text-sm text-gray-600">
-              Clicks: {formatNumber(metrics?.totalClicks || 0)}
-            </p>
-          </div>
-          
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-sm font-medium text-gray-500">Average CPA</h3>
-            <p className="text-2xl font-bold text-gray-900">
-              {formatCurrency(metrics?.averageCpa || 0)}
-            </p>
-            <p className="text-sm text-gray-600">
-              ROAS: {metrics?.averageRoas?.toFixed(2) || 0}x
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {visibleCards.totalSpend && (
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-sm font-medium text-gray-500">Total Spend</h3>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(metrics?.totalCost || 0)}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Budget: {formatCurrency(metrics?.totalBudget || 0)}
+                </p>
+              </div>
+            )}
+            
+            {visibleCards.conversions && (
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-sm font-medium text-gray-500">Conversions</h3>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatNumber(metrics?.totalConversions || 0)}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Value: {formatCurrency(metrics?.totalConversionValue || 0)}
+                </p>
+              </div>
+            )}
+            
+            {visibleCards.averageCtr && (
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-sm font-medium text-gray-500">Average CTR</h3>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatPercentage(metrics?.averageCtr || 0)}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Clicks: {formatNumber(metrics?.totalClicks || 0)}
+                </p>
+              </div>
+            )}
+            
+            {visibleCards.averageCpa && (
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-sm font-medium text-gray-500">Average CPA</h3>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(metrics?.averageCpa || 0)}
+                </p>
+                <p className="text-sm text-gray-600">
+                  ROAS: {metrics?.averageRoas?.toFixed(2) || 0}x
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
