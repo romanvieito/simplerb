@@ -248,7 +248,7 @@ function AdsDashboardContent() {
   });
   const [showCardSelector, setShowCardSelector] = useState(false);
   const [visibleCards, setVisibleCards] = useState<{[key: string]: boolean}>(() => {
-    // Load from localStorage on component mount, default all cards visible
+    // Load from localStorage on component mount, default core cards visible
     if (typeof window !== 'undefined') {
       const savedCards = localStorage.getItem('ads-dashboard-visible-cards');
       if (savedCards) {
@@ -259,7 +259,13 @@ function AdsDashboardContent() {
       totalSpend: true,
       conversions: true,
       averageCtr: true,
-      averageCpa: true
+      averageCpa: true,
+      totalImpressions: false,
+      totalClicks: false,
+      averageCpc: false,
+      conversionRate: false,
+      roas: false,
+      budgetUtilization: false
     };
   });
   const [boostLoading, setBoostLoading] = useState(false);
@@ -668,7 +674,7 @@ Format your response with clear section headers and bullet points. Be specific w
               </button>
               
               {showCardSelector && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50 card-selector">
+                <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-md shadow-lg z-50 max-h-96 overflow-y-auto card-selector">
                   <div className="p-2">
                     <div className="text-xs font-medium text-gray-500 mb-2">Show/Hide Cards</div>
                     <div className="space-y-1">
@@ -676,7 +682,13 @@ Format your response with clear section headers and bullet points. Be specific w
                         totalSpend: 'Total Spend',
                         conversions: 'Conversions',
                         averageCtr: 'Average CTR',
-                        averageCpa: 'Average CPA'
+                        averageCpa: 'Average CPA',
+                        totalImpressions: 'Total Impressions',
+                        totalClicks: 'Total Clicks',
+                        averageCpc: 'Average CPC',
+                        conversionRate: 'Conversion Rate',
+                        roas: 'ROAS',
+                        budgetUtilization: 'Budget Utilization'
                       }).map(([key, label]) => (
                         <label key={key} className="flex items-center space-x-2 text-sm">
                           <input
@@ -741,6 +753,86 @@ Format your response with clear section headers and bullet points. Be specific w
                 <p className="text-sm text-gray-600">
                   ROAS: {metrics?.averageRoas?.toFixed(2) || 0}x
                 </p>
+              </div>
+            )}
+            
+            {visibleCards.totalImpressions && (
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-sm font-medium text-gray-500">Total Impressions</h3>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatNumber(metrics?.totalImpressions || 0)}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Ad views
+                </p>
+              </div>
+            )}
+            
+            {visibleCards.totalClicks && (
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-sm font-medium text-gray-500">Total Clicks</h3>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatNumber(metrics?.totalClicks || 0)}
+                </p>
+                <p className="text-sm text-gray-600">
+                  CTR: {formatPercentage(metrics?.averageCtr || 0)}
+                </p>
+              </div>
+            )}
+            
+            {visibleCards.averageCpc && (
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-sm font-medium text-gray-500">Average CPC</h3>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(metrics?.averageCpc || 0)}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Cost per click
+                </p>
+              </div>
+            )}
+            
+            {visibleCards.conversionRate && (
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-sm font-medium text-gray-500">Conversion Rate</h3>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatPercentage(metrics?.averageConversionRate || 0)}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {formatNumber(metrics?.totalConversions || 0)} conversions
+                </p>
+              </div>
+            )}
+            
+            {visibleCards.roas && (
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-sm font-medium text-gray-500">ROAS</h3>
+                <p className="text-2xl font-bold text-gray-900">
+                  {metrics?.averageRoas?.toFixed(2) || 0}x
+                </p>
+                <p className="text-sm text-gray-600">
+                  Return on ad spend
+                </p>
+              </div>
+            )}
+            
+            {visibleCards.budgetUtilization && (
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h3 className="text-sm font-medium text-gray-500">Budget Utilization</h3>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatPercentage(metrics?.budgetUtilization || 0)}
+                </p>
+                <div className="mt-2">
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className={`h-2 rounded-full transition-all ${
+                        (metrics?.budgetUtilization || 0) > 80 ? 'bg-green-500' :
+                        (metrics?.budgetUtilization || 0) > 50 ? 'bg-yellow-500' : 'bg-red-500'
+                      }`}
+                      style={{ width: `${Math.min(metrics?.budgetUtilization || 0, 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
