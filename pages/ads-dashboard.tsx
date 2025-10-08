@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createParser, ParsedEvent, ReconnectInterval } from 'eventsource-parser';
 import Head from 'next/head';
 import { useUser } from '@clerk/nextjs';
 import AuthGuard from '../components/AuthGuard';
@@ -426,21 +427,116 @@ function AdsDashboardContent() {
       setShowBoostModal(true);
       setBoostResult(null);
 
-      const response = await fetch('/api/google-ads/boost-analysis', {
+      const { timePeriod, visibleColumns, campaigns, summary } = boostData;
+
+      const campaignsData = campaigns.map((campaign: any, idx: number) => {
+        const parts = [`Campaign ${idx + 1}:`];
+        Object.entries(campaign).forEach(([key, value]) => {
+          parts.push(`  ${key}: ${JSON.stringify(value)}`);
+        });
+        return parts.join('\n');
+      }).join('\n\n');
+
+      const prompt = `You are an expert Google Ads consultant analyzing campaign performance data. Provide comprehensive, actionable analysis.
+
+TIME PERIOD: ${timePeriod}
+
+VISIBLE METRICS: ${visibleColumns.join(', ')}
+
+SUMMARY METRICS:
+- Total Spend: $${summary.totalSpend.toFixed(2)}
+- Total Budget: $${summary.totalBudget.toFixed(2)}
+- Budget Utilization: ${summary.budgetUtilization.toFixed(2)}%
+- Total Impressions: ${summary.totalImpressions.toLocaleString()}
+- Total Clicks: ${summary.totalClicks.toLocaleString()}
+- Total Conversions: ${summary.totalConversions}
+- Total Conversion Value: $${summary.totalConversionValue.toFixed(2)}
+- Average CTR: ${summary.averageCtr.toFixed(2)}%
+- Average CPC: $${summary.averageCpc.toFixed(2)}
+- Average Conversion Rate: ${summary.averageConversionRate.toFixed(2)}%
+- Average CPA: $${summary.averageCpa.toFixed(2)}
+- Average ROAS: ${summary.averageRoas.toFixed(2)}x
+
+CAMPAIGN DATA:
+${campaignsData}
+
+Based on this data, provide a comprehensive analysis with the following sections:
+
+1. EXECUTIVE SUMMARY
+   - Overall performance assessment
+   - Key findings (2-3 bullet points)
+
+2. KEY PERFORMANCE INSIGHTS
+   - What's working well
+   - Areas of concern
+   - Notable trends or patterns
+
+3. OPTIMIZATION RECOMMENDATIONS
+   - Specific, actionable recommendations (prioritized)
+   - Expected impact of each recommendation
+   - Quick wins vs. long-term improvements
+
+4. BUDGET OPTIMIZATION
+   - Budget allocation suggestions
+   - Campaigns to scale up or down
+   - ROI improvement opportunities
+
+5. CAMPAIGN-SPECIFIC INSIGHTS
+   - Best performing campaigns and why
+   - Underperforming campaigns and how to fix them
+   - Comparison insights
+
+6. STRATEGIC SUGGESTIONS
+   - Testing opportunities
+   - New targeting or messaging angles
+   - Competitive positioning ideas
+
+7. RED FLAGS & CONCERNS
+   - Any anomalies or urgent issues
+   - Risk factors to address
+
+Format your response with clear section headers and bullet points. Be specific with numbers and percentages. Focus on actionable insights.`;
+
+      const response = await fetch('/api/openai', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(boostData),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, ptemp: 0.2, ptop: 1 }),
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        setBoostResult(data.analysis);
-      } else {
-        setBoostResult(`Error: ${data.error || 'Failed to analyze campaigns'}`);
+      if (!response.ok) {
+        throw new Error(response.statusText);
       }
+
+      const stream = response.body;
+      if (!stream) {
+        throw new Error('No response body');
+      }
+
+      const reader = stream.getReader();
+      const decoder = new TextDecoder();
+      let accumulated = '';
+
+      const onParse = (event: ParsedEvent | ReconnectInterval) => {
+        if (event.type === 'event') {
+          const data = event.data;
+          try {
+            const text = JSON.parse(data).text ?? '';
+            accumulated += text;
+            setBoostResult(accumulated);
+          } catch (_) {}
+        }
+      };
+
+      const parser = createParser(onParse);
+      let done = false;
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        const chunkValue = decoder.decode(value);
+        parser.feed(chunkValue);
+      }
+
+      setBoostResult(accumulated);
     } catch (err) {
       setBoostResult(`Error: ${(err as Error).message}`);
     } finally {
@@ -886,7 +982,7 @@ function AdsDashboardContent() {
                   <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  <h2 className="text-2xl font-bold text-gray-900">AI Campaign Analysis</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">AdsPilot Analysis</h2>
                 </div>
                 <button
                   onClick={() => setShowBoostModal(false)}

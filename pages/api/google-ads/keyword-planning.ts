@@ -39,6 +39,10 @@ export default async function handler(
   try {
     const { keywords, countryCode = 'US', languageCode = 'en' }: KeywordPlanningRequest = req.body;
 
+    console.log('🔍 Google Ads Keyword Planning API called');
+    console.log(`📝 Keywords: ${keywords.join(', ')}`);
+    console.log(`🌍 Country: ${countryCode}, Language: ${languageCode}`);
+
     if (!keywords || keywords.length === 0) {
       return res.status(400).json({ 
         success: false, 
@@ -124,9 +128,10 @@ export default async function handler(
     };
 
     // Generate keyword ideas using the keyword planning service (correct accessor)
+    console.log('📤 Sending request to Google Ads API...');
     console.log('Keyword planning request:', JSON.stringify(keywordIdeasRequest, null, 2));
     const keywordIdeasResponse = await customer.keywordPlanIdeas.generateKeywordIdeas(keywordIdeasRequest);
-    console.log('Keyword planning response results count:', keywordIdeasResponse?.results?.length || 0);
+    console.log(`📥 Google Ads API response - Results count: ${keywordIdeasResponse?.results?.length || 0}`);
 
     // Process the results
     const keywordIdeas: KeywordIdea[] = (keywordIdeasResponse.results || []).map((idea: any) => {
@@ -156,7 +161,7 @@ export default async function handler(
 
     // If Google returned 0 ideas, provide deterministic fallback
     if (keywordIdeas.length === 0) {
-      console.warn('Google returned 0 keyword ideas, using deterministic fallback');
+      console.warn('⚠️ Google Ads API returned 0 keyword ideas, using deterministic fallback');
       const deterministic = (text: string) => {
         let hash = 0;
         for (let i = 0; i < text.length; i++) hash = (hash * 31 + text.charCodeAt(i)) | 0;
@@ -174,6 +179,7 @@ export default async function handler(
           competitionIndex: 0,
         };
       });
+      console.log(`📊 Returning ${fallbackIdeas.length} deterministic mock results`);
       return res.status(200).json({
         success: true,
         keywords: fallbackIdeas,
@@ -181,6 +187,11 @@ export default async function handler(
       });
     }
 
+    console.log(`✅ Successfully returning ${keywordIdeas.length} REAL Google Ads API results`);
+    keywordIdeas.forEach(idea => {
+      console.log(`  - ${idea.keyword}: ${idea.searchVolume} searches, ${idea.competition} competition`);
+    });
+    
     return res.status(200).json({
       success: true,
       keywords: keywordIdeas,

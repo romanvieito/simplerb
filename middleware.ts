@@ -11,7 +11,6 @@ export default authMiddleware({
     "/email",
     "/ads",
     "/ads-analyzer",
-    "/api/openai",
     "/api/serve-site",
     "/api/subdomain-handler",
     "/api/clerk-webhooks(.*)",

@@ -66,7 +66,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Decide whether to call Google service or return mock immediately
     const USE_KEYWORD_PLANNING = process.env.GADS_USE_KEYWORD_PLANNING === 'true';
+    console.log(`🔍 GADS_USE_KEYWORD_PLANNING is set to: ${process.env.GADS_USE_KEYWORD_PLANNING}`);
+    console.log(`📊 Using ${USE_KEYWORD_PLANNING ? 'REAL GOOGLE API DATA' : 'MOCK DATA'}`);
+    
     if (!USE_KEYWORD_PLANNING) {
+      console.log('⚠️ Returning mock data. Set GADS_USE_KEYWORD_PLANNING=true to use real Google Ads API data.');
       // Deterministic mock for fast, stable responses when external service is disabled
       const deterministic = (text: string) => {
         let hash = 0;
@@ -84,6 +88,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Use the new keyword planning service (with timeout)
+    console.log('🚀 Attempting to fetch real Google Ads API data...');
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 6000);
@@ -98,16 +103,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (keywordPlanningResponse.ok) {
         const keywordPlanningData = await keywordPlanningResponse.json();
         if (keywordPlanningData.success && Array.isArray(keywordPlanningData.keywords) && keywordPlanningData.keywords.length > 0) {
+          console.log(`✅ Successfully fetched ${keywordPlanningData.keywords.length} keywords from Google Ads API`);
           const results: KeywordResult[] = keywordPlanningData.keywords.map((idea: any) => ({
             keyword: idea.keyword,
             searchVolume: idea.searchVolume || 0,
             competition: idea.competition || 'UNKNOWN'
           }));
           return res.status(200).json(results);
+        } else {
+          console.log('⚠️ Google Ads API returned no keywords');
         }
+      } else {
+        console.log(`❌ Google Ads API request failed with status: ${keywordPlanningResponse.status}`);
       }
     } catch (keywordPlanningError) {
-      console.warn('Keyword planning service failed:', keywordPlanningError);
+      console.error('❌ Keyword planning service failed:', keywordPlanningError);
+      console.log('⚠️ Falling back to mock data');
 
       // Optional deterministic mock fallback to avoid fluctuating values
       const USE_DETERMINISTIC_MOCK = true;
