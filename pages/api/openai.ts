@@ -23,12 +23,12 @@ const handler = async (req: Request): Promise<Response> => {
     const temperature = (typeof ptemp === 'number') ? ptemp : 0;
     const top_p = (typeof ptop === 'number') ? ptop : 0;
 
-    const payload: OpenAIStreamPayload = {
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: prompt }],
-      stream: true,
-      n: 1,
-    };
+  const payload: OpenAIStreamPayload = {
+    model: 'gpt-5-nano',
+    messages: [{ role: 'user', content: prompt }],
+    stream: true,
+    n: 1,
+  };
 
     
     const stream = await OpenAIStream(payload);

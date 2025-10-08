@@ -118,7 +118,7 @@ Respond as a helpful, expert consultant across all simplerB tools.`;
 
     // Prepare OpenAI request
     const payload = {
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-5-nano',
       messages: [
         { role: 'system', content: systemPrompt },
         ...messages
@@ -169,7 +169,7 @@ Respond as a helpful, expert consultant across all simplerB tools.`;
       // Save assistant response
       await sql`
         INSERT INTO smart_pilot_messages (session_id, role, content, model, tokens)
-        VALUES (${currentSessionId}, 'assistant', ${assistantResponse}, 'gpt-3.5-turbo', ${tokenCount})
+        VALUES (${currentSessionId}, 'assistant', ${assistantResponse}, 'gpt-5-nano', ${tokenCount})
       `;
 
       // Update session timestamp

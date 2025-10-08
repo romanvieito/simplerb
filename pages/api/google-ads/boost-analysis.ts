@@ -117,71 +117,81 @@ Format your response with clear section headers and bullet points. Be specific w
 
 You are an expert Google Ads consultant with deep knowledge of campaign optimization, bidding strategies, and performance marketing. Provide clear, actionable, data-driven recommendations.`;
 
-    // Direct call to OpenAI API (server-side)
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      console.error('OPENAI_API_KEY is not set');
-      return res.status(500).json({
-        success: false,
-        error: 'Server misconfiguration: OPENAI_API_KEY is not set'
-      });
-    }
+    // Call internal OpenAI API endpoint (streams via SSE) using gpt-5-nano
+    const baseUrl = req.headers.host?.includes('localhost') 
+      ? 'http://localhost:3000' 
+      : `https://${req.headers.host}`;
 
-    const oaRes = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch(`${baseUrl}/api/openai`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.2,
-        n: 1,
-        stream: false,
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
     });
 
-    if (!oaRes.ok) {
-      const errorText = await oaRes.text();
-      console.error('OpenAI API Error:', {
-        status: oaRes.status,
-        statusText: oaRes.statusText,
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('OpenAI internal API Error:', {
+        status: response.status,
+        statusText: response.statusText,
         errorText: errorText.substring(0, 500)
       });
 
-      let errorMessage = `Failed to get AI analysis: ${oaRes.statusText}`;
-      if (oaRes.status === 401) {
+      let errorMessage = `Failed to get AI analysis: ${response.statusText}`;
+      if (response.status === 401) {
         errorMessage = 'OpenAI API key is missing or invalid. Please check your OPENAI_API_KEY in .env.local';
-      } else if (oaRes.status === 429) {
+      } else if (response.status === 429) {
         errorMessage = 'OpenAI API rate limit exceeded. Please try again later.';
-      } else if (oaRes.status >= 500) {
+      } else if (response.status >= 500) {
         errorMessage = 'OpenAI API server error. Please try again later.';
       }
 
-      return res.status(oaRes.status).json({
+      return res.status(response.status).json({
         success: false,
         error: errorMessage
       });
     }
 
-    const oaJson = await oaRes.json();
-    const analysis: string = oaJson?.choices?.[0]?.message?.content?.trim() ?? '';
-
-    if (!analysis) {
-      console.error('No analysis text generated');
-      return res.status(500).json({
-        success: false,
-        error: 'No analysis generated from AI'
-      });
+    const reader = response.body?.getReader();
+    if (!reader) {
+      return res.status(500).json({ success: false, error: 'No response body' });
     }
 
-    console.log('Analysis generated successfully, length:', analysis.length);
+    const decoder = new TextDecoder();
+    let analysis = '';
 
-    return res.status(200).json({
-      success: true,
-      analysis
-    });
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const jsonStr = line.slice(6);
+              const parsed = JSON.parse(jsonStr);
+              if (parsed.text) {
+                analysis += parsed.text;
+              }
+            } catch (_) {
+              if (line !== 'data: [DONE]') {
+                // ignore malformed lines
+              }
+            }
+          }
+        }
+      }
+    } catch (streamError) {
+      console.error('Stream reading error:', streamError);
+      return res.status(500).json({ success: false, error: 'Error reading AI response stream' });
+    }
+
+    if (!analysis || analysis.trim().length === 0) {
+      return res.status(500).json({ success: false, error: 'No analysis generated from AI' });
+    }
+
+    return res.status(200).json({ success: true, analysis: analysis.trim() });
 
   } catch (error) {
     console.error('Boost analysis error:', error);
