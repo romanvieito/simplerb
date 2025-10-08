@@ -1,8 +1,11 @@
 # Keyword Planning API - Real Data Verification Report
 
-## 🔍 Current Status: **USING MOCK DATA**
+## 🔍 Current Status: **USING MOCK DATA (API ACCESS LIMITATION)**
 
-The `/find-keywords` endpoint is currently configured to return **mock data** instead of real Google Ads API data.
+✅ **Configuration**: Fully set up and working correctly  
+❌ **Google Ads API Access**: Basic access only (requires Standard access for keyword planning)
+
+The `/find-keywords` endpoint is properly configured with credentials and the `GADS_USE_KEYWORD_PLANNING=true` flag, but Google Ads API returns no data due to **permission limitations**. The system gracefully falls back to deterministic mock data.
 
 ---
 
@@ -11,23 +14,33 @@ The `/find-keywords` endpoint is currently configured to return **mock data** in
 The system has **three layers of fallback** to ensure the UI works even without proper API credentials:
 
 ### 1. Missing Required Credentials ❌
+**Status**: ✅ **ALL CREDENTIALS CONFIGURED**
 ```
-GADS_DEVELOPER_TOKEN      - NOT SET
-GADS_CLIENT_ID            - NOT SET  
-GADS_CLIENT_SECRET        - NOT SET
-GADS_REFRESH_TOKEN        - NOT SET
-GADS_LOGIN_CUSTOMER_ID    - NOT SET
+GADS_DEVELOPER_TOKEN      - ✅ SET
+GADS_CLIENT_ID            - ✅ SET  
+GADS_CLIENT_SECRET        - ✅ SET
+GADS_REFRESH_TOKEN        - ✅ SET
+GADS_LOGIN_CUSTOMER_ID    - ✅ SET (3108024564)
+GADS_CUSTOMER_ID          - ✅ SET (3715597848)
 ```
 
 ### 2. Feature Flag Not Enabled ⚠️
+**Status**: ✅ **ENABLED**
 ```
-GADS_USE_KEYWORD_PLANNING - NOT SET (needs to be 'true')
+GADS_USE_KEYWORD_PLANNING - ✅ SET TO 'true'
 ```
 
-Even if credentials are present, the system checks `GADS_USE_KEYWORD_PLANNING`. If this is not set to `'true'`, it returns mock data for performance and stability.
+### 3. API Permission Limitation 🚫 **← CURRENT ISSUE**
+**Status**: ❌ **BASIC ACCESS (NEED STANDARD)**
 
-### 3. API Fallback 🔄
-If the Google Ads API call fails (timeout, permission error, etc.), the system falls back to deterministic mock data.
+Google Ads API connection works, but Keyword Planning service returns:
+```
+Error: "All promises were rejected code = UNKNOWN"
+Status: Times out after 6 seconds
+Result: 0 keyword ideas returned
+```
+
+This indicates the account has **Basic API access** instead of **Standard access**. Keyword Planning features require Standard access or special permissions.
 
 ---
 

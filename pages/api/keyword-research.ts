@@ -4,6 +4,10 @@ interface KeywordResult {
   keyword: string;
   searchVolume: number;
   competition: string;
+  _meta?: {
+    dataSource: 'google_ads_api' | 'mock_deterministic' | 'mock_fallback';
+    reason?: string;
+  };
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -82,7 +86,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       };
       const mockResults: KeywordResult[] = keywordList.map((k) => {
         const { volume, competition } = deterministic(`${k}|${countryCode}|${languageCode}`);
-        return { keyword: k, searchVolume: volume, competition };
+        return { 
+          keyword: k, 
+          searchVolume: volume, 
+          competition,
+          _meta: {
+            dataSource: 'mock_deterministic',
+            reason: 'GADS_USE_KEYWORD_PLANNING not enabled. Set to "true" in .env.local for real data.'
+          }
+        };
       });
       return res.status(200).json(mockResults);
     }
@@ -102,12 +114,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (keywordPlanningResponse.ok) {
         const keywordPlanningData = await keywordPlanningResponse.json();
+        
+        // Check if this is fallback data from Google API
+        if (keywordPlanningData.usedFallback && Array.isArray(keywordPlanningData.keywords)) {
+          console.log(`⚠️ Google API returned fallback mock data`);
+          const results: KeywordResult[] = keywordPlanningData.keywords.map((idea: any) => ({
+            keyword: idea.keyword,
+            searchVolume: idea.searchVolume || 0,
+            competition: idea.competition || 'UNKNOWN',
+            _meta: {
+              dataSource: 'mock_fallback',
+              reason: keywordPlanningData.reason || 'Google Ads API returned no data'
+            }
+          }));
+          return res.status(200).json(results);
+        }
+        
+        // Real data from Google
         if (keywordPlanningData.success && Array.isArray(keywordPlanningData.keywords) && keywordPlanningData.keywords.length > 0) {
           console.log(`✅ Successfully fetched ${keywordPlanningData.keywords.length} keywords from Google Ads API`);
           const results: KeywordResult[] = keywordPlanningData.keywords.map((idea: any) => ({
             keyword: idea.keyword,
             searchVolume: idea.searchVolume || 0,
-            competition: idea.competition || 'UNKNOWN'
+            competition: idea.competition || 'UNKNOWN',
+            _meta: {
+              dataSource: 'google_ads_api',
+              reason: 'Real data from Google Ads Keyword Planning API'
+            }
           }));
           return res.status(200).json(results);
         } else {
@@ -137,7 +170,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const mockResults: KeywordResult[] = keywordListDet.map((k) => {
           const { volume, competition } = deterministic(`${k}|${countryCode}|${languageCode}`);
-          return { keyword: k, searchVolume: volume, competition };
+          return { 
+            keyword: k, 
+            searchVolume: volume, 
+            competition,
+            _meta: {
+              dataSource: 'mock_fallback',
+              reason: 'Google Ads API failed or returned no data. Likely due to API access level (Basic vs Standard) or account permissions.'
+            }
+          };
         });
 
         return res.status(200).json(mockResults);

@@ -21,6 +21,8 @@ interface KeywordPlanningResponse {
   success: boolean;
   keywords?: KeywordIdea[];
   error?: string;
+  usedFallback?: boolean;
+  reason?: string;
   metadata?: {
     countryCode: string;
     languageCode: string;
@@ -56,7 +58,8 @@ export default async function handler(
       GADS_CLIENT_ID,
       GADS_CLIENT_SECRET,
       GADS_REFRESH_TOKEN,
-      GADS_LOGIN_CUSTOMER_ID
+      GADS_LOGIN_CUSTOMER_ID,
+      GADS_CUSTOMER_ID
     } = process.env;
 
     if (!GADS_DEVELOPER_TOKEN || !GADS_CLIENT_ID || !GADS_CLIENT_SECRET || !GADS_REFRESH_TOKEN || !GADS_LOGIN_CUSTOMER_ID) {
@@ -68,7 +71,8 @@ export default async function handler(
 
     const client = getGoogleAdsClient();
     const customer = getGoogleAdsCustomer();
-    const customerId = formatCustomerId(GADS_LOGIN_CUSTOMER_ID);
+    // Use GADS_CUSTOMER_ID if available (client account), otherwise fall back to LOGIN_CUSTOMER_ID
+    const customerId = formatCustomerId(GADS_CUSTOMER_ID || GADS_LOGIN_CUSTOMER_ID);
 
     // Resolve geo target constant from ISO code → name → resource
     const countryNameMap: Record<string, string> = {
@@ -181,9 +185,11 @@ export default async function handler(
       });
       console.log(`📊 Returning ${fallbackIdeas.length} deterministic mock results`);
       return res.status(200).json({
-        success: true,
+        success: false,  // Mark as false so parent API knows this is fallback data
+        usedFallback: true,
         keywords: fallbackIdeas,
-        metadata: { countryCode, languageCode, totalKeywords: fallbackIdeas.length }
+        metadata: { countryCode, languageCode, totalKeywords: fallbackIdeas.length },
+        reason: 'Google Ads API returned 0 results - likely due to Basic API access. Apply for Standard access.'
       });
     }
 
