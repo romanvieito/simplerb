@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     // Validate admin access
     const userEmail = req.headers['x-user-email'] as string;
-    if (!validateAdPilotAccess(userEmail)) {
+    if (!(await validateAdPilotAccess(userEmail))) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
@@ -72,7 +72,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if ('code' in error) {
         errorCode = error.code;
       }
-      if ('message' in error) {
+      if ('message' in error && typeof error.message === 'string') {
         errorMessage = error.message;
       }
       if ('details' in error) {

@@ -75,7 +75,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   try {
     // Validate admin access
     const userEmail = req.headers['x-user-email'] as string;
-    if (!validateAdPilotAccess(userEmail)) {
+    if (!(await validateAdPilotAccess(userEmail))) {
       return res.status(403).json({ success: false, error: 'Access denied' });
     }
 

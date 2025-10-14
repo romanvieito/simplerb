@@ -64,15 +64,36 @@ export function getGoogleAdsCustomerById(customerId: string) {
   });
 }
 
-export function validateAdPilotAccess(userEmail?: string): boolean {
-  const adminEmails = process.env.ADPILOT_ADMIN_EMAILS?.split(',') || [];
+// Check if user has access to AdPilot features
+// Now checks database for admin status instead of just environment variable
+export async function validateAdPilotAccess(userEmail?: string): Promise<boolean> {
+  if (!userEmail) {
+    return false;
+  }
+
+  try {
+    // First, check the database for admin status
+    const { sql } = await import('@vercel/postgres');
+    const result = await sql`
+      SELECT admin FROM users WHERE email = ${userEmail} LIMIT 1
+    `;
+    
+    if (result.rows.length > 0 && result.rows[0].admin === true) {
+      return true;
+    }
+  } catch (error) {
+    console.warn('Database check failed, falling back to env variable:', error);
+  }
+
+  // Fallback to environment variable check
+  const adminEmails = process.env.ADPILOT_ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
   
   // If no admin emails configured, allow access (for development)
   if (adminEmails.length === 0) {
     return true;
   }
   
-  return userEmail ? adminEmails.includes(userEmail) : false;
+  return adminEmails.includes(userEmail);
 }
 
 // Utility function to format customer ID (remove hyphens)

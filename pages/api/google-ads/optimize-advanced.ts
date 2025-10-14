@@ -75,7 +75,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       return res.status(400).json({ success: false, error: 'User email required' });
     }
     
-    if (!validateAdPilotAccess(userEmail)) {
+    if (!(await validateAdPilotAccess(userEmail))) {
       return res.status(403).json({ success: false, error: 'Access denied - insufficient permissions' });
     }
 
