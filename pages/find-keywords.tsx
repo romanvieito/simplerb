@@ -42,9 +42,9 @@ export default function FindKeywords(): JSX.Element {
       if (data.length > 0 && data[0]._meta) {
         setDataSource(data[0]._meta.dataSource);
         if (data[0]._meta.dataSource === 'google_ads_api') {
-          toast.success('✅ Real Google Ads data retrieved!');
+          toast.success('✅ Real Google Ads data retrieved with Standard Access!');
         } else if (data[0]._meta.dataSource === 'mock_fallback') {
-          toast.error('⚠️ Using mock data - Google Ads API access issue. Apply for Standard access.');
+          toast.error('⚠️ Fallback data used - Google Ads API returned no results (unusual with Standard Access)');
         } else {
           toast('📊 Using mock data - Enable GADS_USE_KEYWORD_PLANNING for real data', { icon: '⚠️' });
         }

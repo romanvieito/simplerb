@@ -115,16 +115,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (keywordPlanningResponse.ok) {
         const keywordPlanningData = await keywordPlanningResponse.json();
         
-        // Check if this is fallback data from Google API
+        // Check if this is fallback data from Google API (rare with Standard Access)
         if (keywordPlanningData.usedFallback && Array.isArray(keywordPlanningData.keywords)) {
-          console.log(`⚠️ Google API returned fallback mock data`);
+          console.log(`⚠️ Google API returned fallback data despite Standard Access`);
           const results: KeywordResult[] = keywordPlanningData.keywords.map((idea: any) => ({
             keyword: idea.keyword,
             searchVolume: idea.searchVolume || 0,
             competition: idea.competition || 'UNKNOWN',
             _meta: {
               dataSource: 'mock_fallback',
-              reason: keywordPlanningData.reason || 'Google Ads API returned no data'
+              reason: keywordPlanningData.reason || 'Google Ads API returned no data (unusual with Standard Access)'
             }
           }));
           return res.status(200).json(results);
@@ -176,7 +176,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             competition,
             _meta: {
               dataSource: 'mock_fallback',
-              reason: 'Google Ads API failed or returned no data. Likely due to API access level (Basic vs Standard) or account permissions.'
+              reason: 'Google Ads API failed or returned no data. With Standard Access, this may be due to network issues or very low-volume keywords.'
             }
           };
         });

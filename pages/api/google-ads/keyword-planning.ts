@@ -163,33 +163,28 @@ export default async function handler(
       };
     });
 
-    // If Google returned 0 ideas, provide deterministic fallback
+    // With Standard Access, we expect results but provide minimal fallback for edge cases
     if (keywordIdeas.length === 0) {
-      console.warn('⚠️ Google Ads API returned 0 keyword ideas, using deterministic fallback');
-      const deterministic = (text: string) => {
-        let hash = 0;
-        for (let i = 0; i < text.length; i++) hash = (hash * 31 + text.charCodeAt(i)) | 0;
-        const volume = Math.abs(hash % 90000) + 1000;
-        const options = ['LOW', 'MEDIUM', 'HIGH'] as const;
-        const competition = options[Math.abs(hash) % options.length];
-        return { volume, competition } as const;
-      };
-      const fallbackIdeas: KeywordIdea[] = keywords.map((k) => {
-        const { volume, competition } = deterministic(`${k}|${countryCode}|${languageCode}`);
-        return {
-          keyword: k,
-          searchVolume: volume,
-          competition,
-          competitionIndex: 0,
-        };
-      });
-      console.log(`📊 Returning ${fallbackIdeas.length} deterministic mock results`);
+      console.warn('⚠️ Google Ads API returned 0 keyword ideas despite Standard Access - this is unusual');
+
+      // For Standard Access, provide minimal fallback data instead of full mock
+      const minimalFallback: KeywordIdea[] = keywords.map((k) => ({
+        keyword: k,
+        searchVolume: 0, // Indicate no data available
+        competition: 'UNKNOWN',
+        competitionIndex: 0,
+        lowTopPageBidMicros: undefined,
+        highTopPageBidMicros: undefined,
+        avgCpcMicros: undefined
+      }));
+
+      console.log(`📊 Returning ${minimalFallback.length} minimal fallback results (Standard Access)`);
       return res.status(200).json({
-        success: false,  // Mark as false so parent API knows this is fallback data
+        success: false,  // Mark as partial success
         usedFallback: true,
-        keywords: fallbackIdeas,
-        metadata: { countryCode, languageCode, totalKeywords: fallbackIdeas.length },
-        reason: 'Google Ads API returned 0 results - likely due to Basic API access. Apply for Standard access.'
+        keywords: minimalFallback,
+        metadata: { countryCode, languageCode, totalKeywords: minimalFallback.length },
+        reason: 'Google Ads API returned no results. This may be due to very low-volume keywords or temporary API issues.'
       });
     }
 
