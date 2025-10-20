@@ -87,7 +87,8 @@ export default async function handler(
       GADS_CUSTOMER_ID,
       GADS_LOGIN_CUSTOMER_ID,
       rawCustomerId,
-      formattedCustomerId: customerId
+      formattedCustomerId: customerId,
+      customerObjectId: customer.credentials.customer_id
     });
 
     // Validate customer ID is not empty
@@ -146,8 +147,8 @@ export default async function handler(
     const languageId = languageIdMap[languageCode.toLowerCase()] ?? 1000;
 
     // Build a valid GenerateKeywordIdeasRequest according to Google Ads API v22 spec
+    // Note: Don't pass customerId in the request - the customer object already knows its ID
     const keywordIdeasRequest: any = {
-      customerId: customerId,
       keywordSeed: {
         keywords: keywords
       },

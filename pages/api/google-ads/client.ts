@@ -14,15 +14,14 @@ export function getGoogleAdsClient() {
   }
 
   // Create a new client instance each time to avoid issues
-  // Updated for Google Ads API v21 with enhanced configuration
+  // Use default API version for compatibility with library version
   const client = new GoogleAdsApi({
     client_id: GADS_CLIENT_ID,
     client_secret: GADS_CLIENT_SECRET,
     developer_token: GADS_DEVELOPER_TOKEN,
     // Enable logging for debugging
     log_level: process.env.NODE_ENV === 'production' ? 'ERROR' : 'INFO',
-    // Set API version explicitly
-    api_version: 'v22',
+    // Let the library use its default API version
   });
 
   return client;
