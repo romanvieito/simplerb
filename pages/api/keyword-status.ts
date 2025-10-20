@@ -26,6 +26,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const useKeywordPlanning = GADS_USE_KEYWORD_PLANNING === 'true';
   const willAttemptRealData = hasAllCredentials && useKeywordPlanning;
 
+  console.log('🔍 Debug - Environment variables:');
+  console.log('GADS_USE_KEYWORD_PLANNING:', GADS_USE_KEYWORD_PLANNING);
+  console.log('GADS_USE_KEYWORD_PLANNING type:', typeof GADS_USE_KEYWORD_PLANNING);
+  console.log('useKeywordPlanning:', useKeywordPlanning);
+
   let status: 'ready' | 'mock_only' | 'missing_credentials' | 'api_restricted';
   let statusMessage: string;
   let dataSource: 'google_ads_api' | 'mock_deterministic' | 'unknown';
