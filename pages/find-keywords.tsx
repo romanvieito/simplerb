@@ -56,7 +56,7 @@ export default function FindKeywords(): JSX.Element {
       if (data.length > 0 && data[0]._meta) {
         setDataSource(data[0]._meta.dataSource);
         if (data[0]._meta.dataSource === 'google_ads_api') {
-          toast.success('✅ Real Google Ads data retrieved with Standard Access!');
+          toast.success('✅ Enjoy!');
         } else if (data[0]._meta.dataSource === 'mock_fallback') {
           toast.error('⚠️ Fallback data used - Google Ads API returned no results (unusual with Standard Access)');
         } else {
