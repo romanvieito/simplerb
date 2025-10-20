@@ -149,7 +149,7 @@ export default async function handler(
     
     // Use the correct service method as per Google Ads API v22 documentation with timeout
     const keywordIdeasResponse = await Promise.race([
-      client.service.keywordPlanIdeaService.generateKeywordIdeas(keywordIdeasRequest),
+      customer.keywordPlanIdeas.generateKeywordIdeas(keywordIdeasRequest),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Google Ads API timeout after 10 seconds')), 10000))
     ]);
     console.log(`📥 Google Ads API response - Results count: ${keywordIdeasResponse?.results?.length || 0}`);
