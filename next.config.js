@@ -4,6 +4,9 @@ module.exports = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  experimental: {
+    // Disable any experimental features that might cause deployment issues
+  },
   async redirects() {
     return [
       {
@@ -21,7 +24,7 @@ module.exports = {
   async rewrites() {
     return [
       {
-        source: '/(.*)',
+        source: '/:path*',
         destination: '/api/subdomain-handler',
         has: [
           {
