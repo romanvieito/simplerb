@@ -22,7 +22,7 @@ export function getGoogleAdsClient() {
     // Enable logging for debugging
     log_level: process.env.NODE_ENV === 'production' ? 'ERROR' : 'INFO',
     // Set API version explicitly
-    api_version: 'v21',
+    api_version: 'v22',
   });
 
   return client;
