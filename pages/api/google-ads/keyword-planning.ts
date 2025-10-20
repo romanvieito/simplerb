@@ -81,6 +81,21 @@ export default async function handler(
     const customer = getGoogleAdsCustomer();
     // Use GADS_CUSTOMER_ID if available (client account), otherwise fall back to LOGIN_CUSTOMER_ID
     const customerId = formatCustomerId(GADS_CUSTOMER_ID || GADS_LOGIN_CUSTOMER_ID);
+    
+    console.log('🔍 Customer ID debugging:', {
+      GADS_CUSTOMER_ID,
+      GADS_LOGIN_CUSTOMER_ID,
+      formattedCustomerId: customerId
+    });
+
+    // Validate customer ID is not empty
+    if (!customerId || customerId.trim() === '') {
+      console.error('❌ Customer ID is empty or invalid');
+      return res.status(500).json({
+        success: false,
+        error: 'Customer ID is missing or invalid. Please check your GADS_CUSTOMER_ID or GADS_LOGIN_CUSTOMER_ID environment variable.'
+      });
+    }
 
     // Resolve geo target constant from ISO code → name → resource
     const countryNameMap: Record<string, string> = {
