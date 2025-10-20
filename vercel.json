@@ -1,28 +1,10 @@
 {
-  "crons": [
-    {
-      "path": "/api/cron/dailyEmails",
-      "schedule": "0 15 * * *"
-    },
-    {
-      "path": "/api/cron/processPendingEmails",
-      "schedule": "10-59/2 15,16-20 * * *"
-    },
-    {
-      "path": "/api/cron/friendEmails",
-      "schedule": "0 16 */3 * *"
-    },
-    {
-      "path": "/api/cron/refreshGmailToken",
-      "schedule": "0 0 */5 * *"
-    },
-    {
-      "path": "/api/google-ads/optimize",
-      "schedule": "0 2 * * *"
-    },
-    {
-      "path": "/api/google-ads/maintenance",
-      "schedule": "0 3 * * 1"
+  "functions": {
+    "pages/api/subdomain-handler.ts": {
+      "maxDuration": 30
     }
-  ]
+  },
+  "regions": ["iad1"],
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next"
 } 

@@ -3,10 +3,24 @@ import Head from "next/head";
 import { Toaster, toast } from "react-hot-toast";
 import { useClerk, SignedIn, SignedOut } from "@clerk/nextjs";
 
+const formatCpc = (micros?: number): string => {
+  if (!micros) return 'N/A';
+  return `$${(micros / 1000000).toFixed(2)}`;
+};
+
 interface KeywordResult {
   keyword: string;
   searchVolume: number | string;
   competition: string;
+  competitionIndex?: number;
+  lowTopPageBidMicros?: number;
+  highTopPageBidMicros?: number;
+  avgCpcMicros?: number;
+  monthlySearchVolumes?: Array<{
+    month: string;
+    year: string;
+    monthlySearches: number;
+  }>;
   _meta?: {
     dataSource: 'google_ads_api' | 'mock_deterministic' | 'mock_fallback';
     reason?: string;
@@ -168,16 +182,43 @@ export default function FindKeywords(): JSX.Element {
                   <thead>
                     <tr>
                       <th className="border-b font-medium p-4 pl-8 pt-0 pb-3">Keyword</th>
-                      <th className="border-b font-medium p-4 pl-8 pt-0 pb-3">Search Volume</th>
-                      <th className="border-b font-medium p-4 pl-8 pt-0 pb-3">Competition</th>
+                      <th className="border-b font-medium p-4 pt-0 pb-3 text-right">Search Volume</th>
+                      <th className="border-b font-medium p-4 pt-0 pb-3">Competition</th>
+                      <th className="border-b font-medium p-4 pt-0 pb-3 text-right">Comp. Index</th>
+                      <th className="border-b font-medium p-4 pt-0 pb-3 text-right">Avg CPC</th>
+                      <th className="border-b font-medium p-4 pr-8 pt-0 pb-3 text-right">CPC Range</th>
                     </tr>
                   </thead>
                   <tbody>
                     {results.map((result, index) => (
                       <tr key={`${result.keyword}-${index}`}>
                         <td className="border-b border-slate-100 p-4 pl-8">{result.keyword}</td>
-                        <td className="border-b border-slate-100 p-4 pl-8">{result.searchVolume}</td>
-                        <td className="border-b border-slate-100 p-4 pl-8">{result.competition}</td>
+                        <td className="border-b border-slate-100 p-4 text-right">
+                          {typeof result.searchVolume === 'number' 
+                            ? result.searchVolume.toLocaleString() 
+                            : result.searchVolume}
+                        </td>
+                        <td className="border-b border-slate-100 p-4">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            result.competition === 'LOW' ? 'bg-green-100 text-green-800' :
+                            result.competition === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
+                            result.competition === 'HIGH' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {result.competition}
+                          </span>
+                        </td>
+                        <td className="border-b border-slate-100 p-4 text-right">
+                          {result.competitionIndex !== undefined ? result.competitionIndex : 'N/A'}
+                        </td>
+                        <td className="border-b border-slate-100 p-4 text-right">
+                          {formatCpc(result.avgCpcMicros)}
+                        </td>
+                        <td className="border-b border-slate-100 p-4 pr-8 text-right text-sm text-gray-600">
+                          {result.lowTopPageBidMicros && result.highTopPageBidMicros
+                            ? `${formatCpc(result.lowTopPageBidMicros)} - ${formatCpc(result.highTopPageBidMicros)}`
+                            : 'N/A'}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

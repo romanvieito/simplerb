@@ -9,11 +9,16 @@ interface KeywordPlanningRequest {
 interface KeywordIdea {
   keyword: string;
   searchVolume: number;
-  competition: 'LOW' | 'MEDIUM' | 'HIGH';
+  competition: 'LOW' | 'MEDIUM' | 'HIGH' | 'UNKNOWN';
   competitionIndex?: number;
   lowTopPageBidMicros?: number;
   highTopPageBidMicros?: number;
   avgCpcMicros?: number;
+  monthlySearchVolumes?: Array<{
+    month: string;
+    year: string;
+    monthlySearches: number;
+  }>;
 }
 
 interface KeywordPlanningResponse {
@@ -123,6 +128,9 @@ export default async function handler(
       keywordPlanNetwork: 'GOOGLE_SEARCH',
       keywordSeed: {
         keywords: keywords
+      },
+      historicalMetricsOptions: {
+        includeAverageCpc: true
       }
     };
 
@@ -164,11 +172,13 @@ export default async function handler(
       const competitionIndex = metrics.competitionIndex || 0;
       
       // Convert competition index to string (0-100 scale)
-      let competition: 'LOW' | 'MEDIUM' | 'HIGH' = 'LOW';
+      let competition: 'LOW' | 'MEDIUM' | 'HIGH' | 'UNKNOWN' = 'UNKNOWN';
       if (competitionIndex >= 70) {
         competition = 'HIGH';
       } else if (competitionIndex >= 30) {
         competition = 'MEDIUM';
+      } else if (competitionIndex > 0) {
+        competition = 'LOW';
       }
 
       return {
@@ -176,9 +186,10 @@ export default async function handler(
         searchVolume: searchVolume,
         competition: competition,
         competitionIndex: competitionIndex,
-        lowTopPageBidMicros: metrics.lowTopPageBidMicros,
-        highTopPageBidMicros: metrics.highTopPageBidMicros,
-        avgCpcMicros: metrics.avgCpcMicros
+        lowTopPageBidMicros: metrics.lowTopOfPageBidMicros,
+        highTopPageBidMicros: metrics.highTopOfPageBidMicros,
+        avgCpcMicros: metrics.avgCpcMicros,
+        monthlySearchVolumes: metrics.monthlySearchVolumes
       };
     });
 

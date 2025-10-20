@@ -4,6 +4,15 @@ interface KeywordResult {
   keyword: string;
   searchVolume: number;
   competition: string;
+  competitionIndex?: number;
+  lowTopPageBidMicros?: number;
+  highTopPageBidMicros?: number;
+  avgCpcMicros?: number;
+  monthlySearchVolumes?: Array<{
+    month: string;
+    year: string;
+    monthlySearches: number;
+  }>;
   _meta?: {
     dataSource: 'google_ads_api' | 'mock_deterministic' | 'mock_fallback';
     reason?: string;
@@ -123,6 +132,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             keyword: idea.keyword,
             searchVolume: idea.searchVolume || 0,
             competition: idea.competition || 'UNKNOWN',
+            competitionIndex: idea.competitionIndex,
+            lowTopPageBidMicros: idea.lowTopPageBidMicros,
+            highTopPageBidMicros: idea.highTopPageBidMicros,
+            avgCpcMicros: idea.avgCpcMicros,
+            monthlySearchVolumes: idea.monthlySearchVolumes,
             _meta: {
               dataSource: 'mock_fallback',
               reason: keywordPlanningData.reason || 'Google Ads API returned no data (unusual with Standard Access)'
@@ -138,6 +152,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             keyword: idea.keyword,
             searchVolume: idea.searchVolume || 0,
             competition: idea.competition || 'UNKNOWN',
+            competitionIndex: idea.competitionIndex,
+            lowTopPageBidMicros: idea.lowTopPageBidMicros,
+            highTopPageBidMicros: idea.highTopPageBidMicros,
+            avgCpcMicros: idea.avgCpcMicros,
+            monthlySearchVolumes: idea.monthlySearchVolumes,
             _meta: {
               dataSource: 'google_ads_api',
               reason: 'Real data from Google Ads Keyword Planning API'

@@ -21,18 +21,19 @@ module.exports = {
       },
     ];
   },
-  async rewrites() {
-    return [
-      {
-        source: '/:path*',
-        destination: '/api/subdomain-handler',
-        has: [
-          {
-            type: 'host',
-            value: '(?<subdomain>.*).simplerb.com'
-          }
-        ]
-      }
-    ];
-  },
+  // Temporarily disabled rewrites to test deployment
+  // async rewrites() {
+  //   return [
+  //     {
+  //       source: '/:path*',
+  //       destination: '/api/subdomain-handler',
+  //       has: [
+  //         {
+  //           type: 'host',
+  //           value: '(?<subdomain>.*).simplerb.com'
+  //         }
+  //       ]
+  //     }
+  //   ];
+  // },
 };

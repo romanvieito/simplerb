@@ -1,0 +1,15 @@
+node_modules/google-ads-node/docs
+node_modules/google-ads-node/examples
+node_modules/google-ads-node/test
+node_modules/@mui/docs
+node_modules/@mui/test-utils
+node_modules/googleapis/docs
+node_modules/googleapis/samples
+node_modules/googleapis/test
+node_modules/puppeteer/.local-chromium
+node_modules/puppeteer/test
+node_modules/typescript/lib
+node_modules/@types
+*.md
+*.txt
+temp_disabled

@@ -70,5 +70,8 @@
     "puppeteer": "^24.24.1",
     "tailwindcss": "^3.2.4",
     "typescript": "^5.8.0"
+  },
+  "engines": {
+    "node": ">=18.18.0 <19.0.0"
   }
 }
