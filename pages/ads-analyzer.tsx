@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect, useCallback } from 'react';
 import Head from "next/head";
 import { useRouter } from 'next/router';
 import { useUser, useClerk, UserButton } from "@clerk/nextjs";
+import dynamic from 'next/dynamic';
 import { 
   Button, 
   Box, 
@@ -17,16 +18,27 @@ import {
   TableRow, 
   Paper,
   Chip,
-  Stepper,
-  Step,
-  StepLabel,
-  CircularProgress,
-  Alert,
-  LinearProgress
+  Alert
 } from "@mui/material";
 import { useDropzone } from 'react-dropzone';
 import Papa from 'papaparse';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+
+const Stepper = dynamic(() => import('@mui/material').then(mod => mod.Stepper), { ssr: false });
+const Step = dynamic(() => import('@mui/material').then(mod => mod.Step), { ssr: false });
+const StepLabel = dynamic(() => import('@mui/material').then(mod => mod.StepLabel), { ssr: false });
+const CircularProgress = dynamic(() => import('@mui/material').then(mod => mod.CircularProgress), { ssr: false });
+const LinearProgress = dynamic(() => import('@mui/material').then(mod => mod.LinearProgress), { ssr: false });
+
+const BarChart = dynamic(() => import('recharts').then(mod => mod.BarChart), { ssr: false });
+const Bar = dynamic(() => import('recharts').then(mod => mod.Bar), { ssr: false });
+const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis), { ssr: false });
+const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis), { ssr: false });
+const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid), { ssr: false });
+const Tooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip), { ssr: false });
+const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false });
+const PieChart = dynamic(() => import('recharts').then(mod => mod.PieChart), { ssr: false });
+const Pie = dynamic(() => import('recharts').then(mod => mod.Pie), { ssr: false });
+const Cell = dynamic(() => import('recharts').then(mod => mod.Cell), { ssr: false });
 import SBRContext from "../context/SBRContext";
 import { Toaster, toast } from "react-hot-toast";
 
