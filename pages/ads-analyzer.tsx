@@ -29,16 +29,16 @@ const StepLabel = dynamic(() => import('@mui/material').then(mod => mod.StepLabe
 const CircularProgress = dynamic(() => import('@mui/material').then(mod => mod.CircularProgress), { ssr: false });
 const LinearProgress = dynamic(() => import('@mui/material').then(mod => mod.LinearProgress), { ssr: false });
 
-const BarChart = dynamic(() => import('recharts').then(mod => mod.BarChart), { ssr: false });
-const Bar = dynamic(() => import('recharts').then(mod => mod.Bar), { ssr: false });
-const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis), { ssr: false });
-const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis), { ssr: false });
-const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid), { ssr: false });
-const Tooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip), { ssr: false });
-const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false });
-const PieChart = dynamic(() => import('recharts').then(mod => mod.PieChart), { ssr: false });
-const Pie = dynamic(() => import('recharts').then(mod => mod.Pie), { ssr: false });
-const Cell = dynamic(() => import('recharts').then(mod => mod.Cell), { ssr: false });
+const BarChart = dynamic(() => import('recharts').then(mod => mod.BarChart as unknown as React.ComponentType<any>), { ssr: false }) as unknown as typeof import('recharts')['BarChart'];
+const Bar = dynamic(() => import('recharts').then(mod => mod.Bar as unknown as React.ComponentType<any>), { ssr: false }) as unknown as typeof import('recharts')['Bar'];
+const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis as unknown as React.ComponentType<any>), { ssr: false }) as unknown as typeof import('recharts')['XAxis'];
+const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis as unknown as React.ComponentType<any>), { ssr: false }) as unknown as typeof import('recharts')['YAxis'];
+const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid as unknown as React.ComponentType<any>), { ssr: false }) as unknown as typeof import('recharts')['CartesianGrid'];
+const Tooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip as unknown as React.ComponentType<any>), { ssr: false }) as unknown as typeof import('recharts')['Tooltip'];
+const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer as unknown as React.ComponentType<any>), { ssr: false }) as unknown as typeof import('recharts')['ResponsiveContainer'];
+const PieChart = dynamic(() => import('recharts').then(mod => mod.PieChart as unknown as React.ComponentType<any>), { ssr: false }) as unknown as typeof import('recharts')['PieChart'];
+const Pie = dynamic(() => import('recharts').then(mod => mod.Pie as unknown as React.ComponentType<any>), { ssr: false }) as unknown as typeof import('recharts')['Pie'];
+const Cell = dynamic(() => import('recharts').then(mod => mod.Cell as unknown as React.ComponentType<any>), { ssr: false }) as unknown as typeof import('recharts')['Cell'];
 import SBRContext from "../context/SBRContext";
 import { Toaster, toast } from "react-hot-toast";
 

@@ -10,7 +10,7 @@ interface KeywordPlanningRequest {
 interface KeywordIdea {
   keyword: string;
   searchVolume: number;
-  competition: 'LOW' | 'MEDIUM' | 'HIGH';
+  competition: 'LOW' | 'MEDIUM' | 'HIGH' | 'UNKNOWN';
   competitionIndex?: number;
   lowTopPageBidMicros?: number;
   highTopPageBidMicros?: number;
