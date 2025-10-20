@@ -38,7 +38,12 @@ export function getGoogleAdsCustomer() {
 
   // Use MCC as login, client as customer
   const loginId = GADS_LOGIN_CUSTOMER_ID ? formatCustomerId(GADS_LOGIN_CUSTOMER_ID) : undefined as any;
-  const customerId = GADS_CUSTOMER_ID ? formatCustomerId(GADS_CUSTOMER_ID) : loginId;
+  const customerId = GADS_CUSTOMER_ID ? formatCustomerId(GADS_CUSTOMER_ID) : (loginId || '');
+
+  // Validate customer ID is not empty
+  if (!customerId || customerId.trim() === '') {
+    throw new Error('Customer ID is missing or invalid. Please check your GADS_CUSTOMER_ID or GADS_LOGIN_CUSTOMER_ID environment variable.');
+  }
 
   // Updated initialization for v21 with enhanced error handling
   return client.Customer({
