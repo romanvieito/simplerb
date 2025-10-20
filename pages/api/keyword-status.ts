@@ -23,11 +23,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     GADS_LOGIN_CUSTOMER_ID
   );
 
-  const useKeywordPlanning = GADS_USE_KEYWORD_PLANNING === 'true';
+  const useKeywordPlanning = GADS_USE_KEYWORD_PLANNING?.trim() === 'true';
   const willAttemptRealData = hasAllCredentials && useKeywordPlanning;
 
   console.log('🔍 Debug - Environment variables:');
   console.log('GADS_USE_KEYWORD_PLANNING:', GADS_USE_KEYWORD_PLANNING);
+  console.log('GADS_USE_KEYWORD_PLANNING trimmed:', GADS_USE_KEYWORD_PLANNING?.trim());
   console.log('GADS_USE_KEYWORD_PLANNING type:', typeof GADS_USE_KEYWORD_PLANNING);
   console.log('useKeywordPlanning:', useKeywordPlanning);
 

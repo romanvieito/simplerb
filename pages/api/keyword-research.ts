@@ -69,8 +69,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Decide whether to call Google service or return mock immediately
-    const USE_KEYWORD_PLANNING = process.env.GADS_USE_KEYWORD_PLANNING === 'true';
-    console.log(`🔍 GADS_USE_KEYWORD_PLANNING is set to: ${process.env.GADS_USE_KEYWORD_PLANNING}`);
+    const USE_KEYWORD_PLANNING = process.env.GADS_USE_KEYWORD_PLANNING?.trim() === 'true';
+    console.log(`🔍 GADS_USE_KEYWORD_PLANNING is set to: "${process.env.GADS_USE_KEYWORD_PLANNING}"`);
+    console.log(`🔍 GADS_USE_KEYWORD_PLANNING trimmed: "${process.env.GADS_USE_KEYWORD_PLANNING?.trim()}"`);
     console.log(`📊 Using ${USE_KEYWORD_PLANNING ? 'REAL GOOGLE API DATA' : 'MOCK DATA'}`);
     
     if (!USE_KEYWORD_PLANNING) {
