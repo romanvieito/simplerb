@@ -63,6 +63,14 @@ export default async function handler(
     } = process.env;
 
     if (!GADS_DEVELOPER_TOKEN || !GADS_CLIENT_ID || !GADS_CLIENT_SECRET || !GADS_REFRESH_TOKEN || !GADS_LOGIN_CUSTOMER_ID) {
+      console.log('❌ Missing required Google Ads environment variables');
+      console.log('Available vars:', {
+        GADS_DEVELOPER_TOKEN: !!GADS_DEVELOPER_TOKEN,
+        GADS_CLIENT_ID: !!GADS_CLIENT_ID,
+        GADS_CLIENT_SECRET: !!GADS_CLIENT_SECRET,
+        GADS_REFRESH_TOKEN: !!GADS_REFRESH_TOKEN,
+        GADS_LOGIN_CUSTOMER_ID: !!GADS_LOGIN_CUSTOMER_ID
+      });
       return res.status(500).json({ 
         success: false, 
         error: 'Missing required Google Ads environment variables' 
@@ -139,8 +147,11 @@ export default async function handler(
     console.log('📤 Sending request to Google Ads API...');
     console.log('Keyword planning request:', JSON.stringify(keywordIdeasRequest, null, 2));
     
-    // Use the correct service method as per Google Ads API v22 documentation
-    const keywordIdeasResponse = await client.service.keywordPlanIdeaService.generateKeywordIdeas(keywordIdeasRequest);
+    // Use the correct service method as per Google Ads API v22 documentation with timeout
+    const keywordIdeasResponse = await Promise.race([
+      client.service.keywordPlanIdeaService.generateKeywordIdeas(keywordIdeasRequest),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Google Ads API timeout after 10 seconds')), 10000))
+    ]);
     console.log(`📥 Google Ads API response - Results count: ${keywordIdeasResponse?.results?.length || 0}`);
 
     // Process the results according to Google Ads API v22 response format
