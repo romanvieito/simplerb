@@ -148,7 +148,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           console.log('⚠️ Google Ads API returned no keywords');
         }
       } else {
+        const errorData = await keywordPlanningResponse.json().catch(() => ({}));
         console.log(`❌ Google Ads API request failed with status: ${keywordPlanningResponse.status}`);
+        console.log('Error details:', errorData);
       }
     } catch (keywordPlanningError) {
       console.error('❌ Keyword planning service failed:', keywordPlanningError);

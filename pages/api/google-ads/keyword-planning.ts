@@ -240,6 +240,8 @@ export default async function handler(
         errorMessage = 'Invalid argument. Please check your request parameters.';
       } else if (apiError.code === 5) {
         errorMessage = 'Not found. Please check your customer ID and permissions.';
+      } else if (apiError.code === 2 && apiError.details?.includes('invalid_grant')) {
+        errorMessage = 'OAuth token expired. Please refresh your Google Ads API credentials.';
       }
     }
 
