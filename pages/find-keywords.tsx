@@ -152,7 +152,7 @@ export default function FindKeywords(): JSX.Element {
                       ? 'bg-green-100 text-green-800' 
                       : 'bg-yellow-100 text-yellow-800'
                   }`}>
-                    {dataSource === 'google_ads_api' ? '✅ Real Google Data' : '⚠️ Mock Data'}
+                    {dataSource === 'google_ads_api' ? '✅' : '⚠️ Mock Data'}
                   </div>
                 )}
               </div>
