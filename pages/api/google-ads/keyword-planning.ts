@@ -120,31 +120,40 @@ export default async function handler(
     };
     const languageId = languageIdMap[languageCode.toLowerCase()] ?? 1000;
 
-    // Build a valid GenerateKeywordIdeasRequest
+    // Build a valid GenerateKeywordIdeasRequest according to Google Ads API v22 spec
     const keywordIdeasRequest: any = {
-      customer_id: customerId,
-      keyword_seed: { keywords },
-      geo_target_constants: geoTargetResource ? [geoTargetResource] : [`geoTargetConstants/2840`], // default US
+      customerId: customerId,
+      keywordSeed: {
+        keywords: keywords
+      },
+      geoTargetConstants: geoTargetResource ? [geoTargetResource] : [`geoTargetConstants/2840`], // default US
       language: `languageConstants/${languageId}`,
-      keyword_plan_network: 'GOOGLE_SEARCH',
-      include_adult_keywords: false,
-      historical_metrics_options: { include_average_cpc: true }
+      keywordPlanNetwork: 'GOOGLE_SEARCH',
+      includeAdultKeywords: false,
+      historicalMetricsOptions: {
+        includeAverageCpc: true
+      }
     };
 
     // Generate keyword ideas using the keyword planning service (correct accessor)
     console.log('📤 Sending request to Google Ads API...');
     console.log('Keyword planning request:', JSON.stringify(keywordIdeasRequest, null, 2));
-    const keywordIdeasResponse = await customer.keywordPlanIdeas.generateKeywordIdeas(keywordIdeasRequest);
+    
+    // Use the correct service method as per Google Ads API v22 documentation
+    const keywordIdeasResponse = await client.service.keywordPlanIdeaService.generateKeywordIdeas(keywordIdeasRequest);
     console.log(`📥 Google Ads API response - Results count: ${keywordIdeasResponse?.results?.length || 0}`);
 
-    // Process the results
+    // Process the results according to Google Ads API v22 response format
     const keywordIdeas: KeywordIdea[] = (keywordIdeasResponse.results || []).map((idea: any) => {
-      const keywordText = idea.text || idea.keyword_idea_metrics?.keyword?.text || idea.keyword || '';
-      const metrics = idea.keyword_idea_metrics || idea.metrics || {};
-      const searchVolume = metrics.avg_monthly_searches || metrics.search_volume || 0;
-      const competitionIndex = metrics.competition_index || 0;
+      // Extract keyword text - API v22 format
+      const keywordText = idea.text || idea.keywordIdeaMetrics?.text || idea.keyword || '';
+      const metrics = idea.keywordIdeaMetrics || idea.metrics || {};
       
-      // Convert competition index to string
+      // Extract search volume and competition data
+      const searchVolume = metrics.avgMonthlySearches || metrics.searchVolume || 0;
+      const competitionIndex = metrics.competitionIndex || metrics.competition_index || 0;
+      
+      // Convert competition index to string (0-100 scale)
       let competition: 'LOW' | 'MEDIUM' | 'HIGH' = 'LOW';
       if (competitionIndex >= 70) {
         competition = 'HIGH';
@@ -157,9 +166,9 @@ export default async function handler(
         searchVolume: searchVolume,
         competition: competition,
         competitionIndex: competitionIndex,
-        lowTopPageBidMicros: metrics.low_top_of_page_bid_micros,
-        highTopPageBidMicros: metrics.high_top_of_page_bid_micros,
-        avgCpcMicros: metrics.avg_cpc_micros
+        lowTopPageBidMicros: metrics.lowTopPageBidMicros || metrics.low_top_of_page_bid_micros,
+        highTopPageBidMicros: metrics.highTopPageBidMicros || metrics.high_top_of_page_bid_micros,
+        avgCpcMicros: metrics.avgCpcMicros || metrics.avg_cpc_micros
       };
     });
 
