@@ -389,7 +389,8 @@ export default function FindKeywords(): JSX.Element {
                       <th className="font-medium p-3 text-gray-700">Keyword</th>
                       <th className="font-medium p-3 text-right text-gray-700">Volume</th>
                       <th className="font-medium p-3 text-gray-700">Competition</th>
-                      <th className="font-medium p-3 text-right text-gray-700">CPC</th>
+                      <th className="font-medium p-3 text-right text-gray-700">Min CPC</th>
+                      <th className="font-medium p-3 text-right text-gray-700">Max CPC</th>
                       <th className="font-medium p-3 text-gray-700">12-mo Trend</th>
                     </tr>
                   </thead>
@@ -420,9 +421,10 @@ export default function FindKeywords(): JSX.Element {
                           </div>
                         </td>
                         <td className="p-3 text-right text-gray-600">
-                          {result.lowTopPageBidMicros && result.highTopPageBidMicros
-                            ? `${formatCpc(result.lowTopPageBidMicros)} - ${formatCpc(result.highTopPageBidMicros)}`
-                            : 'N/A'}
+                          {result.lowTopPageBidMicros ? formatCpc(result.lowTopPageBidMicros) : 'N/A'}
+                        </td>
+                        <td className="p-3 text-right text-gray-600">
+                          {result.highTopPageBidMicros ? formatCpc(result.highTopPageBidMicros) : 'N/A'}
                         </td>
                         <td className="p-3 align-top">
                           {renderMonthlyTrend(result.keyword, result.monthlySearchVolumes)}
