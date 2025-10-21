@@ -243,18 +243,7 @@ export default function FindKeywords(): JSX.Element {
 
           {results.length > 0 && (
             <div className="mt-10 w-full">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">Results</h2>
-                {dataSource && (
-                  <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    dataSource === 'google_ads_api' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {dataSource === 'google_ads_api' ? '' : '⚠️ Mock Data'}
-                  </div>
-                )}
-              </div>
+              
               {dataSource && dataSource !== 'google_ads_api' && results[0]._meta?.reason && (
                 <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <p className="text-sm text-yellow-800">
