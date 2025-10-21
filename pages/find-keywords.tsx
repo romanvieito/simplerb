@@ -107,46 +107,38 @@ const MonthlyTrendChart: React.FC<{ keyword: string; trend: MonthlyTrendPoint[] 
   const maxVolume = Math.max(...lastTwelve.map((point) => point.monthlySearches));
   const minVolume = Math.min(...lastTwelve.map((point) => point.monthlySearches));
   const chartRange = maxVolume - minVolume;
-  const chartWidth = 140;
+  
+  // Debug logging
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Chart data:', { maxVolume, minVolume, chartRange, lastTwelve: lastTwelve.length });
+  }
   const chartHeight = 48;
   const paddingX = 10;
   const paddingY = 8;
-  const innerWidth = chartWidth - paddingX * 2;
   const innerHeight = chartHeight - paddingY * 2;
-  const step = lastTwelve.length > 1 ? innerWidth / (lastTwelve.length - 1) : 0;
 
-  const getPoint = (value: number, index: number) => {
+  const getPoint = (value: number, index: number, chartWidth: number) => {
     const normalized = chartRange === 0 ? 0.5 : (value - minVolume) / chartRange;
+    const innerWidth = chartWidth - paddingX * 2;
+    const step = lastTwelve.length > 1 ? innerWidth / (lastTwelve.length - 1) : 0;
     const x = lastTwelve.length > 1 ? paddingX + step * index : chartWidth / 2;
     const y = paddingY + (1 - normalized) * innerHeight;
     return { x, y };
   };
 
-  const coordinates = lastTwelve.map((point, idx) => ({ ...getPoint(point.monthlySearches, idx), point }));
-  const linePath = coordinates
-    .map(({ x, y }, idx) => `${idx === 0 ? 'M' : 'L'}${x} ${y}`)
-    .join(' ');
-  const areaPath = coordinates.length > 1
-    ? `${linePath} L ${coordinates[coordinates.length - 1].x} ${chartHeight - paddingY} L ${coordinates[0].x} ${chartHeight - paddingY} Z`
-    : '';
   const sanitizedKeyword = keyword.replace(/[^a-z0-9]+/gi, '-') || 'keyword';
   const gradientId = `trendGradient-${sanitizedKeyword}-${lastTwelve[0]?.dateKey ?? 'start'}`;
-  const hoveredPoint = hoveredIndex !== null ? coordinates[hoveredIndex]?.point : null;
 
   return (
     <div className="relative flex flex-col space-y-1">
-      {hoveredPoint && (
-        <div className="absolute -top-2 left-1/2 z-10 -translate-x-1/2 -translate-y-full rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] shadow-sm">
-          <div className="font-medium text-gray-700">{hoveredPoint.monthLabel}</div>
-          <div className="text-gray-500">{hoveredPoint.monthlySearches.toLocaleString()} searches</div>
-        </div>
-      )}
       <svg
-        className="w-full max-w-[150px]"
-        viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+        className="w-full"
+        height={chartHeight}
         role="img"
         aria-label={`Monthly search volume trend for ${keyword}`}
         onMouseLeave={() => setHoveredIndex(null)}
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
       >
         <defs>
           <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
@@ -157,36 +149,62 @@ const MonthlyTrendChart: React.FC<{ keyword: string; trend: MonthlyTrendPoint[] 
         <rect
           x="0"
           y="0"
-          width={chartWidth}
-          height={chartHeight}
+          width="100"
+          height="100"
           fill="rgba(59,130,246,0.04)"
-          rx={6}
+          rx="6"
         />
-        {areaPath && <path d={areaPath} fill={`url(#${gradientId})`} />}
-        {linePath && (
-          <path
-            d={linePath}
-            fill="none"
-            stroke="rgb(59,130,246)"
-            strokeWidth={1.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+        {lastTwelve.length > 1 && (
+          <>
+            <path
+              d={lastTwelve.map((point, idx) => {
+                const normalized = chartRange === 0 ? 0.5 : (point.monthlySearches - minVolume) / chartRange;
+                const x = lastTwelve.length === 1 ? 50 : (idx / (lastTwelve.length - 1)) * 100;
+                const y = 100 - (normalized * 100);
+                return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`;
+              }).join(' ')}
+              fill="none"
+              stroke="rgb(59,130,246)"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d={`${lastTwelve.map((point, idx) => {
+                const normalized = chartRange === 0 ? 0.5 : (point.monthlySearches - minVolume) / chartRange;
+                const x = lastTwelve.length === 1 ? 50 : (idx / (lastTwelve.length - 1)) * 100;
+                const y = 100 - (normalized * 100);
+                return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`;
+              }).join(' ')} L 100 100 L 0 100 Z`}
+              fill={`url(#${gradientId})`}
+            />
+            {lastTwelve.map((point, idx) => {
+              const normalized = chartRange === 0 ? 0.5 : (point.monthlySearches - minVolume) / chartRange;
+              const x = lastTwelve.length === 1 ? 50 : (idx / (lastTwelve.length - 1)) * 100;
+              const y = 100 - (normalized * 100);
+              return (
+                <g
+                  key={point.dateKey}
+                  onMouseEnter={() => setHoveredIndex(idx)}
+                  onFocus={() => setHoveredIndex(idx)}
+                  onBlur={() => setHoveredIndex((prev) => (prev === idx ? null : prev))}
+                  tabIndex={0}
+                  role="presentation"
+                >
+                  <circle cx={x} cy={y} r="1" fill="rgb(59,130,246)" />
+                  <circle cx={x} cy={y} r="4" fill="transparent" />
+                </g>
+              );
+            })}
+          </>
         )}
-        {coordinates.map(({ x, y, point }, idx) => (
-          <g
-            key={point.dateKey}
-            onMouseEnter={() => setHoveredIndex(idx)}
-            onFocus={() => setHoveredIndex(idx)}
-            onBlur={() => setHoveredIndex((prev) => (prev === idx ? null : prev))}
-            tabIndex={0}
-            role="presentation"
-          >
-            <circle cx={x} cy={y} r={3} fill="rgb(59,130,246)" />
-            <circle cx={x} cy={y} r={9} fill="transparent" />
-          </g>
-        ))}
       </svg>
+      {hoveredIndex !== null && lastTwelve[hoveredIndex] && (
+        <div className="absolute -top-2 left-1/2 z-10 -translate-x-1/2 -translate-y-full rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] shadow-sm">
+          <div className="font-medium text-gray-700">{lastTwelve[hoveredIndex].monthLabel}</div>
+          <div className="text-gray-500">{lastTwelve[hoveredIndex].monthlySearches.toLocaleString()} searches</div>
+        </div>
+      )}
       <div className="flex justify-between text-[10px] text-gray-400">
         <span>{lastTwelve[0]?.monthLabel}</span>
         <span>{lastTwelve[lastTwelve.length - 1]?.monthLabel}</span>
@@ -203,6 +221,7 @@ export default function FindKeywords(): JSX.Element {
   const [languageCode, setLanguageCode] = useState('en'); // Always English since dropdown is hidden
   const [dataSource, setDataSource] = useState<string | null>(null);
   const isInitialLoad = useRef(true);
+  const hasLoadedSavedData = useRef(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [sortField, setSortField] = useState<string | null>(null);
@@ -312,6 +331,7 @@ export default function FindKeywords(): JSX.Element {
       setCountryCode(savedData.countryCode);
       setLanguageCode('en'); // Always use English since dropdown is hidden
       setDataSource(savedData.dataSource);
+      hasLoadedSavedData.current = true;
       
       // Show a subtle notification that saved data was restored (only once)
       if (savedData.results.length > 0) {
@@ -328,6 +348,11 @@ export default function FindKeywords(): JSX.Element {
   useEffect(() => {
     if (isInitialLoad.current) return;
     
+    // Reset the flag after initial load is complete
+    if (hasLoadedSavedData.current) {
+      hasLoadedSavedData.current = false;
+    }
+    
     if (keywords || results.length > 0) {
       saveSearchData({
         keywords,
@@ -341,7 +366,7 @@ export default function FindKeywords(): JSX.Element {
 
   // Clear results when country changes to force fresh search
   useEffect(() => {
-    if (isInitialLoad.current) return;
+    if (isInitialLoad.current || hasLoadedSavedData.current) return;
     
     // Clear results when country changes so user knows they need to search again
     if (results.length > 0) {
@@ -393,7 +418,7 @@ export default function FindKeywords(): JSX.Element {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 min-h-screen">
+    <div className="w-full px-4 py-8 min-h-screen">
       <Head>
         <title>Find Keywords</title>
         <link rel="icon" href="/favicon.ico" />
@@ -487,7 +512,7 @@ export default function FindKeywords(): JSX.Element {
           </div>
 
           {results.length > 0 && (
-            <div className="mt-8 w-full max-w-4xl mx-auto">
+            <div className="mt-8 w-full">
               {dataSource && dataSource !== 'google_ads_api' && results[0]._meta?.reason && (
                 <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
                   {results[0]._meta.reason}
@@ -495,7 +520,7 @@ export default function FindKeywords(): JSX.Element {
               )}
               
               <div className="overflow-x-auto">
-                <table className="min-w-full text-left">
+                <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-gray-200">
                       <th 
