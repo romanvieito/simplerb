@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from "next/head";
 import { Toaster, toast } from "react-hot-toast";
 import { useClerk, SignedIn, SignedOut } from "@clerk/nextjs";
@@ -6,6 +6,42 @@ import { useClerk, SignedIn, SignedOut } from "@clerk/nextjs";
 const formatCpc = (micros?: number): string => {
   if (!micros) return 'N/A';
   return `$${(micros / 1000000).toFixed(2)}`;
+};
+
+// LocalStorage utility functions for saving/loading search data
+const STORAGE_KEY = 'last-keyword-search';
+
+interface SavedSearchData {
+  keywords: string;
+  results: KeywordResult[];
+  countryCode: string;
+  languageCode: string;
+  dataSource: string | null;
+  timestamp: number;
+}
+
+const saveSearchData = (data: Omit<SavedSearchData, 'timestamp'>) => {
+  try {
+    const dataWithTimestamp = { ...data, timestamp: Date.now() };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataWithTimestamp));
+  } catch (error) {
+    console.warn('Failed to save search data to localStorage:', error);
+  }
+};
+
+const loadSearchData = (): SavedSearchData | null => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const data = JSON.parse(saved) as SavedSearchData;
+      // Only load data if it's less than 24 hours old
+      const isRecent = Date.now() - data.timestamp < 24 * 60 * 60 * 1000;
+      return isRecent ? data : null;
+    }
+  } catch (error) {
+    console.warn('Failed to load search data from localStorage:', error);
+  }
+  return null;
 };
 
 interface KeywordResult {
@@ -37,6 +73,39 @@ export default function FindKeywords(): JSX.Element {
 
   const { openSignIn } = useClerk();
 
+  // Load saved search data on component mount
+  useEffect(() => {
+    const savedData = loadSearchData();
+    if (savedData) {
+      setKeywords(savedData.keywords);
+      setResults(savedData.results);
+      setCountryCode(savedData.countryCode);
+      setLanguageCode(savedData.languageCode);
+      setDataSource(savedData.dataSource);
+      
+      // Show a subtle notification that saved data was restored
+      if (savedData.results.length > 0) {
+        toast('📋 Previous search restored', { 
+          duration: 2000,
+          icon: '💾'
+        });
+      }
+    }
+  }, []);
+
+  // Save search data whenever it changes
+  useEffect(() => {
+    if (keywords || results.length > 0) {
+      saveSearchData({
+        keywords,
+        results,
+        countryCode,
+        languageCode,
+        dataSource
+      });
+    }
+  }, [keywords, results, countryCode, languageCode, dataSource]);
+
   const handleKeywordResearch = async () => {
     setLoading(true);
     setResults([]);
@@ -56,7 +125,7 @@ export default function FindKeywords(): JSX.Element {
       if (data.length > 0 && data[0]._meta) {
         setDataSource(data[0]._meta.dataSource);
         if (data[0]._meta.dataSource === 'google_ads_api') {
-          toast.success('✅ Enjoy!');
+          toast.success('');
         } else if (data[0]._meta.dataSource === 'mock_fallback') {
           toast.error('⚠️ Fallback data used - Google Ads API returned no results (unusual with Standard Access)');
         } else {
