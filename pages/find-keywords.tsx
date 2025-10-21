@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Head from "next/head";
 import { Toaster, toast } from "react-hot-toast";
 import { useClerk, SignedIn, SignedOut } from "@clerk/nextjs";
+import { useRouter } from 'next/router';
 import { TablePagination } from "@mui/material";
 
 const formatCpc = (micros?: number): string => {
@@ -93,8 +94,10 @@ interface KeywordResult {
     monthlySearches: number;
   }>;
   _meta?: {
-    dataSource: 'google_ads_api' | 'mock_deterministic' | 'mock_fallback';
+    dataSource: 'google_ads_api' | 'mock_deterministic' | 'mock_fallback' | 'openai_generated';
     reason?: string;
+    cached?: boolean;
+    generatedViaAI?: boolean;
   };
 }
 
@@ -179,18 +182,21 @@ const MonthlyTrendChart: React.FC<{ keyword: string; trend: MonthlyTrendPoint[] 
 };
 
 export default function FindKeywords(): JSX.Element {
+  const router = useRouter();
   const [keywords, setKeywords] = useState('');
   const [results, setResults] = useState<KeywordResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [countryCode, setCountryCode] = useState('US');
   const [languageCode, setLanguageCode] = useState('en'); // Always English since dropdown is hidden
   const [dataSource, setDataSource] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'google' | 'ai'>('google');
   const isInitialLoad = useRef(true);
   const hasLoadedSavedData = useRef(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>('asc');
+  const [cacheEnabled, setCacheEnabled] = useState(true);
 
   const { openSignIn } = useClerk();
 
@@ -343,10 +349,15 @@ export default function FindKeywords(): JSX.Element {
     setLoading(true);
     setResults([]);
     try {
-      const response = await fetch('/api/keyword-research', {
+      const endpoint = activeTab === 'google' ? '/api/keyword-research' : '/api/keyword-research/ai';
+      const payload = activeTab === 'google'
+        ? { keywords, countryCode, languageCode, useCache: cacheEnabled, userPrompt: keywords }
+        : { prompt: keywords, countryCode, languageCode };
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keywords, countryCode, languageCode }),
+        body: JSON.stringify(payload),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -357,10 +368,14 @@ export default function FindKeywords(): JSX.Element {
       // Check data source from first result
       if (data.length > 0 && data[0]._meta) {
         setDataSource(data[0]._meta.dataSource);
-        if (data[0]._meta.dataSource === 'google_ads_api') {
-          toast.success('');
+        if (data[0]._meta.generatedViaAI) {
+          toast.success('Google Ads metrics enriched for AI suggestions');
+        } else if (data[0]._meta.dataSource === 'google_ads_api') {
+          toast.success('Google Ads results ready');
         } else if (data[0]._meta.dataSource === 'mock_fallback') {
           toast.error('⚠️ Fallback data used - Google Ads API returned no results (unusual with Standard Access)');
+        } else if (data[0]._meta.dataSource === 'openai_generated') {
+          toast.success('AI-generated keyword ideas ready');
         } else {
           toast('📊 Using mock data - Enable GADS_USE_KEYWORD_PLANNING for real data', { icon: '⚠️' });
         }
@@ -383,15 +398,30 @@ export default function FindKeywords(): JSX.Element {
   };
 
   return (
-    <div className="w-full px-4 py-8 min-h-screen">
+    <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
       <Head>
         <title>Find Keywords</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="flex flex-col items-center text-center">
-        <h1 className="text-2xl font-medium text-slate-900 mb-8">
-          Find Keywords
+      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4">
+        <div className="absolute top-4 left-4">
+          {/* Back Button */}
+          <button
+            onClick={() => router.back()}
+            className="flex items-center space-x-1 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>Back</span>
+          </button>
+        </div>
+
+        <h1 className="text-2xl text-gray-900 mb-1 tracking-tight">
+          Keywords <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+            {'Planner'}
+          </span>
         </h1>
 
         <SignedIn>
@@ -400,12 +430,26 @@ export default function FindKeywords(): JSX.Element {
             <div className="space-y-4">
               {/* Simplified Input Area */}
               <div className="relative bg-white rounded-lg border border-gray-200 focus-within:border-blue-500 transition-colors">
+                <div className="flex border-b border-gray-200">
+                  <button
+                    onClick={() => setActiveTab('google')}
+                    className={`flex-1 py-2 text-sm font-medium ${activeTab === 'google' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
+                  >
+                    Google Ads
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('ai')}
+                    className={`flex-1 py-2 text-sm font-medium ${activeTab === 'ai' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
+                  >
+                    AI Prompt
+                  </button>
+                </div>
                 <textarea
                   value={keywords}
                   onChange={(e) => setKeywords(e.target.value)}
                   rows={4}
                   className="w-full bg-transparent p-4 pb-16 text-gray-700 resize-none text-lg placeholder-gray-400 rounded-lg border-0 focus:outline-none focus:ring-0"
-                  placeholder="Enter keywords (one per line)"
+                  placeholder={activeTab === 'google' ? 'Enter keywords (one per line)' : 'Describe your product, audience, or topic to generate keyword ideas'}
                 />
                 
                 {/* Simplified Action Bar */}
@@ -460,14 +504,14 @@ export default function FindKeywords(): JSX.Element {
                     {loading ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Searching...</span>
+                        <span>{activeTab === 'google' ? 'Searching...' : 'Generating...'}</span>
                       </>
                     ) : (
                       <>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612l-3.96 4.158a.75.75 0 11-1.08-1.04l5.25-5.5a.75.75 0 011.08 0l5.25 5.5a.75.75 0 11-1.08 1.04l-3.96-4.158v10.638A.75.75 0 0110 17z" clipRule="evenodd" />
                         </svg>
-                        <span>Search</span>
+                        <span>{activeTab === 'google' ? 'Search' : 'Generate with AI'}</span>
                       </>
                     )}
                   </button>
@@ -478,8 +522,8 @@ export default function FindKeywords(): JSX.Element {
 
           {results.length > 0 && (
             <div className="mt-8 w-full">
-              {dataSource && dataSource !== 'google_ads_api' && results[0]._meta?.reason && (
-                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+              {dataSource && results[0]._meta?.reason && (
+                <div className={`mb-4 p-3 rounded text-sm ${dataSource === 'mock_fallback' ? 'bg-yellow-50 border border-yellow-200 text-yellow-800' : dataSource === 'openai_generated' ? 'bg-blue-50 border border-blue-200 text-blue-700' : 'bg-gray-50 border border-gray-200 text-gray-700'}`}>
                   {results[0]._meta.reason}
                 </div>
               )}
@@ -574,7 +618,19 @@ export default function FindKeywords(): JSX.Element {
                       .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                       .map((result, index) => (
                       <tr key={`${result.keyword}-${index}`} className="border-b border-gray-100">
-                        <td className="p-3 font-medium">{result.keyword}</td>
+                        <td className="p-3 font-medium flex items-center space-x-2">
+                          <span>{result.keyword}</span>
+                          {result._meta?.dataSource === 'openai_generated' && (
+                            <span className="inline-flex items-center rounded bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
+                              AI
+                            </span>
+                          )}
+                          {result._meta?.cached && (
+                            <span className="inline-flex items-center rounded bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-600">
+                              Cached
+                            </span>
+                          )}
+                        </td>
                         <td className="p-3 text-right text-gray-600">
                           {typeof result.searchVolume === 'number' 
                             ? result.searchVolume.toLocaleString() 
@@ -617,15 +673,45 @@ export default function FindKeywords(): JSX.Element {
                     ))}
                   </tbody>
                 </table>
-                <TablePagination
-                  rowsPerPageOptions={[25, 50, 100]}
-                  component="div"
-                  count={results.length}
-                  rowsPerPage={rowsPerPage}
-                  page={page}
-                  onPageChange={handleChangePage}
-                  onRowsPerPageChange={handleChangeRowsPerPage}
-                />
+                <div className="flex items-center justify-between mt-4">
+                  <div className="flex items-center space-x-3">
+                    <label className="flex items-center space-x-2 text-sm text-gray-600">
+                      <input
+                        type="checkbox"
+                        checked={cacheEnabled}
+                        onChange={(e) => setCacheEnabled(e.target.checked)}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        disabled={activeTab === 'ai'}
+                      />
+                      <span className={activeTab === 'ai' ? 'text-gray-400' : ''}>Use cache</span>
+                    </label>
+                    <div className="text-xs text-gray-500">
+                      {activeTab === 'ai'
+                        ? 'AI mode always fetches fresh ideas'
+                        : cacheEnabled
+                          ? '⚡ Faster responses, reduced API costs'
+                          : '🔄 Fresh data, higher API costs'}
+                    </div>
+                    {results.length > 0 && (
+                      <div className="text-xs text-blue-600">
+                        {activeTab === 'ai'
+                          ? '🤖 Generated by AI'
+                          : results.some(r => r._meta?.cached)
+                            ? `📦 ${results.filter(r => r._meta?.cached).length}/${results.length} cached`
+                            : '🔄 All fresh data'}
+                      </div>
+                    )}
+                  </div>
+                  <TablePagination
+                    rowsPerPageOptions={[25, 50, 100]}
+                    component="div"
+                    count={results.length}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                  />
+                </div>
               </div>
             </div>
           )}
