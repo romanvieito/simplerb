@@ -9,6 +9,37 @@ const formatCpc = (micros?: number): string => {
   return `$${(micros / 1000000).toFixed(2)}`;
 };
 
+// Helper functions for calculating changes
+const calculateThreeMonthChange = (monthlyData?: KeywordResult['monthlySearchVolumes']): string => {
+  if (!monthlyData || monthlyData.length < 4) return 'N/A';
+  
+  // Data is sorted chronologically (oldest to newest), so we need to get the last month vs 3 months ago
+  const totalMonths = monthlyData.length;
+  const lastMonth = monthlyData[totalMonths - 1]; // Most recent month
+  const threeMonthsAgo = monthlyData[totalMonths - 4]; // 3 months ago
+  
+  if (!lastMonth || !threeMonthsAgo) return 'N/A';
+  
+  const lastMonthSearches = lastMonth.monthlySearches;
+  const threeMonthsAgoSearches = threeMonthsAgo.monthlySearches;
+  
+  // Debug logging for verification
+  if (process.env.NODE_ENV === 'development') {
+    console.log('3-month change calculation:', {
+      lastMonth: { month: lastMonth.monthLabel, searches: lastMonthSearches },
+      threeMonthsAgo: { month: threeMonthsAgo.monthLabel, searches: threeMonthsAgoSearches },
+      change: threeMonthsAgoSearches === 0 ? (lastMonthSearches > 0 ? '+∞%' : '0%') : ((lastMonthSearches - threeMonthsAgoSearches) / threeMonthsAgoSearches) * 100
+    });
+  }
+  
+  if (threeMonthsAgoSearches === 0) return lastMonthSearches > 0 ? '+∞%' : '0%';
+  
+  const change = ((lastMonthSearches - threeMonthsAgoSearches) / threeMonthsAgoSearches) * 100;
+  const sign = change >= 0 ? '+' : '';
+  return `${sign}${change.toFixed(1)}%`;
+};
+
+
 // LocalStorage utility functions for saving/loading search data
 const STORAGE_KEY = 'last-keyword-search';
 
@@ -174,6 +205,8 @@ export default function FindKeywords(): JSX.Element {
   const isInitialLoad = useRef(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [sortField, setSortField] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>('asc');
 
   const { openSignIn } = useClerk();
 
@@ -189,6 +222,85 @@ export default function FindKeywords(): JSX.Element {
   ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
+  };
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      // Same field clicked - cycle through: asc -> desc -> null (cancel sort)
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else if (sortDirection === 'desc') {
+        setSortField(null);
+        setSortDirection(null);
+      } else {
+        setSortDirection('asc');
+      }
+    } else {
+      // Different field clicked - start with ascending
+      setSortField(field);
+      setSortDirection('asc');
+    }
+    setPage(0); // Reset to first page when sorting
+  };
+
+  const parsePercentage = (percentageStr: string): number => {
+    if (percentageStr === 'N/A') return -Infinity;
+    if (percentageStr === '+∞%') return Infinity;
+    if (percentageStr === '0%') return 0;
+    // Remove the % sign and parse as float (handles negative numbers automatically)
+    return parseFloat(percentageStr.replace('%', ''));
+  };
+
+  const getSortedResults = () => {
+    if (!sortField || !sortDirection) return results;
+
+    return [...results].sort((a, b) => {
+      let aValue: number;
+      let bValue: number;
+
+      switch (sortField) {
+        case 'keyword':
+          // String sorting
+          const aKeyword = a.keyword.toLowerCase();
+          const bKeyword = b.keyword.toLowerCase();
+          if (aKeyword < bKeyword) return sortDirection === 'asc' ? -1 : 1;
+          if (aKeyword > bKeyword) return sortDirection === 'asc' ? 1 : -1;
+          return 0;
+        case 'volume':
+          // Handle both number and string values
+          aValue = typeof a.searchVolume === 'number'
+            ? a.searchVolume
+            : parseFloat(String(a.searchVolume)) || 0;
+          bValue = typeof b.searchVolume === 'number'
+            ? b.searchVolume
+            : parseFloat(String(b.searchVolume)) || 0;
+          break;
+        case 'competition':
+          // Use competitionIndex for proper numeric sorting
+          aValue = Number(a.competitionIndex) || 0;
+          bValue = Number(b.competitionIndex) || 0;
+          break;
+        case 'minCpc':
+          aValue = a.lowTopPageBidMicros || 0;
+          bValue = b.lowTopPageBidMicros || 0;
+          break;
+        case 'maxCpc':
+          aValue = a.highTopPageBidMicros || 0;
+          bValue = b.highTopPageBidMicros || 0;
+          break;
+        case 'threeMonthChange':
+          aValue = parsePercentage(calculateThreeMonthChange(a.monthlySearchVolumes));
+          bValue = parsePercentage(calculateThreeMonthChange(b.monthlySearchVolumes));
+          break;
+        default:
+          return 0;
+      }
+
+      // Numeric sorting for all other cases
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
   };
 
   // Load saved search data on component mount
@@ -386,16 +498,89 @@ export default function FindKeywords(): JSX.Element {
                 <table className="min-w-full text-left">
                   <thead>
                     <tr className="border-b border-gray-200">
-                      <th className="font-medium p-3 text-gray-700">Keyword</th>
-                      <th className="font-medium p-3 text-right text-gray-700">Volume</th>
-                      <th className="font-medium p-3 text-gray-700">Competition</th>
-                      <th className="font-medium p-3 text-right text-gray-700">Min CPC</th>
-                      <th className="font-medium p-3 text-right text-gray-700">Max CPC</th>
+                      <th 
+                        className="font-medium p-3 text-gray-700 cursor-pointer hover:bg-gray-50 select-none"
+                        onClick={() => handleSort('keyword')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>Keyword</span>
+                          {sortField === 'keyword' && sortDirection !== null && (
+                            <span className="text-blue-600">
+                              {sortDirection === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        className="font-medium p-3 text-right text-gray-700 cursor-pointer hover:bg-gray-50 select-none"
+                        onClick={() => handleSort('volume')}
+                      >
+                        <div className="flex items-center justify-end space-x-1">
+                          <span>Volume</span>
+                          {sortField === 'volume' && sortDirection !== null && (
+                            <span className="text-blue-600">
+                              {sortDirection === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        className="font-medium p-3 text-gray-700 cursor-pointer hover:bg-gray-50 select-none"
+                        onClick={() => handleSort('competition')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>Competition</span>
+                          {sortField === 'competition' && sortDirection !== null && (
+                            <span className="text-blue-600">
+                              {sortDirection === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        className="font-medium p-3 text-right text-gray-700 cursor-pointer hover:bg-gray-50 select-none"
+                        onClick={() => handleSort('minCpc')}
+                      >
+                        <div className="flex items-center justify-end space-x-1">
+                          <span>Min CPC</span>
+                          {sortField === 'minCpc' && sortDirection !== null && (
+                            <span className="text-blue-600">
+                              {sortDirection === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        className="font-medium p-3 text-right text-gray-700 cursor-pointer hover:bg-gray-50 select-none"
+                        onClick={() => handleSort('maxCpc')}
+                      >
+                        <div className="flex items-center justify-end space-x-1">
+                          <span>Max CPC</span>
+                          {sortField === 'maxCpc' && sortDirection !== null && (
+                            <span className="text-blue-600">
+                              {sortDirection === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                      <th
+                        className="font-medium p-3 text-right text-gray-700 cursor-pointer hover:bg-gray-50 select-none"
+                        onClick={() => handleSort('threeMonthChange')}
+                      >
+                        <div className="flex items-center justify-end space-x-1">
+                          <span>3-mo Change</span>
+                          {sortField === 'threeMonthChange' && sortDirection !== null && (
+                            <span className="text-blue-600">
+                              {sortDirection === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
                       <th className="font-medium p-3 text-gray-700">12-mo Trend</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {results
+                    {getSortedResults()
                       .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                       .map((result, index) => (
                       <tr key={`${result.keyword}-${index}`} className="border-b border-gray-100">
@@ -425,6 +610,15 @@ export default function FindKeywords(): JSX.Element {
                         </td>
                         <td className="p-3 text-right text-gray-600">
                           {result.highTopPageBidMicros ? formatCpc(result.highTopPageBidMicros) : 'N/A'}
+                        </td>
+                        <td className="p-3 text-right text-gray-600">
+                          <span className={`text-sm font-medium ${
+                            calculateThreeMonthChange(result.monthlySearchVolumes).startsWith('+') ? 'text-green-600' :
+                            calculateThreeMonthChange(result.monthlySearchVolumes).startsWith('-') ? 'text-red-600' :
+                            'text-gray-500'
+                          }`}>
+                            {calculateThreeMonthChange(result.monthlySearchVolumes)}
+                          </span>
                         </td>
                         <td className="p-3 align-top">
                           {renderMonthlyTrend(result.keyword, result.monthlySearchVolumes)}
