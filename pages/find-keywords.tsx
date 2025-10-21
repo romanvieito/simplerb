@@ -102,37 +102,47 @@ type MonthlyTrendPoint = NonNullable<KeywordResult['monthlySearchVolumes']>[numb
 
 const MonthlyTrendChart: React.FC<{ keyword: string; trend: MonthlyTrendPoint[] }> = ({ keyword, trend }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
 
   const lastTwelve = trend.slice(-12);
   const maxVolume = Math.max(...lastTwelve.map((point) => point.monthlySearches));
   const minVolume = Math.min(...lastTwelve.map((point) => point.monthlySearches));
   const chartRange = maxVolume - minVolume;
+  const chartHeight = 60;
   
-  // Debug logging
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Chart data:', { maxVolume, minVolume, chartRange, lastTwelve: lastTwelve.length });
-  }
-  const chartHeight = 48;
-  const paddingX = 10;
-  const paddingY = 8;
-  const innerHeight = chartHeight - paddingY * 2;
-
-  const getPoint = (value: number, index: number, chartWidth: number) => {
-    const normalized = chartRange === 0 ? 0.5 : (value - minVolume) / chartRange;
-    const innerWidth = chartWidth - paddingX * 2;
-    const step = lastTwelve.length > 1 ? innerWidth / (lastTwelve.length - 1) : 0;
-    const x = lastTwelve.length > 1 ? paddingX + step * index : chartWidth / 2;
-    const y = paddingY + (1 - normalized) * innerHeight;
-    return { x, y };
-  };
+  // Add padding to prevent chart from touching edges (in percentage)
+  const paddingTop = 10;
+  const paddingBottom = 10;
+  const innerRange = 100 - paddingTop - paddingBottom;
 
   const sanitizedKeyword = keyword.replace(/[^a-z0-9]+/gi, '-') || 'keyword';
   const gradientId = `trendGradient-${sanitizedKeyword}-${lastTwelve[0]?.dateKey ?? 'start'}`;
+  const glowId = `glow-${sanitizedKeyword}-${lastTwelve[0]?.dateKey ?? 'start'}`;
+
+  // Calculate trend direction for visual cues
+  const trendDirection = lastTwelve.length >= 2 
+    ? lastTwelve[lastTwelve.length - 1].monthlySearches - lastTwelve[0].monthlySearches
+    : 0;
+  const isPositiveTrend = trendDirection > 0;
+  const isNegativeTrend = trendDirection < 0;
 
   return (
-    <div className="relative flex flex-col space-y-1">
+    <div className="relative flex flex-col space-y-2 group">
+      {hoveredIndex !== null && lastTwelve[hoveredIndex] && (
+        <div className="absolute -top-3 left-1/2 z-20 -translate-x-1/2 -translate-y-full pointer-events-none">
+          <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 shadow-lg">
+            <div className="flex flex-col items-center space-y-0.5">
+              <div className="text-xs font-semibold text-gray-900">{lastTwelve[hoveredIndex].monthLabel}</div>
+              <div className="text-sm font-bold text-blue-600">{lastTwelve[hoveredIndex].monthlySearches.toLocaleString()}</div>
+              <div className="text-[10px] text-gray-500">searches</div>
+            </div>
+            <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-white" style={{ marginTop: '-1px' }}></div>
+          </div>
+        </div>
+      )}
       <svg
-        className="w-full"
+        ref={svgRef}
+        className="w-full transition-all duration-200 group-hover:drop-shadow-sm"
         height={chartHeight}
         role="img"
         aria-label={`Monthly search volume trend for ${keyword}`}
@@ -142,46 +152,67 @@ const MonthlyTrendChart: React.FC<{ keyword: string; trend: MonthlyTrendPoint[] 
       >
         <defs>
           <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="rgba(59,130,246,0.35)" />
-            <stop offset="100%" stopColor="rgba(59,130,246,0.05)" />
+            <stop offset="0%" stopColor={isPositiveTrend ? "rgba(34,197,94,0.25)" : isNegativeTrend ? "rgba(239,68,68,0.25)" : "rgba(59,130,246,0.25)"} />
+            <stop offset="100%" stopColor={isPositiveTrend ? "rgba(34,197,94,0.02)" : isNegativeTrend ? "rgba(239,68,68,0.02)" : "rgba(59,130,246,0.02)"} />
           </linearGradient>
+          <filter id={glowId}>
+            <feGaussianBlur stdDeviation="0.5" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
         </defs>
+        
+        {/* Background with subtle gradient */}
         <rect
           x="0"
           y="0"
           width="100"
           height="100"
-          fill="rgba(59,130,246,0.04)"
-          rx="6"
+          fill="url(#bgGradient)"
+          className="fill-gray-50/50"
+          rx="4"
         />
+        
         {lastTwelve.length > 1 && (
           <>
-            <path
-              d={lastTwelve.map((point, idx) => {
-                const normalized = chartRange === 0 ? 0.5 : (point.monthlySearches - minVolume) / chartRange;
-                const x = lastTwelve.length === 1 ? 50 : (idx / (lastTwelve.length - 1)) * 100;
-                const y = 100 - (normalized * 100);
-                return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`;
-              }).join(' ')}
-              fill="none"
-              stroke="rgb(59,130,246)"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+            {/* Area fill */}
             <path
               d={`${lastTwelve.map((point, idx) => {
                 const normalized = chartRange === 0 ? 0.5 : (point.monthlySearches - minVolume) / chartRange;
                 const x = lastTwelve.length === 1 ? 50 : (idx / (lastTwelve.length - 1)) * 100;
-                const y = 100 - (normalized * 100);
+                const y = paddingTop + (1 - normalized) * innerRange;
                 return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`;
-              }).join(' ')} L 100 100 L 0 100 Z`}
+              }).join(' ')} L 100 ${100 - paddingBottom} L 0 ${100 - paddingBottom} Z`}
               fill={`url(#${gradientId})`}
+              opacity="0.8"
             />
+            
+            {/* Main trend line */}
+            <path
+              d={lastTwelve.map((point, idx) => {
+                const normalized = chartRange === 0 ? 0.5 : (point.monthlySearches - minVolume) / chartRange;
+                const x = lastTwelve.length === 1 ? 50 : (idx / (lastTwelve.length - 1)) * 100;
+                const y = paddingTop + (1 - normalized) * innerRange;
+                return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`;
+              }).join(' ')}
+              fill="none"
+              stroke={isPositiveTrend ? "rgb(34,197,94)" : isNegativeTrend ? "rgb(239,68,68)" : "rgb(59,130,246)"}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              filter={`url(#${glowId})`}
+              className="transition-all duration-200"
+            />
+            
+            {/* Data points */}
             {lastTwelve.map((point, idx) => {
               const normalized = chartRange === 0 ? 0.5 : (point.monthlySearches - minVolume) / chartRange;
               const x = lastTwelve.length === 1 ? 50 : (idx / (lastTwelve.length - 1)) * 100;
-              const y = 100 - (normalized * 100);
+              const y = paddingTop + (1 - normalized) * innerRange;
+              const isHovered = hoveredIndex === idx;
+              
               return (
                 <g
                   key={point.dateKey}
@@ -189,25 +220,57 @@ const MonthlyTrendChart: React.FC<{ keyword: string; trend: MonthlyTrendPoint[] 
                   onFocus={() => setHoveredIndex(idx)}
                   onBlur={() => setHoveredIndex((prev) => (prev === idx ? null : prev))}
                   tabIndex={0}
-                  role="presentation"
+                  role="button"
+                  className="cursor-pointer outline-none"
                 >
-                  <circle cx={x} cy={y} r="1" fill="rgb(59,130,246)" />
-                  <circle cx={x} cy={y} r="4" fill="transparent" />
+                  {/* Hover target (invisible but larger) */}
+                  <circle cx={x} cy={y} r="5" fill="transparent" />
+                  
+                  {/* Outer ring on hover */}
+                  {isHovered && (
+                    <circle 
+                      cx={x} 
+                      cy={y} 
+                      r="2.5" 
+                      fill="none"
+                      stroke={isPositiveTrend ? "rgb(34,197,94)" : isNegativeTrend ? "rgb(239,68,68)" : "rgb(59,130,246)"}
+                      strokeWidth="0.5"
+                      opacity="0.3"
+                      className="animate-pulse"
+                    />
+                  )}
+                  
+                  {/* Data point dot */}
+                  <circle 
+                    cx={x} 
+                    cy={y} 
+                    r={isHovered ? "1.5" : "1.2"}
+                    fill="white"
+                    stroke={isPositiveTrend ? "rgb(34,197,94)" : isNegativeTrend ? "rgb(239,68,68)" : "rgb(59,130,246)"}
+                    strokeWidth={isHovered ? "0.8" : "0.6"}
+                    className="transition-all duration-150"
+                    style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))' }}
+                  />
                 </g>
               );
             })}
           </>
         )}
       </svg>
-      {hoveredIndex !== null && lastTwelve[hoveredIndex] && (
-        <div className="absolute -top-2 left-1/2 z-10 -translate-x-1/2 -translate-y-full rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] shadow-sm">
-          <div className="font-medium text-gray-700">{lastTwelve[hoveredIndex].monthLabel}</div>
-          <div className="text-gray-500">{lastTwelve[hoveredIndex].monthlySearches.toLocaleString()} searches</div>
-        </div>
-      )}
-      <div className="flex justify-between text-[10px] text-gray-400">
-        <span>{lastTwelve[0]?.monthLabel}</span>
-        <span>{lastTwelve[lastTwelve.length - 1]?.monthLabel}</span>
+      
+      {/* Enhanced date labels */}
+      <div className="flex justify-between items-center text-[10px] text-gray-400 px-1">
+        <span className="font-medium">{lastTwelve[0]?.monthLabel}</span>
+        {lastTwelve.length >= 2 && (
+          <div className={`flex items-center space-x-1 text-[9px] font-semibold ${
+            isPositiveTrend ? 'text-green-600' : isNegativeTrend ? 'text-red-600' : 'text-gray-500'
+          }`}>
+            {isPositiveTrend && <span>↗</span>}
+            {isNegativeTrend && <span>↘</span>}
+            {!isPositiveTrend && !isNegativeTrend && <span>→</span>}
+          </div>
+        )}
+        <span className="font-medium">{lastTwelve[lastTwelve.length - 1]?.monthLabel}</span>
       </div>
     </div>
   );
@@ -601,7 +664,7 @@ export default function FindKeywords(): JSX.Element {
                           )}
                         </div>
                       </th>
-                      <th className="font-medium p-3 text-gray-700">12-mo Trend</th>
+                      <th className="font-medium p-3 text-gray-700 min-w-[200px]">12-mo Trend</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -645,7 +708,7 @@ export default function FindKeywords(): JSX.Element {
                             {calculateThreeMonthChange(result.monthlySearchVolumes)}
                           </span>
                         </td>
-                        <td className="p-3 align-top">
+                        <td className="p-4 align-middle">
                           {renderMonthlyTrend(result.keyword, result.monthlySearchVolumes)}
                         </td>
                       </tr>
