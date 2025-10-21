@@ -6,6 +6,15 @@ interface KeywordPlanningRequest {
   languageCode?: string;
 }
 
+interface NormalizedMonthlySearchVolume {
+  month: string;
+  year: number;
+  monthIndex: number;
+  monthLabel: string;
+  dateKey: string;
+  monthlySearches: number;
+}
+
 interface KeywordIdea {
   keyword: string;
   searchVolume: number;
@@ -14,11 +23,7 @@ interface KeywordIdea {
   lowTopPageBidMicros?: number;
   highTopPageBidMicros?: number;
   avgCpcMicros?: number;
-  monthlySearchVolumes?: Array<{
-    month: string;
-    year: string;
-    monthlySearches: number;
-  }>;
+  monthlySearchVolumes?: NormalizedMonthlySearchVolume[];
 }
 
 interface KeywordPlanningResponse {
@@ -33,6 +38,98 @@ interface KeywordPlanningResponse {
     totalKeywords: number;
   };
 }
+
+const MONTH_ENUM_TO_INDEX: Record<string, number> = {
+  JANUARY: 0,
+  FEBRUARY: 1,
+  MARCH: 2,
+  APRIL: 3,
+  MAY: 4,
+  JUNE: 5,
+  JULY: 6,
+  AUGUST: 7,
+  SEPTEMBER: 8,
+  OCTOBER: 9,
+  NOVEMBER: 10,
+  DECEMBER: 11,
+};
+
+const MONTH_INDEX_TO_ENUM = Object.keys(MONTH_ENUM_TO_INDEX).reduce<string[]>((acc, key) => {
+  acc[MONTH_ENUM_TO_INDEX[key]] = key;
+  return acc;
+}, []);
+
+const padMonth = (monthIndex: number) => String(monthIndex + 1).padStart(2, '0');
+
+const normalizeMonthlySearchVolumes = (
+  raw?: Array<{ month: string | number; year: number; monthlySearches: number }>
+): NormalizedMonthlySearchVolume[] | undefined => {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return undefined;
+  }
+
+  const normalized = raw
+    .map((entry) => {
+      const rawMonth = entry.month;
+      const year = Number(entry.year);
+      const monthlySearches = Number(entry.monthlySearches ?? 0);
+
+      if (!Number.isFinite(year)) {
+        return null;
+      }
+
+      let monthIndex: number | undefined;
+      let monthEnum: string | undefined;
+
+      if (typeof rawMonth === 'number') {
+        monthIndex = rawMonth - 1;
+        monthEnum = MONTH_INDEX_TO_ENUM[monthIndex] ?? MONTH_INDEX_TO_ENUM[Math.max(Math.min(monthIndex, 11), 0)];
+      } else if (typeof rawMonth === 'string') {
+        const normalizedMonth = rawMonth.toUpperCase();
+        monthIndex = MONTH_ENUM_TO_INDEX[normalizedMonth];
+        monthEnum = monthIndex !== undefined ? normalizedMonth : undefined;
+      }
+
+      if (monthIndex === undefined || monthIndex < 0 || monthIndex > 11) {
+        return null;
+      }
+
+      const monthLabel = new Date(year, monthIndex, 1).toLocaleString('en-US', {
+        month: 'short',
+        year: 'numeric',
+      });
+
+      return {
+        month: monthEnum ?? MONTH_INDEX_TO_ENUM[monthIndex] ?? 'UNKNOWN',
+        year,
+        monthIndex,
+        monthLabel,
+        dateKey: `${year}-${padMonth(monthIndex)}`,
+        monthlySearches: Math.max(0, Math.round(monthlySearches)),
+      } as NormalizedMonthlySearchVolume;
+    })
+    .filter((entry): entry is NormalizedMonthlySearchVolume => entry !== null);
+
+  if (normalized.length === 0) {
+    return undefined;
+  }
+
+  const sortedDesc = normalized.sort((a, b) => {
+    if (a.year === b.year) {
+      return b.monthIndex - a.monthIndex;
+    }
+    return b.year - a.year;
+  });
+
+  const latestTwelve = sortedDesc.slice(0, 12);
+
+  return latestTwelve.sort((a, b) => {
+    if (a.year === b.year) {
+      return a.monthIndex - b.monthIndex;
+    }
+    return a.year - b.year;
+  });
+};
 
 export default async function handler(
   req: NextApiRequest,
@@ -117,13 +214,32 @@ export default async function handler(
     };
     const languageId = languageIdMap[languageCode.toLowerCase()] ?? 1000;
 
+    // Country/Geo target constant IDs (Google Ads)
+    const geoIdMap: Record<string, number> = {
+      US: 2840,
+      GB: 2826,
+      CA: 2120,
+      AU: 2036,
+      DE: 2760,
+      FR: 250,
+      ES: 724,
+      IT: 380,
+      NL: 528,
+      SE: 752,
+      NO: 578,
+      DK: 208,
+      FI: 246,
+      WORLD: 2840, // Default to US for WORLD
+    };
+    const geoId = geoIdMap[countryCode] ?? 2840; // Default to US
+    console.log(`🗺️ Using geo ID: ${geoId} for country: ${countryCode}`);
+
     // Use the customer ID from environment
     const customerId = GADS_CUSTOMER_ID || GADS_LOGIN_CUSTOMER_ID;
 
     // Build the REST API request
-    const requestBody = {
+    const requestBody: any = {
       language: `languageConstants/${languageId}`,
-      geoTargetConstants: [`geoTargetConstants/2840`], // default US
       includeAdultKeywords: false,
       keywordPlanNetwork: 'GOOGLE_SEARCH',
       keywordSeed: {
@@ -133,6 +249,11 @@ export default async function handler(
         includeAverageCpc: true
       }
     };
+
+    // Only add geo targeting for specific countries, not for WORLD
+    if (countryCode !== 'WORLD') {
+      requestBody.geoTargetConstants = [`geoTargetConstants/${geoId}`];
+    }
 
     console.log('📤 Sending REST API request to Google Ads...');
     console.log('Request body:', JSON.stringify(requestBody, null, 2));
@@ -177,7 +298,7 @@ export default async function handler(
         competition = 'HIGH';
       } else if (competitionIndex >= 30) {
         competition = 'MEDIUM';
-      } else if (competitionIndex > 0) {
+      } else if (competitionIndex >= 0) {
         competition = 'LOW';
       }
 
@@ -189,7 +310,7 @@ export default async function handler(
         lowTopPageBidMicros: metrics.lowTopOfPageBidMicros,
         highTopPageBidMicros: metrics.highTopOfPageBidMicros,
         avgCpcMicros: metrics.avgCpcMicros,
-        monthlySearchVolumes: metrics.monthlySearchVolumes
+        monthlySearchVolumes: normalizeMonthlySearchVolumes(metrics.monthlySearchVolumes)
       };
     });
 

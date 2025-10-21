@@ -10,7 +10,10 @@ interface KeywordResult {
   avgCpcMicros?: number;
   monthlySearchVolumes?: Array<{
     month: string;
-    year: string;
+    year: number;
+    monthIndex: number;
+    monthLabel: string;
+    dateKey: string;
     monthlySearches: number;
   }>;
   _meta?: {

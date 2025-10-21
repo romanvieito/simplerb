@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Head from "next/head";
 import { Toaster, toast } from "react-hot-toast";
 import { useClerk, SignedIn, SignedOut } from "@clerk/nextjs";
@@ -54,7 +54,10 @@ interface KeywordResult {
   avgCpcMicros?: number;
   monthlySearchVolumes?: Array<{
     month: string;
-    year: string;
+    year: number;
+    monthIndex: number;
+    monthLabel: string;
+    dateKey: string;
     monthlySearches: number;
   }>;
   _meta?: {
@@ -68,8 +71,9 @@ export default function FindKeywords(): JSX.Element {
   const [results, setResults] = useState<KeywordResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [countryCode, setCountryCode] = useState('US');
-  const [languageCode, setLanguageCode] = useState('en');
+  const [languageCode, setLanguageCode] = useState('en'); // Always English since dropdown is hidden
   const [dataSource, setDataSource] = useState<string | null>(null);
+  const isInitialLoad = useRef(true);
 
   const { openSignIn } = useClerk();
 
@@ -80,21 +84,24 @@ export default function FindKeywords(): JSX.Element {
       setKeywords(savedData.keywords);
       setResults(savedData.results);
       setCountryCode(savedData.countryCode);
-      setLanguageCode(savedData.languageCode);
+      setLanguageCode('en'); // Always use English since dropdown is hidden
       setDataSource(savedData.dataSource);
       
-      // Show a subtle notification that saved data was restored
+      // Show a subtle notification that saved data was restored (only once)
       if (savedData.results.length > 0) {
-        toast('📋 Previous search restored', { 
+        toast('Previous search restored', { 
           duration: 2000,
           icon: '💾'
         });
       }
     }
+    isInitialLoad.current = false;
   }, []);
 
-  // Save search data whenever it changes
+  // Save search data whenever it changes (but not on initial load)
   useEffect(() => {
+    if (isInitialLoad.current) return;
+    
     if (keywords || results.length > 0) {
       saveSearchData({
         keywords,
@@ -105,6 +112,16 @@ export default function FindKeywords(): JSX.Element {
       });
     }
   }, [keywords, results, countryCode, languageCode, dataSource]);
+
+  // Clear results when country changes to force fresh search
+  useEffect(() => {
+    if (isInitialLoad.current) return;
+    
+    // Clear results when country changes so user knows they need to search again
+    if (results.length > 0) {
+      setResults([]);
+    }
+  }, [countryCode]);
 
   const handleKeywordResearch = async () => {
     setLoading(true);
@@ -141,157 +158,238 @@ export default function FindKeywords(): JSX.Element {
     setLoading(false);
   };
 
+  const renderMonthlyTrend = (keyword: string, trend?: KeywordResult['monthlySearchVolumes']) => {
+    if (!trend || trend.length === 0) {
+      return <span className="text-xs text-gray-400">No trend data</span>;
+    }
+
+    const lastTwelve = trend.slice(-12);
+    const maxVolume = Math.max(...lastTwelve.map((point) => point.monthlySearches));
+    const minVolume = Math.min(...lastTwelve.map((point) => point.monthlySearches));
+    const chartRange = maxVolume - minVolume;
+    const chartWidth = 140;
+    const chartHeight = 44;
+    const paddingX = 8;
+    const paddingY = 6;
+    const innerWidth = chartWidth - paddingX * 2;
+    const innerHeight = chartHeight - paddingY * 2;
+    const step = lastTwelve.length > 1 ? innerWidth / (lastTwelve.length - 1) : 0;
+
+    const getPoint = (value: number, index: number) => {
+      const normalized = chartRange === 0 ? 0.5 : (value - minVolume) / chartRange;
+      const x = lastTwelve.length > 1 ? paddingX + step * index : chartWidth / 2;
+      const y = paddingY + (1 - normalized) * innerHeight;
+      return { x, y };
+    };
+
+    const linePath = lastTwelve
+      .map((point, idx) => {
+        const { x, y } = getPoint(point.monthlySearches, idx);
+        return `${idx === 0 ? 'M' : 'L'}${x} ${y}`;
+      })
+      .join(' ');
+
+    const areaPath = `${linePath} L ${paddingX + innerWidth} ${chartHeight - paddingY} L ${paddingX} ${chartHeight - paddingY} Z`;
+    const gradientId = `trendGradient-${keyword.replace(/[^a-z0-9]+/gi, '-')}-${lastTwelve[0]?.dateKey ?? 'start'}`;
+
+    return (
+      <div className="flex flex-col space-y-1">
+        <svg
+          className="w-full max-w-[150px]"
+          viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+          role="img"
+          aria-label={`Monthly search volume trend for ${keyword}`}
+        >
+          <defs>
+            <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="rgba(59,130,246,0.35)" />
+              <stop offset="100%" stopColor="rgba(59,130,246,0.05)" />
+            </linearGradient>
+          </defs>
+          <rect
+            x="0"
+            y="0"
+            width={chartWidth}
+            height={chartHeight}
+            fill="rgba(59,130,246,0.04)"
+            className="rounded"
+          />
+          <path d={areaPath} fill={`url(#${gradientId})`} />
+          <path
+            d={linePath}
+            fill="none"
+            stroke="rgb(59,130,246)"
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {lastTwelve.map((point, idx) => {
+            const { x, y } = getPoint(point.monthlySearches, idx);
+            return (
+              <circle
+                key={point.dateKey}
+                cx={x}
+                cy={y}
+                r={2.5}
+                fill="rgb(59,130,246)"
+              >
+                <title>{`${point.monthLabel}: ${point.monthlySearches.toLocaleString()}`}</title>
+              </circle>
+            );
+          })}
+        </svg>
+        <div className="flex justify-between text-[10px] text-gray-400">
+          <span>{lastTwelve[0]?.monthLabel}</span>
+          <span>{lastTwelve[lastTwelve.length - 1]?.monthLabel}</span>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
+    <div className="max-w-4xl mx-auto px-4 py-8 min-h-screen">
       <Head>
         <title>Find Keywords</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
-        <h1 className="text-xl max-w-[708px] font-bold text-slate-900">
+      <main className="flex flex-col items-center text-center">
+        <h1 className="text-2xl font-medium text-slate-900 mb-8">
           Find Keywords
         </h1>
 
         <SignedIn>
           {/* Main Input Area */}
-          <div className="w-full max-w-4xl mx-auto mt-8">
-            <div className="space-y-6">
-              {/* Integrated Input Area with Action Bar */}
-              <div className="relative bg-white rounded-2xl border-2 border-gray-200 shadow-sm focus-within:border-blue-500 focus-within:ring-blue-500 transition-all duration-300">
+          <div className="w-full max-w-3xl mx-auto">
+            <div className="space-y-4">
+              {/* Simplified Input Area */}
+              <div className="relative bg-white rounded-lg border border-gray-200 focus-within:border-blue-500 transition-colors">
                 <textarea
                   value={keywords}
                   onChange={(e) => setKeywords(e.target.value)}
                   rows={4}
-                  className="w-full bg-transparent p-6 pb-20 text-gray-700 resize-none transition-all duration-300 text-lg placeholder-gray-400 rounded-2xl border-0 focus:outline-none focus:ring-0"
+                  className="w-full bg-transparent p-4 pb-16 text-gray-700 resize-none text-lg placeholder-gray-400 rounded-lg border-0 focus:outline-none focus:ring-0"
                   placeholder="Enter keywords (one per line)"
                 />
                 
-                {/* Integrated Action Bar */}
-                <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between bg-gray-50 rounded-b-2xl p-4 border-t border-gray-100 overflow-visible">
-                  <div className="flex items-center space-x-3 overflow-visible">
-                    {/* Country Dropdown */}
-                    <div className="relative overflow-visible">
-                      <select
-                        value={countryCode}
-                        onChange={(e) => setCountryCode(e.target.value)}
-                        className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:ring-blue-500 shadow-sm appearance-none pr-8"
-                      >
-                        <option value="US">United States</option>
-                        <option value="GB">United Kingdom</option>
-                        <option value="CA">Canada</option>
-                        <option value="AU">Australia</option>
-                        <option value="DE">Germany</option>
-                        <option value="FR">France</option>
-                        <option value="ES">Spain</option>
-                        <option value="IT">Italy</option>
-                        <option value="NL">Netherlands</option>
-                        <option value="SE">Sweden</option>
-                        <option value="NO">Norway</option>
-                        <option value="DK">Denmark</option>
-                        <option value="FI">Finland</option>
-                      </select>
-                    </div>
+                {/* Simplified Action Bar */}
+                <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between bg-gray-50 rounded-b-lg p-3 border-t border-gray-100">
+                  <div className="flex items-center space-x-3">
+                    <select
+                      value={countryCode}
+                      onChange={(e) => setCountryCode(e.target.value)}
+                      className="bg-white border border-gray-200 rounded px-3 py-1 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                    >
+                      <option value="WORLD">World</option>
+                      <option value="US">United States</option>
+                      <option value="GB">United Kingdom</option>
+                      <option value="CA">Canada</option>
+                      <option value="AU">Australia</option>
+                      <option value="DE">Germany</option>
+                      <option value="FR">France</option>
+                      <option value="ES">Spain</option>
+                      <option value="IT">Italy</option>
+                      <option value="NL">Netherlands</option>
+                      <option value="SE">Sweden</option>
+                      <option value="NO">Norway</option>
+                      <option value="DK">Denmark</option>
+                      <option value="FI">Finland</option>
+                    </select>
 
-                    {/* Language Dropdown */}
-                    <div className="relative overflow-visible">
-                      <select
-                        value={languageCode}
-                        onChange={(e) => setLanguageCode(e.target.value)}
-                        className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:ring-blue-500 shadow-sm appearance-none pr-8"
-                      >
-                        <option value="en">English</option>
-                        <option value="es">Spanish</option>
-                        <option value="fr">French</option>
-                        <option value="de">German</option>
-                        <option value="it">Italian</option>
-                        <option value="pt">Portuguese</option>
-                        <option value="nl">Dutch</option>
-                        <option value="sv">Swedish</option>
-                        <option value="no">Norwegian</option>
-                        <option value="da">Danish</option>
-                        <option value="fi">Finnish</option>
-                      </select>
-                    </div>
+                    {/* Language dropdown hidden for now */}
+                    {/* <select
+                      value={languageCode}
+                      onChange={(e) => setLanguageCode(e.target.value)}
+                      className="bg-white border border-gray-200 rounded px-3 py-1 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                    >
+                      <option value="en">English</option>
+                      <option value="es">Spanish</option>
+                      <option value="fr">French</option>
+                      <option value="de">German</option>
+                      <option value="it">Italian</option>
+                      <option value="pt">Portuguese</option>
+                      <option value="nl">Dutch</option>
+                      <option value="sv">Swedish</option>
+                      <option value="no">Norwegian</option>
+                      <option value="da">Danish</option>
+                      <option value="fi">Finnish</option>
+                    </select> */}
                   </div>
                   
-                  <div className="flex items-center space-x-3">
-                    <button
-                      onClick={handleKeywordResearch}
-                      disabled={loading || !keywords.trim()}
-                      className="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                    >
-                      {loading ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          <span>Researching...</span>
-                        </>
-                      ) : (
-                        <>
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612l-3.96 4.158a.75.75 0 11-1.08-1.04l5.25-5.5a.75.75 0 011.08 0l5.25 5.5a.75.75 0 11-1.08 1.04l-3.96-4.158v10.638A.75.75 0 0110 17z" clipRule="evenodd" />
-                          </svg>
-                          <span>Go</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
+                  <button
+                    onClick={handleKeywordResearch}
+                    disabled={loading || !keywords.trim()}
+                    className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Searching...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612l-3.96 4.158a.75.75 0 11-1.08-1.04l5.25-5.5a.75.75 0 011.08 0l5.25 5.5a.75.75 0 11-1.08 1.04l-3.96-4.158v10.638A.75.75 0 0110 17z" clipRule="evenodd" />
+                        </svg>
+                        <span>Search</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
           </div>
 
           {results.length > 0 && (
-            <div className="mt-10 w-full">
-              
+            <div className="mt-8 w-full max-w-4xl mx-auto">
               {dataSource && dataSource !== 'google_ads_api' && results[0]._meta?.reason && (
-                <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-sm text-yellow-800">
-                    <strong>Note:</strong> {results[0]._meta.reason}
-                  </p>
+                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+                  {results[0]._meta.reason}
                 </div>
               )}
+              
               <div className="overflow-x-auto">
-                <table className="min-w-full text-left border-collapse">
+                <table className="min-w-full text-left">
                   <thead>
-                    <tr>
-                      <th className="border-b font-medium p-4 pl-8 pt-0 pb-3">Keyword</th>
-                      <th className="border-b font-medium p-4 pt-0 pb-3 text-right">Search Volume</th>
-                      <th className="border-b font-medium p-4 pt-0 pb-3">Competition</th>
-                      <th className="border-b font-medium p-4 pt-0 pb-3 text-right">Comp. Index</th>
-                      <th className="border-b font-medium p-4 pt-0 pb-3 text-right">Avg CPC</th>
-                      <th className="border-b font-medium p-4 pr-8 pt-0 pb-3 text-right">CPC Range</th>
+                    <tr className="border-b border-gray-200">
+                      <th className="font-medium p-3 text-gray-700">Keyword</th>
+                      <th className="font-medium p-3 text-right text-gray-700">Volume</th>
+                      <th className="font-medium p-3 text-gray-700">Competition</th>
+                      <th className="font-medium p-3 text-right text-gray-700">CPC</th>
+                      <th className="font-medium p-3 text-gray-700">12-mo Trend</th>
                     </tr>
                   </thead>
                   <tbody>
                     {results.map((result, index) => (
-                      <tr key={`${result.keyword}-${index}`}>
-                        <td className="border-b border-slate-100 p-4 pl-8">{result.keyword}</td>
-                        <td className="border-b border-slate-100 p-4 text-right">
+                      <tr key={`${result.keyword}-${index}`} className="border-b border-gray-100">
+                        <td className="p-3 font-medium">{result.keyword}</td>
+                        <td className="p-3 text-right text-gray-600">
                           {typeof result.searchVolume === 'number' 
                             ? result.searchVolume.toLocaleString() 
                             : result.searchVolume}
                         </td>
-                        <td className="border-b border-slate-100 p-4">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            result.competition === 'LOW' ? 'bg-green-100 text-green-800' :
-                            result.competition === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
-                            result.competition === 'HIGH' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {result.competition}
-                          </span>
+                        <td className="p-3">
+                          <div className="flex items-center space-x-2">
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              result.competition === 'LOW' ? 'bg-green-100 text-green-700' :
+                              result.competition === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
+                              result.competition === 'HIGH' ? 'bg-red-100 text-red-700' :
+                              'bg-gray-100 text-gray-700'
+                            }`}>
+                              {result.competition}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {result.competitionIndex !== undefined ? `(${result.competitionIndex})` : '(N/A)'}
+                            </span>
+                          </div>
                         </td>
-                        <td className="border-b border-slate-100 p-4 text-right">
-                          {result.competitionIndex !== undefined ? result.competitionIndex : 'N/A'}
-                        </td>
-                        <td className="border-b border-slate-100 p-4 text-right">
-                          {formatCpc(result.avgCpcMicros)}
-                        </td>
-                        <td className="border-b border-slate-100 p-4 pr-8 text-right text-sm text-gray-600">
+                        <td className="p-3 text-right text-gray-600">
                           {result.lowTopPageBidMicros && result.highTopPageBidMicros
                             ? `${formatCpc(result.lowTopPageBidMicros)} - ${formatCpc(result.highTopPageBidMicros)}`
                             : 'N/A'}
+                        </td>
+                        <td className="p-3 align-top">
+                          {renderMonthlyTrend(result.keyword, result.monthlySearchVolumes)}
                         </td>
                       </tr>
                     ))}
@@ -303,8 +401,8 @@ export default function FindKeywords(): JSX.Element {
         </SignedIn>
 
         <SignedOut>
-          <button onClick={() => openSignIn()} className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80">
-            Sign in to use the Keyword Finder
+          <button onClick={() => openSignIn()} className="bg-black text-white rounded px-4 py-2 mt-8 hover:bg-gray-800 transition-colors">
+            Sign in to use Keyword Finder
           </button>
         </SignedOut>
       </main>
