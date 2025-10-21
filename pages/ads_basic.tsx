@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import Head from "next/head";
 import { Toaster, toast } from "react-hot-toast";
 import { useClerk, SignedIn, SignedOut } from "@clerk/nextjs";
+import { TablePagination } from "@mui/material";
 
 interface KeywordResult {
   keyword: string;
@@ -16,8 +17,24 @@ const AdsPage = () => {
   const [loading, setLoading] = useState(false);
   const [countryCode, setCountryCode] = useState('US');
   const [languageCode, setLanguageCode] = useState('en');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
   const { openSignIn } = useClerk();
+
+  const handleChangePage = (
+    event: unknown,
+    newPage: number,
+  ) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
   const handleKeywordResearch = async () => {
     setLoading(true);
@@ -84,7 +101,9 @@ const AdsPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {results.map((result, index) => (
+                  {results
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((result, index) => (
                     <tr key={`${result.keyword}-${index}`}>
                       <td className="border-b border-slate-100 p-4 pl-8">{result.keyword}</td>
                       <td className="border-b border-slate-100 p-4 pl-8">{result.searchVolume}</td>
@@ -93,6 +112,15 @@ const AdsPage = () => {
                   ))}
                 </tbody>
               </table>
+              <TablePagination
+                rowsPerPageOptions={[25, 50, 100]}
+                component="div"
+                count={results.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+              />
             </div>
           )}
         </SignedIn>

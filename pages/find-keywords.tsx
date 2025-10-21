@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Head from "next/head";
 import { Toaster, toast } from "react-hot-toast";
 import { useClerk, SignedIn, SignedOut } from "@clerk/nextjs";
+import { TablePagination } from "@mui/material";
 
 const formatCpc = (micros?: number): string => {
   if (!micros) return 'N/A';
@@ -66,6 +67,103 @@ interface KeywordResult {
   };
 }
 
+type MonthlyTrendPoint = NonNullable<KeywordResult['monthlySearchVolumes']>[number];
+
+const MonthlyTrendChart: React.FC<{ keyword: string; trend: MonthlyTrendPoint[] }> = ({ keyword, trend }) => {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  const lastTwelve = trend.slice(-12);
+  const maxVolume = Math.max(...lastTwelve.map((point) => point.monthlySearches));
+  const minVolume = Math.min(...lastTwelve.map((point) => point.monthlySearches));
+  const chartRange = maxVolume - minVolume;
+  const chartWidth = 140;
+  const chartHeight = 48;
+  const paddingX = 10;
+  const paddingY = 8;
+  const innerWidth = chartWidth - paddingX * 2;
+  const innerHeight = chartHeight - paddingY * 2;
+  const step = lastTwelve.length > 1 ? innerWidth / (lastTwelve.length - 1) : 0;
+
+  const getPoint = (value: number, index: number) => {
+    const normalized = chartRange === 0 ? 0.5 : (value - minVolume) / chartRange;
+    const x = lastTwelve.length > 1 ? paddingX + step * index : chartWidth / 2;
+    const y = paddingY + (1 - normalized) * innerHeight;
+    return { x, y };
+  };
+
+  const coordinates = lastTwelve.map((point, idx) => ({ ...getPoint(point.monthlySearches, idx), point }));
+  const linePath = coordinates
+    .map(({ x, y }, idx) => `${idx === 0 ? 'M' : 'L'}${x} ${y}`)
+    .join(' ');
+  const areaPath = coordinates.length > 1
+    ? `${linePath} L ${coordinates[coordinates.length - 1].x} ${chartHeight - paddingY} L ${coordinates[0].x} ${chartHeight - paddingY} Z`
+    : '';
+  const sanitizedKeyword = keyword.replace(/[^a-z0-9]+/gi, '-') || 'keyword';
+  const gradientId = `trendGradient-${sanitizedKeyword}-${lastTwelve[0]?.dateKey ?? 'start'}`;
+  const hoveredPoint = hoveredIndex !== null ? coordinates[hoveredIndex]?.point : null;
+
+  return (
+    <div className="relative flex flex-col space-y-1">
+      {hoveredPoint && (
+        <div className="absolute -top-2 left-1/2 z-10 -translate-x-1/2 -translate-y-full rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] shadow-sm">
+          <div className="font-medium text-gray-700">{hoveredPoint.monthLabel}</div>
+          <div className="text-gray-500">{hoveredPoint.monthlySearches.toLocaleString()} searches</div>
+        </div>
+      )}
+      <svg
+        className="w-full max-w-[150px]"
+        viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+        role="img"
+        aria-label={`Monthly search volume trend for ${keyword}`}
+        onMouseLeave={() => setHoveredIndex(null)}
+      >
+        <defs>
+          <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="rgba(59,130,246,0.35)" />
+            <stop offset="100%" stopColor="rgba(59,130,246,0.05)" />
+          </linearGradient>
+        </defs>
+        <rect
+          x="0"
+          y="0"
+          width={chartWidth}
+          height={chartHeight}
+          fill="rgba(59,130,246,0.04)"
+          rx={6}
+        />
+        {areaPath && <path d={areaPath} fill={`url(#${gradientId})`} />}
+        {linePath && (
+          <path
+            d={linePath}
+            fill="none"
+            stroke="rgb(59,130,246)"
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        )}
+        {coordinates.map(({ x, y, point }, idx) => (
+          <g
+            key={point.dateKey}
+            onMouseEnter={() => setHoveredIndex(idx)}
+            onFocus={() => setHoveredIndex(idx)}
+            onBlur={() => setHoveredIndex((prev) => (prev === idx ? null : prev))}
+            tabIndex={0}
+            role="presentation"
+          >
+            <circle cx={x} cy={y} r={3} fill="rgb(59,130,246)" />
+            <circle cx={x} cy={y} r={9} fill="transparent" />
+          </g>
+        ))}
+      </svg>
+      <div className="flex justify-between text-[10px] text-gray-400">
+        <span>{lastTwelve[0]?.monthLabel}</span>
+        <span>{lastTwelve[lastTwelve.length - 1]?.monthLabel}</span>
+      </div>
+    </div>
+  );
+};
+
 export default function FindKeywords(): JSX.Element {
   const [keywords, setKeywords] = useState('');
   const [results, setResults] = useState<KeywordResult[]>([]);
@@ -74,8 +172,24 @@ export default function FindKeywords(): JSX.Element {
   const [languageCode, setLanguageCode] = useState('en'); // Always English since dropdown is hidden
   const [dataSource, setDataSource] = useState<string | null>(null);
   const isInitialLoad = useRef(true);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
   const { openSignIn } = useClerk();
+
+  const handleChangePage = (
+    event: unknown,
+    newPage: number,
+  ) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
   // Load saved search data on component mount
   useEffect(() => {
@@ -163,87 +277,7 @@ export default function FindKeywords(): JSX.Element {
       return <span className="text-xs text-gray-400">No trend data</span>;
     }
 
-    const lastTwelve = trend.slice(-12);
-    const maxVolume = Math.max(...lastTwelve.map((point) => point.monthlySearches));
-    const minVolume = Math.min(...lastTwelve.map((point) => point.monthlySearches));
-    const chartRange = maxVolume - minVolume;
-    const chartWidth = 140;
-    const chartHeight = 44;
-    const paddingX = 8;
-    const paddingY = 6;
-    const innerWidth = chartWidth - paddingX * 2;
-    const innerHeight = chartHeight - paddingY * 2;
-    const step = lastTwelve.length > 1 ? innerWidth / (lastTwelve.length - 1) : 0;
-
-    const getPoint = (value: number, index: number) => {
-      const normalized = chartRange === 0 ? 0.5 : (value - minVolume) / chartRange;
-      const x = lastTwelve.length > 1 ? paddingX + step * index : chartWidth / 2;
-      const y = paddingY + (1 - normalized) * innerHeight;
-      return { x, y };
-    };
-
-    const linePath = lastTwelve
-      .map((point, idx) => {
-        const { x, y } = getPoint(point.monthlySearches, idx);
-        return `${idx === 0 ? 'M' : 'L'}${x} ${y}`;
-      })
-      .join(' ');
-
-    const areaPath = `${linePath} L ${paddingX + innerWidth} ${chartHeight - paddingY} L ${paddingX} ${chartHeight - paddingY} Z`;
-    const gradientId = `trendGradient-${keyword.replace(/[^a-z0-9]+/gi, '-')}-${lastTwelve[0]?.dateKey ?? 'start'}`;
-
-    return (
-      <div className="flex flex-col space-y-1">
-        <svg
-          className="w-full max-w-[150px]"
-          viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-          role="img"
-          aria-label={`Monthly search volume trend for ${keyword}`}
-        >
-          <defs>
-            <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="rgba(59,130,246,0.35)" />
-              <stop offset="100%" stopColor="rgba(59,130,246,0.05)" />
-            </linearGradient>
-          </defs>
-          <rect
-            x="0"
-            y="0"
-            width={chartWidth}
-            height={chartHeight}
-            fill="rgba(59,130,246,0.04)"
-            className="rounded"
-          />
-          <path d={areaPath} fill={`url(#${gradientId})`} />
-          <path
-            d={linePath}
-            fill="none"
-            stroke="rgb(59,130,246)"
-            strokeWidth={1.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {lastTwelve.map((point, idx) => {
-            const { x, y } = getPoint(point.monthlySearches, idx);
-            return (
-              <circle
-                key={point.dateKey}
-                cx={x}
-                cy={y}
-                r={2.5}
-                fill="rgb(59,130,246)"
-              >
-                <title>{`${point.monthLabel}: ${point.monthlySearches.toLocaleString()}`}</title>
-              </circle>
-            );
-          })}
-        </svg>
-        <div className="flex justify-between text-[10px] text-gray-400">
-          <span>{lastTwelve[0]?.monthLabel}</span>
-          <span>{lastTwelve[lastTwelve.length - 1]?.monthLabel}</span>
-        </div>
-      </div>
-    );
+    return <MonthlyTrendChart keyword={keyword} trend={trend} />;
   };
 
   return (
@@ -360,7 +394,9 @@ export default function FindKeywords(): JSX.Element {
                     </tr>
                   </thead>
                   <tbody>
-                    {results.map((result, index) => (
+                    {results
+                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                      .map((result, index) => (
                       <tr key={`${result.keyword}-${index}`} className="border-b border-gray-100">
                         <td className="p-3 font-medium">{result.keyword}</td>
                         <td className="p-3 text-right text-gray-600">
@@ -395,6 +431,15 @@ export default function FindKeywords(): JSX.Element {
                     ))}
                   </tbody>
                 </table>
+                <TablePagination
+                  rowsPerPageOptions={[25, 50, 100]}
+                  component="div"
+                  count={results.length}
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                />
               </div>
             </div>
           )}

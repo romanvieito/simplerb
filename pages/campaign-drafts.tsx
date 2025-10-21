@@ -22,7 +22,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  CircularProgress
+  CircularProgress,
+  TablePagination
 } from "@mui/material";
 import DownloadIcon from '@mui/icons-material/Download';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -58,6 +59,8 @@ const CampaignDraftsPage = () => {
   const [selectedDraft, setSelectedDraft] = useState<CampaignDraft | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [exporting, setExporting] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -156,6 +159,20 @@ const CampaignDraftsPage = () => {
       case 'exported': return 'info';
       default: return 'default';
     }
+  };
+
+  const handleChangePage = (
+    event: unknown,
+    newPage: number,
+  ) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
   if (!isLoaded || loading) {
@@ -324,7 +341,9 @@ const CampaignDraftsPage = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {drafts.map((draft) => (
+                  {drafts
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((draft) => (
                     <TableRow key={draft.id}>
                       <TableCell>
                         <Typography variant="body2" className="font-medium">
@@ -370,6 +389,15 @@ const CampaignDraftsPage = () => {
                   ))}
                 </TableBody>
               </Table>
+              <TablePagination
+                rowsPerPageOptions={[25, 50, 100]}
+                component="div"
+                count={drafts.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+              />
             </TableContainer>
           )}
         </div>

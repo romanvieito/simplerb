@@ -602,7 +602,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({
   const handleClose = () => setOpen(false);
 
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -611,7 +611,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({
   const { subsTplan } = context;
 
   // Calcular opciones dinámicas para filas por página
-  const rowsPerPageOptions = [5, 10, 25].filter(
+  const rowsPerPageOptions = [25, 50, 100].filter(
     (option) => option <= rows.length
   );
 
@@ -792,7 +792,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({
           </TableBody>
         </Table>
       </TableContainer>
-      {/* <TablePagination
+      <TablePagination
         rowsPerPageOptions={rowsPerPageOptions}
         component="div"
         count={rows.length}
@@ -800,7 +800,7 @@ const TableDomain: React.FC<DomainInfoArray> = ({
         page={page}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
-      /> */}
+      />
     </Paper>
   );
 };

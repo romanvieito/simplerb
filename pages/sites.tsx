@@ -5,7 +5,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { toast, Toaster } from 'react-hot-toast';
 import { useClerk, UserButton } from '@clerk/nextjs';
-import { Button, Box } from "@mui/material";
+import { Button, Box, TablePagination } from "@mui/material";
 import DiamondIcon from '@mui/icons-material/Diamond';
 import LoginIcon from '@mui/icons-material/Login';
 import SBRContext from '../context/SBRContext';
@@ -29,6 +29,8 @@ const SitesPage = () => {
   const [deletingSite, setDeletingSite] = useState<string | null>(null);
   const [editingSubdomain, setEditingSubdomain] = useState<string | null>(null);
   const [tempSubdomain, setTempSubdomain] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -48,6 +50,20 @@ const SitesPage = () => {
   } = context;
 
   const isPremiumUser = subsTplan === "STARTER" || subsTplan === "CREATOR";
+
+  const handleChangePage = (
+    event: unknown,
+    newPage: number,
+  ) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
   // Redirect if not signed in
   useEffect(() => {
@@ -381,7 +397,9 @@ const SitesPage = () => {
             ) : (
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {sites.map((site) => (
+                  {sites
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((site) => (
                     <div key={site.id} className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300">
                       {/* Site Preview */}
                       <div className="aspect-video bg-gray-100 overflow-hidden relative">
@@ -530,6 +548,15 @@ const SitesPage = () => {
                     </div>
                   ))}
                 </div>
+                <TablePagination
+                  rowsPerPageOptions={[25, 50, 100]}
+                  component="div"
+                  count={sites.length}
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                />
               </div>
             )}
           </div>
