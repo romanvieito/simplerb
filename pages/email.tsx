@@ -196,6 +196,12 @@ const EmailPage = () => {
               Email
             </button>
             <button 
+              onClick={() => router.push('/find-keywords')}
+              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              Keywords
+            </button>
+            <button 
               onClick={() => router.push('/ads')}
               className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
             >

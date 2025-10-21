@@ -252,10 +252,10 @@ const SitesPage = () => {
               Website
             </button>
             <button 
-              onClick={() => router.push('/email')}
+              onClick={() => router.push('/find-keywords')}
               className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
             >
-              Email
+              Keywords
             </button>
             <button 
               onClick={() => router.push('/ads')}

@@ -379,10 +379,10 @@ const AdsAnalyzerPage = () => {
               Website
             </button>
             <button 
-              onClick={() => router.push('/email')}
+              onClick={() => router.push('/find-keywords')}
               className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
             >
-              Email
+              Keywords
             </button>
             <button className="px-3 py-1 bg-white rounded-md text-sm font-medium text-gray-800 shadow-sm">
               Ads

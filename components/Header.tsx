@@ -24,7 +24,6 @@ import {
 const pages = [
   { name: 'Domain Generator', link: '/domain' },
   { name: 'Website Creator', link: '/web' },
-  { name: 'Email Marketing', link: '/email' },
   { name: 'Google Ads Generator', link: '/ads' },
   { name: 'Find Keywords', link: '/find-keywords' },
   { name: 'Pricing', link: '/pricing' }

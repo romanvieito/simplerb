@@ -1,4 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { getAuth } from '@clerk/nextjs/server';
+import { sql } from '@vercel/postgres';
+import { saveKeywordSearchHistory } from '../../utils/keywordHistory';
 
 interface KeywordResult {
   keyword: string;
@@ -19,6 +22,8 @@ interface KeywordResult {
   _meta?: {
     dataSource: 'google_ads_api' | 'mock_deterministic' | 'mock_fallback';
     reason?: string;
+    cached?: boolean;
+    generatedViaAI?: boolean;
   };
 }
 
@@ -26,8 +31,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
-  
-  const { keywords, countryCode = 'US', languageCode = 'en' } = req.body;
+
+  // Check authentication using Clerk
+  const { userId } = getAuth(req);
+  if (!userId) {
+    return res.status(401).json({ success: false, error: 'Unauthorized - please sign in' });
+  }
+
+  const {
+    keywords,
+    countryCode = 'US',
+    languageCode = 'en',
+    useCache = true,
+    userPrompt,
+    generatedViaAI: generatedViaAIRaw,
+  } = req.body;
+
+  const generatedViaAI = Boolean(generatedViaAIRaw);
+
+  const decorateResults = (list: KeywordResult[]): KeywordResult[] => {
+    if (!generatedViaAI) return list;
+    return list.map((result) => ({
+      ...result,
+      _meta: {
+        ...result._meta,
+        generatedViaAI: true,
+      },
+    }));
+  };
   
   if (process.env.NODE_ENV !== 'production') {
     console.log('Received request:', req.body);
@@ -85,6 +116,55 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log(`🔍 GADS_USE_KEYWORD_PLANNING is set to: "${process.env.GADS_USE_KEYWORD_PLANNING}"`);
     console.log(`🔍 GADS_USE_KEYWORD_PLANNING trimmed: "${process.env.GADS_USE_KEYWORD_PLANNING?.trim()}"`);
     console.log(`📊 Using ${USE_KEYWORD_PLANNING ? 'REAL GOOGLE API DATA' : 'MOCK DATA'}`);
+
+    // Cache lookup logic - only for real API calls and when cache is enabled
+    let cachedResults: KeywordResult[] = [];
+    let uncachedKeywords: string[] = keywordList;
+    
+    if (USE_KEYWORD_PLANNING && useCache) {
+      try {
+        console.log('🔍 Checking cache for keywords...');
+        const cacheQuery = await sql`
+          SELECT keyword, search_volume, competition, competition_index, 
+                 low_top_page_bid_micros, high_top_page_bid_micros, avg_cpc_micros,
+                 monthly_search_volumes, data_source
+          FROM keyword_cache 
+          WHERE keyword = ANY(${keywordList as any}) 
+            AND country_code = ${countryCode} 
+            AND language_code = ${languageCode} 
+            AND expires_at > NOW()
+        `;
+        
+        const cachedKeywords = new Set<string>();
+        cachedResults = cacheQuery.rows.map((row: any) => {
+          cachedKeywords.add(row.keyword);
+          return {
+            keyword: row.keyword,
+            searchVolume: row.search_volume,
+            competition: row.competition,
+            competitionIndex: row.competition_index,
+            lowTopPageBidMicros: row.low_top_page_bid_micros,
+            highTopPageBidMicros: row.high_top_page_bid_micros,
+            avgCpcMicros: row.avg_cpc_micros,
+            monthlySearchVolumes: row.monthly_search_volumes,
+            _meta: {
+              dataSource: row.data_source as 'google_ads_api' | 'mock_deterministic' | 'mock_fallback',
+              reason: 'Cached data from previous Google Ads API call',
+              cached: true
+            }
+          };
+        });
+        
+        // Filter out cached keywords from the list to fetch
+        uncachedKeywords = keywordList.filter(k => !cachedKeywords.has(k));
+        
+        console.log(`📦 Found ${cachedResults.length} cached keywords, ${uncachedKeywords.length} need fresh data`);
+      } catch (cacheError) {
+        console.error('⚠️ Cache lookup failed, proceeding without cache:', cacheError);
+        uncachedKeywords = keywordList;
+        cachedResults = [];
+      }
+    }
     
     if (!USE_KEYWORD_PLANNING) {
       console.log('⚠️ Returning mock data. Set GADS_USE_KEYWORD_PLANNING=true to use real Google Ads API data.');
@@ -112,6 +192,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json(mockResults);
     }
 
+    // If all keywords are cached, return cached results immediately
+    if (uncachedKeywords.length === 0) {
+      console.log('✅ All keywords found in cache, returning cached results');
+      
+      if (cachedResults.length > 0) {
+        await saveKeywordSearchHistory({
+          userId,
+          userPrompt,
+          countryCode,
+          languageCode,
+          results: cachedResults,
+          source: 'google_ads_api'
+        });
+      }
+      
+      return res.status(200).json(cachedResults);
+    }
+
     // Use the new keyword planning service (with timeout)
     console.log('🚀 Attempting to fetch real Google Ads API data...');
     try {
@@ -120,7 +218,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const keywordPlanningResponse = await fetch(`${req.headers.origin || 'http://127.0.0.1:3000'}/api/google-ads/keyword-planning-rest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keywords: keywordList, countryCode, languageCode }),
+        body: JSON.stringify({ keywords: uncachedKeywords, countryCode, languageCode }),
         signal: controller.signal,
       });
       clearTimeout(timeout);
@@ -131,7 +229,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Check if this is fallback data from Google API (rare with Standard Access)
         if (keywordPlanningData.usedFallback && Array.isArray(keywordPlanningData.keywords)) {
           console.log(`⚠️ Google API returned fallback data despite Standard Access`);
-          const results: KeywordResult[] = keywordPlanningData.keywords.map((idea: any) => ({
+          const freshResults: KeywordResult[] = keywordPlanningData.keywords.map((idea: any) => ({
             keyword: idea.keyword,
             searchVolume: idea.searchVolume || 0,
             competition: idea.competition || 'UNKNOWN',
@@ -142,16 +240,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             monthlySearchVolumes: idea.monthlySearchVolumes,
             _meta: {
               dataSource: 'mock_fallback',
-              reason: keywordPlanningData.reason || 'Google Ads API returned no data (unusual with Standard Access)'
+              reason: keywordPlanningData.reason || 'Google Ads API returned no data (unusual with Standard Access)',
+              cached: false
             }
           }));
-          return res.status(200).json(results);
+          
+        // Combine cached and fresh results
+        const combinedResults = [...cachedResults, ...freshResults];
+        await saveKeywordSearchHistory({
+          userId,
+          userPrompt,
+          countryCode,
+          languageCode,
+          results: combinedResults,
+          source: 'mock_fallback'
+        });
+        return res.status(200).json(combinedResults);
         }
         
         // Real data from Google
         if (keywordPlanningData.success && Array.isArray(keywordPlanningData.keywords) && keywordPlanningData.keywords.length > 0) {
           console.log(`✅ Successfully fetched ${keywordPlanningData.keywords.length} keywords from Google Ads API`);
-          const results: KeywordResult[] = keywordPlanningData.keywords.map((idea: any) => ({
+          const freshResults: KeywordResult[] = keywordPlanningData.keywords.map((idea: any) => ({
             keyword: idea.keyword,
             searchVolume: idea.searchVolume || 0,
             competition: idea.competition || 'UNKNOWN',
@@ -162,10 +272,58 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             monthlySearchVolumes: idea.monthlySearchVolumes,
             _meta: {
               dataSource: 'google_ads_api',
-              reason: 'Real data from Google Ads Keyword Planning API'
+              reason: 'Real data from Google Ads Keyword Planning API',
+              cached: false
             }
           }));
-          return res.status(200).json(results);
+          
+          // Cache the fresh results (only if cache is enabled)
+          if (useCache) {
+            try {
+              console.log('💾 Caching fresh keyword data...');
+              for (const result of freshResults) {
+                await sql`
+                INSERT INTO keyword_cache (
+                  keyword, country_code, language_code, search_volume, competition,
+                  competition_index, low_top_page_bid_micros, high_top_page_bid_micros,
+                  avg_cpc_micros, monthly_search_volumes, data_source, expires_at
+                ) VALUES (
+                  ${result.keyword}, ${countryCode}, ${languageCode}, ${result.searchVolume},
+                  ${result.competition}, ${result.competitionIndex}, ${result.lowTopPageBidMicros},
+                  ${result.highTopPageBidMicros}, ${result.avgCpcMicros}, ${JSON.stringify(result.monthlySearchVolumes)},
+                  ${result._meta?.dataSource}, NOW() + INTERVAL '30 days'
+                ) ON CONFLICT (keyword, country_code, language_code) DO UPDATE SET
+                  search_volume = EXCLUDED.search_volume,
+                  competition = EXCLUDED.competition,
+                  competition_index = EXCLUDED.competition_index,
+                  low_top_page_bid_micros = EXCLUDED.low_top_page_bid_micros,
+                  high_top_page_bid_micros = EXCLUDED.high_top_page_bid_micros,
+                  avg_cpc_micros = EXCLUDED.avg_cpc_micros,
+                  monthly_search_volumes = EXCLUDED.monthly_search_volumes,
+                  data_source = EXCLUDED.data_source,
+                  expires_at = EXCLUDED.expires_at,
+                  created_at = NOW()
+              `;
+              }
+              console.log(`✅ Cached ${freshResults.length} keywords`);
+            } catch (cacheError) {
+              console.error('⚠️ Failed to cache keyword data:', cacheError);
+            }
+          }
+          
+          // Combine cached and fresh results
+          const combinedResults = [...cachedResults, ...freshResults];
+          
+          await saveKeywordSearchHistory({
+            userId,
+            userPrompt,
+            countryCode,
+            languageCode,
+            results: combinedResults,
+            source: 'google_ads_api'
+          });
+          
+          return res.status(200).json(combinedResults);
         } else {
           console.log('⚠️ Google Ads API returned no keywords');
         }
@@ -201,12 +359,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             competition,
             _meta: {
               dataSource: 'mock_fallback',
-              reason: 'Google Ads API failed or returned no data. With Standard Access, this may be due to network issues or very low-volume keywords.'
+              reason: 'Google Ads API failed or returned no data. With Standard Access, this may be due to network issues or very low-volume keywords.',
+              cached: false
             }
           };
         });
 
-        return res.status(200).json(mockResults);
+        // Combine cached and mock results
+        const combinedResults = [...cachedResults, ...mockResults];
+        await saveKeywordSearchHistory({
+          userId,
+          userPrompt,
+          countryCode,
+          languageCode,
+          results: combinedResults,
+          source: 'mock_fallback'
+        });
+        return res.status(200).json(combinedResults);
       }
 
       // If deterministic mock is disabled, provide a helpful error message

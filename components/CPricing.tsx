@@ -57,7 +57,7 @@ const pricingPlans: PricingPlan[] = [
     features: [
       "Everything in starter, plus",
       "Ads generator",
-      "Email marketing",
+      "Keyword research",
       "Priority support"
     ],
     ctaText: "Get creator"
