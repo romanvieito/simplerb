@@ -80,80 +80,96 @@ export default function FindKeywords(): JSX.Element {
       </Head>
 
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-12 sm:mt-20">
-        <h1 className="sm:text-6xl text-4xl max-w-[708px] font-bold text-slate-900">
+        <h1 className="text-xl max-w-[708px] font-bold text-slate-900">
           Find Keywords
         </h1>
-        <p className="text-slate-500 mt-5">Enter seed keywords to get search volume and competition.</p>
 
         <SignedIn>
-          <div className="max-w-xl w-full">
-            <textarea
-              value={keywords}
-              onChange={(e) => setKeywords(e.target.value)}
-              rows={4}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black my-5"
-              placeholder="Enter keywords (one per line)"
-            />
-            
-            <div className="grid grid-cols-2 gap-4 my-4">
-              <div>
-                <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
-                  Country
-                </label>
-                <select
-                  id="country"
-                  value={countryCode}
-                  onChange={(e) => setCountryCode(e.target.value)}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black"
-                >
-                  <option value="US">United States</option>
-                  <option value="GB">United Kingdom</option>
-                  <option value="CA">Canada</option>
-                  <option value="AU">Australia</option>
-                  <option value="DE">Germany</option>
-                  <option value="FR">France</option>
-                  <option value="ES">Spain</option>
-                  <option value="IT">Italy</option>
-                  <option value="NL">Netherlands</option>
-                  <option value="SE">Sweden</option>
-                  <option value="NO">Norway</option>
-                  <option value="DK">Denmark</option>
-                  <option value="FI">Finland</option>
-                </select>
-              </div>
-              
-              <div>
-                <label htmlFor="language" className="block text-sm font-medium text-gray-700 mb-1">
-                  Language
-                </label>
-                <select
-                  id="language"
-                  value={languageCode}
-                  onChange={(e) => setLanguageCode(e.target.value)}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-black focus:ring-black"
-                >
-                  <option value="en">English</option>
-                  <option value="es">Spanish</option>
-                  <option value="fr">French</option>
-                  <option value="de">German</option>
-                  <option value="it">Italian</option>
-                  <option value="pt">Portuguese</option>
-                  <option value="nl">Dutch</option>
-                  <option value="sv">Swedish</option>
-                  <option value="no">Norwegian</option>
-                  <option value="da">Danish</option>
-                  <option value="fi">Finnish</option>
-                </select>
+          {/* Main Input Area */}
+          <div className="w-full max-w-4xl mx-auto mt-8">
+            <div className="space-y-6">
+              {/* Integrated Input Area with Action Bar */}
+              <div className="relative bg-white rounded-2xl border-2 border-gray-200 shadow-sm focus-within:border-blue-500 focus-within:ring-blue-500 transition-all duration-300">
+                <textarea
+                  value={keywords}
+                  onChange={(e) => setKeywords(e.target.value)}
+                  rows={4}
+                  className="w-full bg-transparent p-6 pb-20 text-gray-700 resize-none transition-all duration-300 text-lg placeholder-gray-400 rounded-2xl border-0 focus:outline-none focus:ring-0"
+                  placeholder="Enter keywords (one per line)"
+                />
+                
+                {/* Integrated Action Bar */}
+                <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between bg-gray-50 rounded-b-2xl p-4 border-t border-gray-100 overflow-visible">
+                  <div className="flex items-center space-x-3 overflow-visible">
+                    {/* Country Dropdown */}
+                    <div className="relative overflow-visible">
+                      <select
+                        value={countryCode}
+                        onChange={(e) => setCountryCode(e.target.value)}
+                        className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:ring-blue-500 shadow-sm appearance-none pr-8"
+                      >
+                        <option value="US">United States</option>
+                        <option value="GB">United Kingdom</option>
+                        <option value="CA">Canada</option>
+                        <option value="AU">Australia</option>
+                        <option value="DE">Germany</option>
+                        <option value="FR">France</option>
+                        <option value="ES">Spain</option>
+                        <option value="IT">Italy</option>
+                        <option value="NL">Netherlands</option>
+                        <option value="SE">Sweden</option>
+                        <option value="NO">Norway</option>
+                        <option value="DK">Denmark</option>
+                        <option value="FI">Finland</option>
+                      </select>
+                    </div>
+
+                    {/* Language Dropdown */}
+                    <div className="relative overflow-visible">
+                      <select
+                        value={languageCode}
+                        onChange={(e) => setLanguageCode(e.target.value)}
+                        className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:ring-blue-500 shadow-sm appearance-none pr-8"
+                      >
+                        <option value="en">English</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                        <option value="it">Italian</option>
+                        <option value="pt">Portuguese</option>
+                        <option value="nl">Dutch</option>
+                        <option value="sv">Swedish</option>
+                        <option value="no">Norwegian</option>
+                        <option value="da">Danish</option>
+                        <option value="fi">Finnish</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={handleKeywordResearch}
+                      disabled={loading || !keywords.trim()}
+                      className="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>Researching...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612l-3.96 4.158a.75.75 0 11-1.08-1.04l5.25-5.5a.75.75 0 011.08 0l5.25 5.5a.75.75 0 11-1.08 1.04l-3.96-4.158v10.638A.75.75 0 0110 17z" clipRule="evenodd" />
+                          </svg>
+                          <span>Go</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-            
-            <button
-              onClick={handleKeywordResearch}
-              className="bg-black rounded-xl text-white font-medium px-4 py-2 sm:mt-10 mt-8 hover:bg-black/80 w-full"
-              disabled={loading}
-            >
-              {loading ? 'Researching...' : 'Research Keywords'}
-            </button>
           </div>
 
           {results.length > 0 && (
