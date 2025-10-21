@@ -369,7 +369,7 @@ export default function FindKeywords(): JSX.Element {
       if (data.length > 0 && data[0]._meta) {
         setDataSource(data[0]._meta.dataSource);
         if (data[0]._meta.generatedViaAI) {
-          toast.success('Google Ads metrics enriched for AI suggestions');
+          toast.success('AI-generated ideas enriched with Google Ads metrics');
         } else if (data[0]._meta.dataSource === 'google_ads_api') {
           toast.success('Google Ads results ready');
         } else if (data[0]._meta.dataSource === 'mock_fallback') {
@@ -435,7 +435,7 @@ export default function FindKeywords(): JSX.Element {
                     onClick={() => setActiveTab('google')}
                     className={`flex-1 py-2 text-sm font-medium ${activeTab === 'google' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
                   >
-                    Google Ads
+                    Find Your Keywords
                   </button>
                   <button
                     onClick={() => setActiveTab('ai')}
