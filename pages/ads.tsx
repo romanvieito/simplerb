@@ -4,6 +4,7 @@ import { Toaster, toast } from "react-hot-toast";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useRouter } from 'next/router';
 import { Box, Button } from "@mui/material";
+import { TablePagination } from "@mui/material";
 import DiamondIcon from '@mui/icons-material/Diamond';
 import LoginIcon from '@mui/icons-material/Login';
 import SBRContext from "../context/SBRContext";
@@ -12,6 +13,7 @@ import LoadingDots from "../components/LoadingDots";
 // LocalStorage utility functions for saving/loading campaign keywords
 const STORAGE_KEY = 'last-campaign-keywords';
 const COLUMN_VISIBILITY_KEY = 'ads-table-column-visibility';
+const SORT_STATE_KEY = 'ads-table-sort-state';
 
 // Column visibility type
 type ColumnVisibilityState = {
@@ -54,6 +56,38 @@ const loadColumnVisibility = (): ColumnVisibilityState | null => {
     }
   } catch (error) {
     console.warn('Failed to load column visibility from localStorage:', error);
+  }
+  return null;
+};
+
+// Sort state type
+type SortState = {
+  sortColumn: 'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'qualityScore' | 'impressionShare' | null;
+  sortDirection: 'asc' | 'desc';
+};
+
+// Save sort state preferences
+const saveSortState = (sortState: SortState) => {
+  if (typeof window === 'undefined') return; // SSR safety
+  
+  try {
+    localStorage.setItem(SORT_STATE_KEY, JSON.stringify(sortState));
+  } catch (error) {
+    console.warn('Failed to save sort state to localStorage:', error);
+  }
+};
+
+// Load sort state preferences
+const loadSortState = (): SortState | null => {
+  if (typeof window === 'undefined') return null; // SSR safety
+  
+  try {
+    const saved = localStorage.getItem(SORT_STATE_KEY);
+    if (saved) {
+      return JSON.parse(saved) as SortState;
+    }
+  } catch (error) {
+    console.warn('Failed to load sort state from localStorage:', error);
   }
   return null;
 };
@@ -141,11 +175,27 @@ const AdsPage = () => {
   const [selectedCampaignIds, setSelectedCampaignIds] = useState<string[]>([]);
   const [showCurrentKeywords, setShowCurrentKeywords] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [sortColumn, setSortColumn] = useState<'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'qualityScore' | 'impressionShare' | null>(null);
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  // Sort state - initialize from localStorage or use defaults
+  const [sortColumn, setSortColumn] = useState<'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'qualityScore' | 'impressionShare' | null>(() => {
+    const saved = loadSortState();
+    return saved?.sortColumn ?? null;
+  });
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(() => {
+    const saved = loadSortState();
+    return saved?.sortDirection ?? 'desc';
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(50);
   const [showColumnSelector, setShowColumnSelector] = useState(false);
+  
+  // Similar keywords view and pagination state
+  const [similarKeywordsViewMode, setSimilarKeywordsViewMode] = useState<'grid' | 'table'>('table');
+  const [similarKeywordsPage, setSimilarKeywordsPage] = useState(0);
+  const [similarKeywordsRowsPerPage, setSimilarKeywordsRowsPerPage] = useState(50);
+  const [similarKeywordsSortField, setSimilarKeywordsSortField] = useState<'keyword' | 'searchVolume' | 'competition' | 'minCpc' | 'maxCpc' | 'avgCpc' | 'sourceKeyword' | null>(null);
+  const [similarKeywordsSortDirection, setSimilarKeywordsSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [similarKeywordsCountryCode, setSimilarKeywordsCountryCode] = useState('US');
+  const [similarKeywordsLanguageCode, setSimilarKeywordsLanguageCode] = useState('en');
   
   // Default column visibility - all columns visible by default
   const defaultColumnVisibility = {
@@ -409,37 +459,55 @@ const AdsPage = () => {
       // Get unique keywords from campaigns
       const uniqueKeywords = Array.from(new Set(campaignKeywords.map(k => k.keyword)));
       
-      // Process in batches to avoid overwhelming the API
-      const batchSize = 10;
+      // Process in batches to avoid overwhelming the API (matches backend batch size of 5)
+      const batchSize = 5;
       let allSimilar: SimilarKeyword[] = [];
+      const failedKeywords: string[] = [];
       
       for (let i = 0; i < uniqueKeywords.length; i += batchSize) {
         const batch = uniqueKeywords.slice(i, i + batchSize);
         
-        const response = await fetch('/api/google-ads/find-similar-keywords', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-            'x-user-email': user.emailAddresses[0].emailAddress
-        },
-        body: JSON.stringify({
-            keywords: batch,
-            countryCode: 'US',
-            languageCode: 'en',
-            excludeExisting: uniqueKeywords,
-          })
-      });
+        try {
+          const response = await fetch('/api/google-ads/find-similar-keywords', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'x-user-email': user.emailAddresses[0].emailAddress
+            },
+            body: JSON.stringify({
+              keywords: batch,
+              countryCode: similarKeywordsCountryCode,
+              languageCode: similarKeywordsLanguageCode,
+              excludeExisting: uniqueKeywords,
+            })
+          });
 
-      const data = await response.json();
-      
-        if (response.ok && data.success && data.similarKeywords) {
-          allSimilar = [...allSimilar, ...data.similarKeywords];
-          setSimilarKeywords([...allSimilar]);
+          const data = await response.json();
+          
+          if (response.ok && data.success && data.similarKeywords) {
+            allSimilar = [...allSimilar, ...data.similarKeywords];
+            setSimilarKeywords([...allSimilar]);
+          } else {
+            // Track failed keywords in this batch
+            failedKeywords.push(...batch);
+            console.warn(`Failed to find similar keywords for batch starting at index ${i}:`, data.error || 'Unknown error');
+          }
+        } catch (error) {
+          // Track failed keywords in this batch
+          failedKeywords.push(...batch);
+          console.error(`Error processing batch starting at index ${i}:`, error);
         }
         
-        // Update progress
-        if (i + batchSize < uniqueKeywords.length) {
-          toast.loading(`Processing keywords ${i + 1}-${Math.min(i + batchSize, uniqueKeywords.length)} of ${uniqueKeywords.length}...`, { id: 'progress' });
+        // Update progress with detailed information
+        const processedSoFar = Math.min(i + batchSize, uniqueKeywords.length);
+        const totalKeywords = uniqueKeywords.length;
+        const progressPercent = Math.round((processedSoFar / totalKeywords) * 100);
+        
+        if (processedSoFar < totalKeywords) {
+          toast.loading(
+            `Processing similar keywords... ${processedSoFar} of ${totalKeywords} (${progressPercent}%)`, 
+            { id: 'progress', duration: Infinity }
+          );
         }
       }
       
@@ -452,7 +520,15 @@ const AdsPage = () => {
       
       setSimilarKeywords(uniqueSimilar);
       setShowSuggestions(true);
-      toast.success(`Found ${uniqueSimilar.length} similar keywords to expand your reach!`);
+      
+      // Show appropriate success/warning message
+      if (failedKeywords.length > 0 && uniqueSimilar.length > 0) {
+        toast.success(`Found ${uniqueSimilar.length} similar keywords (${failedKeywords.length} keyword${failedKeywords.length !== 1 ? 's' : ''} failed to process)`, { duration: 5000 });
+      } else if (failedKeywords.length > 0 && uniqueSimilar.length === 0) {
+        toast.error(`Failed to find similar keywords. ${failedKeywords.length} keyword${failedKeywords.length !== 1 ? 's' : ''} could not be processed.`);
+      } else {
+        toast.success(`Found ${uniqueSimilar.length} similar keywords to expand your reach!`);
+      }
     } catch (error) {
       console.error('Error finding similar keywords:', error);
       toast.error('Failed to find similar keywords');
@@ -624,6 +700,112 @@ const AdsPage = () => {
     setCurrentPage(1); // Reset to first page when changing items per page
   };
 
+  // Similar keywords sorting and pagination
+  const handleSimilarKeywordsSort = (field: 'keyword' | 'searchVolume' | 'competition' | 'minCpc' | 'maxCpc' | 'avgCpc' | 'sourceKeyword') => {
+    if (similarKeywordsSortField === field) {
+      // Toggle direction if clicking the same column
+      setSimilarKeywordsSortDirection(similarKeywordsSortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new column and default to descending
+      setSimilarKeywordsSortField(field);
+      setSimilarKeywordsSortDirection('desc');
+    }
+    setSimilarKeywordsPage(0); // Reset to first page when sorting
+  };
+
+  const getSortedSimilarKeywords = () => {
+    if (!similarKeywordsSortField || !similarKeywordsSortDirection) {
+      return similarKeywords;
+    }
+
+    return [...similarKeywords].sort((a, b) => {
+      let aValue: string | number;
+      let bValue: string | number;
+
+      switch (similarKeywordsSortField) {
+        case 'keyword':
+          aValue = a.keyword.toLowerCase();
+          bValue = b.keyword.toLowerCase();
+          if (aValue < bValue) return similarKeywordsSortDirection === 'asc' ? -1 : 1;
+          if (aValue > bValue) return similarKeywordsSortDirection === 'asc' ? 1 : -1;
+          return 0;
+        case 'searchVolume':
+          aValue = a.searchVolume || 0;
+          bValue = b.searchVolume || 0;
+          break;
+        case 'competition':
+          // Convert competition to numeric for sorting (HIGH=3, MEDIUM=2, LOW=1, UNKNOWN=0)
+          const compMap: Record<string, number> = { 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1, 'UNKNOWN': 0 };
+          aValue = compMap[a.competition] || (a.competitionIndex || 0);
+          bValue = compMap[b.competition] || (b.competitionIndex || 0);
+          break;
+        case 'minCpc':
+          aValue = a.lowTopPageBidMicros || 0;
+          bValue = b.lowTopPageBidMicros || 0;
+          break;
+        case 'maxCpc':
+          aValue = a.highTopPageBidMicros || 0;
+          bValue = b.highTopPageBidMicros || 0;
+          break;
+        case 'avgCpc':
+          aValue = a.avgCpcMicros || 0;
+          bValue = b.avgCpcMicros || 0;
+          break;
+        case 'sourceKeyword':
+          aValue = (a.sourceKeyword || '').toLowerCase();
+          bValue = (b.sourceKeyword || '').toLowerCase();
+          if (aValue < bValue) return similarKeywordsSortDirection === 'asc' ? -1 : 1;
+          if (aValue > bValue) return similarKeywordsSortDirection === 'asc' ? 1 : -1;
+          return 0;
+        default:
+          return 0;
+      }
+
+      // Numeric sorting
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        if (similarKeywordsSortDirection === 'asc') {
+          return aValue - bValue;
+        } else {
+          return bValue - aValue;
+        }
+      }
+
+      return 0;
+    });
+  };
+
+  const getPaginatedSimilarKeywords = () => {
+    const sorted = getSortedSimilarKeywords();
+    const startIndex = similarKeywordsPage * similarKeywordsRowsPerPage;
+    const endIndex = startIndex + similarKeywordsRowsPerPage;
+    return sorted.slice(startIndex, endIndex);
+  };
+
+  const SimilarKeywordsSortArrow = ({ column }: { column: 'keyword' | 'searchVolume' | 'competition' | 'minCpc' | 'maxCpc' | 'avgCpc' | 'sourceKeyword' }) => {
+    if (similarKeywordsSortField !== column) {
+      return <span className="ml-1 text-gray-400">↕</span>;
+    }
+    return similarKeywordsSortDirection === 'asc' ? (
+      <span className="ml-1 text-blue-600">↑</span>
+    ) : (
+      <span className="ml-1 text-blue-600">↓</span>
+    );
+  };
+
+  const handleSimilarKeywordsChangePage = (
+    event: unknown,
+    newPage: number,
+  ) => {
+    setSimilarKeywordsPage(newPage);
+  };
+
+  const handleSimilarKeywordsChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setSimilarKeywordsRowsPerPage(parseInt(event.target.value, 10));
+    setSimilarKeywordsPage(0);
+  };
+
   const handleColumnVisibilityToggle = (column: keyof typeof visibleColumns) => {
     // Prevent toggling keyword column
     if (column === 'keyword') return;
@@ -644,6 +826,20 @@ const AdsPage = () => {
     // Save whenever visibleColumns changes
     saveColumnVisibility(visibleColumns);
   }, [visibleColumns]);
+
+  // Auto-save sort state to localStorage when it changes (skip initial load)
+  useEffect(() => {
+    // Skip save on initial mount to avoid overwriting with defaults
+    if (isInitialLoad.current) {
+      return;
+    }
+    
+    // Save whenever sort state changes
+    saveSortState({
+      sortColumn,
+      sortDirection
+    });
+  }, [sortColumn, sortDirection]);
 
   return (
     <div className="flex max-w-6xl mx-auto flex-col items-center justify-center py-4 min-h-screen bg-white">
@@ -818,26 +1014,68 @@ const AdsPage = () => {
             </button>
 
             {campaignKeywords.length > 0 && (
-              <button
-                onClick={findSimilarKeywords}
-                disabled={findingSimilar}
-                className="bg-indigo-600 text-white rounded-lg px-6 py-3 hover:bg-indigo-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm font-medium"
-              >
-                {findingSimilar ? (
-                  <>
-                    <LoadingDots color="white" style="small" />
-                    <span>Finding Similar Keywords...</span>
-                  </>
-                ) : (
-                  <>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                    </svg>
-                    <span>Find Similar Keywords</span>
-                  </>
-                )}
-              </button>
-                )}
+              <>
+                <div className="flex items-center gap-3">
+                  <label className="text-sm text-gray-600 font-medium">Location:</label>
+                  <select
+                    value={similarKeywordsCountryCode}
+                    onChange={(e) => setSimilarKeywordsCountryCode(e.target.value)}
+                    className="bg-white border border-gray-200 rounded px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="WORLD">World</option>
+                    <option value="US">United States</option>
+                    <option value="GB">United Kingdom</option>
+                    <option value="CA">Canada</option>
+                    <option value="AU">Australia</option>
+                    <option value="DE">Germany</option>
+                    <option value="FR">France</option>
+                    <option value="ES">Spain</option>
+                    <option value="IT">Italy</option>
+                    <option value="NL">Netherlands</option>
+                    <option value="SE">Sweden</option>
+                    <option value="NO">Norway</option>
+                    <option value="DK">Denmark</option>
+                    <option value="FI">Finland</option>
+                  </select>
+                  <select
+                    value={similarKeywordsLanguageCode}
+                    onChange={(e) => setSimilarKeywordsLanguageCode(e.target.value)}
+                    className="bg-white border border-gray-200 rounded px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="en">English</option>
+                    <option value="es">Spanish</option>
+                    <option value="fr">French</option>
+                    <option value="de">German</option>
+                    <option value="it">Italian</option>
+                    <option value="pt">Portuguese</option>
+                    <option value="nl">Dutch</option>
+                    <option value="sv">Swedish</option>
+                    <option value="no">Norwegian</option>
+                    <option value="da">Danish</option>
+                    <option value="fi">Finnish</option>
+                  </select>
+                </div>
+                <button
+                  onClick={findSimilarKeywords}
+                  disabled={findingSimilar}
+                  className="bg-indigo-600 text-white rounded-lg px-6 py-3 hover:bg-indigo-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm font-medium"
+                >
+                  {findingSimilar ? (
+                    <>
+                      <LoadingDots color="white" style="small" />
+                      <span>Finding Similar Keywords...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                      </svg>
+                      <span>Find Similar Keywords</span>
+                    </>
+                  )}
+                </button>
+              </>
+            )}
                     </div>
 
           {!admin && (
@@ -1196,7 +1434,31 @@ const AdsPage = () => {
                 <h2 className="text-xl font-semibold text-gray-900">
                   Similar Keywords ({similarKeywords.length})
                 </h2>
-              <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                  {/* View Mode Toggle */}
+                  <div className="flex items-center bg-gray-100 rounded-lg p-1 mr-2">
+                    <button
+                      onClick={() => setSimilarKeywordsViewMode('table')}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                        similarKeywordsViewMode === 'table' 
+                          ? 'bg-white text-blue-600 shadow-sm' 
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      Table
+                    </button>
+                    <button
+                      onClick={() => setSimilarKeywordsViewMode('grid')}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                        similarKeywordsViewMode === 'grid' 
+                          ? 'bg-white text-blue-600 shadow-sm' 
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      Grid
+                    </button>
+                  </div>
+                  
                   <button
                     onClick={() => exportKeywords('csv')}
                     className="bg-green-600 text-white rounded-lg px-4 py-2 hover:bg-green-700 transition-all duration-200 text-sm font-medium"
@@ -1209,53 +1471,186 @@ const AdsPage = () => {
                   >
                     Export JSON
                   </button>
+                </div>
               </div>
-            </div>
-              
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                {similarKeywords.slice(0, 30).map((kw, index) => (
-                  <div
-                    key={index}
-                    className="bg-gradient-to-br from-white to-gray-50 p-4 rounded-xl border border-gray-200 hover:shadow-md transition-all duration-200"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900 break-words">{kw.keyword}</h3>
-                      <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
-                        kw.competition === 'HIGH' ? 'bg-red-100 text-red-800' :
-                        kw.competition === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {kw.competition}
-                      </span>
-              </div>
-                    <div className="space-y-1 text-sm text-gray-600">
-                      <div className="flex justify-between">
-                        <span>Search Volume:</span>
-                        <span className="font-medium text-gray-900">{formatNumber(kw.searchVolume)}</span>
+
+              {similarKeywordsViewMode === 'table' ? (
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th 
+                            className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                            onClick={() => handleSimilarKeywordsSort('keyword')}
+                          >
+                            <div className="flex items-center">
+                              Keyword
+                              <SimilarKeywordsSortArrow column="keyword" />
+                            </div>
+                          </th>
+                          <th 
+                            className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                            onClick={() => handleSimilarKeywordsSort('searchVolume')}
+                          >
+                            <div className="flex items-center justify-end">
+                              Search Volume
+                              <SimilarKeywordsSortArrow column="searchVolume" />
+                            </div>
+                          </th>
+                          <th 
+                            className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                            onClick={() => handleSimilarKeywordsSort('competition')}
+                          >
+                            <div className="flex items-center">
+                              Competition
+                              <SimilarKeywordsSortArrow column="competition" />
+                            </div>
+                          </th>
+                          <th 
+                            className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                            onClick={() => handleSimilarKeywordsSort('minCpc')}
+                          >
+                            <div className="flex items-center justify-end">
+                              Min CPC
+                              <SimilarKeywordsSortArrow column="minCpc" />
+                            </div>
+                          </th>
+                          <th 
+                            className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                            onClick={() => handleSimilarKeywordsSort('maxCpc')}
+                          >
+                            <div className="flex items-center justify-end">
+                              Max CPC
+                              <SimilarKeywordsSortArrow column="maxCpc" />
+                            </div>
+                          </th>
+                          <th 
+                            className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                            onClick={() => handleSimilarKeywordsSort('avgCpc')}
+                          >
+                            <div className="flex items-center justify-end">
+                              Avg CPC
+                              <SimilarKeywordsSortArrow column="avgCpc" />
+                            </div>
+                          </th>
+                          <th 
+                            className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                            onClick={() => handleSimilarKeywordsSort('sourceKeyword')}
+                          >
+                            <div className="flex items-center">
+                              Source Keyword
+                              <SimilarKeywordsSortArrow column="sourceKeyword" />
+                            </div>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {getPaginatedSimilarKeywords().map((kw, index) => (
+                          <tr key={index} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 text-sm font-medium text-gray-900">{kw.keyword}</td>
+                            <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatNumber(kw.searchVolume)}</td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                kw.competition === 'HIGH' ? 'bg-red-100 text-red-800' :
+                                kw.competition === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-green-100 text-green-800'
+                              }`}>
+                                {kw.competition}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                              {kw.lowTopPageBidMicros ? formatCurrency(kw.lowTopPageBidMicros) : 'N/A'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                              {kw.highTopPageBidMicros ? formatCurrency(kw.highTopPageBidMicros) : 'N/A'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                              {kw.avgCpcMicros ? formatCurrency(kw.avgCpcMicros) : 'N/A'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600">{kw.sourceKeyword || '-'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                      {kw.avgCpcMicros && (
-                        <div className="flex justify-between">
-                          <span>Avg CPC:</span>
-                          <span className="font-medium text-gray-900">{formatCurrency(kw.avgCpcMicros)}</span>
+                  <div className="mt-4">
+                    <TablePagination
+                      rowsPerPageOptions={[25, 50, 100]}
+                      component="div"
+                      count={similarKeywords.length}
+                      rowsPerPage={similarKeywordsRowsPerPage}
+                      page={similarKeywordsPage}
+                      onPageChange={handleSimilarKeywordsChangePage}
+                      onRowsPerPageChange={handleSimilarKeywordsChangeRowsPerPage}
+                    />
                   </div>
-                      )}
-                      {kw.sourceKeyword && (
-                        <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
-                          Suggested from: <span className="font-medium">{kw.sourceKeyword}</span>
-                          </div>
-                      )}
+                </>
+              ) : (
+                <>
+                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                    {getPaginatedSimilarKeywords().map((kw, index) => (
+                      <div
+                        key={index}
+                        className="bg-gradient-to-br from-white to-gray-50 p-4 rounded-xl border border-gray-200 hover:shadow-md transition-all duration-200"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <h3 className="text-lg font-semibold text-gray-900 break-words">{kw.keyword}</h3>
+                          <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
+                            kw.competition === 'HIGH' ? 'bg-red-100 text-red-800' :
+                            kw.competition === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {kw.competition}
+                          </span>
                         </div>
+                        <div className="space-y-1 text-sm text-gray-600">
+                          <div className="flex justify-between">
+                            <span>Search Volume:</span>
+                            <span className="font-medium text-gray-900">{formatNumber(kw.searchVolume)}</span>
                           </div>
-                ))}
+                          {kw.lowTopPageBidMicros && (
+                            <div className="flex justify-between">
+                              <span>Min CPC:</span>
+                              <span className="font-medium text-gray-900">{formatCurrency(kw.lowTopPageBidMicros)}</span>
+                            </div>
+                          )}
+                          {kw.highTopPageBidMicros && (
+                            <div className="flex justify-between">
+                              <span>Max CPC:</span>
+                              <span className="font-medium text-gray-900">{formatCurrency(kw.highTopPageBidMicros)}</span>
+                            </div>
+                          )}
+                          {kw.avgCpcMicros && (
+                            <div className="flex justify-between">
+                              <span>Avg CPC:</span>
+                              <span className="font-medium text-gray-900">{formatCurrency(kw.avgCpcMicros)}</span>
+                            </div>
+                          )}
+                          {kw.sourceKeyword && (
+                            <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
+                              Suggested from: <span className="font-medium">{kw.sourceKeyword}</span>
+                            </div>
+                          )}
                         </div>
-              
-              {similarKeywords.length > 30 && (
-                <p className="text-sm text-gray-500 mt-4 text-center">
-                  Showing first 30 of {similarKeywords.length} suggestions. Export to see all.
-                </p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4">
+                    <TablePagination
+                      rowsPerPageOptions={[25, 50, 100]}
+                      component="div"
+                      count={similarKeywords.length}
+                      rowsPerPage={similarKeywordsRowsPerPage}
+                      page={similarKeywordsPage}
+                      onPageChange={handleSimilarKeywordsChangePage}
+                      onRowsPerPageChange={handleSimilarKeywordsChangeRowsPerPage}
+                    />
+                  </div>
+                </>
               )}
-                          </div>
-                        </div>
+            </div>
+          </div>
         )}
 
         {/* Empty State */}
