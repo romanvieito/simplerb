@@ -165,7 +165,8 @@ const AdsPage = () => {
   const router = useRouter();
   const { openSignIn } = useClerk();
   const { isLoaded, user, isSignedIn } = useUser();
-  
+
+  const [activeTab, setActiveTab] = useState<'analysis' | 'similar'>('analysis');
   const [loading, setLoading] = useState(false);
   const [fetchingKeywords, setFetchingKeywords] = useState(false);
   const [findingSimilar, setFindingSimilar] = useState(false);
@@ -1071,196 +1072,260 @@ const AdsPage = () => {
           Ads <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Pilot</span>
         </h1>
 
-        {/* Campaign Selector */}
-        {availableCampaigns.length > 0 && (
-          <div className="w-full max-w-4xl mx-auto mb-6">
-            <div className="bg-white rounded-xl border border-gray-100 p-4">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-sm font-medium text-gray-700">Campaigns</span>
-                <button
-                  onClick={() => {
-                    if (selectedCampaignIds.length === availableCampaigns.length) {
-                      setSelectedCampaignIds([]);
-                    } else {
-                      setSelectedCampaignIds(availableCampaigns.map(c => c.id));
-                    }
-                  }}
-                  className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  {selectedCampaignIds.length === availableCampaigns.length ? 'Deselect All' : 'Select All'}
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {availableCampaigns.map((campaign) => (
-                  <label
-                    key={campaign.id}
-                    className="flex items-center space-x-2 px-3 py-1.5 rounded-md border border-gray-200 hover:border-blue-300 cursor-pointer transition-all bg-gray-50 hover:bg-blue-50"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedCampaignIds.includes(campaign.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedCampaignIds([...selectedCampaignIds, campaign.id]);
-                        } else {
-                          setSelectedCampaignIds(selectedCampaignIds.filter(id => id !== campaign.id));
-                        }
-                      }}
-                      className="w-3 h-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <span className="text-xs text-gray-700 font-medium">{campaign.name}</span>
-                  </label>
-                ))}
-              </div>
-              {selectedCampaignIds.length > 0 && (
-                <p className="text-xs text-gray-500 mt-2">
-                  {selectedCampaignIds.length} of {availableCampaigns.length} selected
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Date Filter */}
+        {/* Tab Navigation */}
         <div className="w-full max-w-4xl mx-auto mb-6">
-          <div className="bg-white rounded-xl border border-gray-100 p-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <span className="text-sm font-medium text-gray-700">Date Range</span>
-              <div className="flex flex-wrap gap-2">
-                {datePresets.map((preset) => (
-                  <button
-                    key={preset.value}
-                    onClick={() => handleDatePresetChange(preset.value)}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                      selectedDatePreset === preset.value
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-                <div className="flex gap-2">
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => {
-                      setStartDate(e.target.value);
-                      setSelectedDatePreset('custom');
-                    }}
-                    className="px-2 py-1.5 text-xs border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  />
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => {
-                      setEndDate(e.target.value);
-                      setSelectedDatePreset('custom');
-                    }}
-                    className="px-2 py-1.5 text-xs border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
+          <div className="bg-white rounded-xl border border-gray-100 p-1">
+            <div className="flex">
+              <button
+                onClick={() => setActiveTab('analysis')}
+                className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                  activeTab === 'analysis'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                Campaign Analysis
+              </button>
+              <button
+                onClick={() => setActiveTab('similar')}
+                className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                  activeTab === 'similar'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                Similar Keywords
+                {campaignKeywords.length > 0 && (
+                  <span className={`ml-2 px-1.5 py-0.5 text-xs rounded-full ${
+                    activeTab === 'similar' ? 'bg-indigo-500' : 'bg-gray-200 text-gray-700'
+                  }`}>
+                    {campaignKeywords.length}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="w-full max-w-4xl mx-auto mb-8">
-          <div className="flex flex-col gap-4">
-            <div className="flex justify-center">
-              <button
-                onClick={fetchCampaignKeywords}
-                disabled={fetchingKeywords || !admin}
-                className="bg-blue-600 text-white rounded-lg px-6 py-2.5 hover:bg-blue-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
-              >
-                {fetchingKeywords ? (
-                  <>
-                    <LoadingDots color="white" style="small" />
-                    <span>Analyzing...</span>
-                  </>
-                ) : (
-                  <>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-                    </svg>
-                    <span>Analyze Campaigns</span>
-                  </>
-                )}
-              </button>
+        {/* Campaign Analysis Tab */}
+        {activeTab === 'analysis' && (
+          <>
+            {/* Campaign Selector */}
+            {availableCampaigns.length > 0 && (
+              <div className="w-full max-w-4xl mx-auto mb-6">
+                <div className="bg-white rounded-xl border border-gray-100 p-4">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-sm font-medium text-gray-700">Campaigns</span>
+                    <button
+                      onClick={() => {
+                        if (selectedCampaignIds.length === availableCampaigns.length) {
+                          setSelectedCampaignIds([]);
+                        } else {
+                          setSelectedCampaignIds(availableCampaigns.map(c => c.id));
+                        }
+                      }}
+                      className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      {selectedCampaignIds.length === availableCampaigns.length ? 'Deselect All' : 'Select All'}
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {availableCampaigns.map((campaign) => (
+                      <label
+                        key={campaign.id}
+                        className="flex items-center space-x-2 px-3 py-1.5 rounded-md border border-gray-200 hover:border-blue-300 cursor-pointer transition-all bg-gray-50 hover:bg-blue-50"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedCampaignIds.includes(campaign.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedCampaignIds([...selectedCampaignIds, campaign.id]);
+                            } else {
+                              setSelectedCampaignIds(selectedCampaignIds.filter(id => id !== campaign.id));
+                            }
+                          }}
+                          className="w-3 h-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <span className="text-xs text-gray-700 font-medium">{campaign.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {selectedCampaignIds.length > 0 && (
+                    <p className="text-xs text-gray-500 mt-2">
+                      {selectedCampaignIds.length} of {availableCampaigns.length} selected
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Date Filter */}
+            <div className="w-full max-w-4xl mx-auto mb-6">
+              <div className="bg-white rounded-xl border border-gray-100 p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <span className="text-sm font-medium text-gray-700">Date Range</span>
+                  <div className="flex flex-wrap gap-2">
+                    {datePresets.map((preset) => (
+                      <button
+                        key={preset.value}
+                        onClick={() => handleDatePresetChange(preset.value)}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                          selectedDatePreset === preset.value
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                    <div className="flex gap-2">
+                      <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => {
+                          setStartDate(e.target.value);
+                          setSelectedDatePreset('custom');
+                        }}
+                        className="px-2 py-1.5 text-xs border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => {
+                          setEndDate(e.target.value);
+                          setSelectedDatePreset('custom');
+                        }}
+                        className="px-2 py-1.5 text-xs border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {campaignKeywords.length > 0 && (
-              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-                <div className="flex items-center gap-2">
-                  <select
-                    value={similarKeywordsCountryCode}
-                    onChange={(e) => setSimilarKeywordsCountryCode(e.target.value)}
-                    className="bg-white border border-gray-200 rounded px-3 py-1.5 text-xs text-gray-700 focus:border-blue-500 focus:outline-none"
-                  >
-                    <option value="WORLD">World</option>
-                    <option value="US">United States</option>
-                    <option value="GB">United Kingdom</option>
-                    <option value="CA">Canada</option>
-                    <option value="AU">Australia</option>
-                    <option value="DE">Germany</option>
-                    <option value="FR">France</option>
-                    <option value="ES">Spain</option>
-                    <option value="IT">Italy</option>
-                    <option value="NL">Netherlands</option>
-                    <option value="SE">Sweden</option>
-                    <option value="NO">Norway</option>
-                    <option value="DK">Denmark</option>
-                    <option value="FI">Finland</option>
-                  </select>
-                  <select
-                    value={similarKeywordsLanguageCode}
-                    onChange={(e) => setSimilarKeywordsLanguageCode(e.target.value)}
-                    className="bg-white border border-gray-200 rounded px-3 py-1.5 text-xs text-gray-700 focus:border-blue-500 focus:outline-none"
-                  >
-                    <option value="en">English</option>
-                    <option value="es">Spanish</option>
-                    <option value="fr">French</option>
-                    <option value="de">German</option>
-                    <option value="it">Italian</option>
-                    <option value="pt">Portuguese</option>
-                    <option value="nl">Dutch</option>
-                    <option value="sv">Swedish</option>
-                    <option value="no">Norwegian</option>
-                    <option value="da">Danish</option>
-                    <option value="fi">Finnish</option>
-                  </select>
-                </div>
+            {/* Analyze Button */}
+            <div className="w-full max-w-4xl mx-auto mb-8">
+              <div className="flex justify-center">
                 <button
-                  onClick={findSimilarKeywords}
-                  disabled={findingSimilar}
-                  className="bg-indigo-600 text-white rounded-lg px-4 py-2 hover:bg-indigo-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
+                  onClick={fetchCampaignKeywords}
+                  disabled={fetchingKeywords || !admin}
+                  className="bg-blue-600 text-white rounded-lg px-6 py-2.5 hover:bg-blue-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
                 >
-                  {findingSimilar ? (
+                  {fetchingKeywords ? (
                     <>
                       <LoadingDots color="white" style="small" />
-                      <span>Finding...</span>
+                      <span>Analyzing...</span>
                     </>
                   ) : (
                     <>
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                        <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
                       </svg>
-                      <span>Find Similar Keywords</span>
+                      <span>Analyze Campaigns</span>
                     </>
                   )}
                 </button>
               </div>
-            )}
+              {!admin && (
+                <p className="text-xs text-gray-500 text-center mt-4">Admin access required</p>
+              )}
+            </div>
+          </>
+        )}
 
-            {!admin && (
-              <p className="text-xs text-gray-500 text-center">Admin access required</p>
+        {/* Similar Keywords Tab */}
+        {activeTab === 'similar' && (
+          <div className="w-full max-w-4xl mx-auto mb-8">
+            {campaignKeywords.length > 0 ? (
+              <div className="space-y-6">
+                {/* Location Settings */}
+                <div className="bg-white rounded-xl border border-gray-100 p-4">
+                  <span className="text-sm font-medium text-gray-700 mb-3 block">Target Location</span>
+                  <div className="flex gap-3">
+                    <select
+                      value={similarKeywordsCountryCode}
+                      onChange={(e) => setSimilarKeywordsCountryCode(e.target.value)}
+                      className="bg-white border border-gray-200 rounded px-3 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none"
+                    >
+                      <option value="WORLD">World</option>
+                      <option value="US">United States</option>
+                      <option value="GB">United Kingdom</option>
+                      <option value="CA">Canada</option>
+                      <option value="AU">Australia</option>
+                      <option value="DE">Germany</option>
+                      <option value="FR">France</option>
+                      <option value="ES">Spain</option>
+                      <option value="IT">Italy</option>
+                      <option value="NL">Netherlands</option>
+                      <option value="SE">Sweden</option>
+                      <option value="NO">Norway</option>
+                      <option value="DK">Denmark</option>
+                      <option value="FI">Finland</option>
+                    </select>
+                    <select
+                      value={similarKeywordsLanguageCode}
+                      onChange={(e) => setSimilarKeywordsLanguageCode(e.target.value)}
+                      className="bg-white border border-gray-200 rounded px-3 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none"
+                    >
+                      <option value="en">English</option>
+                      <option value="es">Spanish</option>
+                      <option value="fr">French</option>
+                      <option value="de">German</option>
+                      <option value="it">Italian</option>
+                      <option value="pt">Portuguese</option>
+                      <option value="nl">Dutch</option>
+                      <option value="sv">Swedish</option>
+                      <option value="no">Norwegian</option>
+                      <option value="da">Danish</option>
+                      <option value="fi">Finnish</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Find Button */}
+                <div className="flex justify-center">
+                  <button
+                    onClick={findSimilarKeywords}
+                    disabled={findingSimilar}
+                    className="bg-indigo-600 text-white rounded-lg px-6 py-3 hover:bg-indigo-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  >
+                    {findingSimilar ? (
+                      <>
+                        <LoadingDots color="white" style="small" />
+                        <span>Finding Similar Keywords...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                        </svg>
+                        <span>Find Similar Keywords</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Campaign Data</h3>
+                <p className="text-gray-600 mb-4">Switch to the Campaign Analysis tab to fetch your campaign keywords first.</p>
+                <button
+                  onClick={() => setActiveTab('analysis')}
+                  className="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition-colors text-sm font-medium"
+                >
+                  Go to Campaign Analysis
+                </button>
+              </div>
             )}
           </div>
-        </div>
+        )}
 
-        {/* Current Keywords */}
-        {showCurrentKeywords && campaignKeywords.length > 0 && (
+        {/* Current Keywords - Analysis Tab */}
+        {activeTab === 'analysis' && showCurrentKeywords && campaignKeywords.length > 0 && (
           <div className="w-full mb-8">
             <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6">
               {/* Column Selector */}
@@ -1602,8 +1667,8 @@ const AdsPage = () => {
           </div>
             )}
 
-        {/* Similar Keywords Suggestions */}
-        {showSuggestions && similarKeywords.length > 0 && (
+        {/* Similar Keywords Suggestions - Similar Tab */}
+        {activeTab === 'similar' && showSuggestions && similarKeywords.length > 0 && (
           <div className="w-full mb-8">
             <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6">
               <div className="flex justify-between items-center mb-4">
