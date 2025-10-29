@@ -1070,30 +1070,30 @@ const AdsPage = () => {
 
         {/* Tab Navigation */}
         <div className="w-full max-w-4xl mx-auto mb-6">
-          <div className="bg-white rounded-xl border border-gray-100 p-1">
+          <div className="bg-gray-100 rounded-lg p-1">
             <div className="flex">
               <button
                 onClick={() => setActiveTab('analysis')}
-                className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all ${
                   activeTab === 'analysis'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    ? 'bg-white text-gray-800 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800'
                 }`}
               >
                 Campaign Analysis
               </button>
               <button
                 onClick={() => setActiveTab('similar')}
-                className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all ${
                   activeTab === 'similar'
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    ? 'bg-white text-gray-800 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800'
                 }`}
               >
                 Similar Keywords
                 {campaignKeywords.length > 0 && (
                   <span className={`ml-2 px-1.5 py-0.5 text-xs rounded-full ${
-                    activeTab === 'similar' ? 'bg-indigo-500' : 'bg-gray-200 text-gray-700'
+                    activeTab === 'similar' ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-700'
                   }`}>
                     {campaignKeywords.length}
                   </span>
