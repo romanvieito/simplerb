@@ -1182,50 +1182,6 @@ const AdsPage = () => {
               </div>
             )}
 
-            {/* Date Filter */}
-            <div className="w-full max-w-4xl mx-auto mb-6">
-              <div className="bg-white rounded-xl border border-gray-100 p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <span className="text-sm font-medium text-gray-700">Date Range</span>
-                  <div className="flex flex-wrap gap-2">
-                    {datePresets.map((preset) => (
-                      <button
-                        key={preset.value}
-                        onClick={() => handleDatePresetChange(preset.value)}
-                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                          selectedDatePreset === preset.value
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                      >
-                        {preset.label}
-                      </button>
-                    ))}
-                    <div className="flex gap-2">
-                      <input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => {
-                          setStartDate(e.target.value);
-                          setSelectedDatePreset('custom');
-                        }}
-                        className="px-2 py-1.5 text-xs border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                      />
-                      <input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => {
-                          setEndDate(e.target.value);
-                          setSelectedDatePreset('custom');
-                        }}
-                        className="px-2 py-1.5 text-xs border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
           </>
         )}
 
@@ -1238,7 +1194,7 @@ const AdsPage = () => {
                 <div className="bg-white rounded-xl border border-gray-100 p-4">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <p className="text-xs text-gray-600">Select which keywords from your campaigns will be used to find similar keywords ({selectedInputKeywords.size} selected)</p>
+                      <p className="text-xs text-gray-600">Select which keywords from your campaigns will be used ({selectedInputKeywords.size} unique keywords selected from {campaignKeywords.length} total)</p>
                     </div>
                     <div className="flex gap-2">
                       <button
@@ -1373,8 +1329,52 @@ const AdsPage = () => {
         {activeTab === 'analysis' && showCurrentKeywords && campaignKeywords.length > 0 && (
           <div className="w-full mb-8">
             <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6">
-              {/* Column Selector */}
-              <div className="mb-4 flex justify-end relative" ref={columnSelectorRef}>
+              {/* Date Filter and Column Selector Row */}
+              <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                {/* Date Filter */}
+                <div className="bg-gray-50 rounded-xl border border-gray-100 p-4 flex-shrink-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <span className="text-sm font-medium text-gray-700">Date Range</span>
+                    <div className="flex flex-wrap gap-2">
+                      {datePresets.map((preset) => (
+                        <button
+                          key={preset.value}
+                          onClick={() => handleDatePresetChange(preset.value)}
+                          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                            selectedDatePreset === preset.value
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                      <div className="flex gap-2">
+                        <input
+                          type="date"
+                          value={startDate}
+                          onChange={(e) => {
+                            setStartDate(e.target.value);
+                            setSelectedDatePreset('custom');
+                          }}
+                          className="px-2 py-1.5 text-xs border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        <input
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => {
+                            setEndDate(e.target.value);
+                            setSelectedDatePreset('custom');
+                          }}
+                          className="px-2 py-1.5 text-xs border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Column Selector */}
+                <div className="flex justify-end relative" ref={columnSelectorRef}>
                 <button
                   onClick={() => setShowColumnSelector(!showColumnSelector)}
                   className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
@@ -1430,8 +1430,9 @@ const AdsPage = () => {
                       </div>
                     </div>
                 )}
+                </div>
               </div>
-              
+
               <div className="overflow-x-auto w-full">
                   <table className="w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
