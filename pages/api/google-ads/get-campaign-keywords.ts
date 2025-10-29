@@ -60,6 +60,8 @@ export default async function handler(
 
     // Query to get all keywords from enabled campaigns with metrics
     // Note: Metrics require a date range, so we use segments.date
+    // When using segments.date in WHERE, we should include it in SELECT for proper aggregation
+    // Note: metrics.quality_score is not available for keyword_view, so we exclude it
     const query = `
       SELECT 
         campaign.id,
@@ -70,19 +72,19 @@ export default async function handler(
         ad_group_criterion.keyword.match_type,
         ad_group_criterion.cpc_bid_micros,
         ad_group_criterion.status,
+        segments.date,
         metrics.impressions,
         metrics.clicks,
         metrics.cost_micros,
         metrics.ctr,
-        metrics.average_cpc,
-        metrics.quality_score
+        metrics.average_cpc
       FROM keyword_view
       WHERE campaign.status = 'ENABLED'
         AND ad_group.status = 'ENABLED'
         AND ad_group_criterion.status = 'ENABLED'
         AND segments.date BETWEEN '${startDateStr}' AND '${endDateStr}'
         ${campaignIds ? `AND campaign.id IN (${campaignIds.map(id => id.trim()).join(',')})` : ''}
-      ORDER BY campaign.id, ad_group.id, ad_group_criterion.keyword.text
+      ORDER BY campaign.id, ad_group.id, ad_group_criterion.keyword.text, segments.date
     `;
 
     console.log('Fetching keywords from Google Ads campaigns...');
@@ -110,13 +112,30 @@ export default async function handler(
       
       console.log(`Received ${rows.length} rows from API`);
     } catch (queryError: any) {
-      console.error('Query error details:', {
-        error: queryError,
+      // Extract detailed error information from Google Ads API error
+      let errorDetails = {
         message: queryError?.message,
         code: queryError?.code,
         details: queryError?.details,
-        stack: queryError?.stack
-      });
+      };
+      
+      // Google Ads API errors often have nested error structures
+      if (queryError?.errors && Array.isArray(queryError.errors)) {
+        errorDetails = {
+          ...errorDetails,
+          message: queryError.errors.map((e: any) => e.message || e.errorString || JSON.stringify(e)).join('; '),
+          code: queryError.errors[0]?.errorCode?.errorCode || queryError.errors[0]?.errorCode || queryError.code,
+        };
+      } else if (queryError?.error?.errors && Array.isArray(queryError.error.errors)) {
+        errorDetails = {
+          ...errorDetails,
+          message: queryError.error.errors.map((e: any) => e.message || e.errorString || JSON.stringify(e)).join('; '),
+          code: queryError.error.errors[0]?.errorCode?.errorCode || queryError.error.errors[0]?.errorCode,
+        };
+      }
+      
+      console.error('Query error details:', errorDetails);
+      console.error('Full error object:', JSON.stringify(queryError, null, 2));
       
       // If the query fails, try a simpler query without metrics first
       console.log('Trying simpler query without date range...');
@@ -159,6 +178,8 @@ export default async function handler(
     }
 
     // Aggregate metrics if we had multiple date rows per keyword
+    // When using segments.date in SELECT, the API returns one row per day per keyword
+    // We aggregate these to get total metrics for the date range
     const keywordMap = new Map<string, CampaignKeyword>();
     
     rows.forEach((row: any) => {
@@ -174,7 +195,7 @@ export default async function handler(
       const key = `${campaignId}_${adGroupId}_${keywordText}`;
       
       if (keywordMap.has(key)) {
-        // Aggregate metrics if multiple rows exist for the same keyword
+        // Aggregate metrics if multiple rows exist for the same keyword (multiple dates)
         const existing = keywordMap.get(key)!;
         existing.impressions += row.metrics?.impressions || 0;
         existing.clicks += row.metrics?.clicks || 0;
@@ -182,6 +203,9 @@ export default async function handler(
         // Recalculate CTR from aggregated values
         existing.ctr = existing.impressions > 0 ? existing.clicks / existing.impressions : 0;
         existing.averageCpcMicros = existing.clicks > 0 ? existing.costMicros / existing.clicks : 0;
+        
+        // Quality score is not available as a metric for keyword_view
+        // Keep existing qualityScore if set (though it won't be set from metrics)
       } else {
         const keyword: CampaignKeyword = {
           campaignId,
@@ -197,7 +221,7 @@ export default async function handler(
           costMicros: row.metrics?.cost_micros || 0,
           ctr: row.metrics?.ctr || 0,
           averageCpcMicros: row.metrics?.average_cpc || 0,
-          qualityScore: row.metrics?.quality_score || undefined,
+          qualityScore: undefined, // Quality score is not available as a metric for keyword_view
         };
         
         keywordMap.set(key, keyword);
