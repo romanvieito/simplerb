@@ -478,7 +478,7 @@ const AdsPage = () => {
               keywords: batch,
               countryCode: similarKeywordsCountryCode,
               languageCode: similarKeywordsLanguageCode,
-              excludeExisting: uniqueKeywords,
+              excludeExisting: [], // Don't exclude campaign keywords - we want to find similar ones
             })
           });
 
@@ -842,7 +842,7 @@ const AdsPage = () => {
   }, [sortColumn, sortDirection]);
 
   return (
-    <div className="flex max-w-6xl mx-auto flex-col items-center justify-center py-4 min-h-screen bg-white">
+    <div className="flex w-full flex-col items-center justify-center py-4 min-h-screen bg-white">
       <Head>
         <title>Ads Pilot</title>
         <link rel="icon" href="/favicon.ico" />
@@ -1085,7 +1085,7 @@ const AdsPage = () => {
 
         {/* Current Keywords */}
         {showCurrentKeywords && campaignKeywords.length > 0 && (
-          <div className="w-full max-w-6xl mx-auto mb-8">
+          <div className="w-full mb-8">
             <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6">
               {/* Column Selector */}
               <div className="mb-4 flex justify-end relative" ref={columnSelectorRef}>
@@ -1146,8 +1146,8 @@ const AdsPage = () => {
                 )}
               </div>
               
-              <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
+              <div className="overflow-x-auto w-full">
+                  <table className="w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
                         {visibleColumns.keyword && (
@@ -1297,10 +1297,10 @@ const AdsPage = () => {
                       {getPaginatedKeywords().map((kw, index) => (
                         <tr key={index} className="hover:bg-gray-50">
                           {visibleColumns.keyword && (
-                            <td className="px-4 py-3 text-sm font-medium text-gray-900">{kw.keyword}</td>
+                            <td className="px-4 py-3 text-sm font-medium text-gray-900 text-left">{kw.keyword}</td>
                           )}
                           {visibleColumns.campaign && (
-                            <td className="px-4 py-3 text-sm text-gray-600">{kw.campaignName}</td>
+                            <td className="px-4 py-3 text-sm text-gray-600 text-left">{kw.campaignName}</td>
                           )}
                           {visibleColumns.adGroup && (
                             <td className="px-4 py-3 text-sm text-gray-600">{kw.adGroupName}</td>
@@ -1428,7 +1428,7 @@ const AdsPage = () => {
 
         {/* Similar Keywords Suggestions */}
         {showSuggestions && similarKeywords.length > 0 && (
-          <div className="w-full max-w-6xl mx-auto mb-8">
+          <div className="w-full mb-8">
             <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-gray-900">
@@ -1476,8 +1476,8 @@ const AdsPage = () => {
 
               {similarKeywordsViewMode === 'table' ? (
                 <>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
+                  <div className="overflow-x-auto w-full">
+                    <table className="w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
                           <th 
