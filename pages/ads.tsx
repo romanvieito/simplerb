@@ -51,6 +51,8 @@ const AdsPage = () => {
   const [selectedCampaignIds, setSelectedCampaignIds] = useState<string[]>([]);
   const [showCurrentKeywords, setShowCurrentKeywords] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [sortColumn, setSortColumn] = useState<'impressions' | 'clicks' | 'ctr' | 'cost' | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -325,6 +327,66 @@ const AdsPage = () => {
     return num.toLocaleString();
   };
 
+  const handleSort = (column: 'impressions' | 'clicks' | 'ctr' | 'cost') => {
+    if (sortColumn === column) {
+      // Toggle direction if clicking the same column
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new column and default to descending
+      setSortColumn(column);
+      setSortDirection('desc');
+    }
+  };
+
+  const getSortedKeywords = () => {
+    if (!sortColumn) return campaignKeywords;
+
+    const sorted = [...campaignKeywords].sort((a, b) => {
+      let aValue: number;
+      let bValue: number;
+
+      switch (sortColumn) {
+        case 'impressions':
+          aValue = a.impressions;
+          bValue = b.impressions;
+          break;
+        case 'clicks':
+          aValue = a.clicks;
+          bValue = b.clicks;
+          break;
+        case 'ctr':
+          aValue = a.ctr;
+          bValue = b.ctr;
+          break;
+        case 'cost':
+          aValue = a.costMicros;
+          bValue = b.costMicros;
+          break;
+        default:
+          return 0;
+      }
+
+      if (sortDirection === 'asc') {
+        return aValue - bValue;
+      } else {
+        return bValue - aValue;
+      }
+    });
+
+    return sorted;
+  };
+
+  const SortArrow = ({ column }: { column: 'impressions' | 'clicks' | 'ctr' | 'cost' }) => {
+    if (sortColumn !== column) {
+      return <span className="ml-1 text-gray-400">↕</span>;
+    }
+    return sortDirection === 'asc' ? (
+      <span className="ml-1 text-blue-600">↑</span>
+    ) : (
+      <span className="ml-1 text-blue-600">↓</span>
+    );
+  };
+
   return (
     <div className="flex max-w-6xl mx-auto flex-col items-center justify-center py-4 min-h-screen bg-white">
       <Head>
@@ -549,14 +611,46 @@ const AdsPage = () => {
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keyword</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Campaign</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ad Group</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Impressions</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Clicks</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">CTR</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
+                        <th 
+                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('impressions')}
+                        >
+                          <div className="flex items-center justify-end">
+                            Impressions
+                            <SortArrow column="impressions" />
+                          </div>
+                        </th>
+                        <th 
+                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('clicks')}
+                        >
+                          <div className="flex items-center justify-end">
+                            Clicks
+                            <SortArrow column="clicks" />
+                          </div>
+                        </th>
+                        <th 
+                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('ctr')}
+                        >
+                          <div className="flex items-center justify-end">
+                            CTR
+                            <SortArrow column="ctr" />
+                          </div>
+                        </th>
+                        <th 
+                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('cost')}
+                        >
+                          <div className="flex items-center justify-end">
+                            Cost
+                            <SortArrow column="cost" />
+                          </div>
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {campaignKeywords.slice(0, 50).map((kw, index) => (
+                      {getSortedKeywords().slice(0, 50).map((kw, index) => (
                         <tr key={index} className="hover:bg-gray-50">
                           <td className="px-4 py-3 text-sm font-medium text-gray-900">{kw.keyword}</td>
                           <td className="px-4 py-3 text-sm text-gray-600">{kw.campaignName}</td>
