@@ -212,6 +212,7 @@ export default function FindKeywords(): JSX.Element {
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>('asc');
   const [cacheEnabled, setCacheEnabled] = useState(true);
+  const [hasUsedAI, setHasUsedAI] = useState(false);
 
   const { openSignIn } = useClerk();
 
@@ -246,6 +247,15 @@ export default function FindKeywords(): JSX.Element {
       setSortDirection('asc');
     }
     setPage(0); // Reset to first page when sorting
+  };
+
+  const handleTabChange = (tab: 'google' | 'ai') => {
+    setActiveTab(tab);
+    // Mark AI as used if user switches to AI tab
+    if (tab === 'ai' && !hasUsedAI) {
+      localStorage.setItem('hasUsedAIKeywords', 'true');
+      setHasUsedAI(true);
+    }
   };
 
   const parsePercentage = (percentageStr: string): number => {
@@ -319,6 +329,13 @@ export default function FindKeywords(): JSX.Element {
       setDataSource(savedData.dataSource);
       hasLoadedSavedData.current = true;
     }
+    
+    // Check if user has used AI feature before
+    const used = localStorage.getItem('hasUsedAIKeywords');
+    if (used === 'true') {
+      setHasUsedAI(true);
+    }
+    
     isInitialLoad.current = false;
   }, []);
 
@@ -449,20 +466,6 @@ export default function FindKeywords(): JSX.Element {
             <div className="space-y-4">
               {/* Simplified Input Area */}
               <div className="relative bg-white rounded-lg border border-gray-200 focus-within:border-blue-500 transition-colors">
-                <div className="flex border-b border-gray-200">
-                  <button
-                    onClick={() => setActiveTab('google')}
-                    className={`flex-1 py-2 text-sm font-medium ${activeTab === 'google' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
-                  >
-                    Find Your Keywords
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('ai')}
-                    className={`flex-1 py-2 text-sm font-medium ${activeTab === 'ai' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
-                  >
-                    AI Prompt
-                  </button>
-                </div>
                 <textarea
                   value={keywords}
                   onChange={(e) => setKeywords(e.target.value)}
@@ -515,25 +518,85 @@ export default function FindKeywords(): JSX.Element {
                     </select> */}
                   </div>
                   
-                  <button
-                    onClick={handleKeywordResearch}
-                    disabled={loading || !keywords.trim()}
-                    className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>{activeTab === 'google' ? 'Searching...' : 'Generating...'}</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612l-3.96 4.158a.75.75 0 11-1.08-1.04l5.25-5.5a.75.75 0 011.08 0l5.25 5.5a.75.75 0 11-1.08 1.04l-3.96-4.158v10.638A.75.75 0 0110 17z" clipRule="evenodd" />
+                  <div className="flex items-center space-x-3">
+                    {/* Enhanced Tabs Component */}
+                    <div className="flex items-center bg-gray-100 rounded-lg p-1 shadow-sm">
+                      <button
+                        onClick={() => handleTabChange('google')}
+                        className={`group relative px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 flex items-center space-x-2 ${
+                          activeTab === 'google' 
+                            ? 'bg-white text-blue-600 shadow-sm' 
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                        title="Search for keywords using Google Ads data"
+                      >
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          className={`h-4 w-4 transition-transform duration-200 ${activeTab === 'google' ? 'scale-110' : 'group-hover:scale-105'}`} 
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                        <span>{activeTab === 'google' ? 'Search' : 'Generate with AI'}</span>
-                      </>
-                    )}
-                  </button>
+                        <span>Find Keywords</span>
+                      </button>
+                      <button
+                        onClick={() => handleTabChange('ai')}
+                        className={`group relative px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 flex items-center space-x-2 ${
+                          activeTab === 'ai' 
+                            ? 'bg-white text-purple-600 shadow-sm' 
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                        title="Generate keyword ideas with AI"
+                      >
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          className={`h-4 w-4 transition-transform duration-200 ${activeTab === 'ai' ? 'scale-110' : 'group-hover:scale-105'}`}
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                        </svg>
+                        <span>AI Prompt</span>
+                        {activeTab !== 'ai' && !hasUsedAI && (
+                          <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
+                          </span>
+                        )}
+                      </button>
+                    </div>
+                    
+                    <button
+                      onClick={handleKeywordResearch}
+                      disabled={loading || !keywords.trim()}
+                      className={`${
+                        activeTab === 'google' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700'
+                      } text-white rounded-lg px-5 py-2.5 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95`}
+                    >
+                      {loading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>{activeTab === 'google' ? 'Searching...' : 'Generating...'}</span>
+                        </>
+                      ) : (
+                        <>
+                          {activeTab === 'google' ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                            </svg>
+                          ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                          )}
+                          <span className="font-medium">{activeTab === 'google' ? 'Search' : 'Generate'}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
