@@ -196,6 +196,7 @@ const AdsPage = () => {
   const [similarKeywordsSortDirection, setSimilarKeywordsSortDirection] = useState<'asc' | 'desc'>('desc');
   const [similarKeywordsCountryCode, setSimilarKeywordsCountryCode] = useState('US');
   const [similarKeywordsLanguageCode, setSimilarKeywordsLanguageCode] = useState('en');
+  const [selectedSimilarKeywords, setSelectedSimilarKeywords] = useState<Set<string>>(new Set());
   
   // Default column visibility - all columns visible by default
   const defaultColumnVisibility = {
@@ -454,7 +455,8 @@ const AdsPage = () => {
 
     setFindingSimilar(true);
     setSimilarKeywords([]);
-    
+    setSelectedSimilarKeywords(new Set()); // Clear selections when finding new keywords
+
     try {
       // Get unique keywords from campaigns
       const uniqueKeywords = Array.from(new Set(campaignKeywords.map(k => k.keyword)));
@@ -537,42 +539,113 @@ const AdsPage = () => {
     }
   };
 
-  const exportKeywords = (format: 'csv' | 'json') => {
-    if (similarKeywords.length === 0) {
+  const exportKeywords = (format: 'csv' | 'json', selectedOnly: boolean = false) => {
+    const keywordsToExport = selectedOnly && selectedSimilarKeywords.size > 0
+      ? similarKeywords.filter(k => selectedSimilarKeywords.has(k.keyword))
+      : similarKeywords;
+
+    if (keywordsToExport.length === 0) {
       toast.error('No keywords to export');
       return;
     }
 
     if (format === 'csv') {
       const headers = ['Keyword', 'Search Volume', 'Competition', 'Avg CPC', 'Source Keyword'];
-      const rows = similarKeywords.map(k => [
+      const rows = keywordsToExport.map(k => [
         k.keyword,
         k.searchVolume.toString(),
         k.competition,
         k.avgCpcMicros ? `$${(k.avgCpcMicros / 1000000).toFixed(2)}` : 'N/A',
         k.sourceKeyword || ''
       ]);
-      
+
       const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `similar-keywords-${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `similar-keywords${selectedOnly ? '-selected' : ''}-${new Date().toISOString().split('T')[0]}.csv`;
       a.click();
       URL.revokeObjectURL(url);
-      } else {
-      const json = JSON.stringify(similarKeywords, null, 2);
+    } else {
+      const json = JSON.stringify(keywordsToExport, null, 2);
       const blob = new Blob([json], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `similar-keywords-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `similar-keywords${selectedOnly ? '-selected' : ''}-${new Date().toISOString().split('T')[0]}.json`;
       a.click();
       URL.revokeObjectURL(url);
     }
-    
-    toast.success(`Exported ${similarKeywords.length} keywords as ${format.toUpperCase()}`);
+
+    toast.success(`Exported ${keywordsToExport.length} keywords as ${format.toUpperCase()}`);
+  };
+
+  const copyKeywordsToClipboard = async (selectedOnly: boolean = false) => {
+    const keywordsToCopy = selectedOnly && selectedSimilarKeywords.size > 0
+      ? similarKeywords.filter(k => selectedSimilarKeywords.has(k.keyword))
+      : similarKeywords;
+
+    if (keywordsToCopy.length === 0) {
+      toast.error('No keywords to copy');
+      return;
+    }
+
+    const keywordList = keywordsToCopy.map(k => k.keyword).join('\n');
+
+    try {
+      await navigator.clipboard.writeText(keywordList);
+      toast.success(`Copied ${keywordsToCopy.length} keyword${keywordsToCopy.length !== 1 ? 's' : ''} to clipboard`);
+    } catch (error) {
+      // Fallback for browsers that don't support clipboard API
+      const textArea = document.createElement('textarea');
+      textArea.value = keywordList;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        toast.success(`Copied ${keywordsToCopy.length} keyword${keywordsToCopy.length !== 1 ? 's' : ''} to clipboard`);
+      } catch (fallbackError) {
+        toast.error('Failed to copy keywords to clipboard');
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+
+  const handleSimilarKeywordSelect = (keyword: string, selected: boolean) => {
+    setSelectedSimilarKeywords(prev => {
+      const newSet = new Set(prev);
+      if (selected) {
+        newSet.add(keyword);
+      } else {
+        newSet.delete(keyword);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAllSimilarKeywords = (selected: boolean) => {
+    if (selected) {
+      const allKeywords = new Set(getPaginatedSimilarKeywords().map(k => k.keyword));
+      setSelectedSimilarKeywords(prev => new Set([...prev, ...allKeywords]));
+    } else {
+      const currentPageKeywords = new Set(getPaginatedSimilarKeywords().map(k => k.keyword));
+      setSelectedSimilarKeywords(prev => {
+        const newSet = new Set(prev);
+        currentPageKeywords.forEach(keyword => newSet.delete(keyword));
+        return newSet;
+      });
+    }
+  };
+
+  const isAllCurrentPageSelected = () => {
+    const currentPageKeywords = getPaginatedSimilarKeywords();
+    return currentPageKeywords.length > 0 && currentPageKeywords.every(k => selectedSimilarKeywords.has(k.keyword));
+  };
+
+  const isAnyCurrentPageSelected = () => {
+    const currentPageKeywords = getPaginatedSimilarKeywords();
+    return currentPageKeywords.some(k => selectedSimilarKeywords.has(k.keyword));
   };
 
   const formatCurrency = (micros: number) => {
@@ -1440,8 +1513,8 @@ const AdsPage = () => {
                     <button
                       onClick={() => setSimilarKeywordsViewMode('table')}
                       className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                        similarKeywordsViewMode === 'table' 
-                          ? 'bg-white text-blue-600 shadow-sm' 
+                        similarKeywordsViewMode === 'table'
+                          ? 'bg-white text-blue-600 shadow-sm'
                           : 'text-gray-600 hover:text-gray-900'
                       }`}
                     >
@@ -1450,27 +1523,70 @@ const AdsPage = () => {
                     <button
                       onClick={() => setSimilarKeywordsViewMode('grid')}
                       className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                        similarKeywordsViewMode === 'grid' 
-                          ? 'bg-white text-blue-600 shadow-sm' 
+                        similarKeywordsViewMode === 'grid'
+                          ? 'bg-white text-blue-600 shadow-sm'
                           : 'text-gray-600 hover:text-gray-900'
                       }`}
                     >
                       Grid
                     </button>
                   </div>
-                  
+
+                  {/* Selection info */}
+                  {selectedSimilarKeywords.size > 0 && (
+                    <div className="text-sm text-gray-600 mr-2">
+                      {selectedSimilarKeywords.size} selected
+                    </div>
+                  )}
+
                   <button
-                    onClick={() => exportKeywords('csv')}
+                    onClick={() => copyKeywordsToClipboard(false)}
+                    className="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition-all duration-200 text-sm font-medium flex items-center gap-2"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Copy All
+                  </button>
+                  {selectedSimilarKeywords.size > 0 && (
+                    <button
+                      onClick={() => copyKeywordsToClipboard(true)}
+                      className="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition-all duration-200 text-sm font-medium flex items-center gap-2"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      Copy Selected
+                    </button>
+                  )}
+                  <button
+                    onClick={() => exportKeywords('csv', false)}
                     className="bg-green-600 text-white rounded-lg px-4 py-2 hover:bg-green-700 transition-all duration-200 text-sm font-medium"
                   >
-                    Export CSV
+                    Export All CSV
                   </button>
+                  {selectedSimilarKeywords.size > 0 && (
+                    <button
+                      onClick={() => exportKeywords('csv', true)}
+                      className="bg-green-600 text-white rounded-lg px-4 py-2 hover:bg-green-700 transition-all duration-200 text-sm font-medium"
+                    >
+                      Export Selected CSV
+                    </button>
+                  )}
                   <button
-                    onClick={() => exportKeywords('json')}
+                    onClick={() => exportKeywords('json', false)}
                     className="bg-green-600 text-white rounded-lg px-4 py-2 hover:bg-green-700 transition-all duration-200 text-sm font-medium"
                   >
-                    Export JSON
+                    Export All JSON
                   </button>
+                  {selectedSimilarKeywords.size > 0 && (
+                    <button
+                      onClick={() => exportKeywords('json', true)}
+                      className="bg-green-600 text-white rounded-lg px-4 py-2 hover:bg-green-700 transition-all duration-200 text-sm font-medium"
+                    >
+                      Export Selected JSON
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1480,7 +1596,20 @@ const AdsPage = () => {
                     <table className="w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th 
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <div className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={isAllCurrentPageSelected()}
+                                ref={(el) => {
+                                  if (el) el.indeterminate = isAnyCurrentPageSelected() && !isAllCurrentPageSelected();
+                                }}
+                                onChange={(e) => handleSelectAllSimilarKeywords(e.target.checked)}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              />
+                            </div>
+                          </th>
+                          <th
                             className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                             onClick={() => handleSimilarKeywordsSort('keyword')}
                           >
@@ -1548,6 +1677,14 @@ const AdsPage = () => {
                       <tbody className="bg-white divide-y divide-gray-200">
                         {getPaginatedSimilarKeywords().map((kw, index) => (
                           <tr key={index} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 text-sm">
+                              <input
+                                type="checkbox"
+                                checked={selectedSimilarKeywords.has(kw.keyword)}
+                                onChange={(e) => handleSimilarKeywordSelect(kw.keyword, e.target.checked)}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              />
+                            </td>
                             <td className="px-4 py-3 text-sm font-medium text-gray-900">{kw.keyword}</td>
                             <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatNumber(kw.searchVolume)}</td>
                             <td className="px-4 py-3 text-sm">
