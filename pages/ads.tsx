@@ -342,6 +342,13 @@ const AdsPage = () => {
     isInitialLoad.current = false;
   }, []);
 
+  // Auto-select all campaigns when they become available (if no saved data was loaded)
+  useEffect(() => {
+    if (availableCampaigns.length > 0 && !hasLoadedSavedData.current && selectedCampaignIds.length === 0) {
+      setSelectedCampaignIds(availableCampaigns.map(c => c.id));
+    }
+  }, [availableCampaigns, selectedCampaignIds.length]);
+
   // Close column selector when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1109,22 +1116,27 @@ const AdsPage = () => {
             {/* Campaign Selector */}
             {availableCampaigns.length > 0 && (
               <div className="w-full max-w-4xl mx-auto mb-6">
-                <div className="bg-white rounded-xl border border-gray-100 p-4">
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-sm font-medium text-gray-700">Campaigns</span>
-                    <button
-                      onClick={() => {
-                        if (selectedCampaignIds.length === availableCampaigns.length) {
-                          setSelectedCampaignIds([]);
-                        } else {
-                          setSelectedCampaignIds(availableCampaigns.map(c => c.id));
-                        }
-                      }}
-                      className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-                    >
-                      {selectedCampaignIds.length === availableCampaigns.length ? 'Deselect All' : 'Select All'}
-                    </button>
-                  </div>
+                <div className="bg-white rounded-xl border border-gray-100 p-4 relative">
+                  {/* Refresh Button positioned absolutely in top right */}
+                  <button
+                    onClick={fetchCampaignKeywords}
+                    disabled={fetchingKeywords || !admin}
+                    className="absolute top-4 right-4 bg-black text-white rounded-lg px-6 py-2.5 hover:bg-gray-800 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm z-10"
+                  >
+                    {fetchingKeywords ? (
+                      <>
+                        <LoadingDots color="white" style="small" />
+                        <span>Analyzing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-1.268a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                        </svg>
+                        <span>Refresh</span>
+                      </>
+                    )}
+                  </button>
                   <div className="flex flex-wrap gap-2">
                     {availableCampaigns.map((campaign) => (
                       <label
@@ -1152,28 +1164,6 @@ const AdsPage = () => {
                       {selectedCampaignIds.length} of {availableCampaigns.length} selected
                     </p>
                   )}
-                  {/* Analyze Button inside Campaigns div */}
-                  <div className="flex justify-end mt-4">
-                    <button
-                      onClick={fetchCampaignKeywords}
-                      disabled={fetchingKeywords || !admin}
-                      className="bg-black text-white rounded-lg px-6 py-2.5 hover:bg-gray-800 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
-                    >
-                      {fetchingKeywords ? (
-                        <>
-                          <LoadingDots color="white" style="small" />
-                          <span>Analyzing...</span>
-                        </>
-                      ) : (
-                        <>
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-1.268a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-                          </svg>
-                          <span>Analyze Campaigns</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
                   {!admin && (
                     <p className="text-xs text-gray-500 text-center mt-2">Admin access required</p>
                   )}
@@ -1237,7 +1227,6 @@ const AdsPage = () => {
                 <div className="bg-white rounded-xl border border-gray-100 p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-sm font-medium text-gray-700 mb-3 block">Target Location</span>
                       <div className="flex gap-3">
                         <select
                           value={similarKeywordsCountryCode}
