@@ -572,9 +572,7 @@ export default function FindKeywords(): JSX.Element {
                     <button
                       onClick={handleKeywordResearch}
                       disabled={loading || !keywords.trim()}
-                      className={`${
-                        activeTab === 'google' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700'
-                      } text-white rounded-lg px-5 py-2.5 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95`}
+                      className={`bg-black hover:bg-gray-800 text-white rounded-lg px-5 py-2.5 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95`}
                     >
                       {loading ? (
                         <>
