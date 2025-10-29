@@ -126,7 +126,7 @@ const MonthlyTrendChart: React.FC<{ keyword: string; trend: MonthlyTrendPoint[] 
   };
 
   return (
-    <div className="relative" style={{ paddingLeft: `${yAxisWidth}px` }}>
+    <div className="relative" style={{ paddingRight: `${yAxisWidth}px` }}>
       {hoveredIndex !== null && lastTwelve[hoveredIndex] && (
         <div className="absolute -top-1 left-1/2 z-20 -translate-x-1/2 -translate-y-full pointer-events-none">
           <div className="bg-gray-900 text-white px-2 py-1 rounded text-xs whitespace-nowrap">
@@ -135,8 +135,8 @@ const MonthlyTrendChart: React.FC<{ keyword: string; trend: MonthlyTrendPoint[] 
         </div>
       )}
       
-      {/* Y-axis label (top number) */}
-      <div className="absolute left-0 top-0 text-xs text-gray-500 font-medium" style={{ width: `${yAxisWidth - 4}px`, textAlign: 'right', paddingRight: '4px' }}>
+      {/* Y-axis label (top number) - on the right */}
+      <div className="absolute right-0 top-0 text-xs text-gray-500 font-medium" style={{ width: `${yAxisWidth - 4}px`, textAlign: 'left', paddingLeft: '4px' }}>
         {formatTopNumber(maxVolume)}
       </div>
       
