@@ -227,6 +227,19 @@ const AdsPage = () => {
     return defaultColumnVisibility;
   });
 
+  // Date filter state
+  const [startDate, setStartDate] = useState<string>(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 7); // Default to last 7 days
+    return date.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState<string>(() => {
+    const date = new Date();
+    return date.toISOString().split('T')[0];
+  });
+  const [selectedDatePreset, setSelectedDatePreset] = useState<string>('last7days');
+  const [showDateFilter, setShowDateFilter] = useState(false);
+
   // Refs to prevent save loops during initial load
   const isInitialLoad = useRef(true);
   const hasLoadedSavedData = useRef(false);
@@ -359,13 +372,16 @@ const AdsPage = () => {
     }
 
     // If we have selected campaigns, use them; otherwise fetch all
-    const campaignIdsParam = selectedCampaignIds.length > 0 
-      ? `?campaignIds=${selectedCampaignIds.join(',')}`
-      : '';
+    const params = new URLSearchParams();
+    if (selectedCampaignIds.length > 0) {
+      params.append('campaignIds', selectedCampaignIds.join(','));
+    }
+    params.append('startDate', startDate);
+    params.append('endDate', endDate);
 
     setFetchingKeywords(true);
     try {
-      const response = await fetch(`/api/google-ads/get-campaign-keywords${campaignIdsParam}`, {
+      const response = await fetch(`/api/google-ads/get-campaign-keywords?${params.toString()}`, {
         headers: {
           'x-user-email': user.emailAddresses[0].emailAddress
         }
@@ -384,11 +400,11 @@ const AdsPage = () => {
         ).values()) as Array<{id: string, name: string}>;
         
         // Only update available campaigns if we don't have them yet or if we fetched all
-        const campaignsToSave = (availableCampaigns.length === 0 || campaignIdsParam === '') 
-          ? uniqueCampaigns 
+        const campaignsToSave = (availableCampaigns.length === 0 || selectedCampaignIds.length === 0)
+          ? uniqueCampaigns
           : availableCampaigns;
-        
-        if (availableCampaigns.length === 0 || campaignIdsParam === '') {
+
+        if (availableCampaigns.length === 0 || selectedCampaignIds.length === 0) {
           setAvailableCampaigns(uniqueCampaigns);
         }
         
@@ -398,12 +414,12 @@ const AdsPage = () => {
           selectedCampaignIds,
           availableCampaigns: campaignsToSave
         });
-        
+
         // Reset the hasLoadedSavedData flag after first manual fetch
         if (hasLoadedSavedData.current) {
           hasLoadedSavedData.current = false;
         }
-        
+
         toast.success(`Found ${data.totalKeywords} keywords from ${uniqueCampaigns.length} campaign${uniqueCampaigns.length !== 1 ? 's' : ''}`);
       } else {
         toast.error(data.error || 'Failed to fetch keywords');
@@ -421,8 +437,12 @@ const AdsPage = () => {
     if (!user?.emailAddresses[0]?.emailAddress || !admin) return;
 
     try {
-      const response = await fetch('/api/google-ads/get-campaign-keywords', {
-        headers: { 
+      const params = new URLSearchParams();
+      params.append('startDate', startDate);
+      params.append('endDate', endDate);
+
+      const response = await fetch(`/api/google-ads/get-campaign-keywords?${params.toString()}`, {
+        headers: {
           'x-user-email': user.emailAddresses[0].emailAddress
         }
       });
@@ -627,12 +647,12 @@ const AdsPage = () => {
   const handleSelectAllSimilarKeywords = (selected: boolean) => {
     if (selected) {
       const allKeywords = new Set(getPaginatedSimilarKeywords().map(k => k.keyword));
-      setSelectedSimilarKeywords(prev => new Set([...prev, ...allKeywords]));
+      setSelectedSimilarKeywords(prev => new Set([...Array.from(prev), ...Array.from(allKeywords)]));
     } else {
       const currentPageKeywords = new Set(getPaginatedSimilarKeywords().map(k => k.keyword));
       setSelectedSimilarKeywords(prev => {
         const newSet = new Set(prev);
-        currentPageKeywords.forEach(keyword => newSet.delete(keyword));
+        Array.from(currentPageKeywords).forEach(keyword => newSet.delete(keyword));
         return newSet;
       });
     }
@@ -640,13 +660,53 @@ const AdsPage = () => {
 
   const isAllCurrentPageSelected = () => {
     const currentPageKeywords = getPaginatedSimilarKeywords();
-    return currentPageKeywords.length > 0 && currentPageKeywords.every(k => selectedSimilarKeywords.has(k.keyword));
+    return currentPageKeywords.length > 0 && Array.from(selectedSimilarKeywords).every(keyword => currentPageKeywords.some(k => k.keyword === keyword));
   };
 
   const isAnyCurrentPageSelected = () => {
     const currentPageKeywords = getPaginatedSimilarKeywords();
     return currentPageKeywords.some(k => selectedSimilarKeywords.has(k.keyword));
   };
+
+  // Date filter helper functions
+  const handleDatePresetChange = (preset: string) => {
+    const today = new Date();
+    let endDateValue = new Date(today);
+    let startDateValue = new Date(today);
+
+    switch (preset) {
+      case 'last7days':
+        startDateValue.setDate(today.getDate() - 7);
+        break;
+      case 'last30days':
+        startDateValue.setDate(today.getDate() - 30);
+        break;
+      case 'last90days':
+        startDateValue.setDate(today.getDate() - 90);
+        break;
+      case 'thismonth':
+        startDateValue = new Date(today.getFullYear(), today.getMonth(), 1);
+        break;
+      case 'lastmonth':
+        startDateValue = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        endDateValue = new Date(today.getFullYear(), today.getMonth(), 0);
+        break;
+      default:
+        return;
+    }
+
+    setStartDate(startDateValue.toISOString().split('T')[0]);
+    setEndDate(endDateValue.toISOString().split('T')[0]);
+    setSelectedDatePreset(preset);
+  };
+
+  const datePresets = [
+    { value: 'last7days', label: 'Last 7 days' },
+    { value: 'last30days', label: 'Last 30 days' },
+    { value: 'last90days', label: 'Last 90 days' },
+    { value: 'thismonth', label: 'This month' },
+    { value: 'lastmonth', label: 'Last month' },
+  ];
 
   const formatCurrency = (micros: number) => {
     return `$${(micros / 1000000).toFixed(2)}`;
@@ -1062,6 +1122,82 @@ const AdsPage = () => {
                 </div>
               </div>
             )}
+
+        {/* Date Filter */}
+        <div className="w-full max-w-4xl mx-auto mb-6">
+          <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Date Range
+              </h3>
+              <button
+                onClick={() => setShowDateFilter(!showDateFilter)}
+                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                </svg>
+                <span>{datePresets.find(p => p.value === selectedDatePreset)?.label || 'Custom Range'}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform ${showDateFilter ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+
+            {showDateFilter && (
+              <div className="space-y-4">
+                {/* Preset buttons */}
+                <div className="flex flex-wrap gap-2">
+                  {datePresets.map((preset) => (
+                    <button
+                      key={preset.value}
+                      onClick={() => handleDatePresetChange(preset.value)}
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                        selectedDatePreset === preset.value
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Custom date inputs */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => {
+                        setStartDate(e.target.value);
+                        setSelectedDatePreset('custom');
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => {
+                        setEndDate(e.target.value);
+                        setSelectedDatePreset('custom');
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Action Buttons */}
         <div className="w-full max-w-4xl mx-auto space-y-4 mb-8">

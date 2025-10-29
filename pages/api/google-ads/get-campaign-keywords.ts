@@ -49,20 +49,34 @@ export default async function handler(
     }
 
     // Optional: filter by campaign IDs from query params
-    const campaignIds = req.query.campaignIds 
-      ? (typeof req.query.campaignIds === 'string' 
-          ? req.query.campaignIds.split(',') 
+    const campaignIds = req.query.campaignIds
+      ? (typeof req.query.campaignIds === 'string'
+          ? req.query.campaignIds.split(',')
           : req.query.campaignIds)
       : null;
 
+    // Optional: filter by date range from query params
+    const startDateParam = req.query.startDate as string;
+    const endDateParam = req.query.endDate as string;
+
     const customer = getGoogleAdsCustomer();
 
-    // Calculate date range for metrics (last 30 days)
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(endDate.getDate() - 30);
-    const startDateStr = startDate.toISOString().split('T')[0];
-    const endDateStr = endDate.toISOString().split('T')[0];
+    // Calculate date range for metrics (default to last 30 days if not provided)
+    let startDateStr: string;
+    let endDateStr: string;
+
+    if (startDateParam && endDateParam) {
+      // Use provided date range
+      startDateStr = startDateParam;
+      endDateStr = endDateParam;
+    } else {
+      // Default to last 30 days
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(endDate.getDate() - 30);
+      startDateStr = startDate.toISOString().split('T')[0];
+      endDateStr = endDate.toISOString().split('T')[0];
+    }
 
     // Query to get all keywords from enabled campaigns with metrics
     // Note: Metrics require a date range, so we use segments.date
@@ -156,7 +170,7 @@ export default async function handler(
       
       try {
         const basicMetricsQuery = `
-          SELECT 
+          SELECT
             campaign.id,
             campaign.name,
             ad_group.id,
