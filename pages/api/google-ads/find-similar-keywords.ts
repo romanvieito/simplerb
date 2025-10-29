@@ -15,7 +15,6 @@ interface SimilarKeyword {
   competitionIndex?: number;
   lowTopPageBidMicros?: number;
   highTopPageBidMicros?: number;
-  avgCpcMicros?: number;
   sourceKeyword?: string; // Which keyword led to this suggestion
 }
 
@@ -214,7 +213,6 @@ export default async function handler(
                     competitionIndex: idea.competitionIndex,
                     lowTopPageBidMicros: idea.lowTopPageBidMicros,
                     highTopPageBidMicros: idea.highTopPageBidMicros,
-                    avgCpcMicros: idea.avgCpcMicros,
                     sourceKeyword,
                   });
                 } else {

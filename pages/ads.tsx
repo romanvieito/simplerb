@@ -157,7 +157,6 @@ interface SimilarKeyword {
   competitionIndex?: number;
   lowTopPageBidMicros?: number;
   highTopPageBidMicros?: number;
-  avgCpcMicros?: number;
   sourceKeyword?: string;
 }
 
@@ -193,7 +192,7 @@ const AdsPage = () => {
   const [similarKeywordsViewMode, setSimilarKeywordsViewMode] = useState<'grid' | 'table'>('table');
   const [similarKeywordsPage, setSimilarKeywordsPage] = useState(0);
   const [similarKeywordsRowsPerPage, setSimilarKeywordsRowsPerPage] = useState(50);
-  const [similarKeywordsSortField, setSimilarKeywordsSortField] = useState<'keyword' | 'searchVolume' | 'competition' | 'minCpc' | 'maxCpc' | 'avgCpc' | 'sourceKeyword' | null>(null);
+  const [similarKeywordsSortField, setSimilarKeywordsSortField] = useState<'keyword' | 'searchVolume' | 'competition' | 'minCpc' | 'maxCpc' | 'sourceKeyword' | null>(null);
   const [similarKeywordsSortDirection, setSimilarKeywordsSortDirection] = useState<'asc' | 'desc'>('desc');
   const [similarKeywordsCountryCode, setSimilarKeywordsCountryCode] = useState('US');
   const [similarKeywordsLanguageCode, setSimilarKeywordsLanguageCode] = useState('en');
@@ -571,12 +570,13 @@ const AdsPage = () => {
     }
 
     if (format === 'csv') {
-      const headers = ['Keyword', 'Search Volume', 'Competition', 'Avg CPC', 'Source Keyword'];
+      const headers = ['Keyword', 'Search Volume', 'Competition', 'Min CPC', 'Max CPC', 'Source Keyword'];
       const rows = keywordsToExport.map(k => [
         k.keyword,
         k.searchVolume.toString(),
         k.competition,
-        k.avgCpcMicros ? `$${(k.avgCpcMicros / 1000000).toFixed(2)}` : 'N/A',
+        k.lowTopPageBidMicros ? `$${(k.lowTopPageBidMicros / 1000000).toFixed(2)}` : 'N/A',
+        k.highTopPageBidMicros ? `$${(k.highTopPageBidMicros / 1000000).toFixed(2)}` : 'N/A',
         k.sourceKeyword || ''
       ]);
 
@@ -835,7 +835,7 @@ const AdsPage = () => {
   };
 
   // Similar keywords sorting and pagination
-  const handleSimilarKeywordsSort = (field: 'keyword' | 'searchVolume' | 'competition' | 'minCpc' | 'maxCpc' | 'avgCpc' | 'sourceKeyword') => {
+  const handleSimilarKeywordsSort = (field: 'keyword' | 'searchVolume' | 'competition' | 'minCpc' | 'maxCpc' | 'sourceKeyword') => {
     if (similarKeywordsSortField === field) {
       // Toggle direction if clicking the same column
       setSimilarKeywordsSortDirection(similarKeywordsSortDirection === 'asc' ? 'desc' : 'asc');
@@ -881,10 +881,6 @@ const AdsPage = () => {
           aValue = a.highTopPageBidMicros || 0;
           bValue = b.highTopPageBidMicros || 0;
           break;
-        case 'avgCpc':
-          aValue = a.avgCpcMicros || 0;
-          bValue = b.avgCpcMicros || 0;
-          break;
         case 'sourceKeyword':
           aValue = (a.sourceKeyword || '').toLowerCase();
           bValue = (b.sourceKeyword || '').toLowerCase();
@@ -915,7 +911,7 @@ const AdsPage = () => {
     return sorted.slice(startIndex, endIndex);
   };
 
-  const SimilarKeywordsSortArrow = ({ column }: { column: 'keyword' | 'searchVolume' | 'competition' | 'minCpc' | 'maxCpc' | 'avgCpc' | 'sourceKeyword' }) => {
+  const SimilarKeywordsSortArrow = ({ column }: { column: 'keyword' | 'searchVolume' | 'competition' | 'minCpc' | 'maxCpc' | 'sourceKeyword' }) => {
     if (similarKeywordsSortField !== column) {
       return <span className="ml-1 text-gray-400">↕</span>;
     }
@@ -1156,6 +1152,31 @@ const AdsPage = () => {
                       {selectedCampaignIds.length} of {availableCampaigns.length} selected
                     </p>
                   )}
+                  {/* Analyze Button inside Campaigns div */}
+                  <div className="flex justify-end mt-4">
+                    <button
+                      onClick={fetchCampaignKeywords}
+                      disabled={fetchingKeywords || !admin}
+                      className="bg-black text-white rounded-lg px-6 py-2.5 hover:bg-gray-800 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
+                    >
+                      {fetchingKeywords ? (
+                        <>
+                          <LoadingDots color="white" style="small" />
+                          <span>Analyzing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-1.268a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                          </svg>
+                          <span>Analyze Campaigns</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  {!admin && (
+                    <p className="text-xs text-gray-500 text-center mt-2">Admin access required</p>
+                  )}
                 </div>
               </div>
             )}
@@ -1204,33 +1225,6 @@ const AdsPage = () => {
               </div>
             </div>
 
-            {/* Analyze Button */}
-            <div className="w-full max-w-4xl mx-auto mb-8">
-              <div className="flex justify-center">
-                <button
-                  onClick={fetchCampaignKeywords}
-                  disabled={fetchingKeywords || !admin}
-                  className="bg-blue-600 text-white rounded-lg px-6 py-2.5 hover:bg-blue-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
-                >
-                  {fetchingKeywords ? (
-                    <>
-                      <LoadingDots color="white" style="small" />
-                      <span>Analyzing...</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-                      </svg>
-                      <span>Analyze Campaigns</span>
-                    </>
-                  )}
-                </button>
-              </div>
-              {!admin && (
-                <p className="text-xs text-gray-500 text-center mt-4">Admin access required</p>
-              )}
-            </div>
           </>
         )}
 
@@ -1241,69 +1235,71 @@ const AdsPage = () => {
               <div className="space-y-6">
                 {/* Location Settings */}
                 <div className="bg-white rounded-xl border border-gray-100 p-4">
-                  <span className="text-sm font-medium text-gray-700 mb-3 block">Target Location</span>
-                  <div className="flex gap-3">
-                    <select
-                      value={similarKeywordsCountryCode}
-                      onChange={(e) => setSimilarKeywordsCountryCode(e.target.value)}
-                      className="bg-white border border-gray-200 rounded px-3 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none"
-                    >
-                      <option value="WORLD">World</option>
-                      <option value="US">United States</option>
-                      <option value="GB">United Kingdom</option>
-                      <option value="CA">Canada</option>
-                      <option value="AU">Australia</option>
-                      <option value="DE">Germany</option>
-                      <option value="FR">France</option>
-                      <option value="ES">Spain</option>
-                      <option value="IT">Italy</option>
-                      <option value="NL">Netherlands</option>
-                      <option value="SE">Sweden</option>
-                      <option value="NO">Norway</option>
-                      <option value="DK">Denmark</option>
-                      <option value="FI">Finland</option>
-                    </select>
-                    <select
-                      value={similarKeywordsLanguageCode}
-                      onChange={(e) => setSimilarKeywordsLanguageCode(e.target.value)}
-                      className="bg-white border border-gray-200 rounded px-3 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none"
-                    >
-                      <option value="en">English</option>
-                      <option value="es">Spanish</option>
-                      <option value="fr">French</option>
-                      <option value="de">German</option>
-                      <option value="it">Italian</option>
-                      <option value="pt">Portuguese</option>
-                      <option value="nl">Dutch</option>
-                      <option value="sv">Swedish</option>
-                      <option value="no">Norwegian</option>
-                      <option value="da">Danish</option>
-                      <option value="fi">Finnish</option>
-                    </select>
-                  </div>
-                </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-sm font-medium text-gray-700 mb-3 block">Target Location</span>
+                      <div className="flex gap-3">
+                        <select
+                          value={similarKeywordsCountryCode}
+                          onChange={(e) => setSimilarKeywordsCountryCode(e.target.value)}
+                          className="bg-white border border-gray-200 rounded px-3 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none"
+                        >
+                          <option value="WORLD">World</option>
+                          <option value="US">United States</option>
+                          <option value="GB">United Kingdom</option>
+                          <option value="CA">Canada</option>
+                          <option value="AU">Australia</option>
+                          <option value="DE">Germany</option>
+                          <option value="FR">France</option>
+                          <option value="ES">Spain</option>
+                          <option value="IT">Italy</option>
+                          <option value="NL">Netherlands</option>
+                          <option value="SE">Sweden</option>
+                          <option value="NO">Norway</option>
+                          <option value="DK">Denmark</option>
+                          <option value="FI">Finland</option>
+                        </select>
+                        <select
+                          value={similarKeywordsLanguageCode}
+                          onChange={(e) => setSimilarKeywordsLanguageCode(e.target.value)}
+                          className="bg-white border border-gray-200 rounded px-3 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:outline-none"
+                        >
+                          <option value="en">English</option>
+                          <option value="es">Spanish</option>
+                          <option value="fr">French</option>
+                          <option value="de">German</option>
+                          <option value="it">Italian</option>
+                          <option value="pt">Portuguese</option>
+                          <option value="nl">Dutch</option>
+                          <option value="sv">Swedish</option>
+                          <option value="no">Norwegian</option>
+                          <option value="da">Danish</option>
+                          <option value="fi">Finnish</option>
+                        </select>
+                      </div>
+                    </div>
 
-                {/* Find Button */}
-                <div className="flex justify-center">
-                  <button
-                    onClick={findSimilarKeywords}
-                    disabled={findingSimilar}
-                    className="bg-indigo-600 text-white rounded-lg px-6 py-3 hover:bg-indigo-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                  >
-                    {findingSimilar ? (
-                      <>
-                        <LoadingDots color="white" style="small" />
-                        <span>Finding Similar Keywords...</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                        </svg>
-                        <span>Find Similar Keywords</span>
-                      </>
-                    )}
-                  </button>
+                    {/* Find Button */}
+                    <button
+                      onClick={findSimilarKeywords}
+                      disabled={findingSimilar}
+                      className="bg-black text-white rounded-lg px-6 py-3 hover:bg-gray-800 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    >
+                      {findingSimilar ? (
+                        <>
+                          <LoadingDots color="white" style="small" />
+                          <span>Finding Similar Keywords...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                          </svg>
+                          <span>Find Similar Keywords</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -1823,15 +1819,6 @@ const AdsPage = () => {
                             </div>
                           </th>
                           <th 
-                            className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                            onClick={() => handleSimilarKeywordsSort('avgCpc')}
-                          >
-                            <div className="flex items-center justify-end">
-                              Avg CPC
-                              <SimilarKeywordsSortArrow column="avgCpc" />
-                            </div>
-                          </th>
-                          <th 
                             className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                             onClick={() => handleSimilarKeywordsSort('sourceKeyword')}
                           >
@@ -1869,9 +1856,6 @@ const AdsPage = () => {
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-900 text-right">
                               {kw.highTopPageBidMicros ? formatCurrency(kw.highTopPageBidMicros) : 'N/A'}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                              {kw.avgCpcMicros ? formatCurrency(kw.avgCpcMicros) : 'N/A'}
                             </td>
                             <td className="px-4 py-3 text-sm text-gray-600">{kw.sourceKeyword || '-'}</td>
                           </tr>
@@ -1924,12 +1908,6 @@ const AdsPage = () => {
                             <div className="flex justify-between">
                               <span>Max CPC:</span>
                               <span className="font-medium text-gray-900">{formatCurrency(kw.highTopPageBidMicros)}</span>
-                            </div>
-                          )}
-                          {kw.avgCpcMicros && (
-                            <div className="flex justify-between">
-                              <span>Avg CPC:</span>
-                              <span className="font-medium text-gray-900">{formatCurrency(kw.avgCpcMicros)}</span>
                             </div>
                           )}
                           {kw.sourceKeyword && (
