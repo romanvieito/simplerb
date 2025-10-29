@@ -1422,27 +1422,45 @@ const AdsPage = () => {
                 {/* Campaign Selector inside Campaigns Summary (moved above Date Range) */}
                 {availableCampaigns.length > 0 && (
                   <div className="mb-4">
-                    <div className="flex flex-wrap gap-2">
-                      {availableCampaigns.map((campaign) => (
-                        <label
-                          key={campaign.id}
-                          className="flex items-center space-x-2 px-3 py-1.5 rounded-md border border-gray-200 hover:border-blue-300 cursor-pointer transition-all bg-gray-50 hover:bg-blue-50"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedCampaignIds.includes(campaign.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedCampaignIds([...selectedCampaignIds, campaign.id]);
-                              } else {
-                                setSelectedCampaignIds(selectedCampaignIds.filter(id => id !== campaign.id));
-                              }
-                            }}
-                            className="w-3 h-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                          />
-                          <span className="text-xs text-gray-700 font-medium">{campaign.name}</span>
-                        </label>
-                      ))}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        {availableCampaigns.map((campaign) => (
+                          <label
+                            key={campaign.id}
+                            className="flex items-center space-x-2 px-3 py-1.5 rounded-md border border-gray-200 hover:border-blue-300 cursor-pointer transition-all bg-gray-50 hover:bg-blue-50"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedCampaignIds.includes(campaign.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedCampaignIds([...selectedCampaignIds, campaign.id]);
+                                } else {
+                                  setSelectedCampaignIds(selectedCampaignIds.filter(id => id !== campaign.id));
+                                }
+                              }}
+                              className="w-3 h-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <span className="text-xs text-gray-700 font-medium">{campaign.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                      <span className="hidden sm:block h-6 w-px bg-gray-200 mx-2" />
+                      <label className="flex items-center gap-2 bg-gray-100 border border-gray-200 rounded-lg px-2.5 py-2 text-sm text-gray-700 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={showKeywordsTable}
+                          onChange={(e) => {
+                            const next = e.target.checked;
+                            setShowKeywordsTable(next);
+                            if (next && campaignKeywords.length === 0 && admin && isLoaded && isSignedIn) {
+                              fetchCampaignKeywords();
+                            }
+                          }}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <span>KW table</span>
+                      </label>
                     </div>
                     {!admin && (
                       <p className="text-xs text-gray-500 text-center mt-2">Admin access required</p>
@@ -1550,23 +1568,7 @@ const AdsPage = () => {
                           </div>
                         )}
                       </div>
-                      {/* Minimal vertical divider and KW toggle in same row */}
-                      <span className="hidden sm:block h-6 w-px bg-gray-200 mx-2" />
-                      <label className="flex items-center gap-2 bg-gray-100 border border-gray-200 rounded-lg px-2.5 py-2 text-sm text-gray-700 cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={showKeywordsTable}
-                          onChange={(e) => {
-                            const next = e.target.checked;
-                            setShowKeywordsTable(next);
-                            if (next && campaignKeywords.length === 0 && admin && isLoaded && isSignedIn) {
-                              fetchCampaignKeywords();
-                            }
-                          }}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                        <span>KW table</span>
-                      </label>
+                      
                     </div>
                   </div>
                 </div>
