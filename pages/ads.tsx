@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, useCallback } from 'react';
+import React, { useState, useContext, useEffect, useCallback, useRef } from 'react';
 import Head from "next/head";
 import { Toaster, toast } from "react-hot-toast";
 import { useClerk, useUser } from "@clerk/nextjs";
@@ -8,6 +8,44 @@ import DiamondIcon from '@mui/icons-material/Diamond';
 import LoginIcon from '@mui/icons-material/Login';
 import SBRContext from "../context/SBRContext";
 import LoadingDots from "../components/LoadingDots";
+
+// LocalStorage utility functions for saving/loading campaign keywords
+const STORAGE_KEY = 'last-campaign-keywords';
+
+interface SavedCampaignKeywordsData {
+  campaignKeywords: CampaignKeyword[];
+  selectedCampaignIds: string[];
+  availableCampaigns: Array<{id: string, name: string}>;
+  timestamp: number;
+}
+
+const saveCampaignKeywords = (data: Omit<SavedCampaignKeywordsData, 'timestamp'>) => {
+  if (typeof window === 'undefined') return; // SSR safety
+  
+  try {
+    const dataWithTimestamp = { ...data, timestamp: Date.now() };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataWithTimestamp));
+  } catch (error) {
+    console.warn('Failed to save campaign keywords to localStorage:', error);
+  }
+};
+
+const loadCampaignKeywords = (): SavedCampaignKeywordsData | null => {
+  if (typeof window === 'undefined') return null; // SSR safety
+  
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const data = JSON.parse(saved) as SavedCampaignKeywordsData;
+      // Only load data if it's less than 24 hours old
+      const isRecent = Date.now() - data.timestamp < 24 * 60 * 60 * 1000;
+      return isRecent ? data : null;
+    }
+  } catch (error) {
+    console.warn('Failed to load campaign keywords from localStorage:', error);
+  }
+  return null;
+};
 
 interface CampaignKeyword {
   campaignId: string;
@@ -61,6 +99,10 @@ const AdsPage = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(50);
+
+  // Refs to prevent save loops during initial load
+  const isInitialLoad = useRef(true);
+  const hasLoadedSavedData = useRef(false);
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -146,6 +188,20 @@ const AdsPage = () => {
     setCurrentPage(1);
   }, [campaignKeywords.length]);
 
+  // Load saved campaign keywords on component mount
+  useEffect(() => {
+    const savedData = loadCampaignKeywords();
+    if (savedData) {
+      setCampaignKeywords(savedData.campaignKeywords);
+      setSelectedCampaignIds(savedData.selectedCampaignIds);
+      setAvailableCampaigns(savedData.availableCampaigns);
+      setShowCurrentKeywords(true);
+      hasLoadedSavedData.current = true;
+    }
+    isInitialLoad.current = false;
+  }, []);
+
+
   const fetchCampaignKeywords = async () => {
     if (!user?.emailAddresses[0]?.emailAddress) {
       toast.error('Please sign in to analyze campaigns');
@@ -173,17 +229,34 @@ const AdsPage = () => {
       const data = await response.json();
       
       if (response.ok && data.success) {
-        setCampaignKeywords(data.keywords || []);
+        const keywords = data.keywords || [];
+        setCampaignKeywords(keywords);
         setShowCurrentKeywords(true);
         
         // Extract unique campaigns from response for the selector
         const uniqueCampaigns = Array.from(new Map(
-          data.keywords?.map((kw: CampaignKeyword) => [kw.campaignId, { id: kw.campaignId, name: kw.campaignName }]) || []
+          keywords.map((kw: CampaignKeyword) => [kw.campaignId, { id: kw.campaignId, name: kw.campaignName }]) || []
         ).values()) as Array<{id: string, name: string}>;
         
         // Only update available campaigns if we don't have them yet or if we fetched all
+        const campaignsToSave = (availableCampaigns.length === 0 || campaignIdsParam === '') 
+          ? uniqueCampaigns 
+          : availableCampaigns;
+        
         if (availableCampaigns.length === 0 || campaignIdsParam === '') {
           setAvailableCampaigns(uniqueCampaigns);
+        }
+        
+        // Save to localStorage after successful fetch
+        saveCampaignKeywords({
+          campaignKeywords: keywords,
+          selectedCampaignIds,
+          availableCampaigns: campaignsToSave
+        });
+        
+        // Reset the hasLoadedSavedData flag after first manual fetch
+        if (hasLoadedSavedData.current) {
+          hasLoadedSavedData.current = false;
         }
         
         toast.success(`Found ${data.totalKeywords} keywords from ${uniqueCampaigns.length} campaign${uniqueCampaigns.length !== 1 ? 's' : ''}`);
@@ -661,17 +734,11 @@ const AdsPage = () => {
         {showCurrentKeywords && campaignKeywords.length > 0 && (
           <div className="w-full max-w-6xl mx-auto mb-8">
             <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Kw ({campaignKeywords.length})
-                </h2>
-                    </div>
-
               <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keyword</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kw ({campaignKeywords.length})</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Campaign</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ad Group</th>
                         <th 
