@@ -15,6 +15,12 @@ interface CampaignKeyword {
   costMicros: number;
   ctr: number;
   averageCpcMicros: number;
+  conversions: number;
+  conversionValueMicros: number;
+  conversionRate: number;
+  costPerConversionMicros: number;
+  valuePerConversionMicros: number;
+  impressionShare?: number;
   qualityScore?: number;
 }
 
@@ -61,7 +67,8 @@ export default async function handler(
     // Query to get all keywords from enabled campaigns with metrics
     // Note: Metrics require a date range, so we use segments.date
     // When using segments.date in WHERE, we should include it in SELECT for proper aggregation
-    // Note: metrics.quality_score is not available for keyword_view, so we exclude it
+    // Note: Some metrics like quality_score and impression_share may not be available for all keywords
+    // We try to include them but the query will handle gracefully if they're not available
     const query = `
       SELECT 
         campaign.id,
@@ -77,7 +84,14 @@ export default async function handler(
         metrics.clicks,
         metrics.cost_micros,
         metrics.ctr,
-        metrics.average_cpc
+        metrics.average_cpc,
+        metrics.conversions,
+        metrics.conversions_value,
+        metrics.conversions_from_interactions_rate,
+        metrics.cost_per_conversion,
+        metrics.value_per_conversion,
+        metrics.search_impression_share,
+        metrics.quality_score
       FROM keyword_view
       WHERE campaign.status = 'ENABLED'
         AND ad_group.status = 'ENABLED'
@@ -137,11 +151,11 @@ export default async function handler(
       console.error('Query error details:', errorDetails);
       console.error('Full error object:', JSON.stringify(queryError, null, 2));
       
-      // If the query fails, try a simpler query without metrics first
-      console.log('Trying simpler query without date range...');
+      // If the query fails, try a query with only basic metrics (the ones we know work)
+      console.log('Trying query with basic metrics only...');
       
       try {
-        const simpleQuery = `
+        const basicMetricsQuery = `
           SELECT 
             campaign.id,
             campaign.name,
@@ -150,29 +164,39 @@ export default async function handler(
             ad_group_criterion.keyword.text,
             ad_group_criterion.keyword.match_type,
             ad_group_criterion.cpc_bid_micros,
-            ad_group_criterion.status
+            ad_group_criterion.status,
+            segments.date,
+            metrics.impressions,
+            metrics.clicks,
+            metrics.cost_micros,
+            metrics.ctr,
+            metrics.average_cpc,
+            metrics.conversions,
+            metrics.conversions_value,
+            metrics.conversions_from_interactions_rate,
+            metrics.cost_per_conversion
           FROM keyword_view
           WHERE campaign.status = 'ENABLED'
             AND ad_group.status = 'ENABLED'
             AND ad_group_criterion.status = 'ENABLED'
+            AND segments.date BETWEEN '${startDateStr}' AND '${endDateStr}'
             ${campaignIds ? `AND campaign.id IN (${campaignIds.map(id => id.trim()).join(',')})` : ''}
-          ORDER BY campaign.id, ad_group.id, ad_group_criterion.keyword.text
-          LIMIT 1000
+          ORDER BY campaign.id, ad_group.id, ad_group_criterion.keyword.text, segments.date
         `;
         
-        const simpleResponse = await customer.query(simpleQuery);
+        const basicResponse = await customer.query(basicMetricsQuery);
         
-        if (Array.isArray(simpleResponse)) {
-          rows = simpleResponse;
-        } else if (simpleResponse && Array.isArray((simpleResponse as any).rows)) {
-          rows = (simpleResponse as any).rows;
-        } else if (simpleResponse && Array.isArray((simpleResponse as any).results)) {
-          rows = (simpleResponse as any).results;
+        if (Array.isArray(basicResponse)) {
+          rows = basicResponse;
+        } else if (basicResponse && Array.isArray((basicResponse as any).rows)) {
+          rows = (basicResponse as any).rows;
+        } else if (basicResponse && Array.isArray((basicResponse as any).results)) {
+          rows = (basicResponse as any).results;
         }
         
-        console.log(`Simple query returned ${rows.length} rows`);
-      } catch (simpleError) {
-        console.error('Simple query also failed:', simpleError);
+        console.log(`Basic metrics query returned ${rows.length} rows`);
+      } catch (basicError) {
+        console.error('Basic metrics query also failed:', basicError);
         throw queryError; // Throw original error
       }
     }
@@ -181,6 +205,12 @@ export default async function handler(
     // When using segments.date in SELECT, the API returns one row per day per keyword
     // We aggregate these to get total metrics for the date range
     const keywordMap = new Map<string, CampaignKeyword>();
+    
+    // Debug: log first row structure to understand data format
+    if (rows.length > 0) {
+      console.log('Sample row structure:', JSON.stringify(rows[0], null, 2));
+      console.log('First row metrics:', rows[0]?.metrics);
+    }
     
     rows.forEach((row: any) => {
       const keywordText = row.ad_group_criterion?.keyword?.text || '';
@@ -194,18 +224,40 @@ export default async function handler(
       // Create unique key for keyword aggregation
       const key = `${campaignId}_${adGroupId}_${keywordText}`;
       
+      // Parse metrics with proper number conversion
+      const impressions = parseInt(row.metrics?.impressions || 0, 10);
+      const clicks = parseInt(row.metrics?.clicks || 0, 10);
+      const costMicros = parseInt(row.metrics?.cost_micros || 0, 10);
+      const conversions = parseFloat(row.metrics?.conversions || 0);
+      const conversionValueMicros = parseFloat(row.metrics?.conversions_value || 0);
+      
       if (keywordMap.has(key)) {
         // Aggregate metrics if multiple rows exist for the same keyword (multiple dates)
         const existing = keywordMap.get(key)!;
-        existing.impressions += row.metrics?.impressions || 0;
-        existing.clicks += row.metrics?.clicks || 0;
-        existing.costMicros += row.metrics?.cost_micros || 0;
-        // Recalculate CTR from aggregated values
+        existing.impressions += impressions;
+        existing.clicks += clicks;
+        existing.costMicros += costMicros;
+        existing.conversions += conversions;
+        existing.conversionValueMicros += conversionValueMicros;
+        
+        // Recalculate derived metrics from aggregated values
         existing.ctr = existing.impressions > 0 ? existing.clicks / existing.impressions : 0;
         existing.averageCpcMicros = existing.clicks > 0 ? existing.costMicros / existing.clicks : 0;
+        existing.conversionRate = existing.clicks > 0 ? existing.conversions / existing.clicks : 0;
+        existing.costPerConversionMicros = existing.conversions > 0 ? existing.costMicros / existing.conversions : 0;
+        existing.valuePerConversionMicros = existing.conversions > 0 ? existing.conversionValueMicros / existing.conversions : 0;
         
-        // Quality score is not available as a metric for keyword_view
-        // Keep existing qualityScore if set (though it won't be set from metrics)
+        // Impression share and quality score: use average if multiple values, or keep first non-zero value
+        if (row.metrics?.search_impression_share !== undefined && row.metrics?.search_impression_share !== null) {
+          existing.impressionShare = existing.impressionShare !== undefined 
+            ? (existing.impressionShare + row.metrics.search_impression_share) / 2 
+            : row.metrics.search_impression_share;
+        }
+        if (row.metrics?.quality_score !== undefined && row.metrics?.quality_score !== null) {
+          existing.qualityScore = existing.qualityScore !== undefined
+            ? (existing.qualityScore + row.metrics.quality_score) / 2
+            : row.metrics.quality_score;
+        }
       } else {
         const keyword: CampaignKeyword = {
           campaignId,
@@ -216,12 +268,26 @@ export default async function handler(
           matchType: row.ad_group_criterion?.keyword?.match_type || '',
           cpcBidMicros: row.ad_group_criterion?.cpc_bid_micros || 0,
           status: row.ad_group_criterion?.status || '',
-          impressions: row.metrics?.impressions || 0,
-          clicks: row.metrics?.clicks || 0,
-          costMicros: row.metrics?.cost_micros || 0,
-          ctr: row.metrics?.ctr || 0,
-          averageCpcMicros: row.metrics?.average_cpc || 0,
-          qualityScore: undefined, // Quality score is not available as a metric for keyword_view
+          impressions,
+          clicks,
+          costMicros,
+          ctr: row.metrics?.ctr || (impressions > 0 ? clicks / impressions : 0),
+          averageCpcMicros: row.metrics?.average_cpc || (clicks > 0 ? costMicros / clicks : 0),
+          conversions,
+          conversionValueMicros,
+          conversionRate: clicks > 0 ? conversions / clicks : (row.metrics?.conversions_from_interactions_rate || 0),
+          costPerConversionMicros: conversions > 0 
+            ? costMicros / conversions 
+            : (row.metrics?.cost_per_conversion ? parseFloat(row.metrics.cost_per_conversion) * 1000000 : 0),
+          valuePerConversionMicros: conversions > 0 
+            ? conversionValueMicros / conversions 
+            : (row.metrics?.value_per_conversion ? parseFloat(row.metrics.value_per_conversion) * 1000000 : 0),
+          impressionShare: row.metrics?.search_impression_share !== undefined && row.metrics?.search_impression_share !== null 
+            ? row.metrics.search_impression_share 
+            : undefined,
+          qualityScore: row.metrics?.quality_score !== undefined && row.metrics?.quality_score !== null
+            ? row.metrics.quality_score
+            : undefined,
         };
         
         keywordMap.set(key, keyword);

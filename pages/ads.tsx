@@ -23,6 +23,12 @@ interface CampaignKeyword {
   costMicros: number;
   ctr: number;
   averageCpcMicros: number;
+  conversions: number;
+  conversionValueMicros: number;
+  conversionRate: number;
+  costPerConversionMicros: number;
+  valuePerConversionMicros: number;
+  impressionShare?: number;
   qualityScore?: number;
 }
 
@@ -51,8 +57,10 @@ const AdsPage = () => {
   const [selectedCampaignIds, setSelectedCampaignIds] = useState<string[]>([]);
   const [showCurrentKeywords, setShowCurrentKeywords] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [sortColumn, setSortColumn] = useState<'impressions' | 'clicks' | 'ctr' | 'cost' | null>(null);
+  const [sortColumn, setSortColumn] = useState<'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'qualityScore' | 'impressionShare' | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -132,6 +140,11 @@ const AdsPage = () => {
       fetchAvailableCampaigns();
     }
   }, [isLoaded, isSignedIn, admin]);
+
+  // Reset to page 1 when campaign keywords change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [campaignKeywords.length]);
 
   const fetchCampaignKeywords = async () => {
     if (!user?.emailAddresses[0]?.emailAddress) {
@@ -327,7 +340,11 @@ const AdsPage = () => {
     return num.toLocaleString();
   };
 
-  const handleSort = (column: 'impressions' | 'clicks' | 'ctr' | 'cost') => {
+  const formatPercentage = (value: number) => {
+    return `${(value * 100).toFixed(2)}%`;
+  };
+
+  const handleSort = (column: 'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'qualityScore' | 'impressionShare') => {
     if (sortColumn === column) {
       // Toggle direction if clicking the same column
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -362,6 +379,38 @@ const AdsPage = () => {
           aValue = a.costMicros;
           bValue = b.costMicros;
           break;
+        case 'bid':
+          aValue = a.cpcBidMicros;
+          bValue = b.cpcBidMicros;
+          break;
+        case 'avgCpc':
+          aValue = a.averageCpcMicros;
+          bValue = b.averageCpcMicros;
+          break;
+        case 'conversions':
+          aValue = a.conversions;
+          bValue = b.conversions;
+          break;
+        case 'conversionRate':
+          aValue = a.conversionRate;
+          bValue = b.conversionRate;
+          break;
+        case 'cpa':
+          aValue = a.costPerConversionMicros;
+          bValue = b.costPerConversionMicros;
+          break;
+        case 'conversionValue':
+          aValue = a.conversionValueMicros;
+          bValue = b.conversionValueMicros;
+          break;
+        case 'qualityScore':
+          aValue = a.qualityScore || 0;
+          bValue = b.qualityScore || 0;
+          break;
+        case 'impressionShare':
+          aValue = a.impressionShare || 0;
+          bValue = b.impressionShare || 0;
+          break;
         default:
           return 0;
       }
@@ -376,7 +425,7 @@ const AdsPage = () => {
     return sorted;
   };
 
-  const SortArrow = ({ column }: { column: 'impressions' | 'clicks' | 'ctr' | 'cost' }) => {
+  const SortArrow = ({ column }: { column: 'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'qualityScore' | 'impressionShare' }) => {
     if (sortColumn !== column) {
       return <span className="ml-1 text-gray-400">↕</span>;
     }
@@ -385,6 +434,27 @@ const AdsPage = () => {
     ) : (
       <span className="ml-1 text-blue-600">↓</span>
     );
+  };
+
+  const getPaginatedKeywords = () => {
+    const sorted = getSortedKeywords();
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return sorted.slice(startIndex, endIndex);
+  };
+
+  const totalPages = Math.ceil(getSortedKeywords().length / itemsPerPage);
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, getSortedKeywords().length);
+  const totalItems = getSortedKeywords().length;
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page when changing items per page
   };
 
   return (
@@ -593,18 +663,11 @@ const AdsPage = () => {
             <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold text-gray-900">
-                  Current Keywords ({campaignKeywords.length})
+                  Kw ({campaignKeywords.length})
                 </h2>
-                <button
-                  onClick={() => setShowCurrentKeywords(!showCurrentKeywords)}
-                  className="text-sm text-gray-600 hover:text-gray-800"
-                >
-                  {showCurrentKeywords ? 'Hide' : 'Show'}
-                </button>
                     </div>
 
-              {showCurrentKeywords && (
-                <div className="overflow-x-auto">
+              <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
@@ -647,29 +710,179 @@ const AdsPage = () => {
                             <SortArrow column="cost" />
                           </div>
                         </th>
+                        <th 
+                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('bid')}
+                        >
+                          <div className="flex items-center justify-end">
+                            Bid Amount
+                            <SortArrow column="bid" />
+                          </div>
+                        </th>
+                        <th 
+                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('avgCpc')}
+                        >
+                          <div className="flex items-center justify-end">
+                            Avg CPC
+                            <SortArrow column="avgCpc" />
+                          </div>
+                        </th>
+                        <th 
+                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('conversions')}
+                        >
+                          <div className="flex items-center justify-end">
+                            Conversions
+                            <SortArrow column="conversions" />
+                          </div>
+                        </th>
+                        <th 
+                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('conversionRate')}
+                        >
+                          <div className="flex items-center justify-end">
+                            Conv. Rate
+                            <SortArrow column="conversionRate" />
+                          </div>
+                        </th>
+                        <th 
+                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('cpa')}
+                        >
+                          <div className="flex items-center justify-end">
+                            CPA
+                            <SortArrow column="cpa" />
+                          </div>
+                        </th>
+                        <th 
+                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('conversionValue')}
+                        >
+                          <div className="flex items-center justify-end">
+                            Conv. Value
+                            <SortArrow column="conversionValue" />
+                          </div>
+                        </th>
+                        <th 
+                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('qualityScore')}
+                        >
+                          <div className="flex items-center justify-end">
+                            Quality Score
+                            <SortArrow column="qualityScore" />
+                          </div>
+                        </th>
+                        <th 
+                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                          onClick={() => handleSort('impressionShare')}
+                        >
+                          <div className="flex items-center justify-end">
+                            Impression Share
+                            <SortArrow column="impressionShare" />
+                          </div>
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {getSortedKeywords().slice(0, 50).map((kw, index) => (
+                      {getPaginatedKeywords().map((kw, index) => (
                         <tr key={index} className="hover:bg-gray-50">
                           <td className="px-4 py-3 text-sm font-medium text-gray-900">{kw.keyword}</td>
                           <td className="px-4 py-3 text-sm text-gray-600">{kw.campaignName}</td>
                           <td className="px-4 py-3 text-sm text-gray-600">{kw.adGroupName}</td>
                           <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatNumber(kw.impressions)}</td>
                           <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatNumber(kw.clicks)}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{(kw.ctr * 100).toFixed(2)}%</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatPercentage(kw.ctr)}</td>
                           <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(kw.costMicros)}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(kw.cpcBidMicros)}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(kw.averageCpcMicros)}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatNumber(kw.conversions)}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatPercentage(kw.conversionRate)}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{kw.costPerConversionMicros > 0 ? formatCurrency(kw.costPerConversionMicros) : 'N/A'}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(kw.conversionValueMicros)}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{kw.qualityScore !== undefined ? kw.qualityScore.toFixed(1) : 'N/A'}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{kw.impressionShare !== undefined ? formatPercentage(kw.impressionShare) : 'N/A'}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                  {campaignKeywords.length > 50 && (
-                    <p className="text-sm text-gray-500 mt-4 text-center">
-                      Showing first 50 of {campaignKeywords.length} keywords
-                    </p>
-                )}
+                  
+                  {/* Pagination Controls */}
+                  <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    {/* Items per page selector */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600">Show:</span>
+                      <div className="flex gap-1">
+                        {[20, 50, 100].map((size) => (
+                          <button
+                            key={size}
+                            onClick={() => handleItemsPerPageChange(size)}
+                            className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                              itemsPerPage === size
+                                ? 'bg-blue-600 text-white font-medium'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            {size}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Page info */}
+                    <div className="text-sm text-gray-600">
+                      Showing {startItem} to {endItem} of {totalItems} keywords
+                    </div>
+
+                    {/* Page navigation */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1 text-sm rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Previous
+                      </button>
+                      
+                      <div className="flex gap-1">
+                        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                          let pageNum: number;
+                          if (totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (currentPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + i;
+                          } else {
+                            pageNum = currentPage - 2 + i;
+                          }
+                          
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => handlePageChange(pageNum)}
+                              className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                                currentPage === pageNum
+                                  ? 'bg-blue-600 text-white font-medium'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1 text-sm rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
               </div>
-              )}
             </div>
           </div>
             )}
