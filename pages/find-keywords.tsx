@@ -111,14 +111,22 @@ const MonthlyTrendChart: React.FC<{ keyword: string; trend: MonthlyTrendPoint[] 
   const minVolume = Math.min(...lastTwelve.map((point) => point.monthlySearches));
   const chartRange = maxVolume - minVolume;
   const chartHeight = 40;
+  const yAxisWidth = 45; // Width for y-axis label
   
   // Padding to prevent clipping
   const paddingTop = 5;
   const paddingBottom = 5;
   const innerRange = 100 - paddingTop - paddingBottom;
 
+  // Format max volume for display (abbreviate large numbers)
+  const formatTopNumber = (num: number): string => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    return num.toLocaleString();
+  };
+
   return (
-    <div className="relative">
+    <div className="relative" style={{ paddingLeft: `${yAxisWidth}px` }}>
       {hoveredIndex !== null && lastTwelve[hoveredIndex] && (
         <div className="absolute -top-1 left-1/2 z-20 -translate-x-1/2 -translate-y-full pointer-events-none">
           <div className="bg-gray-900 text-white px-2 py-1 rounded text-xs whitespace-nowrap">
@@ -126,6 +134,13 @@ const MonthlyTrendChart: React.FC<{ keyword: string; trend: MonthlyTrendPoint[] 
           </div>
         </div>
       )}
+      
+      {/* Y-axis label (top number) */}
+      <div className="absolute left-0 top-0 text-xs text-gray-500 font-medium" style={{ width: `${yAxisWidth - 4}px`, textAlign: 'right', paddingRight: '4px' }}>
+        {formatTopNumber(maxVolume)}
+      </div>
+      
+      {/* Chart SVG */}
       <svg
         className="w-full"
         height={chartHeight}
@@ -389,6 +404,18 @@ export default function FindKeywords(): JSX.Element {
     return <MonthlyTrendChart keyword={keyword} trend={trend} />;
   };
 
+  // Get last month label from results to display in column header
+  const getLastMonthLabel = (): string | null => {
+    const firstResultWithTrend = results.find(r => r.monthlySearchVolumes && r.monthlySearchVolumes.length > 0);
+    if (!firstResultWithTrend?.monthlySearchVolumes) return null;
+    
+    const lastPoint = firstResultWithTrend.monthlySearchVolumes[firstResultWithTrend.monthlySearchVolumes.length - 1];
+    if (!lastPoint || !lastPoint.monthLabel) return null;
+    
+    // Extract just the month part (e.g., "Jan 2024" -> "Jan")
+    return lastPoint.monthLabel.split(' ')[0];
+  };
+
   return (
     <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
       <Head>
@@ -513,13 +540,14 @@ export default function FindKeywords(): JSX.Element {
           </div>
 
           {results.length > 0 && (
-            <div className="mt-8 w-full">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
+            <div className="mt-8 w-full" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)', width: '100vw' }}>
+              <div className="overflow-x-auto w-full px-4">
+                <table className="w-full text-left table-fixed" style={{ width: '100%', tableLayout: 'fixed' }}>
                   <thead>
                     <tr className="border-b border-gray-200">
                       <th 
                         className="font-medium p-3 text-gray-700 cursor-pointer hover:bg-gray-50 select-none"
+                        style={{ width: '25%' }}
                         onClick={() => handleSort('keyword')}
                       >
                         <div className="flex items-center space-x-1">
@@ -533,6 +561,7 @@ export default function FindKeywords(): JSX.Element {
                       </th>
                       <th 
                         className="font-medium p-3 text-right text-gray-700 cursor-pointer hover:bg-gray-50 select-none"
+                        style={{ width: '10%' }}
                         onClick={() => handleSort('volume')}
                       >
                         <div className="flex items-center justify-end space-x-1">
@@ -546,6 +575,7 @@ export default function FindKeywords(): JSX.Element {
                       </th>
                       <th 
                         className="font-medium p-3 text-gray-700 cursor-pointer hover:bg-gray-50 select-none"
+                        style={{ width: '12%' }}
                         onClick={() => handleSort('competition')}
                       >
                         <div className="flex items-center space-x-1">
@@ -559,6 +589,7 @@ export default function FindKeywords(): JSX.Element {
                       </th>
                       <th 
                         className="font-medium p-3 text-right text-gray-700 cursor-pointer hover:bg-gray-50 select-none"
+                        style={{ width: '10%' }}
                         onClick={() => handleSort('minCpc')}
                       >
                         <div className="flex items-center justify-end space-x-1">
@@ -572,6 +603,7 @@ export default function FindKeywords(): JSX.Element {
                       </th>
                       <th 
                         className="font-medium p-3 text-right text-gray-700 cursor-pointer hover:bg-gray-50 select-none"
+                        style={{ width: '10%' }}
                         onClick={() => handleSort('maxCpc')}
                       >
                         <div className="flex items-center justify-end space-x-1">
@@ -585,6 +617,7 @@ export default function FindKeywords(): JSX.Element {
                       </th>
                       <th
                         className="font-medium p-3 text-right text-gray-700 cursor-pointer hover:bg-gray-50 select-none"
+                        style={{ width: '12%' }}
                         onClick={() => handleSort('threeMonthChange')}
                       >
                         <div className="flex items-center justify-end space-x-1">
@@ -596,7 +629,9 @@ export default function FindKeywords(): JSX.Element {
                           )}
                         </div>
                       </th>
-                      <th className="font-medium p-3 text-gray-700 w-32">Trend</th>
+                      <th className="font-medium p-3 text-gray-700" style={{ width: '21%' }}>
+                        {getLastMonthLabel() ? `Trend (${getLastMonthLabel()})` : 'Trend'}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
