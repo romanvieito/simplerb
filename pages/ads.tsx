@@ -175,6 +175,40 @@ const AdsPage = () => {
   const [selectedCampaignIds, setSelectedCampaignIds] = useState<string[]>([]);
   const [showCurrentKeywords, setShowCurrentKeywords] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  // Campaigns summary state
+  const [campaignsSummary, setCampaignsSummary] = useState<Array<{
+    id: string;
+    name: string;
+    status: string;
+    type: string;
+    impressions: number;
+    clicks: number;
+    cost: number;
+    conversions: number;
+    conversionValue: number;
+    ctr: number;
+    cpc: number;
+    conversionRate: number;
+    cpa: number;
+    impressionShare?: number;
+  }>>([]);
+  const [loadingCampaignsSummary, setLoadingCampaignsSummary] = useState(false);
+  // Campaigns summary column selector state
+  const [showCampaignsColumnSelector, setShowCampaignsColumnSelector] = useState(false);
+  const campaignsColumnSelectorRef = useRef<HTMLDivElement>(null);
+  const [campaignsVisibleColumns, setCampaignsVisibleColumns] = useState({
+    name: true,
+    impressions: true,
+    clicks: true,
+    ctr: true,
+    cost: true,
+    avgCpc: true,
+    conversions: true,
+    conversionRate: true,
+    cpa: true,
+    conversionValue: true,
+    impressionShare: true,
+  });
   // Sort state - initialize from localStorage or use defaults
   const [sortColumn, setSortColumn] = useState<'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'qualityScore' | 'impressionShare' | null>(() => {
     const saved = loadSortState();
@@ -377,6 +411,21 @@ const AdsPage = () => {
     };
   }, [showColumnSelector]);
 
+  // Close Campaigns column selector when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (campaignsColumnSelectorRef.current && !campaignsColumnSelectorRef.current.contains(event.target as Node)) {
+        setShowCampaignsColumnSelector(false);
+      }
+    };
+    if (showCampaignsColumnSelector) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCampaignsColumnSelector]);
+
 
   const fetchCampaignKeywords = async () => {
     if (!user?.emailAddresses[0]?.emailAddress) {
@@ -450,6 +499,45 @@ const AdsPage = () => {
     }
   };
 
+  // Fetch campaigns summary (campaign-level metrics)
+  const fetchCampaignsSummary = async () => {
+    if (!user?.emailAddresses[0]?.emailAddress) {
+      toast.error('Please sign in to view campaign summaries');
+      return;
+    }
+    if (!admin) {
+      toast.error('Admin access required');
+      return;
+    }
+
+    const params = new URLSearchParams();
+    params.append('startDate', startDate);
+    params.append('endDate', endDate);
+
+    setLoadingCampaignsSummary(true);
+    try {
+      const response = await fetch(`/api/google-ads/metrics?${params.toString()}`, {
+        headers: { 'x-user-email': user.emailAddresses[0].emailAddress }
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to fetch campaign metrics');
+      }
+      let campaigns = (data.metrics?.campaigns || []) as typeof campaignsSummary;
+      // Client-side filter by selected campaigns if any are selected
+      if (selectedCampaignIds.length > 0) {
+        const selectedSet = new Set(selectedCampaignIds);
+        campaigns = campaigns.filter(c => selectedSet.has(String(c.id)));
+      }
+      setCampaignsSummary(campaigns);
+    } catch (e) {
+      console.error('Error fetching campaigns summary:', e);
+      toast.error(e instanceof Error ? e.message : 'Failed to load campaign summary');
+    } finally {
+      setLoadingCampaignsSummary(false);
+    }
+  };
+
   // Initial fetch to get list of campaigns
   const fetchAvailableCampaigns = async () => {
     if (!user?.emailAddresses[0]?.emailAddress || !admin) return;
@@ -479,6 +567,22 @@ const AdsPage = () => {
       console.error('Error fetching campaigns:', error);
     }
   };
+
+  // Auto-fetch campaigns summary when date range or selection changes (and admin)
+  useEffect(() => {
+    if (isLoaded && isSignedIn && admin) {
+      fetchCampaignsSummary();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startDate, endDate, selectedCampaignIds, isLoaded, isSignedIn, admin]);
+
+  // Auto-fetch keywords when date range or selected campaigns change
+  useEffect(() => {
+    if (isLoaded && isSignedIn && admin) {
+      fetchCampaignKeywords();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startDate, endDate, selectedCampaignIds, isLoaded, isSignedIn, admin]);
 
   const findSimilarKeywords = async () => {
     if (campaignKeywords.length === 0) {
@@ -1128,26 +1232,7 @@ const AdsPage = () => {
             {availableCampaigns.length > 0 && (
               <div className="w-full max-w-4xl mx-auto mb-6">
                 <div className="bg-white rounded-xl border border-gray-100 p-4 relative">
-                  {/* Refresh Button positioned absolutely in top right */}
-                  <button
-                    onClick={fetchCampaignKeywords}
-                    disabled={fetchingKeywords || !admin}
-                    className="absolute top-4 right-4 bg-black text-white rounded-lg px-6 py-2.5 hover:bg-gray-800 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm z-10"
-                  >
-                    {fetchingKeywords ? (
-                      <>
-                        <LoadingDots color="white" style="small" />
-                        <span>Analyzing...</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-1.268a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-                        </svg>
-                        <span>Refresh</span>
-                      </>
-                    )}
-                  </button>
+                  {/* Auto refresh enabled; manual refresh removed */}
                   <div className="flex flex-wrap gap-2">
                     {availableCampaigns.map((campaign) => (
                       <label
@@ -1181,6 +1266,203 @@ const AdsPage = () => {
                 </div>
               </div>
             )}
+
+            {/* Campaigns Summary */}
+            <div className="w-full mb-6">
+              <div className="bg-white rounded-xl border border-gray-100 p-4">
+                {/* Single row with Date Filter, Title, and Controls */}
+                <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  {/* Date Filter on the left */}
+                  <div className="bg-gray-50 rounded-xl border border-gray-100 p-4 flex-shrink-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                      <span className="text-sm font-medium text-gray-700">Date Range</span>
+                      <div className="flex flex-wrap gap-2">
+                        {datePresets.map((preset) => (
+                          <button
+                            key={preset.value}
+                            onClick={() => handleDatePresetChange(preset.value)}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                              selectedDatePreset === preset.value
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                        <div className="flex gap-2">
+                          <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => {
+                              setStartDate(e.target.value);
+                              setSelectedDatePreset('custom');
+                            }}
+                            className="px-2 py-1.5 text-xs border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                          />
+                          <input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => {
+                              setEndDate(e.target.value);
+                              setSelectedDatePreset('custom');
+                            }}
+                            className="px-2 py-1.5 text-xs border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Title and Controls on the right */}
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      {/* Column Selector */}
+                      <div className="flex justify-end relative" ref={campaignsColumnSelectorRef}>
+                        <button
+                          onClick={() => setShowCampaignsColumnSelector(!showCampaignsColumnSelector)}
+                          className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z" />
+                          </svg>
+                          <span>Columns</span>
+                          <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform ${showCampaignsColumnSelector ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                        
+                        {showCampaignsColumnSelector && (
+                          <div className="absolute right-0 top-full mt-2 bg-white rounded-lg shadow-xl border-2 border-gray-200 p-4 z-20 min-w-[220px]">
+                            <div className="flex justify-between items-center mb-3">
+                              <h3 className="text-sm font-semibold text-gray-900">Show/Hide Columns</h3>
+                              <button
+                                onClick={() => setShowCampaignsColumnSelector(false)}
+                                className="text-gray-400 hover:text-gray-600"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                              </button>
+                            </div>
+                            <div className="space-y-2 max-h-96 overflow-y-auto">
+                              {Object.entries(campaignsVisibleColumns).map(([key, value]) => (
+                                <label
+                                  key={key}
+                                  className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={value}
+                                    onChange={() => setCampaignsVisibleColumns(prev => ({...prev, [key]: !prev[key as keyof typeof prev]}))}
+                                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                  />
+                                  <span className="text-sm text-gray-700">
+                                    {key === 'name' ? 'Campaign' :
+                                     key === 'avgCpc' ? 'Avg CPC' :
+                                     key === 'conversionRate' ? 'Conv. Rate' :
+                                     key === 'conversionValue' ? 'Conv. Value' :
+                                     key === 'impressionShare' ? 'Impr. Share' :
+                                     key.charAt(0).toUpperCase() + key.slice(1)}
+                                  </span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      {/* Manual refresh removed; summary auto-refreshes on date/selection changes */}
+                    </div>
+                  </div>
+                </div>
+                {loadingCampaignsSummary ? (
+                  <div className="py-6 flex justify-center"><LoadingDots color="black" style="small" /></div>
+                ) : campaignsSummary.length === 0 ? (
+                  <p className="text-sm text-gray-600">No campaign data for the selected range.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          {campaignsVisibleColumns.name && (
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Campaign</th>
+                          )}
+                          {campaignsVisibleColumns.impressions && (
+                            <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Impr.</th>
+                          )}
+                          {campaignsVisibleColumns.clicks && (
+                            <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Clicks</th>
+                          )}
+                          {campaignsVisibleColumns.ctr && (
+                            <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">CTR</th>
+                          )}
+                          {campaignsVisibleColumns.cost && (
+                            <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
+                          )}
+                          {campaignsVisibleColumns.avgCpc && (
+                            <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Avg CPC</th>
+                          )}
+                          {campaignsVisibleColumns.conversions && (
+                            <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Conv.</th>
+                          )}
+                          {campaignsVisibleColumns.conversionRate && (
+                            <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Conv. Rate</th>
+                          )}
+                          {campaignsVisibleColumns.cpa && (
+                            <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">CPA</th>
+                          )}
+                          {campaignsVisibleColumns.conversionValue && (
+                            <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Conv. Value</th>
+                          )}
+                          {campaignsVisibleColumns.impressionShare && (
+                            <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Impr. Share</th>
+                          )}
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {campaignsSummary.map((c) => (
+                          <tr key={c.id} className="hover:bg-gray-50">
+                            {campaignsVisibleColumns.name && (
+                              <td className="px-4 py-2 text-sm text-left text-gray-900">{c.name}</td>
+                            )}
+                            {campaignsVisibleColumns.impressions && (
+                              <td className="px-4 py-2 text-sm text-right text-gray-900">{formatNumber(c.impressions)}</td>
+                            )}
+                            {campaignsVisibleColumns.clicks && (
+                              <td className="px-4 py-2 text-sm text-right text-gray-900">{formatNumber(c.clicks)}</td>
+                            )}
+                            {campaignsVisibleColumns.ctr && (
+                              <td className="px-4 py-2 text-sm text-right text-gray-900">{(c.ctr || 0).toFixed(2)}%</td>
+                            )}
+                            {campaignsVisibleColumns.cost && (
+                              <td className="px-4 py-2 text-sm text-right text-gray-900">{formatCurrency(c.cost * 1000000)}</td>
+                            )}
+                            {campaignsVisibleColumns.avgCpc && (
+                              <td className="px-4 py-2 text-sm text-right text-gray-900">{formatCurrency((c.cpc || 0) * 1000000)}</td>
+                            )}
+                            {campaignsVisibleColumns.conversions && (
+                              <td className="px-4 py-2 text-sm text-right text-gray-900">{formatNumber(Math.round(c.conversions))}</td>
+                            )}
+                            {campaignsVisibleColumns.conversionRate && (
+                              <td className="px-4 py-2 text-sm text-right text-gray-900">{(c.conversionRate || 0).toFixed(2)}%</td>
+                            )}
+                            {campaignsVisibleColumns.cpa && (
+                              <td className="px-4 py-2 text-sm text-right text-gray-900">{c.cpa ? formatCurrency(c.cpa * 1000000) : 'N/A'}</td>
+                            )}
+                            {campaignsVisibleColumns.conversionValue && (
+                              <td className="px-4 py-2 text-sm text-right text-gray-900">{formatCurrency((c.conversionValue || 0) * 1000000)}</td>
+                            )}
+                            {campaignsVisibleColumns.impressionShare && (
+                              <td className="px-4 py-2 text-sm text-right text-gray-900">{c.impressionShare !== undefined ? `${(c.impressionShare * 100).toFixed(2)}%` : 'N/A'}</td>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
 
           </>
         )}
@@ -1329,51 +1611,8 @@ const AdsPage = () => {
         {activeTab === 'analysis' && showCurrentKeywords && campaignKeywords.length > 0 && (
           <div className="w-full mb-8">
             <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6">
-              {/* Date Filter and Column Selector Row */}
-              <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                {/* Date Filter */}
-                <div className="bg-gray-50 rounded-xl border border-gray-100 p-4 flex-shrink-0">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                    <span className="text-sm font-medium text-gray-700">Date Range</span>
-                    <div className="flex flex-wrap gap-2">
-                      {datePresets.map((preset) => (
-                        <button
-                          key={preset.value}
-                          onClick={() => handleDatePresetChange(preset.value)}
-                          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                            selectedDatePreset === preset.value
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                        >
-                          {preset.label}
-                        </button>
-                      ))}
-                      <div className="flex gap-2">
-                        <input
-                          type="date"
-                          value={startDate}
-                          onChange={(e) => {
-                            setStartDate(e.target.value);
-                            setSelectedDatePreset('custom');
-                          }}
-                          className="px-2 py-1.5 text-xs border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                        />
-                        <input
-                          type="date"
-                          value={endDate}
-                          onChange={(e) => {
-                            setEndDate(e.target.value);
-                            setSelectedDatePreset('custom');
-                          }}
-                          className="px-2 py-1.5 text-xs border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Column Selector */}
+              {/* Column Selector */}
+              <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4">
                 <div className="flex justify-end relative" ref={columnSelectorRef}>
                 <button
                   onClick={() => setShowColumnSelector(!showColumnSelector)}
