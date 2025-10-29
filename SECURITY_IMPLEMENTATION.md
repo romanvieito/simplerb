@@ -1,132 +1,91 @@
-# Security Implementation for Ads Dashboard
+# Security Implementation for Ads Pilot
 
 ## Overview
-This document outlines the security measures implemented for the Google Ads Dashboard at `http://localhost:3000/ads-dashboard`.
+This document outlines the security measures implemented for the Ads Pilot experience at `http://localhost:3000/ads`.
 
-## Security Issues Found
-The ads dashboard previously had **NO security** and was accessible to anyone without authentication. This was a critical vulnerability that exposed:
-- Google Ads account data
-- Campaign performance metrics
-- Optimization capabilities
-- User data and preferences
+## Security Posture
+The legacy `/ads-dashboard` UI has been retired in favour of the streamlined `/ads` surface. The page shell is visible to all visitors, but any action that touches Google Ads data requires:
 
-## Security Measures Implemented
+- a signed-in Clerk session, and
+- explicit admin approval via `validateAdPilotAccess`.
 
-### 1. Authentication Layer
-- **Clerk Integration**: All routes now require user authentication via Clerk
-- **Middleware Protection**: Removed `/ads-dashboard` and related API endpoints from public routes
-- **Automatic Redirects**: Unauthenticated users are automatically redirected to sign-in page
+This ensures only authorised team members can read or manipulate campaign data while keeping the marketing page publicly accessible.
 
-### 2. Protected Routes
-The following routes are now protected and require authentication:
-- `/ads-dashboard` - Main dashboard page
-- `/campaign-drafts` - Campaign management
-- `/smart-pilot` - Smart pilot features
-- `/api/google-ads/metrics` - Campaign metrics API
-- `/api/google-ads/optimize-advanced` - Campaign optimization API
-- `/api/google-ads/optimize-campaigns` - Campaign optimization
-- `/api/google-ads/export-recommendations` - Export functionality
-- `/api/google-ads/create-campaign` - Campaign creation
-- `/api/google-ads/keyword-planning` - Keyword planning
-- `/api/google-ads/whoami` - User identification
-- `/api/keyword-research` - Keyword research
-- `/api/smart-pilot/*` - All smart pilot endpoints
+## Security Controls
 
-### 3. API Security
-All Google Ads API endpoints now include:
-- **Clerk Authentication Check**: Verifies user is signed in
-- **User Email Validation**: Requires valid user email in headers
-- **Admin Access Control**: Validates user against admin email list
-- **Proper Error Handling**: Returns appropriate HTTP status codes
+### 1. Authentication & Authorisation
+- **Clerk enforcement**: API routes require a valid Clerk session (via `x-user-email`).
+- **Admin gating**: `validateAdPilotAccess` verifies admin status against the database (with environment fallbacks).
+- **Frontend guardrails**: `ads.tsx` prevents non-admin users from triggering protected actions and communicates the limitation with clear UI messaging.
 
-### 4. User Context Management
-- **AuthGuard Component**: Reusable component for protecting pages
-- **User Session Management**: Proper handling of user state and loading
-- **Email-based Access Control**: Uses user's email for API authentication
+### 2. Protected API Routes
+The following Ads endpoints enforce authentication and admin validation:
+- `GET /api/google-ads/get-campaign-keywords`
+- `POST /api/google-ads/find-similar-keywords`
+- `GET /api/google-ads/metrics`
+- `POST /api/google-ads/optimize-advanced`
+- `POST /api/google-ads/create-campaign`
+- `POST /api/google-ads/keyword-planning`
+- `GET /api/google-ads/whoami`
+- `POST /api/keyword-research`
+- `POST /api/google-ads/maintenance`
+- `POST /api/google-ads/optimize`
 
-## Implementation Details
-
-### Frontend Security
+### 3. Admin Verification Flow
 ```typescript
-// AuthGuard component protects pages
-<AuthGuard>
-  <AdsDashboardContent />
-</AuthGuard>
-
-// User authentication check
-const { user, isLoaded } = useUser();
-if (!isLoaded || !user) {
-  // Redirect to sign-in
+// pages/api/google-ads/get-campaign-keywords.ts
+const userEmail = req.headers['x-user-email'] as string;
+if (!(await validateAdPilotAccess(userEmail))) {
+  return res.status(403).json({ success: false, error: 'Access denied' });
 }
 ```
 
-### Backend Security
-```typescript
-// API endpoint authentication
-const { userId } = getAuth(req);
-if (!userId) {
-  return res.status(401).json({ error: 'Unauthorized' });
-}
+The same pattern is used across the Ads Pilot API surface, ensuring no Google Ads call is executed without admin approval.
 
-// Admin access validation
-if (!validateAdPilotAccess(userEmail)) {
-  return res.status(403).json({ error: 'Access denied' });
-}
+### 4. Middleware Configuration
+```typescript
+export default authMiddleware({
+  publicRoutes: [
+    '/', '/pricing', '/faq', '/domain', '/web', '/sites',
+    '/email', '/ads', '/find-keywords', '/api/clerk-webhooks(.*)',
+    // …other explicitly whitelisted utilities
+  ],
+});
 ```
 
-### Middleware Configuration
-```typescript
-// Removed from publicRoutes:
-"/ads-dashboard",
-"/api/google-ads/metrics",
-"/api/google-ads/optimize-advanced",
-// ... other protected routes
-```
+Sensitive Ads APIs are intentionally omitted from `publicRoutes`, forcing Clerk authentication before they execute.
 
 ## Security Best Practices Implemented
 
-1. **Principle of Least Privilege**: Users only access what they're authorized for
-2. **Defense in Depth**: Multiple layers of security (middleware, API, frontend)
-3. **Authentication Required**: No anonymous access to sensitive data
-4. **Proper Error Handling**: No information leakage in error messages
-5. **Session Management**: Proper user session handling with Clerk
+1. **Principle of least privilege** — only approved admins can reach Ads data.
+2. **Defense in depth** — middleware, frontend, and backend checks work together.
+3. **Secure error handling** — descriptive but non-sensitive error messages.
+4. **Session integrity** — Clerk handles token rotation and session validation.
+5. **Database-backed authorisation** — admin status lives in the `users` table.
 
 ## Environment Variables Required
 
-Ensure these environment variables are set for proper security:
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Clerk public key
-- `CLERK_SECRET_KEY` - Clerk secret key
-- `ADPILOT_ADMIN_EMAILS` - Comma-separated list of admin emails
+Ensure these environment variables are configured in production and local development:
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+- `CLERK_SECRET_KEY`
+- `ADPILOT_ADMIN_EMAILS` (fallback list when the database check fails)
+- Google Ads credentials (`GADS_*`) required by downstream APIs
 
 ## Testing Security
 
-To test the security implementation:
-
-1. **Unauthenticated Access**: Try accessing `/ads-dashboard` without signing in
-   - Should redirect to `/sign-in`
-
-2. **API Security**: Try calling API endpoints without authentication
-   - Should return 401 Unauthorized
-
-3. **Admin Access**: Test with non-admin email
-   - Should return 403 Forbidden
+1. **Signed-out visit** — open `/ads` without signing in; CTA buttons render but campaign actions stay disabled.
+2. **Authenticated non-admin** — sign in with a non-admin user and attempt to fetch campaign keywords; you should receive a toast error and a `403` response.
+3. **API probe** — call `/api/google-ads/get-campaign-keywords` without the `x-user-email` header or with a non-admin email; the API returns `401/403`.
 
 ## Future Security Considerations
 
-1. **Rate Limiting**: Implement rate limiting for API endpoints
-2. **Audit Logging**: Log all access attempts and actions
-3. **Role-based Access**: Implement more granular permissions
-4. **API Key Rotation**: Regular rotation of Google Ads API credentials
-5. **Input Validation**: Enhanced validation for all user inputs
-6. **CORS Configuration**: Proper CORS settings for production
+1. Rate limiting on Ads APIs to mitigate brute-force attempts.
+2. Security event logging for sensitive operations.
+3. Granular role-based access beyond the admin flag.
+4. Scheduled rotation of Google Ads OAuth credentials.
+5. Additional input validation and sanitisation on user-provided data.
+6. Hardened CORS policies for production deployments.
 
 ## Conclusion
 
-The ads dashboard is now properly secured with:
-- ✅ Authentication required for all access
-- ✅ Protected API endpoints
-- ✅ Proper user session management
-- ✅ Admin access control
-- ✅ Secure error handling
-
-The application now follows security best practices and protects sensitive Google Ads data from unauthorized access.
+Ads Pilot now ensures that only authorised administrators can access Google Ads resources while leaving the marketing shell publicly viewable. With Clerk authentication, database-backed admin checks, and consistent API enforcement, sensitive campaign data remains protected from unauthorised access.

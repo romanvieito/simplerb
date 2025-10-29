@@ -194,7 +194,7 @@ node test-keyword-planning.js
 
 ### 2. Manual Testing
 1. Start the development server
-2. Navigate to `/find-keywords` or `/ads_basic`
+2. Navigate to `/find-keywords` or `/ads`
 3. Enter keywords and select country/language
 4. Click "Research Keywords"
 5. Verify real data is returned

@@ -66,7 +66,7 @@ npm run dev
 
 Then test the endpoints:
 - `http://localhost:3003/api/google-ads/test`
-- `http://localhost:3003/ads-dashboard`
+- `http://localhost:3003/ads`
 
 ## 🎯 **What You Can Do Now**
 
@@ -74,28 +74,30 @@ Once set up, you'll have access to:
 
 ### **Campaign Management**
 - Create Search & Performance Max campaigns
-- Advanced targeting (demographics, audiences, locations)
-- Smart bidding strategies
-- Ad scheduling and device targeting
+- Configure advanced targeting (demographics, audiences, locations)
+- Enable smart bidding strategies
+- Adjust schedules and device bid modifiers
 
-### **Performance Tracking**
-- Real-time metrics dashboard
-- Conversion tracking and ROI analysis
-- Budget utilization monitoring
-- Quality score tracking
+### **Campaign Insights**
+- Pull campaign metrics through the API
+- Inspect active keywords with quality metrics
+- Export current keyword inventory
 
 ### **Automated Optimization**
-- Bid adjustments based on performance
-- Keyword management (pause low performers)
-- Negative keyword addition
-- Performance-based recommendations
+- Run baseline optimisation scripts
+- Launch advanced optimisation workflows
+- Trigger maintenance tasks for long-running accounts
+- Generate recommended keyword expansions
 
 ### **API Endpoints**
-- `GET /api/google-ads/test` - Test connection
-- `POST /api/google-ads/create-campaign` - Create campaigns
-- `GET /api/google-ads/metrics` - Get performance data
-- `POST /api/google-ads/optimize-advanced` - Run optimizations
-- `GET /ads-dashboard` - Visual dashboard
+- `GET /api/google-ads/test` – Test connection
+- `GET /api/google-ads/get-campaign-keywords` – Fetch campaign keyword inventory
+- `POST /api/google-ads/find-similar-keywords` – Discover new keyword ideas
+- `GET /api/google-ads/metrics` – Retrieve performance data
+- `POST /api/google-ads/create-campaign` – Create campaigns
+- `POST /api/google-ads/optimize` – Run baseline optimisations
+- `POST /api/google-ads/optimize-advanced` – Execute advanced optimisations
+- `GET /ads` – Ads Pilot interface for keyword analysis and exports
 
 ## 🆘 **Troubleshooting**
 

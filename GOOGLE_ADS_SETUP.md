@@ -120,25 +120,29 @@ curl -X POST "https://your-domain.com/api/google-ads/create-campaign" \
 ## 📊 Available Endpoints
 
 ### Campaign Management
-- `GET /api/google-ads/test` - Test API connection
-- `POST /api/google-ads/create-campaign` - Create new campaigns
-- `GET /api/google-ads/metrics` - Get performance metrics
-- `POST /api/google-ads/optimize-advanced` - Run optimizations
+- `GET /api/google-ads/test` – Test API connection
+- `POST /api/google-ads/create-campaign` – Create new campaigns
+- `POST /api/google-ads/optimize` – Run baseline optimisations
+- `POST /api/google-ads/optimize-advanced` – Execute full optimisation suite
+- `POST /api/google-ads/maintenance` – Run periodic maintenance tasks
+
+### Campaign Insights
+- `GET /api/google-ads/get-campaign-keywords` – Retrieve active campaign keywords with metrics
+- `POST /api/google-ads/find-similar-keywords` – Discover additional keyword opportunities
+- `GET /api/google-ads/metrics` – Pull performance metrics
+- `GET /api/google-ads/whoami` – Debug login customer context
 
 ### Keyword Research
-- `POST /api/keyword-research` - Research keywords
+- `POST /api/google-ads/keyword-planning` – Request ideas from Google Ads Keyword Planner
+- `POST /api/keyword-research` – Generate research results (with optional AI enrichment)
 
-### Campaign Analysis
-- `POST /api/google-ads/analyze-csv` - Analyze campaign data
-- `GET /api/google-ads/export-recommendations` - Export optimization recommendations
+## 🎯 Ads Pilot UI
 
-## 🎯 Dashboard Access
-
-Visit `/ads-dashboard` to access the comprehensive Google Ads management dashboard with:
-- Real-time performance metrics
-- Campaign management interface
-- Automated optimization tools
-- Performance insights and recommendations
+Visit `/ads` to access the Ads Pilot interface where you can:
+- Analyse existing campaign keywords
+- Generate similar keyword opportunities with Google Ads data
+- Export curated keyword lists for campaign expansion
+- Review campaign metrics before running optimisations
 
 ## 🔧 Advanced Features
 

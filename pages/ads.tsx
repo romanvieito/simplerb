@@ -1,63 +1,56 @@
-import React, { useState, useRef, useContext, useEffect, useCallback } from 'react';
+import React, { useState, useContext, useEffect, useCallback } from 'react';
 import Head from "next/head";
-import Image from "next/image";
-import Link from "next/link";
-import Header from "../components/Header";
 import { Toaster, toast } from "react-hot-toast";
-import { useClerk, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { useClerk, useUser } from "@clerk/nextjs";
 import { useRouter } from 'next/router';
-import { useUser } from "@clerk/nextjs";
-import { Button, Box, TextField, FormControl, InputLabel, Select, MenuItem, Chip, Typography, Stepper, Step, StepLabel, Card, CardContent, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress, Alert, IconButton, Menu, ListItemIcon, ListItemText } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import DiamondIcon from '@mui/icons-material/Diamond';
 import LoginIcon from '@mui/icons-material/Login';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import UploadIcon from '@mui/icons-material/Upload';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import TouchAppIcon from '@mui/icons-material/TouchApp';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import CreateIcon from '@mui/icons-material/Create';
-import DraftsIcon from '@mui/icons-material/Drafts';
 import SBRContext from "../context/SBRContext";
 import LoadingDots from "../components/LoadingDots";
-import mixpanel from "../utils/mixpanel-config";
-import { useDropzone } from 'react-dropzone';
+
+interface CampaignKeyword {
+  campaignId: string;
+  campaignName: string;
+  adGroupId: string;
+  adGroupName: string;
+  keyword: string;
+  matchType: string;
+  cpcBidMicros: number;
+  status: string;
+  impressions: number;
+  clicks: number;
+  costMicros: number;
+  ctr: number;
+  averageCpcMicros: number;
+  qualityScore?: number;
+}
+
+interface SimilarKeyword {
+  keyword: string;
+  searchVolume: number;
+  competition: 'LOW' | 'MEDIUM' | 'HIGH' | 'UNKNOWN';
+  competitionIndex?: number;
+  lowTopPageBidMicros?: number;
+  highTopPageBidMicros?: number;
+  avgCpcMicros?: number;
+  sourceKeyword?: string;
+}
 
 const AdsPage = () => {
   const router = useRouter();
   const { openSignIn } = useClerk();
   const { isLoaded, user, isSignedIn } = useUser();
   
-  // Show wizard only when ?wizard=true is present
-  const showWizard = router.query.wizard === 'true';
-  
-  // Wizard state
-  const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [generatedCopy, setGeneratedCopy] = useState<any>(null);
-  const [savingDraft, setSavingDraft] = useState(false);
-  
-  // Dashboard state
-  const [dashboardData, setDashboardData] = useState<any>(null);
-  const [dashboardLoading, setDashboardLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
-  const [selectedDays, setSelectedDays] = useState(7);
-  
-  // Campaign data
-  const [campaignData, setCampaignData] = useState({
-    type: 'SEARCH',
-    brand: '',
-    url: '',
-    keywords: [] as string[],
-    keywordInput: '',
-    locations: [] as string[],
-    languages: ['en'],
-    budgetDaily: 50,
-    campaignNameSuffix: ''
-  });
+  const [fetchingKeywords, setFetchingKeywords] = useState(false);
+  const [findingSimilar, setFindingSimilar] = useState(false);
+  const [campaignKeywords, setCampaignKeywords] = useState<CampaignKeyword[]>([]);
+  const [similarKeywords, setSimilarKeywords] = useState<SimilarKeyword[]>([]);
+  const [availableCampaigns, setAvailableCampaigns] = useState<Array<{id: string, name: string}>>([]);
+  const [selectedCampaignIds, setSelectedCampaignIds] = useState<string[]>([]);
+  const [showCurrentKeywords, setShowCurrentKeywords] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -78,93 +71,7 @@ const AdsPage = () => {
 
   const isPremiumUser = subsTplan === "STARTER" || subsTplan === "CREATOR";
 
-  // Dashboard functions
-  const fetchDashboardData = useCallback(async () => {
-    if (!user?.emailAddresses[0]?.emailAddress) return;
-    
-    setDashboardLoading(true);
-    try {
-      const response = await fetch(`/api/google-ads/last-analysis?days=${selectedDays}`, {
-        headers: {
-          'x-user-email': user.emailAddresses[0].emailAddress
-        }
-      });
-      
-      const data = await response.json();
-      if (response.ok) {
-        setDashboardData(data);
-      } else {
-        toast.error(data.error || 'Failed to fetch dashboard data');
-      }
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      toast.error('Failed to fetch dashboard data');
-    } finally {
-      setDashboardLoading(false);
-    }
-  }, [user, selectedDays]);
-
-  const handleFileUpload = async (file: File) => {
-    if (!user?.emailAddresses[0]?.emailAddress) return;
-
-    setUploading(true);
-    try {
-      const fileContent = await file.text();
-      
-      const response = await fetch('/api/google-ads/analyze-csv', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-email': user.emailAddresses[0].emailAddress
-        },
-        body: JSON.stringify({
-          fileName: file.name,
-          csv: fileContent,
-          userEmail: user.emailAddresses[0].emailAddress
-        })
-      });
-
-      const data = await response.json();
-      
-      if (response.ok) {
-        toast.success('Data uploaded and analyzed successfully!');
-        fetchDashboardData(); // Refresh dashboard
-      } else {
-        toast.error(data.error || 'Failed to analyze CSV');
-      }
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      toast.error('Failed to upload file');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (file) {
-      handleFileUpload(file);
-    }
-  }, [user]);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'text/csv': ['.csv']
-    },
-    maxFiles: 1,
-    maxSize: 10 * 1024 * 1024 // 10MB
-  });
-
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setMenuAnchor(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setMenuAnchor(null);
-  };
-
-  // Add fetchUserData function
+  // Fetch user data
   const fetchUserData = useCallback(async (email: string) => {
     try {
       const response = await fetch(`/api/getUser?email=${email}`);
@@ -190,27 +97,17 @@ const AdsPage = () => {
     }
   }, [setDataUser, setCredits, setAdmin, setSubsTplan, setSubsCancel]);
 
-  // Add initPageData function
   const initPageData = useCallback(async () => {
     if (isLoaded && user) {
       const email = user.emailAddresses[0].emailAddress;
       if (email) {
         try {
           await fetchUserData(email);
-          mixpanel.identify(email);
         } catch (error) {
           console.error("Error initializing page data:", error);
-          if (process.env.NODE_ENV !== 'production') {
-            console.warn("Failed to load user data. Please try refreshing the page.");
-          }
-        }
-      } else {
-        if (process.env.NODE_ENV !== 'production') {
-          console.warn("User email not available");
         }
       }
     } else if (isLoaded && !user) {
-      // Reset user data when not signed in
       setSubsTplan(null);
       setSubsCancel(null);
       setCredits(null);
@@ -223,238 +120,219 @@ const AdsPage = () => {
     }
   }, [isLoaded, user, fetchUserData]);
 
-  // Add useEffect to load user data
   useEffect(() => {
     initPageData();
   }, [isSignedIn, user, initPageData]);
 
-  // Load dashboard data when not in wizard mode
+  // Fetch available campaigns when admin is loaded
   useEffect(() => {
-    if (isSignedIn && admin && !showWizard) {
-      fetchDashboardData();
-    } else {
-      // Avoid infinite loading state for first-time or non-admin users
-      setDashboardLoading(false);
+    if (isLoaded && isSignedIn && admin && availableCampaigns.length === 0) {
+      fetchAvailableCampaigns();
     }
-  }, [isSignedIn, admin, showWizard, fetchDashboardData]);
+  }, [isLoaded, isSignedIn, admin]);
 
-  // Refetch data when date range changes
-  useEffect(() => {
-    if (isSignedIn && admin && !showWizard) {
-      fetchDashboardData();
-    }
-  }, [selectedDays, fetchDashboardData, isSignedIn, admin, showWizard]);
-
-  const steps = [
-    'Campaign Basics',
-    'Keywords',
-    'Targeting',
-    'Budget',
-    'AI Copy',
-    'Review & Launch'
-  ];
-
-  const handleKeywordAdd = () => {
-    if (campaignData.keywordInput.trim() && !campaignData.keywords.includes(campaignData.keywordInput.trim())) {
-      setCampaignData(prev => ({
-        ...prev,
-        keywords: [...prev.keywords, prev.keywordInput.trim()],
-        keywordInput: ''
-      }));
-    }
-  };
-
-  const handleKeywordRemove = (keyword: string) => {
-    setCampaignData(prev => ({
-      ...prev,
-      keywords: prev.keywords.filter(k => k !== keyword)
-    }));
-  };
-
-  const generateAdCopy = async () => {
-    if (!campaignData.keywords.length) {
-      toast.error('Please add at least one keyword');
+  const fetchCampaignKeywords = async () => {
+    if (!user?.emailAddresses[0]?.emailAddress) {
+      toast.error('Please sign in to analyze campaigns');
       return;
     }
 
-    setLoading(true);
+    if (!admin) {
+      toast.error('Admin access required');
+      return;
+    }
+
+    // If we have selected campaigns, use them; otherwise fetch all
+    const campaignIdsParam = selectedCampaignIds.length > 0 
+      ? `?campaignIds=${selectedCampaignIds.join(',')}`
+      : '';
+
+    setFetchingKeywords(true);
     try {
-      const response = await fetch('/api/google-ads/generate-copy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          keywords: campaignData.keywords,
-          brand: campaignData.brand,
-          landingUrl: campaignData.url,
-          campaignType: campaignData.type
-        }),
+      const response = await fetch(`/api/google-ads/get-campaign-keywords${campaignIdsParam}`, {
+        headers: {
+          'x-user-email': user.emailAddresses[0].emailAddress
+        }
       });
 
       const data = await response.json();
       
-      if (response.ok) {
-        setGeneratedCopy(data);
-        toast.success('Ad copy generated successfully!');
-        setCurrentStep(5); // Move to review step
-      } else {
-        toast.error(data.error || 'Failed to generate ad copy');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Something went wrong generating ad copy');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createCampaign = async () => {
-    if (!generatedCopy) {
-      toast.error('Please generate ad copy first');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await fetch('/api/google-ads/create-campaign', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-user-email': user?.emailAddresses[0]?.emailAddress || ''
-        },
-        body: JSON.stringify({
-          ...campaignData,
-          copy: generatedCopy
-        }),
-      });
-
-      const data = await response.json();
-      
-      if (response.ok) {
-        toast.success('Campaign created successfully! Check your Google Ads account.');
-        console.log('Campaign created:', data);
+      if (response.ok && data.success) {
+        setCampaignKeywords(data.keywords || []);
+        setShowCurrentKeywords(true);
         
-        // Reset form
-        setCurrentStep(0);
-        setCampaignData({
-          type: 'SEARCH',
-          brand: '',
-          url: '',
-          keywords: [],
-          keywordInput: '',
-          locations: [],
-          languages: ['en'],
-          budgetDaily: 50,
-          campaignNameSuffix: ''
-        });
-        setGeneratedCopy(null);
+        // Extract unique campaigns from response for the selector
+        const uniqueCampaigns = Array.from(new Map(
+          data.keywords?.map((kw: CampaignKeyword) => [kw.campaignId, { id: kw.campaignId, name: kw.campaignName }]) || []
+        ).values()) as Array<{id: string, name: string}>;
+        
+        // Only update available campaigns if we don't have them yet or if we fetched all
+        if (availableCampaigns.length === 0 || campaignIdsParam === '') {
+          setAvailableCampaigns(uniqueCampaigns);
+        }
+        
+        toast.success(`Found ${data.totalKeywords} keywords from ${uniqueCampaigns.length} campaign${uniqueCampaigns.length !== 1 ? 's' : ''}`);
       } else {
-        toast.error(data.error || 'Failed to create campaign');
+        toast.error(data.error || 'Failed to fetch keywords');
       }
     } catch (error) {
-      console.error('Error:', error);
-      toast.error('Something went wrong creating campaign');
+      console.error('Error fetching keywords:', error);
+      toast.error('Failed to fetch keywords from campaigns');
     } finally {
-      setLoading(false);
+      setFetchingKeywords(false);
     }
   };
 
-  const saveDraft = async () => {
-    if (!generatedCopy) {
-      toast.error('Please generate ad copy first');
-      return;
-    }
+  // Initial fetch to get list of campaigns
+  const fetchAvailableCampaigns = async () => {
+    if (!user?.emailAddresses[0]?.emailAddress || !admin) return;
 
-    const draftName = prompt('Enter a name for this campaign draft:');
-    if (!draftName) return;
-
-    setSavingDraft(true);
     try {
-      const response = await fetch('/api/campaign-drafts/save', {
-        method: 'POST',
+      const response = await fetch('/api/google-ads/get-campaign-keywords', {
         headers: { 
-          'Content-Type': 'application/json',
-          'x-user-email': user?.emailAddresses[0]?.emailAddress || ''
-        },
-        body: JSON.stringify({
-          campaignData,
-          generatedCopy,
-          name: draftName,
-          industry: 'General' // Default industry
-        }),
+          'x-user-email': user.emailAddresses[0].emailAddress
+        }
       });
 
       const data = await response.json();
       
-      if (response.ok) {
-        toast.success('Campaign draft saved successfully!');
-        console.log('Draft saved:', data);
-      } else {
-        toast.error(data.error || 'Failed to save draft');
+      if (response.ok && data.success) {
+        // Extract unique campaigns
+        const uniqueCampaigns = Array.from(new Map(
+          data.keywords?.map((kw: CampaignKeyword) => [kw.campaignId, { id: kw.campaignId, name: kw.campaignName }]) || []
+        ).values()) as Array<{id: string, name: string}>;
+        
+        setAvailableCampaigns(uniqueCampaigns);
       }
     } catch (error) {
-      console.error('Error:', error);
-      toast.error('Something went wrong saving draft');
-    } finally {
-      setSavingDraft(false);
+      console.error('Error fetching campaigns:', error);
     }
   };
 
-  const nextStep = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
+  const findSimilarKeywords = async () => {
+    if (campaignKeywords.length === 0) {
+      toast.error('Please fetch campaign keywords first');
+      return;
     }
-  };
 
-  const prevStep = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+    if (!user?.emailAddresses[0]?.emailAddress) {
+      toast.error('Please sign in');
+      return;
     }
-  };
 
-  const saveToLocalStorage = () => {
-    localStorage.setItem('adpilot-draft', JSON.stringify({
-      campaignData,
-      currentStep,
-      generatedCopy
-    }));
-  };
+    setFindingSimilar(true);
+    setSimilarKeywords([]);
+    
+    try {
+      // Get unique keywords from campaigns
+      const uniqueKeywords = Array.from(new Set(campaignKeywords.map(k => k.keyword)));
+      
+      // Process in batches to avoid overwhelming the API
+      const batchSize = 10;
+      let allSimilar: SimilarKeyword[] = [];
+      
+      for (let i = 0; i < uniqueKeywords.length; i += batchSize) {
+        const batch = uniqueKeywords.slice(i, i + batchSize);
+        
+        const response = await fetch('/api/google-ads/find-similar-keywords', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+            'x-user-email': user.emailAddresses[0].emailAddress
+        },
+        body: JSON.stringify({
+            keywords: batch,
+            countryCode: 'US',
+            languageCode: 'en',
+            excludeExisting: uniqueKeywords,
+          })
+      });
 
-  const loadFromLocalStorage = () => {
-    const saved = localStorage.getItem('adpilot-draft');
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        setCampaignData(data.campaignData || campaignData);
-        setCurrentStep(data.currentStep || 0);
-        setGeneratedCopy(data.generatedCopy || null);
-      } catch (error) {
-        console.error('Error loading saved data:', error);
+      const data = await response.json();
+      
+        if (response.ok && data.success && data.similarKeywords) {
+          allSimilar = [...allSimilar, ...data.similarKeywords];
+          setSimilarKeywords([...allSimilar]);
+        }
+        
+        // Update progress
+        if (i + batchSize < uniqueKeywords.length) {
+          toast.loading(`Processing keywords ${i + 1}-${Math.min(i + batchSize, uniqueKeywords.length)} of ${uniqueKeywords.length}...`, { id: 'progress' });
+        }
       }
+      
+      toast.dismiss('progress');
+      
+      // Remove duplicates and sort by search volume
+      const uniqueSimilar = Array.from(
+        new Map(allSimilar.map(k => [k.keyword.toLowerCase(), k])).values()
+      ).sort((a, b) => (b.searchVolume || 0) - (a.searchVolume || 0));
+      
+      setSimilarKeywords(uniqueSimilar);
+      setShowSuggestions(true);
+      toast.success(`Found ${uniqueSimilar.length} similar keywords to expand your reach!`);
+    } catch (error) {
+      console.error('Error finding similar keywords:', error);
+      toast.error('Failed to find similar keywords');
+    } finally {
+      setFindingSimilar(false);
     }
   };
 
-  useEffect(() => {
-    loadFromLocalStorage();
-  }, []);
+  const exportKeywords = (format: 'csv' | 'json') => {
+    if (similarKeywords.length === 0) {
+      toast.error('No keywords to export');
+      return;
+    }
 
-  useEffect(() => {
-    saveToLocalStorage();
-  }, [campaignData, currentStep, generatedCopy]);
+    if (format === 'csv') {
+      const headers = ['Keyword', 'Search Volume', 'Competition', 'Avg CPC', 'Source Keyword'];
+      const rows = similarKeywords.map(k => [
+        k.keyword,
+        k.searchVolume.toString(),
+        k.competition,
+        k.avgCpcMicros ? `$${(k.avgCpcMicros / 1000000).toFixed(2)}` : 'N/A',
+        k.sourceKeyword || ''
+      ]);
+      
+      const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `similar-keywords-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      } else {
+      const json = JSON.stringify(similarKeywords, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `similar-keywords-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    
+    toast.success(`Exported ${similarKeywords.length} keywords as ${format.toUpperCase()}`);
+  };
+
+  const formatCurrency = (micros: number) => {
+    return `$${(micros / 1000000).toFixed(2)}`;
+  };
+
+  const formatNumber = (num: number) => {
+    return num.toLocaleString();
+  };
 
   return (
-    <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
+    <div className="flex max-w-6xl mx-auto flex-col items-center justify-center py-4 min-h-screen bg-white">
       <Head>
-        <title>Ad Generator</title>
+        <title>Ads Pilot</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      {/* Hidden form for checkout */}
-      <form action="/api/checkout_sessions" method="POST" style={{ display: 'none' }}>
-        <input type="hidden" name="tipo" value="STARTER" />
-      </form>
-
-      {/* <Header/> */}
-      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4">
+      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-8 sm:mt-12">
         <div className="absolute top-4 left-4 flex items-center space-x-3">
           {/* Logo */}
           <div className="flex items-center space-x-0.5">
@@ -488,7 +366,6 @@ const AdsPage = () => {
               Ads
             </button>
           </div>
-
         </div>
 
         <Box
@@ -519,22 +396,6 @@ const AdsPage = () => {
                   type="submit"
                   variant="contained"
                   role="link"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    mixpanel.track("Become a Member Click", {
-                      plan_subscription: 'STARTER',
-                    });  
-                    window.gtag && window.gtag('event', 'conversion', {
-                      'send_to': '16510475658/ZCyECJS9tqYZEIq758A9',
-                    });
-
-                    const form = e.currentTarget.form;
-                    if (form) {
-                      form.submit();
-                    } else {
-                      console.error("Form not found");
-                    }
-                  }}
                 >
                   <Box sx={{ display: "flex", alignItems: "center" }}>
                     <DiamondIcon sx={{ mr: 0.2, fontSize: "1rem" }} />
@@ -542,7 +403,6 @@ const AdsPage = () => {
                   </Box>
                 </Button>
               </form>
-              <UserButton userProfileUrl="/user" afterSignOutUrl="/" />
             </>
           ) : (
             <button
@@ -558,525 +418,278 @@ const AdsPage = () => {
           )}
         </Box>
 
-        <h1 className="text-2xl text-gray-900 mb-1 tracking-tight">
-          Ads <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-            {'Dash'}
-          </span>
+        <h1 className="text-2xl text-gray-900 mb-3 tracking-tight">
+          Ads <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Pilot</span>
         </h1>
+
+        {/* Campaign Selector */}
+        {availableCampaigns.length > 0 && (
+          <div className="w-full max-w-4xl mx-auto mb-6">
+            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Select Campaigns to Analyze
+                </h3>
+                <button
+                  onClick={() => {
+                    if (selectedCampaignIds.length === availableCampaigns.length) {
+                      setSelectedCampaignIds([]);
+                    } else {
+                      setSelectedCampaignIds(availableCampaigns.map(c => c.id));
+                    }
+                  }}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  {selectedCampaignIds.length === availableCampaigns.length ? 'Deselect All' : 'Select All'}
+                </button>
+            </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {availableCampaigns.map((campaign) => (
+                  <label
+                    key={campaign.id}
+                    className="flex items-center space-x-3 p-3 rounded-lg border-2 border-gray-200 hover:border-blue-300 cursor-pointer transition-all"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedCampaignIds.includes(campaign.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedCampaignIds([...selectedCampaignIds, campaign.id]);
+                        } else {
+                          setSelectedCampaignIds(selectedCampaignIds.filter(id => id !== campaign.id));
+                        }
+                      }}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700 font-medium flex-1">{campaign.name}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mt-4">
+                {selectedCampaignIds.length === 0 
+                  ? 'Select one or more campaigns above. If none selected, all campaigns will be analyzed.'
+                  : `${selectedCampaignIds.length} of ${availableCampaigns.length} campaign${availableCampaigns.length !== 1 ? 's' : ''} selected`}
+              </p>
+                </div>
+              </div>
+            )}
+
+        {/* Action Buttons */}
+        <div className="w-full max-w-4xl mx-auto space-y-4 mb-8">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <button
+              onClick={fetchCampaignKeywords}
+              disabled={fetchingKeywords || !admin}
+              className="bg-blue-600 text-white rounded-lg px-6 py-3 hover:bg-blue-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm font-medium"
+            >
+              {fetchingKeywords ? (
+                <>
+                  <LoadingDots color="white" style="small" />
+                  <span>Fetching Keywords...</span>
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                  </svg>
+                  <span>Analyze {selectedCampaignIds.length > 0 ? `Selected Campaign${selectedCampaignIds.length !== 1 ? 's' : ''}` : 'All Campaigns'}</span>
+                </>
+              )}
+            </button>
+
+            {campaignKeywords.length > 0 && (
+              <button
+                onClick={findSimilarKeywords}
+                disabled={findingSimilar}
+                className="bg-indigo-600 text-white rounded-lg px-6 py-3 hover:bg-indigo-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm font-medium"
+              >
+                {findingSimilar ? (
+                  <>
+                    <LoadingDots color="white" style="small" />
+                    <span>Finding Similar Keywords...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                    </svg>
+                    <span>Find Similar Keywords</span>
+                  </>
+                )}
+              </button>
+                )}
+                    </div>
+
+          {!admin && (
+            <p className="text-sm text-gray-500">Admin access required to analyze campaigns</p>
+          )}
+                    </div>
+
+        {/* Current Keywords */}
+        {showCurrentKeywords && campaignKeywords.length > 0 && (
+          <div className="w-full max-w-6xl mx-auto mb-8">
+            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Current Keywords ({campaignKeywords.length})
+                </h2>
+                <button
+                  onClick={() => setShowCurrentKeywords(!showCurrentKeywords)}
+                  className="text-sm text-gray-600 hover:text-gray-800"
+                >
+                  {showCurrentKeywords ? 'Hide' : 'Show'}
+                </button>
+                    </div>
+
+              {showCurrentKeywords && (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keyword</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Campaign</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ad Group</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Impressions</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Clicks</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">CTR</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {campaignKeywords.slice(0, 50).map((kw, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{kw.keyword}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{kw.campaignName}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{kw.adGroupName}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatNumber(kw.impressions)}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatNumber(kw.clicks)}</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{(kw.ctr * 100).toFixed(2)}%</td>
+                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(kw.costMicros)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {campaignKeywords.length > 50 && (
+                    <p className="text-sm text-gray-500 mt-4 text-center">
+                      Showing first 50 of {campaignKeywords.length} keywords
+                    </p>
+                )}
+              </div>
+              )}
+            </div>
+          </div>
+            )}
+
+        {/* Similar Keywords Suggestions */}
+        {showSuggestions && similarKeywords.length > 0 && (
+          <div className="w-full max-w-6xl mx-auto mb-8">
+            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Similar Keywords ({similarKeywords.length})
+                </h2>
+              <div className="flex gap-2">
+                  <button
+                    onClick={() => exportKeywords('csv')}
+                    className="bg-green-600 text-white rounded-lg px-4 py-2 hover:bg-green-700 transition-all duration-200 text-sm font-medium"
+                  >
+                    Export CSV
+                  </button>
+                  <button
+                    onClick={() => exportKeywords('json')}
+                    className="bg-green-600 text-white rounded-lg px-4 py-2 hover:bg-green-700 transition-all duration-200 text-sm font-medium"
+                  >
+                    Export JSON
+                  </button>
+              </div>
+            </div>
+              
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {similarKeywords.slice(0, 30).map((kw, index) => (
+                  <div
+                    key={index}
+                    className="bg-gradient-to-br from-white to-gray-50 p-4 rounded-xl border border-gray-200 hover:shadow-md transition-all duration-200"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900 break-words">{kw.keyword}</h3>
+                      <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
+                        kw.competition === 'HIGH' ? 'bg-red-100 text-red-800' :
+                        kw.competition === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        {kw.competition}
+                      </span>
+              </div>
+                    <div className="space-y-1 text-sm text-gray-600">
+                      <div className="flex justify-between">
+                        <span>Search Volume:</span>
+                        <span className="font-medium text-gray-900">{formatNumber(kw.searchVolume)}</span>
+                  </div>
+                      {kw.avgCpcMicros && (
+                        <div className="flex justify-between">
+                          <span>Avg CPC:</span>
+                          <span className="font-medium text-gray-900">{formatCurrency(kw.avgCpcMicros)}</span>
+                  </div>
+                      )}
+                      {kw.sourceKeyword && (
+                        <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
+                          Suggested from: <span className="font-medium">{kw.sourceKeyword}</span>
+                          </div>
+                      )}
+                        </div>
+                          </div>
+                ))}
+                        </div>
+              
+              {similarKeywords.length > 30 && (
+                <p className="text-sm text-gray-500 mt-4 text-center">
+                  Showing first 30 of {similarKeywords.length} suggestions. Export to see all.
+                </p>
+              )}
+                          </div>
+                        </div>
+        )}
+
+        {/* Empty State */}
+        {!showCurrentKeywords && !showSuggestions && !fetchingKeywords && !findingSimilar && (
+          <div className="w-full max-w-2xl mx-auto mt-8">
+            <div className="bg-gray-50 rounded-2xl border-2 border-gray-200 p-8">
+              <p className="text-gray-600 mb-4">
+                Get started by analyzing your Google Ads campaigns to discover new keyword opportunities.
+              </p>
+              <ul className="text-left text-sm text-gray-600 space-y-2 max-w-md mx-auto">
+                <li className="flex items-center space-x-2">
+                  <svg className="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span>Fetch all keywords from your active campaigns</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <svg className="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span>Find similar keywords to expand your reach</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <svg className="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span>Export suggestions and add them to your campaigns</span>
+                </li>
+              </ul>
+                          </div>
+                        </div>
+        )}
 
         <Toaster
           position="top-center"
           reverseOrder={false}
-          toastOptions={{ duration: 5000 }}
+          toastOptions={{ duration: 3000 }}
         />
-
-        {showWizard ? (
-          <>
-            {/* Stepper */}
-            <div className="w-full max-w-4xl mx-auto mt-8 mb-8">
-              <Stepper activeStep={currentStep} alternativeLabel>
-                {steps.map((label) => (
-                  <Step key={label}>
-                    <StepLabel>{label}</StepLabel>
-                  </Step>
-                ))}
-              </Stepper>
-            </div>
-
-            {/* Wizard Content */}
-            <div className="w-full max-w-4xl mx-auto">
-              <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm p-8">
-            {currentStep === 0 && (
-              <div className="space-y-6">
-                <Typography variant="h5" className="text-gray-900 mb-4">Campaign Basics</Typography>
-                
-                <FormControl fullWidth>
-                  <InputLabel>Campaign Type</InputLabel>
-                  <Select
-                    value={campaignData.type}
-                    onChange={(e) => setCampaignData(prev => ({ ...prev, type: e.target.value }))}
-                  >
-                    <MenuItem value="SEARCH">Search Campaign</MenuItem>
-                    <MenuItem value="PMAX">Performance Max</MenuItem>
-                  </Select>
-                </FormControl>
-
-                <TextField
-                  fullWidth
-                  label="Brand Name"
-                  value={campaignData.brand}
-                  onChange={(e) => setCampaignData(prev => ({ ...prev, brand: e.target.value }))}
-                  placeholder="e.g., My Company"
-                />
-
-                <TextField
-                  fullWidth
-                  label="Landing Page URL"
-                  value={campaignData.url}
-                  onChange={(e) => setCampaignData(prev => ({ ...prev, url: e.target.value }))}
-                  placeholder="https://example.com"
-                />
-
-                <TextField
-                  fullWidth
-                  label="Campaign Name Suffix (optional)"
-                  value={campaignData.campaignNameSuffix}
-                  onChange={(e) => setCampaignData(prev => ({ ...prev, campaignNameSuffix: e.target.value }))}
-                  placeholder="e.g., Q4 Sale"
-                />
-              </div>
-            )}
-
-            {currentStep === 1 && (
-              <div className="space-y-6">
-                <Typography variant="h5" className="text-gray-900 mb-4">Keywords</Typography>
-                
-                <div className="flex space-x-2">
-                  <TextField
-                    fullWidth
-                    label="Add Keyword"
-                    value={campaignData.keywordInput}
-                    onChange={(e) => setCampaignData(prev => ({ ...prev, keywordInput: e.target.value }))}
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleKeywordAdd())}
-                    placeholder="e.g., best coffee shop"
-                  />
-                  <Button variant="contained" onClick={handleKeywordAdd}>Add</Button>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {campaignData.keywords.map((keyword) => (
-                    <Chip
-                      key={keyword}
-                      label={keyword}
-                      onDelete={() => handleKeywordRemove(keyword)}
-                      color="primary"
-                    />
-                  ))}
-                </div>
-
-                {campaignData.keywords.length === 0 && (
-                  <Typography variant="body2" color="textSecondary">
-                    Add keywords that describe your product or service
-                  </Typography>
-                )}
-              </div>
-            )}
-
-            {currentStep === 2 && (
-              <div className="space-y-6">
-                <Typography variant="h5" className="text-gray-900 mb-4">Targeting</Typography>
-                
-                <FormControl fullWidth>
-                  <InputLabel>Languages</InputLabel>
-                  <Select
-                    multiple
-                    value={campaignData.languages}
-                    onChange={(e) => setCampaignData(prev => ({ ...prev, languages: e.target.value as string[] }))}
-                    renderValue={(selected) => (selected as string[]).join(', ')}
-                  >
-                    <MenuItem value="en">English</MenuItem>
-                    <MenuItem value="es">Spanish</MenuItem>
-                    <MenuItem value="fr">French</MenuItem>
-                    <MenuItem value="de">German</MenuItem>
-                  </Select>
-                </FormControl>
-
-                <Typography variant="body2" color="textSecondary">
-                  Location targeting will be set to "All locations" by default. Advanced location targeting can be configured in Google Ads after campaign creation.
-                </Typography>
-              </div>
-            )}
-
-            {currentStep === 3 && (
-              <div className="space-y-6">
-                <Typography variant="h5" className="text-gray-900 mb-4">Budget</Typography>
-                
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Daily Budget ($)"
-                  value={campaignData.budgetDaily}
-                  onChange={(e) => setCampaignData(prev => ({ ...prev, budgetDaily: parseFloat(e.target.value) || 0 }))}
-                  inputProps={{ min: 1, step: 1 }}
-                />
-
-                <Typography variant="body2" color="textSecondary">
-                  Minimum daily budget is $1. Google Ads will automatically adjust your spend to stay within your monthly budget limit.
-                </Typography>
-              </div>
-            )}
-
-            {currentStep === 4 && (
-              <div className="space-y-6">
-                <Typography variant="h5" className="text-gray-900 mb-4">Generate Ad Copy</Typography>
-                
-                <div className="text-center">
-                  <Typography variant="body1" className="mb-4">
-                    Ready to generate AI-powered ad copy for your {campaignData.type.toLowerCase()} campaign?
-                  </Typography>
-                  
-                  <Button
-                    variant="contained"
-                    size="large"
-                    onClick={generateAdCopy}
-                    disabled={loading || !campaignData.keywords.length}
-                    startIcon={loading ? <LoadingDots color="white" style="small" /> : null}
-                  >
-                    {loading ? 'Generating...' : 'Generate Ad Copy'}
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {currentStep === 5 && (
-              <div className="space-y-6">
-                <Typography variant="h5" className="text-gray-900 mb-4">Review & Launch</Typography>
-                
-                {generatedCopy ? (
-                  <div className="space-y-4">
-                    <div>
-                      <Typography variant="h6">Headlines:</Typography>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {generatedCopy.headlines.map((headline: string, index: number) => (
-                          <Chip key={index} label={headline} variant="outlined" />
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <Typography variant="h6">Descriptions:</Typography>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {generatedCopy.descriptions.map((desc: string, index: number) => (
-                          <Chip key={index} label={desc} variant="outlined" />
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <Typography variant="h6" className="mb-2">Campaign Summary:</Typography>
-                      <Typography variant="body2">
-                        <strong>Type:</strong> {campaignData.type}<br/>
-                        <strong>Brand:</strong> {campaignData.brand}<br/>
-                        <strong>URL:</strong> {campaignData.url}<br/>
-                        <strong>Keywords:</strong> {campaignData.keywords.length}<br/>
-                        <strong>Daily Budget:</strong> ${campaignData.budgetDaily}
-                      </Typography>
-                    </div>
-
-                    <div className="text-center space-y-4">
-                      {/* Only show Save as Draft until Basic approval */}
-              <Button
-                variant="contained"
-                size="large"
-                onClick={saveDraft}
-                disabled={savingDraft}
-                startIcon={savingDraft ? <LoadingDots color="white" style="small" /> : null}
-              >
-                {savingDraft ? 'Saving...' : 'Save as Draft'}
-              </Button>
-              
-              <Button
-                variant="outlined"
-                size="large"
-                onClick={() => {
-                  const context = `Campaign type: ${campaignData.type}, Brand: ${campaignData.brand}, Keywords: ${campaignData.keywords.join(', ')}`;
-                  router.push(`/smart-pilot?seed=${encodeURIComponent(`Help me improve this campaign: ${context}`)}`);
-                }}
-              >
-                Get AI Help
-              </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <Typography variant="body1" color="textSecondary">
-                    Please generate ad copy first in the previous step.
-                  </Typography>
-                )}
-              </div>
-            )}
-
-            {/* Navigation */}
-            <div className="flex justify-between mt-8 pt-6 border-t">
-              <Button
-                startIcon={<ArrowBackIcon />}
-                onClick={prevStep}
-                disabled={currentStep === 0}
-              >
-                Previous
-              </Button>
-
-              {currentStep < 4 && (
-                <Button
-                  endIcon={<ArrowForwardIcon />}
-                  onClick={nextStep}
-                  variant="contained"
-                  disabled={
-                    (currentStep === 0 && (!campaignData.brand || !campaignData.url)) ||
-                    (currentStep === 1 && campaignData.keywords.length === 0)
-                  }
-                >
-                  Next
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-          </>
-        ) : (
-          /* Dashboard Content */
-          <div className="w-full max-w-7xl mx-auto space-y-6">
-            {/* Upload Section */}
-            <div className="flex justify-between items-center">
-              {/* Date Filter */}
-              <FormControl size="small" sx={{ minWidth: 140 }}>
-                <InputLabel>Date Range</InputLabel>
-                <Select
-                  value={selectedDays}
-                  onChange={(e) => setSelectedDays(e.target.value as number)}
-                  label="Date Range"
-                >
-                  <MenuItem value={7}>Last 7 days</MenuItem>
-                  <MenuItem value={30}>Last 30 days</MenuItem>
-                  <MenuItem value={365}>All time</MenuItem>
-                </Select>
-              </FormControl>
-
-              <div className="flex gap-2">
-                <div {...getRootProps()}>
-                  <input {...getInputProps()} />
-                  <Button
-                    variant="contained"
-                    startIcon={uploading ? <CircularProgress size={20} /> : <UploadIcon />}
-                    disabled={uploading}
-                  >
-                    {uploading ? 'Uploading...' : 'Upload CSV'}
-                  </Button>
-                </div>
-                
-                {/* Secondary Menu */}
-                <IconButton
-                  onClick={handleMenuOpen}
-                  size="small"
-                  sx={{ 
-                    border: '1px solid #e0e0e0',
-                    borderRadius: 1,
-                    width: 40,
-                    height: 40
-                  }}
-                >
-                  <MoreVertIcon fontSize="small" />
-                </IconButton>
-              </div>
-            </div>
-              
-            <Menu
-              anchorEl={menuAnchor}
-              open={Boolean(menuAnchor)}
-              onClose={handleMenuClose}
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'right',
-              }}
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-            >
-              <MenuItem onClick={() => {
-                handleMenuClose();
-                router.push('/ads?wizard=true');
-              }}>
-                <ListItemIcon>
-                  <CreateIcon fontSize="small" />
-                </ListItemIcon>
-                <ListItemText>New Campaign</ListItemText>
-              </MenuItem>
-              <MenuItem onClick={() => {
-                handleMenuClose();
-                router.push('/find-keywords');
-              }}>
-                <ListItemIcon>
-                  <TrendingUpIcon fontSize="small" />
-                </ListItemIcon>
-                <ListItemText>Keyword Planner</ListItemText>
-              </MenuItem>
-              <MenuItem onClick={() => {
-                handleMenuClose();
-                router.push('/campaign-drafts');
-              }}>
-                <ListItemIcon>
-                  <DraftsIcon fontSize="small" />
-                </ListItemIcon>
-                <ListItemText>View Drafts</ListItemText>
-              </MenuItem>
-            </Menu>
-
-            {dashboardLoading ? (
-              <div className="flex justify-center py-12">
-                <CircularProgress size={60} />
-              </div>
-            ) : !dashboardData?.totals ? (
-              /* Empty State */
-              <Card>
-                <CardContent className="text-center py-12">
-                  <Typography variant="h6" className="mb-4">
-                    No data available
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary" className="mb-6">
-                    Upload your first Google Ads CSV to get started with the dashboard.
-                  </Typography>
-                  <div {...getRootProps()}>
-                    <input {...getInputProps()} />
-                    <Button
-                      variant="contained"
-                      startIcon={<UploadIcon />}
-                      disabled={uploading}
-                    >
-                      {uploading ? 'Uploading...' : 'Upload CSV'}
-                    </Button>
-                  </div>
-                  <div className="mt-4">
-                    <Button
-                      variant="outlined"
-                      onClick={() => router.push('/ads?wizard=true')}
-                    >
-                      Start New Campaign
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <>
-                {/* KPI Cards */}
-                <Grid container spacing={3}>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <Card>
-                      <CardContent>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Typography color="textSecondary" gutterBottom>
-                              Impressions
-                            </Typography>
-                            <Typography variant="h4">
-                              {dashboardData.totals.impressions.toLocaleString()}
-                            </Typography>
-                          </div>
-                          <VisibilityIcon color="primary" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-
-                  <Grid item xs={12} sm={6} md={3}>
-                    <Card>
-                      <CardContent>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Typography color="textSecondary" gutterBottom>
-                              Clicks
-                            </Typography>
-                            <Typography variant="h4">
-                              {dashboardData.totals.clicks.toLocaleString()}
-                            </Typography>
-                            {/* <Typography variant="body2" color="textSecondary">
-                              CTR: {(dashboardData.totals.avgCtr * 100).toFixed(2)}%
-                            </Typography> */}
-                          </div>
-                          <TouchAppIcon color="primary" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-
-                  <Grid item xs={12} sm={6} md={3}>
-                    <Card>
-                      <CardContent>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Typography color="textSecondary" gutterBottom>
-                              Cost
-                            </Typography>
-                            <Typography variant="h4">
-                              ${dashboardData.totals.cost.toFixed(2)}
-                            </Typography>
-                          </div>
-                          <AttachMoneyIcon color="primary" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-
-                  <Grid item xs={12} sm={6} md={3}>
-                    <Card>
-                      <CardContent>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <Typography color="textSecondary" gutterBottom>
-                              Avg CTR
-                            </Typography>
-                            <Typography variant="h4">
-                              {(dashboardData.totals.avgCtr * 100).toFixed(2)}%
-                            </Typography>
-                          </div>
-                          <TrendingUpIcon color="primary" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                </Grid>
-
-                {/* Campaigns Table */}
-                {dashboardData.campaigns && dashboardData.campaigns.length > 0 && (
-                  <Card>
-                    <CardContent>
-                      <Typography variant="h6" className="mb-4">Campaigns</Typography>
-                      <TableContainer component={Paper} variant="outlined">
-                        <Table>
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>Campaign Name</TableCell>
-                              <TableCell align="right">Impressions</TableCell>
-                              <TableCell align="right">Clicks</TableCell>
-                              <TableCell align="right">CTR</TableCell>
-                              <TableCell align="right">Cost</TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {dashboardData.campaigns.map((campaign: any, index: number) => (
-                              <TableRow key={index}>
-                                <TableCell>
-                                  <Typography variant="body2" className="font-medium">
-                                    {campaign.name}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell align="right">
-                                  {campaign.impressions.toLocaleString()}
-                                </TableCell>
-                                <TableCell align="right">
-                                  {campaign.clicks.toLocaleString()}
-                                </TableCell>
-                                <TableCell align="right">
-                                  {(campaign.ctr * 100).toFixed(2)}%
-                                </TableCell>
-                                <TableCell align="right">
-                                  ${campaign.cost.toFixed(2)}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    </CardContent>
-                  </Card>
-                )}
-
-              </>
-            )}
-          </div>
-        )}
       </main>
     </div>
   );
 };
 
 export default AdsPage;
+

@@ -27,8 +27,8 @@ export default function SignInPage() {
             routing="path"
             path="/sign-in"
             signUpUrl="/sign-up"
-            redirectUrl="/ads-dashboard"
-            afterSignInUrl="/ads-dashboard"
+            redirectUrl="/ads"
+            afterSignInUrl="/ads"
           />
         </div>
         

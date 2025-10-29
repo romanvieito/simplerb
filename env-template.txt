@@ -8,8 +8,8 @@ CLERK_SECRET_KEY=sk_test_your_secret_key_here
 # Clerk URL Configuration
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/ads-dashboard
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/ads-dashboard
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/ads
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/ads
 
 # ===================================
 # GOOGLE ADS API CONFIGURATION
