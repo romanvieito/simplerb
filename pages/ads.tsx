@@ -197,6 +197,7 @@ const AdsPage = () => {
   const [similarKeywordsCountryCode, setSimilarKeywordsCountryCode] = useState('US');
   const [similarKeywordsLanguageCode, setSimilarKeywordsLanguageCode] = useState('en');
   const [selectedSimilarKeywords, setSelectedSimilarKeywords] = useState<Set<string>>(new Set());
+  const [selectedInputKeywords, setSelectedInputKeywords] = useState<Set<string>>(new Set());
   
   // Default column visibility - all columns visible by default
   const defaultColumnVisibility = {
@@ -342,6 +343,16 @@ const AdsPage = () => {
     isInitialLoad.current = false;
   }, []);
 
+  // Initialize selected input keywords when campaign keywords change
+  useEffect(() => {
+    if (campaignKeywords.length > 0) {
+      const uniqueKeywords = Array.from(new Set(campaignKeywords.map(k => k.keyword)));
+      setSelectedInputKeywords(new Set(uniqueKeywords));
+    } else {
+      setSelectedInputKeywords(new Set());
+    }
+  }, [campaignKeywords]);
+
   // Auto-select all campaigns when they become available (if no saved data was loaded)
   useEffect(() => {
     if (availableCampaigns.length > 0 && !hasLoadedSavedData.current && selectedCampaignIds.length === 0) {
@@ -485,8 +496,8 @@ const AdsPage = () => {
     setSelectedSimilarKeywords(new Set()); // Clear selections when finding new keywords
 
     try {
-      // Get unique keywords from campaigns
-      const uniqueKeywords = Array.from(new Set(campaignKeywords.map(k => k.keyword)));
+      // Get selected input keywords
+      const uniqueKeywords = Array.from(selectedInputKeywords);
       
       // Process in batches to avoid overwhelming the API (matches backend batch size of 5)
       const batchSize = 5;
@@ -1223,6 +1234,55 @@ const AdsPage = () => {
           <div className="w-full max-w-4xl mx-auto mb-8">
             {campaignKeywords.length > 0 ? (
               <div className="space-y-6">
+                {/* Input Keywords Selection */}
+                <div className="bg-white rounded-xl border border-gray-100 p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-xs text-gray-600">Select which keywords from your campaigns will be used to find similar keywords ({selectedInputKeywords.size} selected)</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setSelectedInputKeywords(new Set(Array.from(new Set(campaignKeywords.map(k => k.keyword)))))}
+                        className="px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors"
+                      >
+                        Select All
+                      </button>
+                      <button
+                        onClick={() => setSelectedInputKeywords(new Set())}
+                        className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3 bg-gray-50">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {Array.from(new Set(campaignKeywords.map(k => k.keyword))).map((keyword) => (
+                        <label
+                          key={keyword}
+                          className="flex items-center space-x-2 p-2 bg-white rounded border hover:bg-gray-50 cursor-pointer transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedInputKeywords.has(keyword)}
+                            onChange={(e) => {
+                              const newSet = new Set(selectedInputKeywords);
+                              if (e.target.checked) {
+                                newSet.add(keyword);
+                              } else {
+                                newSet.delete(keyword);
+                              }
+                              setSelectedInputKeywords(newSet);
+                            }}
+                            className="w-3 h-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <span className="text-xs text-gray-700 truncate" title={keyword}>{keyword}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Location Settings */}
                 <div className="bg-white rounded-xl border border-gray-100 p-4">
                   <div className="flex items-center justify-between">
@@ -1271,7 +1331,7 @@ const AdsPage = () => {
                     {/* Find Button */}
                     <button
                       onClick={findSimilarKeywords}
-                      disabled={findingSimilar}
+                      disabled={findingSimilar || selectedInputKeywords.size === 0}
                       className="bg-black text-white rounded-lg px-6 py-3 hover:bg-gray-800 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                     >
                       {findingSimilar ? (
@@ -1284,7 +1344,7 @@ const AdsPage = () => {
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
                           </svg>
-                          <span>Find Similar Keywords</span>
+                          <span>Find Similar Keywords ({selectedInputKeywords.size})</span>
                         </>
                       )}
                     </button>
