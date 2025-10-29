@@ -1,0 +1,39 @@
+name: Check Google Ads Token Health
+
+# Optional: Uncomment to run monthly automatically
+# on:
+#   schedule:
+#     - cron: '0 0 1 * *'  # First day of every month at midnight UTC
+#   workflow_dispatch:  # Allow manual trigger
+
+on:
+  workflow_dispatch:  # Manual trigger only (safer for now)
+
+jobs:
+  check-token:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+      
+      - name: Check token health
+        env:
+          GADS_CLIENT_ID: ${{ secrets.GADS_CLIENT_ID }}
+          GADS_CLIENT_SECRET: ${{ secrets.GADS_CLIENT_SECRET }}
+          GADS_REFRESH_TOKEN: ${{ secrets.GADS_REFRESH_TOKEN }}
+        run: |
+          npm install dotenv
+          node scripts/check-token-health.js
+      
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "⚠️ Token health check failed! Check REFRESH_TOKEN_MAINTENANCE.md for renewal instructions."
+          # Add your notification method here (Slack, email, etc.)
+          # Example: curl -X POST $SLACK_WEBHOOK_URL -d "{\"text\":\"Token health check failed\"}"
+

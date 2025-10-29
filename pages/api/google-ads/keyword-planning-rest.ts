@@ -30,8 +30,10 @@ interface KeywordPlanningResponse {
   success: boolean;
   keywords?: KeywordIdea[];
   error?: string;
+  errorDetails?: any;
   usedFallback?: boolean;
   reason?: string;
+  message?: string;
   metadata?: {
     countryCode: string;
     languageCode: string;
@@ -171,6 +173,15 @@ export default async function handler(
       });
     }
 
+    // Log environment info for debugging (mask sensitive data)
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔐 OAuth Configuration:');
+      console.log(`   Client ID: ${GADS_CLIENT_ID.substring(0, 10)}...`);
+      console.log(`   Client Secret: ${GADS_CLIENT_SECRET.substring(0, 6)}...`);
+      console.log(`   Refresh Token: ${GADS_REFRESH_TOKEN.substring(0, 10)}...`);
+      console.log(`   Login Customer ID: ${GADS_LOGIN_CUSTOMER_ID}`);
+    }
+
     // Get access token from refresh token
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -188,9 +199,36 @@ export default async function handler(
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.text();
       console.error('❌ Failed to get access token:', errorData);
+      
+      let errorMessage = 'Failed to authenticate with Google Ads API';
+      let errorDetails: any = {};
+      
+      try {
+        const errorJson = JSON.parse(errorData);
+        errorDetails = errorJson;
+        if (errorJson.error_description) {
+          errorMessage = `Failed to authenticate: ${errorJson.error_description}`;
+        } else if (errorJson.error) {
+          errorMessage = `Failed to authenticate: ${errorJson.error}`;
+        }
+      } catch {
+        // If errorData is not JSON, include it as-is
+        if (errorData) {
+          errorMessage = `Failed to authenticate: ${errorData}`;
+        }
+      }
+      
+      // Provide helpful guidance for common errors
+      if (errorDetails.error === 'invalid_grant') {
+        errorMessage += '. This usually means your refresh token has expired or been revoked. ';
+        errorMessage += 'You may need to generate a new refresh token using the scripts in the root directory. ';
+        errorMessage += 'Note: Refresh tokens are bound to specific OAuth client credentials, so ensure your local GADS_CLIENT_ID and GADS_CLIENT_SECRET match the ones used in production.';
+      }
+      
       return res.status(500).json({
         success: false,
-        error: 'Failed to authenticate with Google Ads API'
+        error: errorMessage,
+        errorDetails: errorDetails
       });
     }
 

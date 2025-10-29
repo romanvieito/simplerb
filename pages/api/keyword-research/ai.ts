@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getAuth } from '@clerk/nextjs/server';
 import OpenAI from 'openai';
-import { runGoogleKeywordResearch } from '../../../utils/googleKeywordResearch';
+import { saveKeywordSearchHistory } from '../../../utils/keywordHistory';
 
 interface GeneratedKeywordResult {
   keyword: string;
@@ -28,21 +28,17 @@ interface GeneratedKeywordResult {
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const systemPrompt = `You are a keyword research expert. Generate 15-20 high-quality keyword suggestions for digital marketing based on the user's prompt.
-
-IMPORTANT: Respond ONLY with a valid JSON array. No explanations, no markdown, no additional text.
-
-Each array element must be an object with these exact fields:
-- keyword: string (the keyword phrase)
-- searchVolume: number or null (estimated monthly searches, or null if unknown)
-- competition: string (one of: "LOW", "MEDIUM", "HIGH", "UNKNOWN")
-- competitionIndex: number or null (0-100 scale, or null if unknown)
-- monthlySearchVolumes: array or null (last 12 months as array of objects with monthLabel and monthlySearches, or null)
-
-Example format:
-[{"keyword":"example keyword","searchVolume":1000,"competition":"MEDIUM","competitionIndex":45,"monthlySearchVolumes":null}]
-
-Generate keywords relevant to: `;
+const systemPrompt = `You generate keyword ideas for digital marketing.
+Return 15-25 high-quality keyword suggestions relevant to the user's prompt.
+Output must be JSON array of objects with fields:
+- keyword (string)
+- searchVolume (number, optional; use null if unknown)
+- competition (one of LOW, MEDIUM, HIGH, UNKNOWN)
+- competitionIndex (number 0-100, optional)
+- monthlySearchVolumes (optional array of last 12 months with { monthLabel, monthlySearches })
+Leave numeric fields null if unavailable.
+Do not include any text outside JSON.
+`;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -88,19 +84,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         'content optimization',
         'growth hacking',
         'conversion funnel',
-        'brand awareness',
-        'customer engagement',
-        'lead generation',
-        'conversion rate',
-        'target audience',
-        'marketing campaign',
-        'content marketing',
-        'social media',
-        'email marketing',
-        'paid advertising',
       ];
 
-      const mockResults: GeneratedKeywordResult[] = baseKeywords.slice(0, 20).map((base, idx) => {
+      const mockResults: GeneratedKeywordResult[] = baseKeywords.map((base, idx) => {
         const key = `${seed}|${base}|${idx}`;
         const { volume, competitionIndex } = deterministic(key);
         const competition = competitionIndex > 70 ? 'HIGH' : competitionIndex > 40 ? 'MEDIUM' : 'LOW';
@@ -138,7 +124,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         { role: 'system', content: systemPrompt },
         {
           role: 'user',
-          content: `${prompt} (Country: ${countryCode}, Language: ${languageCode})`
+          content: `Prompt: ${prompt}\nCountry: ${countryCode}\nLanguage: ${languageCode}`
         }
       ],
     });
@@ -215,33 +201,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json([]);
     }
 
-    // Try to enrich with Google Ads data (cap to 20 keywords)
-    const keywordsToEnrich = results.slice(0, 20);
-    console.log(`Attempting to enrich ${keywordsToEnrich.length} AI-generated keywords with Google Ads data`);
-
-    if (keywordsToEnrich.length === 0) {
-      console.log('No keywords to enrich, returning AI results');
-      return res.status(200).json(results);
-    }
-
-    try {
-      console.log('Calling runGoogleKeywordResearch...');
-      const enrichedResults = await runGoogleKeywordResearch({
-        keywords: keywordsToEnrich.map((r) => r.keyword),
+    if (userId) {
+      await saveKeywordSearchHistory({
+        userId,
+        userPrompt: prompt,
         countryCode,
         languageCode,
-        useCache: true,
-        userPrompt: prompt,
-        userId: userId || undefined,
-        generatedViaAI: true,
+        results,
+        source: 'openai_generated',
       });
-      console.log(`Google Ads enrichment successful, returning ${enrichedResults.length} results`);
-      return res.status(200).json(enrichedResults);
-    } catch (enrichmentError) {
-      console.error('Google Ads enrichment failed:', enrichmentError);
-      console.log('Returning AI-generated results without enrichment');
-      return res.status(200).json(results);
     }
+
+    return res.status(200).json(results);
   } catch (error) {
     console.error('OpenAI keyword generation error:', error);
     let message = 'Failed to generate keywords with AI';

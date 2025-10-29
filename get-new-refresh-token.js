@@ -55,3 +55,5 @@ console.log('');
 console.log('6. Update your environment variables with the new refresh token');
 console.log('');
 console.log('💡 The new refresh token will be displayed in the terminal.');
+console.log('');
+console.log('📚 See REFRESH_TOKEN_MAINTENANCE.md for detailed instructions and prevention tips.');

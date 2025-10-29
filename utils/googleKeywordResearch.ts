@@ -104,11 +104,20 @@ export async function runGoogleKeywordResearch({
   const DEVELOPER_TOKEN = process.env.GADS_DEVELOPER_TOKEN ?? process.env.GOOGLE_ADS_DEVELOPER_TOKEN;
   const REFRESH_TOKEN = process.env.GADS_REFRESH_TOKEN ?? process.env.GOOGLE_ADS_REFRESH_TOKEN;
   const CUSTOMER_ID_RAW = process.env.GADS_CUSTOMER_ID ?? process.env.GOOGLE_ADS_CUSTOMER_ID;
+  const LOGIN_CUSTOMER_ID = process.env.GADS_LOGIN_CUSTOMER_ID ?? process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID;
 
-  const missingEnv = !CLIENT_ID || !CLIENT_SECRET || !DEVELOPER_TOKEN || !REFRESH_TOKEN || !CUSTOMER_ID_RAW;
+  const missingEnv = !CLIENT_ID || !CLIENT_SECRET || !DEVELOPER_TOKEN || !REFRESH_TOKEN || !CUSTOMER_ID_RAW || !LOGIN_CUSTOMER_ID;
 
   if (missingEnv && process.env.NODE_ENV === 'production') {
-    throw new Error('Missing required Google Ads environment variables');
+    const missingVars = [
+      !CLIENT_ID && 'GADS_CLIENT_ID',
+      !CLIENT_SECRET && 'GADS_CLIENT_SECRET',
+      !DEVELOPER_TOKEN && 'GADS_DEVELOPER_TOKEN',
+      !REFRESH_TOKEN && 'GADS_REFRESH_TOKEN',
+      !CUSTOMER_ID_RAW && 'GADS_CUSTOMER_ID',
+      !LOGIN_CUSTOMER_ID && 'GADS_LOGIN_CUSTOMER_ID',
+    ].filter(Boolean).join(', ');
+    throw new Error(`Missing required Google Ads environment variables: ${missingVars}`);
   }
 
   if (!GADS_USES_REAL_DATA || missingEnv) {
@@ -236,7 +245,21 @@ export async function runGoogleKeywordResearch({
   if (!tokenResponse.ok) {
     const errorData = await tokenResponse.text();
     console.error('Failed to get access token:', errorData);
-    throw new Error('Failed to authenticate with Google Ads API');
+    let errorMessage = 'Failed to authenticate with Google Ads API';
+    try {
+      const errorJson = JSON.parse(errorData);
+      if (errorJson.error_description) {
+        errorMessage = `Failed to authenticate with Google Ads API: ${errorJson.error_description}`;
+      } else if (errorJson.error) {
+        errorMessage = `Failed to authenticate with Google Ads API: ${errorJson.error}`;
+      }
+    } catch {
+      // If errorData is not JSON, include it as-is
+      if (errorData) {
+        errorMessage = `Failed to authenticate with Google Ads API: ${errorData}`;
+      }
+    }
+    throw new Error(errorMessage);
   }
 
   const tokenData = await tokenResponse.json();
@@ -258,8 +281,16 @@ export async function runGoogleKeywordResearch({
     requestBody.geoTargetConstants = [`geoTargetConstants/${geoId}`];
   }
 
-  const loginCustomerId = process.env.GADS_LOGIN_CUSTOMER_ID;
-  const customerId = process.env.GADS_CUSTOMER_ID || loginCustomerId;
+  const loginCustomerId = LOGIN_CUSTOMER_ID;
+  const customerId = CUSTOMER_ID_RAW || loginCustomerId;
+
+  if (!loginCustomerId) {
+    throw new Error('GADS_LOGIN_CUSTOMER_ID is required for Google Ads API calls');
+  }
+
+  if (!customerId) {
+    throw new Error('GADS_CUSTOMER_ID or GADS_LOGIN_CUSTOMER_ID is required for Google Ads API calls');
+  }
 
   // Guard: Google supports up to 20 seed keywords
   const seeds = uncachedKeywords.slice(0, 20);
@@ -269,7 +300,7 @@ export async function runGoogleKeywordResearch({
     headers: {
       'Content-Type': 'application/json',
       'developer-token': DEVELOPER_TOKEN!,
-      'login-customer-id': loginCustomerId!,
+      'login-customer-id': loginCustomerId,
       Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({ ...requestBody, keywordSeed: { keywords: seeds } }),
@@ -278,7 +309,23 @@ export async function runGoogleKeywordResearch({
   if (!apiResponse.ok) {
     const errorData = await apiResponse.text();
     console.error('Google Ads API error:', errorData);
-    throw new Error(`Google Ads API error: ${apiResponse.status}`);
+    let errorMessage = `Google Ads API error: ${apiResponse.status}`;
+    try {
+      const errorJson = JSON.parse(errorData);
+      if (errorJson.error?.message) {
+        errorMessage = `Google Ads API error: ${errorJson.error.message}`;
+      } else if (errorJson.message) {
+        errorMessage = `Google Ads API error: ${errorJson.message}`;
+      } else if (errorData) {
+        errorMessage = `Google Ads API error (${apiResponse.status}): ${errorData.substring(0, 200)}`;
+      }
+    } catch {
+      // If errorData is not JSON, include it as-is
+      if (errorData) {
+        errorMessage = `Google Ads API error (${apiResponse.status}): ${errorData.substring(0, 200)}`;
+      }
+    }
+    throw new Error(errorMessage);
   }
 
   const responseData = await apiResponse.json();

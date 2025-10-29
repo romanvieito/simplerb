@@ -21,13 +21,14 @@ if (!clientId || !clientSecret) {
 }
 const redirectUri = 'http://localhost:3000/oauth/callback';
 
-const postData = JSON.stringify({
+// OAuth2 token endpoint expects application/x-www-form-urlencoded, not JSON
+const postData = new URLSearchParams({
   client_id: clientId,
   client_secret: clientSecret,
   code: code,
   grant_type: 'authorization_code',
   redirect_uri: redirectUri
-});
+}).toString();
 
 const options = {
   hostname: 'oauth2.googleapis.com',
@@ -35,7 +36,7 @@ const options = {
   path: '/token',
   method: 'POST',
   headers: {
-    'Content-Type': 'application/json',
+    'Content-Type': 'application/x-www-form-urlencoded',
     'Content-Length': Buffer.byteLength(postData)
   }
 };
@@ -63,6 +64,9 @@ const req = https.request(options, (res) => {
         console.log('');
         console.log('🚀 Then redeploy:');
         console.log('vercel --prod');
+        console.log('');
+        console.log('✅ Remember to update both local (.env.local) and production (Vercel) environments!');
+        console.log('📚 Run "node scripts/check-token-health.js" monthly to monitor token health.');
       } else {
         console.log('❌ Error getting refresh token:');
         console.log(JSON.stringify(response, null, 2));
