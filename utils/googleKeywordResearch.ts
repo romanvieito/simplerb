@@ -371,7 +371,7 @@ export async function runGoogleKeywordResearch({
         reason:
           source === 'google_ads_api'
             ? 'Real data from Google Ads Keyword Planning API'
-            : 'Google Ads API returned no data (unusual with Standard Access)',
+            : 'Try again later. No data available.',
         cached: false,
       },
     }));

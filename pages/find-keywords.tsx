@@ -514,12 +514,6 @@ export default function FindKeywords(): JSX.Element {
 
           {results.length > 0 && (
             <div className="mt-8 w-full">
-              {dataSource && results[0]._meta?.reason && (
-                <div className={`mb-4 p-3 rounded text-sm ${dataSource === 'mock_fallback' ? 'bg-yellow-50 border border-yellow-200 text-yellow-800' : dataSource === 'openai_generated' ? 'bg-blue-50 border border-blue-200 text-blue-700' : 'bg-gray-50 border border-gray-200 text-gray-700'}`}>
-                  {results[0]._meta.reason}
-                </div>
-              )}
-              
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
