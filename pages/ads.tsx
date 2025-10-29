@@ -14,6 +14,13 @@ import LoadingDots from "../components/LoadingDots";
 const STORAGE_KEY = 'last-campaign-keywords';
 const COLUMN_VISIBILITY_KEY = 'ads-table-column-visibility';
 const SORT_STATE_KEY = 'ads-table-sort-state';
+const UI_ACTIVE_TAB_KEY = 'ads-ui-active-tab';
+const UI_SHOW_KW_TABLE_KEY = 'ads-ui-show-kw-table';
+const UI_CAMPAIGNS_COLUMNS_KEY = 'ads-ui-campaigns-columns';
+const UI_DATE_FILTER_KEY = 'ads-ui-date-filter';
+const UI_MAIN_PAGINATION_KEY = 'ads-ui-main-pagination';
+const UI_SIMILAR_PREFS_KEY = 'ads-ui-similar-prefs';
+const UI_SELECTED_INPUT_KWS_KEY = 'ads-ui-selected-input-kws';
 
 // Column visibility type
 type ColumnVisibilityState = {
@@ -92,6 +99,118 @@ const loadSortState = (): SortState | null => {
   return null;
 };
 
+// UI: Active tab
+const saveActiveTab = (tab: 'analysis' | 'similar') => {
+  if (typeof window === 'undefined') return;
+  try { localStorage.setItem(UI_ACTIVE_TAB_KEY, tab); } catch {}
+};
+const loadActiveTab = (): 'analysis' | 'similar' | null => {
+  if (typeof window === 'undefined') return null;
+  try { return (localStorage.getItem(UI_ACTIVE_TAB_KEY) as any) || null; } catch { return null; }
+};
+
+// UI: KW table toggle
+const saveShowKwTable = (show: boolean) => {
+  if (typeof window === 'undefined') return;
+  try { localStorage.setItem(UI_SHOW_KW_TABLE_KEY, JSON.stringify(show)); } catch {}
+};
+const loadShowKwTable = (): boolean | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const v = localStorage.getItem(UI_SHOW_KW_TABLE_KEY);
+    return v == null ? null : JSON.parse(v);
+  } catch { return null; }
+};
+
+// UI: Campaigns summary columns
+type CampaignsColumns = {
+  name: boolean;
+  impressions: boolean;
+  clicks: boolean;
+  ctr: boolean;
+  cost: boolean;
+  avgCpc: boolean;
+  conversions: boolean;
+  conversionRate: boolean;
+  cpa: boolean;
+  conversionValue: boolean;
+  impressionShare: boolean;
+};
+const saveCampaignsColumns = (cols: CampaignsColumns) => {
+  if (typeof window === 'undefined') return;
+  try { localStorage.setItem(UI_CAMPAIGNS_COLUMNS_KEY, JSON.stringify(cols)); } catch {}
+};
+const loadCampaignsColumns = (): CampaignsColumns | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const v = localStorage.getItem(UI_CAMPAIGNS_COLUMNS_KEY);
+    return v ? (JSON.parse(v) as CampaignsColumns) : null;
+  } catch { return null; }
+};
+
+// UI: Date filter
+type DateFilterState = { startDate: string; endDate: string; preset: string };
+const saveDateFilter = (df: DateFilterState) => {
+  if (typeof window === 'undefined') return;
+  try { localStorage.setItem(UI_DATE_FILTER_KEY, JSON.stringify(df)); } catch {}
+};
+const loadDateFilter = (): DateFilterState | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const v = localStorage.getItem(UI_DATE_FILTER_KEY);
+    return v ? (JSON.parse(v) as DateFilterState) : null;
+  } catch { return null; }
+};
+
+// UI: Main pagination
+type MainPaginationState = { page: number; itemsPerPage: number };
+const saveMainPagination = (pg: MainPaginationState) => {
+  if (typeof window === 'undefined') return;
+  try { localStorage.setItem(UI_MAIN_PAGINATION_KEY, JSON.stringify(pg)); } catch {}
+};
+const loadMainPagination = (): MainPaginationState | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const v = localStorage.getItem(UI_MAIN_PAGINATION_KEY);
+    return v ? (JSON.parse(v) as MainPaginationState) : null;
+  } catch { return null; }
+};
+
+// UI: Similar keywords preferences
+type SimilarPrefs = {
+  viewMode: 'grid' | 'table';
+  page: number;
+  rowsPerPage: number;
+  sortField: 'keyword' | 'searchVolume' | 'competition' | 'minCpc' | 'maxCpc' | 'sourceKeyword' | null;
+  sortDirection: 'asc' | 'desc';
+  countryCode: string;
+  languageCode: string;
+};
+const saveSimilarPrefs = (prefs: SimilarPrefs) => {
+  if (typeof window === 'undefined') return;
+  try { localStorage.setItem(UI_SIMILAR_PREFS_KEY, JSON.stringify(prefs)); } catch {}
+};
+const loadSimilarPrefs = (): SimilarPrefs | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const v = localStorage.getItem(UI_SIMILAR_PREFS_KEY);
+    return v ? (JSON.parse(v) as SimilarPrefs) : null;
+  } catch { return null; }
+};
+
+// UI: Selected input keywords
+const saveSelectedInputKeywords = (kws: string[]) => {
+  if (typeof window === 'undefined') return;
+  try { localStorage.setItem(UI_SELECTED_INPUT_KWS_KEY, JSON.stringify(kws)); } catch {}
+};
+const loadSelectedInputKeywords = (): string[] | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const v = localStorage.getItem(UI_SELECTED_INPUT_KWS_KEY);
+    return v ? (JSON.parse(v) as string[]) : null;
+  } catch { return null; }
+};
+
 interface SavedCampaignKeywordsData {
   campaignKeywords: CampaignKeyword[];
   selectedCampaignIds: string[];
@@ -165,7 +284,7 @@ const AdsPage = () => {
   const { openSignIn } = useClerk();
   const { isLoaded, user, isSignedIn } = useUser();
 
-  const [activeTab, setActiveTab] = useState<'analysis' | 'similar'>('analysis');
+  const [activeTab, setActiveTab] = useState<'analysis' | 'similar'>(() => loadActiveTab() ?? 'analysis');
   const [loading, setLoading] = useState(false);
   const [fetchingKeywords, setFetchingKeywords] = useState(false);
   const [findingSimilar, setFindingSimilar] = useState(false);
@@ -176,7 +295,7 @@ const AdsPage = () => {
   const [showCurrentKeywords, setShowCurrentKeywords] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   // Toggle to control showing keyword table and fetching keywords
-  const [showKeywordsTable, setShowKeywordsTable] = useState(true);
+  const [showKeywordsTable, setShowKeywordsTable] = useState<boolean>(() => loadShowKwTable() ?? true);
   // Campaigns summary state
   const [campaignsSummary, setCampaignsSummary] = useState<Array<{
     id: string;
@@ -198,19 +317,21 @@ const AdsPage = () => {
   // Campaigns summary column selector state
   const [showCampaignsColumnSelector, setShowCampaignsColumnSelector] = useState(false);
   const campaignsColumnSelectorRef = useRef<HTMLDivElement>(null);
-  const [campaignsVisibleColumns, setCampaignsVisibleColumns] = useState({
-    name: true,
-    impressions: true,
-    clicks: true,
-    ctr: true,
-    cost: true,
-    avgCpc: true,
-    conversions: true,
-    conversionRate: true,
-    cpa: true,
-    conversionValue: true,
-    impressionShare: true,
-  });
+  const [campaignsVisibleColumns, setCampaignsVisibleColumns] = useState<CampaignsColumns>(() =>
+    loadCampaignsColumns() ?? {
+      name: true,
+      impressions: true,
+      clicks: true,
+      ctr: true,
+      cost: true,
+      avgCpc: true,
+      conversions: true,
+      conversionRate: true,
+      cpa: true,
+      conversionValue: true,
+      impressionShare: true,
+    }
+  );
   // Sort state - initialize from localStorage or use defaults
   const [sortColumn, setSortColumn] = useState<'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'qualityScore' | 'impressionShare' | null>(() => {
     const saved = loadSortState();
@@ -220,18 +341,19 @@ const AdsPage = () => {
     const saved = loadSortState();
     return saved?.sortDirection ?? 'desc';
   });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(50);
+  const [currentPage, setCurrentPage] = useState<number>(() => loadMainPagination()?.page ?? 1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(() => loadMainPagination()?.itemsPerPage ?? 50);
   const [showColumnSelector, setShowColumnSelector] = useState(false);
   
   // Similar keywords view and pagination state
-  const [similarKeywordsViewMode, setSimilarKeywordsViewMode] = useState<'grid' | 'table'>('table');
-  const [similarKeywordsPage, setSimilarKeywordsPage] = useState(0);
-  const [similarKeywordsRowsPerPage, setSimilarKeywordsRowsPerPage] = useState(50);
-  const [similarKeywordsSortField, setSimilarKeywordsSortField] = useState<'keyword' | 'searchVolume' | 'competition' | 'minCpc' | 'maxCpc' | 'sourceKeyword' | null>(null);
-  const [similarKeywordsSortDirection, setSimilarKeywordsSortDirection] = useState<'asc' | 'desc'>('desc');
-  const [similarKeywordsCountryCode, setSimilarKeywordsCountryCode] = useState('US');
-  const [similarKeywordsLanguageCode, setSimilarKeywordsLanguageCode] = useState('en');
+  const initialSimilarPrefs = loadSimilarPrefs();
+  const [similarKeywordsViewMode, setSimilarKeywordsViewMode] = useState<'grid' | 'table'>(initialSimilarPrefs?.viewMode ?? 'table');
+  const [similarKeywordsPage, setSimilarKeywordsPage] = useState<number>(initialSimilarPrefs?.page ?? 0);
+  const [similarKeywordsRowsPerPage, setSimilarKeywordsRowsPerPage] = useState<number>(initialSimilarPrefs?.rowsPerPage ?? 50);
+  const [similarKeywordsSortField, setSimilarKeywordsSortField] = useState<'keyword' | 'searchVolume' | 'competition' | 'minCpc' | 'maxCpc' | 'sourceKeyword' | null>(initialSimilarPrefs?.sortField ?? null);
+  const [similarKeywordsSortDirection, setSimilarKeywordsSortDirection] = useState<'asc' | 'desc'>(initialSimilarPrefs?.sortDirection ?? 'desc');
+  const [similarKeywordsCountryCode, setSimilarKeywordsCountryCode] = useState<string>(initialSimilarPrefs?.countryCode ?? 'US');
+  const [similarKeywordsLanguageCode, setSimilarKeywordsLanguageCode] = useState<string>(initialSimilarPrefs?.languageCode ?? 'en');
   const [selectedSimilarKeywords, setSelectedSimilarKeywords] = useState<Set<string>>(new Set());
   const [selectedInputKeywords, setSelectedInputKeywords] = useState<Set<string>>(new Set());
   
@@ -265,22 +387,17 @@ const AdsPage = () => {
   });
 
   // Date filter state
-  const [startDate, setStartDate] = useState<string>(() => {
-    const date = new Date();
-    date.setDate(date.getDate() - 7); // Default to last 7 days
-    return date.toISOString().split('T')[0];
-  });
-  const [endDate, setEndDate] = useState<string>(() => {
-    const date = new Date();
-    return date.toISOString().split('T')[0];
-  });
-  const [selectedDatePreset, setSelectedDatePreset] = useState<string>('last7days');
+  const loadedDateFilter = loadDateFilter();
+  const [startDate, setStartDate] = useState<string>(() => loadedDateFilter?.startDate ?? (() => { const d = new Date(); d.setDate(d.getDate() - 7); return d.toISOString().split('T')[0]; })());
+  const [endDate, setEndDate] = useState<string>(() => loadedDateFilter?.endDate ?? new Date().toISOString().split('T')[0]);
+  const [selectedDatePreset, setSelectedDatePreset] = useState<string>(loadedDateFilter?.preset ?? 'last7days');
   const [showDateFilter, setShowDateFilter] = useState(false);
 
   // Refs to prevent save loops during initial load
   const isInitialLoad = useRef(true);
   const hasLoadedSavedData = useRef(false);
   const columnSelectorRef = useRef<HTMLDivElement>(null);
+  const inputKwInitializedFromStorage = useRef(false);
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -383,6 +500,17 @@ const AdsPage = () => {
   useEffect(() => {
     if (campaignKeywords.length > 0) {
       const uniqueKeywords = Array.from(new Set(campaignKeywords.map(k => k.keyword)));
+      if (!inputKwInitializedFromStorage.current) {
+        const saved = loadSelectedInputKeywords();
+        if (saved && saved.length > 0) {
+          const allowed = new Set(uniqueKeywords);
+          const intersect = saved.filter(k => allowed.has(k));
+          setSelectedInputKeywords(new Set(intersect));
+          inputKwInitializedFromStorage.current = true;
+          return;
+        }
+        inputKwInitializedFromStorage.current = true;
+      }
       setSelectedInputKeywords(new Set(uniqueKeywords));
     } else {
       setSelectedInputKeywords(new Set());
@@ -1095,6 +1223,64 @@ const AdsPage = () => {
     });
   }, [sortColumn, sortDirection]);
 
+  // Persist active tab
+  useEffect(() => {
+    if (isInitialLoad.current) return;
+    saveActiveTab(activeTab);
+  }, [activeTab]);
+
+  // Persist KW table toggle
+  useEffect(() => {
+    if (isInitialLoad.current) return;
+    saveShowKwTable(showKeywordsTable);
+  }, [showKeywordsTable]);
+
+  // Persist campaigns summary columns
+  useEffect(() => {
+    if (isInitialLoad.current) return;
+    saveCampaignsColumns(campaignsVisibleColumns);
+  }, [campaignsVisibleColumns]);
+
+  // Persist date filter
+  useEffect(() => {
+    if (isInitialLoad.current) return;
+    saveDateFilter({ startDate, endDate, preset: selectedDatePreset });
+  }, [startDate, endDate, selectedDatePreset]);
+
+  // Persist main pagination
+  useEffect(() => {
+    if (isInitialLoad.current) return;
+    saveMainPagination({ page: currentPage, itemsPerPage });
+  }, [currentPage, itemsPerPage]);
+
+  // Persist similar keywords preferences
+  useEffect(() => {
+    if (isInitialLoad.current) return;
+    saveSimilarPrefs({
+      viewMode: similarKeywordsViewMode,
+      page: similarKeywordsPage,
+      rowsPerPage: similarKeywordsRowsPerPage,
+      sortField: similarKeywordsSortField,
+      sortDirection: similarKeywordsSortDirection,
+      countryCode: similarKeywordsCountryCode,
+      languageCode: similarKeywordsLanguageCode,
+    });
+  }, [
+    similarKeywordsViewMode,
+    similarKeywordsPage,
+    similarKeywordsRowsPerPage,
+    similarKeywordsSortField,
+    similarKeywordsSortDirection,
+    similarKeywordsCountryCode,
+    similarKeywordsLanguageCode,
+  ]);
+
+  // Persist selected input keywords
+  useEffect(() => {
+    if (isInitialLoad.current) return;
+    saveSelectedInputKeywords(Array.from(selectedInputKeywords));
+  }, [selectedInputKeywords]);
+
   return (
     <div className="flex w-full flex-col items-center justify-center py-4 min-h-screen bg-white">
       <Head>
@@ -1263,25 +1449,6 @@ const AdsPage = () => {
                     )}
                   </div>
                 )}
-                {/* Divider and KW toggle row (above Date Range and Columns) */}
-                <div className="border-t border-gray-200 my-3" />
-                <div className="flex items-center justify-end mb-2">
-                  <label className="flex items-center gap-2 bg-gray-100 border border-gray-200 rounded-lg px-2.5 py-2 text-sm text-gray-700 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={showKeywordsTable}
-                      onChange={(e) => {
-                        const next = e.target.checked;
-                        setShowKeywordsTable(next);
-                        if (next && campaignKeywords.length === 0 && admin && isLoaded && isSignedIn) {
-                          fetchCampaignKeywords();
-                        }
-                      }}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <span>KW table</span>
-                  </label>
-                </div>
                 {/* Single row with Date Filter, Title, and Controls */}
                 <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   {/* Date Filter on the left */}
@@ -1383,7 +1550,23 @@ const AdsPage = () => {
                           </div>
                         )}
                       </div>
-                      
+                      {/* Minimal vertical divider and KW toggle in same row */}
+                      <span className="hidden sm:block h-6 w-px bg-gray-200 mx-2" />
+                      <label className="flex items-center gap-2 bg-gray-100 border border-gray-200 rounded-lg px-2.5 py-2 text-sm text-gray-700 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={showKeywordsTable}
+                          onChange={(e) => {
+                            const next = e.target.checked;
+                            setShowKeywordsTable(next);
+                            if (next && campaignKeywords.length === 0 && admin && isLoaded && isSignedIn) {
+                              fetchCampaignKeywords();
+                            }
+                          }}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <span>KW table</span>
+                      </label>
                     </div>
                   </div>
                 </div>
