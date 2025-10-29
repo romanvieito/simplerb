@@ -1422,7 +1422,23 @@ const AdsPage = () => {
                 {/* Campaign Selector inside Campaigns Summary (moved above Date Range) */}
                 {availableCampaigns.length > 0 && (
                   <div className="mb-4">
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center flex-wrap gap-2">
+                      <label className="flex items-center gap-2 bg-gray-100 border border-gray-200 rounded-lg px-2.5 py-2 text-sm text-gray-700 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={showKeywordsTable}
+                          onChange={(e) => {
+                            const next = e.target.checked;
+                            setShowKeywordsTable(next);
+                            if (next && campaignKeywords.length === 0 && admin && isLoaded && isSignedIn) {
+                              fetchCampaignKeywords();
+                            }
+                          }}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <span>KW table</span>
+                      </label>
+                      <span className="hidden sm:block h-6 w-px bg-gray-200 mx-1" />
                       <div className="flex flex-wrap gap-2">
                         {availableCampaigns.map((campaign) => (
                           <label
@@ -1445,22 +1461,7 @@ const AdsPage = () => {
                           </label>
                         ))}
                       </div>
-                      <span className="hidden sm:block h-6 w-px bg-gray-200 mx-2" />
-                      <label className="flex items-center gap-2 bg-gray-100 border border-gray-200 rounded-lg px-2.5 py-2 text-sm text-gray-700 cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={showKeywordsTable}
-                          onChange={(e) => {
-                            const next = e.target.checked;
-                            setShowKeywordsTable(next);
-                            if (next && campaignKeywords.length === 0 && admin && isLoaded && isSignedIn) {
-                              fetchCampaignKeywords();
-                            }
-                          }}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                        <span>KW table</span>
-                      </label>
+                      
                     </div>
                     {!admin && (
                       <p className="text-xs text-gray-500 text-center mt-2">Admin access required</p>
