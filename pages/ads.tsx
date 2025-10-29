@@ -1231,6 +1231,36 @@ const AdsPage = () => {
             {/* Campaigns Summary */}
             <div className="w-full mb-6">
               <div className="bg-white rounded-xl border border-gray-100 p-4">
+                {/* Campaign Selector inside Campaigns Summary (moved above Date Range) */}
+                {availableCampaigns.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex flex-wrap gap-2">
+                      {availableCampaigns.map((campaign) => (
+                        <label
+                          key={campaign.id}
+                          className="flex items-center space-x-2 px-3 py-1.5 rounded-md border border-gray-200 hover:border-blue-300 cursor-pointer transition-all bg-gray-50 hover:bg-blue-50"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedCampaignIds.includes(campaign.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedCampaignIds([...selectedCampaignIds, campaign.id]);
+                              } else {
+                                setSelectedCampaignIds(selectedCampaignIds.filter(id => id !== campaign.id));
+                              }
+                            }}
+                            className="w-3 h-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <span className="text-xs text-gray-700 font-medium">{campaign.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {!admin && (
+                      <p className="text-xs text-gray-500 text-center mt-2">Admin access required</p>
+                    )}
+                  </div>
+                )}
                 {/* Single row with Date Filter, Title, and Controls */}
                 <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   {/* Date Filter on the left */}
@@ -1336,36 +1366,7 @@ const AdsPage = () => {
                     </div>
                   </div>
                 </div>
-                {/* Campaign Selector inside Campaigns Summary */}
-                {availableCampaigns.length > 0 && (
-                  <div className="mb-4">
-                    <div className="flex flex-wrap gap-2">
-                      {availableCampaigns.map((campaign) => (
-                        <label
-                          key={campaign.id}
-                          className="flex items-center space-x-2 px-3 py-1.5 rounded-md border border-gray-200 hover:border-blue-300 cursor-pointer transition-all bg-gray-50 hover:bg-blue-50"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedCampaignIds.includes(campaign.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedCampaignIds([...selectedCampaignIds, campaign.id]);
-                              } else {
-                                setSelectedCampaignIds(selectedCampaignIds.filter(id => id !== campaign.id));
-                              }
-                            }}
-                            className="w-3 h-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                          />
-                          <span className="text-xs text-gray-700 font-medium">{campaign.name}</span>
-                        </label>
-                      ))}
-                    </div>
-                    {!admin && (
-                      <p className="text-xs text-gray-500 text-center mt-2">Admin access required</p>
-                    )}
-                  </div>
-                )}
+                
                 {loadingCampaignsSummary ? (
                   <div className="py-6 flex justify-center"><LoadingDots color="black" style="small" /></div>
                 ) : campaignsSummary.length === 0 ? (
