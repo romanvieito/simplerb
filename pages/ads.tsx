@@ -1074,11 +1074,9 @@ const AdsPage = () => {
         {/* Campaign Selector */}
         {availableCampaigns.length > 0 && (
           <div className="w-full max-w-4xl mx-auto mb-6">
-            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Select Campaigns to Analyze
-                </h3>
+            <div className="bg-white rounded-xl border border-gray-100 p-4">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-sm font-medium text-gray-700">Campaigns</span>
                 <button
                   onClick={() => {
                     if (selectedCampaignIds.length === availableCampaigns.length) {
@@ -1087,16 +1085,16 @@ const AdsPage = () => {
                       setSelectedCampaignIds(availableCampaigns.map(c => c.id));
                     }
                   }}
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  className="text-xs text-blue-600 hover:text-blue-700 font-medium"
                 >
                   {selectedCampaignIds.length === availableCampaigns.length ? 'Deselect All' : 'Select All'}
                 </button>
-            </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              </div>
+              <div className="flex flex-wrap gap-2">
                 {availableCampaigns.map((campaign) => (
                   <label
                     key={campaign.id}
-                    className="flex items-center space-x-3 p-3 rounded-lg border-2 border-gray-200 hover:border-blue-300 cursor-pointer transition-all"
+                    className="flex items-center space-x-2 px-3 py-1.5 rounded-md border border-gray-200 hover:border-blue-300 cursor-pointer transition-all bg-gray-50 hover:bg-blue-50"
                   >
                     <input
                       type="checkbox"
@@ -1108,128 +1106,97 @@ const AdsPage = () => {
                           setSelectedCampaignIds(selectedCampaignIds.filter(id => id !== campaign.id));
                         }
                       }}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      className="w-3 h-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
-                    <span className="text-sm text-gray-700 font-medium flex-1">{campaign.name}</span>
+                    <span className="text-xs text-gray-700 font-medium">{campaign.name}</span>
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-gray-500 mt-4">
-                {selectedCampaignIds.length === 0 
-                  ? 'Select one or more campaigns above. If none selected, all campaigns will be analyzed.'
-                  : `${selectedCampaignIds.length} of ${availableCampaigns.length} campaign${availableCampaigns.length !== 1 ? 's' : ''} selected`}
-              </p>
-                </div>
-              </div>
-            )}
+              {selectedCampaignIds.length > 0 && (
+                <p className="text-xs text-gray-500 mt-2">
+                  {selectedCampaignIds.length} of {availableCampaigns.length} selected
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Date Filter */}
         <div className="w-full max-w-4xl mx-auto mb-6">
-          <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Date Range
-              </h3>
-              <button
-                onClick={() => setShowDateFilter(!showDateFilter)}
-                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                </svg>
-                <span>{datePresets.find(p => p.value === selectedDatePreset)?.label || 'Custom Range'}</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform ${showDateFilter ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </button>
-            </div>
-
-            {showDateFilter && (
-              <div className="space-y-4">
-                {/* Preset buttons */}
-                <div className="flex flex-wrap gap-2">
-                  {datePresets.map((preset) => (
-                    <button
-                      key={preset.value}
-                      onClick={() => handleDatePresetChange(preset.value)}
-                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        selectedDatePreset === preset.value
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Custom date inputs */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Start Date
-                    </label>
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => {
-                        setStartDate(e.target.value);
-                        setSelectedDatePreset('custom');
-                      }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      End Date
-                    </label>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => {
-                        setEndDate(e.target.value);
-                        setSelectedDatePreset('custom');
-                      }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
+          <div className="bg-white rounded-xl border border-gray-100 p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <span className="text-sm font-medium text-gray-700">Date Range</span>
+              <div className="flex flex-wrap gap-2">
+                {datePresets.map((preset) => (
+                  <button
+                    key={preset.value}
+                    onClick={() => handleDatePresetChange(preset.value)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                      selectedDatePreset === preset.value
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => {
+                      setStartDate(e.target.value);
+                      setSelectedDatePreset('custom');
+                    }}
+                    className="px-2 py-1.5 text-xs border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => {
+                      setEndDate(e.target.value);
+                      setSelectedDatePreset('custom');
+                    }}
+                    className="px-2 py-1.5 text-xs border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  />
                 </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="w-full max-w-4xl mx-auto space-y-4 mb-8">
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <button
-              onClick={fetchCampaignKeywords}
-              disabled={fetchingKeywords || !admin}
-              className="bg-blue-600 text-white rounded-lg px-6 py-3 hover:bg-blue-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm font-medium"
-            >
-              {fetchingKeywords ? (
-                <>
-                  <LoadingDots color="white" style="small" />
-                  <span>Fetching Keywords...</span>
-                </>
-              ) : (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-                  </svg>
-                  <span>Analyze {selectedCampaignIds.length > 0 ? `Selected Campaign${selectedCampaignIds.length !== 1 ? 's' : ''}` : 'All Campaigns'}</span>
-                </>
-              )}
-            </button>
+        <div className="w-full max-w-4xl mx-auto mb-8">
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-center">
+              <button
+                onClick={fetchCampaignKeywords}
+                disabled={fetchingKeywords || !admin}
+                className="bg-blue-600 text-white rounded-lg px-6 py-2.5 hover:bg-blue-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
+              >
+                {fetchingKeywords ? (
+                  <>
+                    <LoadingDots color="white" style="small" />
+                    <span>Analyzing...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                    </svg>
+                    <span>Analyze Campaigns</span>
+                  </>
+                )}
+              </button>
+            </div>
 
             {campaignKeywords.length > 0 && (
-              <>
-                <div className="flex items-center gap-3">
-                  <label className="text-sm text-gray-600 font-medium">Location:</label>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                <div className="flex items-center gap-2">
                   <select
                     value={similarKeywordsCountryCode}
                     onChange={(e) => setSimilarKeywordsCountryCode(e.target.value)}
-                    className="bg-white border border-gray-200 rounded px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                    className="bg-white border border-gray-200 rounded px-3 py-1.5 text-xs text-gray-700 focus:border-blue-500 focus:outline-none"
                   >
                     <option value="WORLD">World</option>
                     <option value="US">United States</option>
@@ -1249,7 +1216,7 @@ const AdsPage = () => {
                   <select
                     value={similarKeywordsLanguageCode}
                     onChange={(e) => setSimilarKeywordsLanguageCode(e.target.value)}
-                    className="bg-white border border-gray-200 rounded px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none"
+                    className="bg-white border border-gray-200 rounded px-3 py-1.5 text-xs text-gray-700 focus:border-blue-500 focus:outline-none"
                   >
                     <option value="en">English</option>
                     <option value="es">Spanish</option>
@@ -1267,30 +1234,30 @@ const AdsPage = () => {
                 <button
                   onClick={findSimilarKeywords}
                   disabled={findingSimilar}
-                  className="bg-indigo-600 text-white rounded-lg px-6 py-3 hover:bg-indigo-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm font-medium"
+                  className="bg-indigo-600 text-white rounded-lg px-4 py-2 hover:bg-indigo-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
                 >
                   {findingSimilar ? (
                     <>
                       <LoadingDots color="white" style="small" />
-                      <span>Finding Similar Keywords...</span>
+                      <span>Finding...</span>
                     </>
                   ) : (
                     <>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
                       </svg>
                       <span>Find Similar Keywords</span>
                     </>
                   )}
                 </button>
-              </>
+              </div>
             )}
-                    </div>
 
-          {!admin && (
-            <p className="text-sm text-gray-500">Admin access required to analyze campaigns</p>
-          )}
-                    </div>
+            {!admin && (
+              <p className="text-xs text-gray-500 text-center">Admin access required</p>
+            )}
+          </div>
+        </div>
 
         {/* Current Keywords */}
         {showCurrentKeywords && campaignKeywords.length > 0 && (
