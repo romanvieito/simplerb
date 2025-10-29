@@ -175,6 +175,8 @@ const AdsPage = () => {
   const [selectedCampaignIds, setSelectedCampaignIds] = useState<string[]>([]);
   const [showCurrentKeywords, setShowCurrentKeywords] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  // Toggle to control showing keyword table and fetching keywords
+  const [showKeywordsTable, setShowKeywordsTable] = useState(true);
   // Campaigns summary state
   const [campaignsSummary, setCampaignsSummary] = useState<Array<{
     id: string;
@@ -578,11 +580,11 @@ const AdsPage = () => {
 
   // Auto-fetch keywords when date range or selected campaigns change
   useEffect(() => {
-    if (isLoaded && isSignedIn && admin) {
+    if (isLoaded && isSignedIn && admin && showKeywordsTable) {
       fetchCampaignKeywords();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startDate, endDate, selectedCampaignIds, isLoaded, isSignedIn, admin]);
+  }, [startDate, endDate, selectedCampaignIds, isLoaded, isSignedIn, admin, showKeywordsTable]);
 
   const findSimilarKeywords = async () => {
     if (campaignKeywords.length === 0) {
@@ -1362,7 +1364,22 @@ const AdsPage = () => {
                           </div>
                         )}
                       </div>
-                      {/* Manual refresh removed; summary auto-refreshes on date/selection changes */}
+                      {/* KW table toggle to avoid extra API usage and clutter */}
+                      <label className="flex items-center gap-2 bg-gray-100 border border-gray-200 rounded-lg px-2.5 py-2 text-sm text-gray-700 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={showKeywordsTable}
+                          onChange={(e) => {
+                            const next = e.target.checked;
+                            setShowKeywordsTable(next);
+                            if (next && campaignKeywords.length === 0 && admin && isLoaded && isSignedIn) {
+                              fetchCampaignKeywords();
+                            }
+                          }}
+                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <span>KW table</span>
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -1600,7 +1617,7 @@ const AdsPage = () => {
         )}
 
         {/* Current Keywords - Analysis Tab */}
-        {activeTab === 'analysis' && showCurrentKeywords && campaignKeywords.length > 0 && (
+        {activeTab === 'analysis' && showKeywordsTable && showCurrentKeywords && campaignKeywords.length > 0 && (
           <div className="w-full mb-8">
             <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6">
               {/* Column Selector */}
