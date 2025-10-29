@@ -11,6 +11,52 @@ import LoadingDots from "../components/LoadingDots";
 
 // LocalStorage utility functions for saving/loading campaign keywords
 const STORAGE_KEY = 'last-campaign-keywords';
+const COLUMN_VISIBILITY_KEY = 'ads-table-column-visibility';
+
+// Column visibility type
+type ColumnVisibilityState = {
+  keyword: boolean;
+  campaign: boolean;
+  adGroup: boolean;
+  impressions: boolean;
+  clicks: boolean;
+  ctr: boolean;
+  cost: boolean;
+  bid: boolean;
+  avgCpc: boolean;
+  conversions: boolean;
+  conversionRate: boolean;
+  cpa: boolean;
+  conversionValue: boolean;
+  qualityScore: boolean;
+  impressionShare: boolean;
+};
+
+// Save column visibility preferences
+const saveColumnVisibility = (visibility: ColumnVisibilityState) => {
+  if (typeof window === 'undefined') return; // SSR safety
+  
+  try {
+    localStorage.setItem(COLUMN_VISIBILITY_KEY, JSON.stringify(visibility));
+  } catch (error) {
+    console.warn('Failed to save column visibility to localStorage:', error);
+  }
+};
+
+// Load column visibility preferences
+const loadColumnVisibility = (): ColumnVisibilityState | null => {
+  if (typeof window === 'undefined') return null; // SSR safety
+  
+  try {
+    const saved = localStorage.getItem(COLUMN_VISIBILITY_KEY);
+    if (saved) {
+      return JSON.parse(saved) as ColumnVisibilityState;
+    }
+  } catch (error) {
+    console.warn('Failed to load column visibility from localStorage:', error);
+  }
+  return null;
+};
 
 interface SavedCampaignKeywordsData {
   campaignKeywords: CampaignKeyword[];
@@ -99,10 +145,41 @@ const AdsPage = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(50);
+  const [showColumnSelector, setShowColumnSelector] = useState(false);
+  
+  // Default column visibility - all columns visible by default
+  const defaultColumnVisibility = {
+    keyword: true, // Always visible
+    campaign: true,
+    adGroup: true,
+    impressions: true,
+    clicks: true,
+    ctr: true,
+    cost: true,
+    bid: true,
+    avgCpc: true,
+    conversions: true,
+    conversionRate: true,
+    cpa: true,
+    conversionValue: true,
+    qualityScore: true,
+    impressionShare: true,
+  };
+
+  // Column visibility state - initialize from localStorage or use defaults
+  const [visibleColumns, setVisibleColumns] = useState<ColumnVisibilityState>(() => {
+    const saved = loadColumnVisibility();
+    if (saved) {
+      // Ensure keyword is always true
+      return { ...saved, keyword: true };
+    }
+    return defaultColumnVisibility;
+  });
 
   // Refs to prevent save loops during initial load
   const isInitialLoad = useRef(true);
   const hasLoadedSavedData = useRef(false);
+  const columnSelectorRef = useRef<HTMLDivElement>(null);
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -200,6 +277,23 @@ const AdsPage = () => {
     }
     isInitialLoad.current = false;
   }, []);
+
+  // Close column selector when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (columnSelectorRef.current && !columnSelectorRef.current.contains(event.target as Node)) {
+        setShowColumnSelector(false);
+      }
+    };
+
+    if (showColumnSelector) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showColumnSelector]);
 
 
   const fetchCampaignKeywords = async () => {
@@ -530,6 +624,27 @@ const AdsPage = () => {
     setCurrentPage(1); // Reset to first page when changing items per page
   };
 
+  const handleColumnVisibilityToggle = (column: keyof typeof visibleColumns) => {
+    // Prevent toggling keyword column
+    if (column === 'keyword') return;
+    
+    setVisibleColumns(prev => ({
+      ...prev,
+      [column]: !prev[column]
+    }));
+  };
+
+  // Auto-save column visibility to localStorage when it changes (skip initial load)
+  useEffect(() => {
+    // Skip save on initial mount to avoid overwriting with defaults
+    if (isInitialLoad.current) {
+      return;
+    }
+    
+    // Save whenever visibleColumns changes
+    saveColumnVisibility(visibleColumns);
+  }, [visibleColumns]);
+
   return (
     <div className="flex max-w-6xl mx-auto flex-col items-center justify-center py-4 min-h-screen bg-white">
       <Head>
@@ -734,141 +849,260 @@ const AdsPage = () => {
         {showCurrentKeywords && campaignKeywords.length > 0 && (
           <div className="w-full max-w-6xl mx-auto mb-8">
             <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6">
+              {/* Column Selector */}
+              <div className="mb-4 flex justify-end relative" ref={columnSelectorRef}>
+                <button
+                  onClick={() => setShowColumnSelector(!showColumnSelector)}
+                  className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z" />
+                  </svg>
+                  <span>Columns</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform ${showColumnSelector ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+                
+                {showColumnSelector && (
+                  <div className="absolute right-0 top-full mt-2 bg-white rounded-lg shadow-xl border-2 border-gray-200 p-4 z-20 min-w-[220px]">
+                      <div className="flex justify-between items-center mb-3">
+                        <h3 className="text-sm font-semibold text-gray-900">Show/Hide Columns</h3>
+                        <button
+                          onClick={() => setShowColumnSelector(false)}
+                          className="text-gray-400 hover:text-gray-600"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="space-y-2 max-h-96 overflow-y-auto">
+                        {Object.entries(visibleColumns).map(([key, value]) => (
+                          <label
+                            key={key}
+                            className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={value}
+                              onChange={() => handleColumnVisibilityToggle(key as keyof typeof visibleColumns)}
+                              disabled={key === 'keyword'} // Keyword column always visible
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            />
+                            <span className={`text-sm text-gray-700 ${key === 'keyword' ? 'font-semibold' : ''}`}>
+                              {key === 'keyword' ? 'Keyword' :
+                               key === 'adGroup' ? 'Ad Group' :
+                               key === 'avgCpc' ? 'Avg CPC' :
+                               key === 'conversionRate' ? 'Conv. Rate' :
+                               key === 'conversionValue' ? 'Conv. Value' :
+                               key === 'qualityScore' ? 'Quality Score' :
+                               key === 'impressionShare' ? 'Impression Share' :
+                               key.charAt(0).toUpperCase() + key.slice(1)}
+                              {key === 'keyword' && <span className="text-xs text-gray-500 ml-1">(always visible)</span>}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                )}
+              </div>
+              
               <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kw ({campaignKeywords.length})</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Campaign</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ad Group</th>
-                        <th 
-                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                          onClick={() => handleSort('impressions')}
-                        >
-                          <div className="flex items-center justify-end">
-                            Impressions
-                            <SortArrow column="impressions" />
-                          </div>
-                        </th>
-                        <th 
-                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                          onClick={() => handleSort('clicks')}
-                        >
-                          <div className="flex items-center justify-end">
-                            Clicks
-                            <SortArrow column="clicks" />
-                          </div>
-                        </th>
-                        <th 
-                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                          onClick={() => handleSort('ctr')}
-                        >
-                          <div className="flex items-center justify-end">
-                            CTR
-                            <SortArrow column="ctr" />
-                          </div>
-                        </th>
-                        <th 
-                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                          onClick={() => handleSort('cost')}
-                        >
-                          <div className="flex items-center justify-end">
-                            Cost
-                            <SortArrow column="cost" />
-                          </div>
-                        </th>
-                        <th 
-                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                          onClick={() => handleSort('bid')}
-                        >
-                          <div className="flex items-center justify-end">
-                            Bid Amount
-                            <SortArrow column="bid" />
-                          </div>
-                        </th>
-                        <th 
-                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                          onClick={() => handleSort('avgCpc')}
-                        >
-                          <div className="flex items-center justify-end">
-                            Avg CPC
-                            <SortArrow column="avgCpc" />
-                          </div>
-                        </th>
-                        <th 
-                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                          onClick={() => handleSort('conversions')}
-                        >
-                          <div className="flex items-center justify-end">
-                            Conversions
-                            <SortArrow column="conversions" />
-                          </div>
-                        </th>
-                        <th 
-                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                          onClick={() => handleSort('conversionRate')}
-                        >
-                          <div className="flex items-center justify-end">
-                            Conv. Rate
-                            <SortArrow column="conversionRate" />
-                          </div>
-                        </th>
-                        <th 
-                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                          onClick={() => handleSort('cpa')}
-                        >
-                          <div className="flex items-center justify-end">
-                            CPA
-                            <SortArrow column="cpa" />
-                          </div>
-                        </th>
-                        <th 
-                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                          onClick={() => handleSort('conversionValue')}
-                        >
-                          <div className="flex items-center justify-end">
-                            Conv. Value
-                            <SortArrow column="conversionValue" />
-                          </div>
-                        </th>
-                        <th 
-                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                          onClick={() => handleSort('qualityScore')}
-                        >
-                          <div className="flex items-center justify-end">
-                            Quality Score
-                            <SortArrow column="qualityScore" />
-                          </div>
-                        </th>
-                        <th 
-                          className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                          onClick={() => handleSort('impressionShare')}
-                        >
-                          <div className="flex items-center justify-end">
-                            Impression Share
-                            <SortArrow column="impressionShare" />
-                          </div>
-                        </th>
+                        {visibleColumns.keyword && (
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kw ({campaignKeywords.length})</th>
+                        )}
+                        {visibleColumns.campaign && (
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Campaign</th>
+                        )}
+                        {visibleColumns.adGroup && (
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ad Group</th>
+                        )}
+                        {visibleColumns.impressions && (
+                          <th 
+                            className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                            onClick={() => handleSort('impressions')}
+                          >
+                            <div className="flex items-center justify-end">
+                              Impressions
+                              <SortArrow column="impressions" />
+                            </div>
+                          </th>
+                        )}
+                        {visibleColumns.clicks && (
+                          <th 
+                            className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                            onClick={() => handleSort('clicks')}
+                          >
+                            <div className="flex items-center justify-end">
+                              Clicks
+                              <SortArrow column="clicks" />
+                            </div>
+                          </th>
+                        )}
+                        {visibleColumns.ctr && (
+                          <th 
+                            className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                            onClick={() => handleSort('ctr')}
+                          >
+                            <div className="flex items-center justify-end">
+                              CTR
+                              <SortArrow column="ctr" />
+                            </div>
+                          </th>
+                        )}
+                        {visibleColumns.cost && (
+                          <th 
+                            className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                            onClick={() => handleSort('cost')}
+                          >
+                            <div className="flex items-center justify-end">
+                              Cost
+                              <SortArrow column="cost" />
+                            </div>
+                          </th>
+                        )}
+                        {visibleColumns.bid && (
+                          <th 
+                            className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                            onClick={() => handleSort('bid')}
+                          >
+                            <div className="flex items-center justify-end">
+                              Bid Amount
+                              <SortArrow column="bid" />
+                            </div>
+                          </th>
+                        )}
+                        {visibleColumns.avgCpc && (
+                          <th 
+                            className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                            onClick={() => handleSort('avgCpc')}
+                          >
+                            <div className="flex items-center justify-end">
+                              Avg CPC
+                              <SortArrow column="avgCpc" />
+                            </div>
+                          </th>
+                        )}
+                        {visibleColumns.conversions && (
+                          <th 
+                            className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                            onClick={() => handleSort('conversions')}
+                          >
+                            <div className="flex items-center justify-end">
+                              Conversions
+                              <SortArrow column="conversions" />
+                            </div>
+                          </th>
+                        )}
+                        {visibleColumns.conversionRate && (
+                          <th 
+                            className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                            onClick={() => handleSort('conversionRate')}
+                          >
+                            <div className="flex items-center justify-end">
+                              Conv. Rate
+                              <SortArrow column="conversionRate" />
+                            </div>
+                          </th>
+                        )}
+                        {visibleColumns.cpa && (
+                          <th 
+                            className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                            onClick={() => handleSort('cpa')}
+                          >
+                            <div className="flex items-center justify-end">
+                              CPA
+                              <SortArrow column="cpa" />
+                            </div>
+                          </th>
+                        )}
+                        {visibleColumns.conversionValue && (
+                          <th 
+                            className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                            onClick={() => handleSort('conversionValue')}
+                          >
+                            <div className="flex items-center justify-end">
+                              Conv. Value
+                              <SortArrow column="conversionValue" />
+                            </div>
+                          </th>
+                        )}
+                        {visibleColumns.qualityScore && (
+                          <th 
+                            className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                            onClick={() => handleSort('qualityScore')}
+                          >
+                            <div className="flex items-center justify-end">
+                              Quality Score
+                              <SortArrow column="qualityScore" />
+                            </div>
+                          </th>
+                        )}
+                        {visibleColumns.impressionShare && (
+                          <th 
+                            className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                            onClick={() => handleSort('impressionShare')}
+                          >
+                            <div className="flex items-center justify-end">
+                              Impression Share
+                              <SortArrow column="impressionShare" />
+                            </div>
+                          </th>
+                        )}
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {getPaginatedKeywords().map((kw, index) => (
                         <tr key={index} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">{kw.keyword}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{kw.campaignName}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{kw.adGroupName}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatNumber(kw.impressions)}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatNumber(kw.clicks)}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatPercentage(kw.ctr)}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(kw.costMicros)}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(kw.cpcBidMicros)}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(kw.averageCpcMicros)}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatNumber(kw.conversions)}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatPercentage(kw.conversionRate)}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{kw.costPerConversionMicros > 0 ? formatCurrency(kw.costPerConversionMicros) : 'N/A'}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(kw.conversionValueMicros)}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{kw.qualityScore !== undefined ? kw.qualityScore.toFixed(1) : 'N/A'}</td>
-                          <td className="px-4 py-3 text-sm text-gray-900 text-right">{kw.impressionShare !== undefined ? formatPercentage(kw.impressionShare) : 'N/A'}</td>
+                          {visibleColumns.keyword && (
+                            <td className="px-4 py-3 text-sm font-medium text-gray-900">{kw.keyword}</td>
+                          )}
+                          {visibleColumns.campaign && (
+                            <td className="px-4 py-3 text-sm text-gray-600">{kw.campaignName}</td>
+                          )}
+                          {visibleColumns.adGroup && (
+                            <td className="px-4 py-3 text-sm text-gray-600">{kw.adGroupName}</td>
+                          )}
+                          {visibleColumns.impressions && (
+                            <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatNumber(kw.impressions)}</td>
+                          )}
+                          {visibleColumns.clicks && (
+                            <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatNumber(kw.clicks)}</td>
+                          )}
+                          {visibleColumns.ctr && (
+                            <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatPercentage(kw.ctr)}</td>
+                          )}
+                          {visibleColumns.cost && (
+                            <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(kw.costMicros)}</td>
+                          )}
+                          {visibleColumns.bid && (
+                            <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(kw.cpcBidMicros)}</td>
+                          )}
+                          {visibleColumns.avgCpc && (
+                            <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(kw.averageCpcMicros)}</td>
+                          )}
+                          {visibleColumns.conversions && (
+                            <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatNumber(kw.conversions)}</td>
+                          )}
+                          {visibleColumns.conversionRate && (
+                            <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatPercentage(kw.conversionRate)}</td>
+                          )}
+                          {visibleColumns.cpa && (
+                            <td className="px-4 py-3 text-sm text-gray-900 text-right">{kw.costPerConversionMicros > 0 ? formatCurrency(kw.costPerConversionMicros) : 'N/A'}</td>
+                          )}
+                          {visibleColumns.conversionValue && (
+                            <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(kw.conversionValueMicros)}</td>
+                          )}
+                          {visibleColumns.qualityScore && (
+                            <td className="px-4 py-3 text-sm text-gray-900 text-right">{kw.qualityScore !== undefined ? kw.qualityScore.toFixed(1) : 'N/A'}</td>
+                          )}
+                          {visibleColumns.impressionShare && (
+                            <td className="px-4 py-3 text-sm text-gray-900 text-right">{kw.impressionShare !== undefined ? formatPercentage(kw.impressionShare) : 'N/A'}</td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
