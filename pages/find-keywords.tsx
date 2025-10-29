@@ -303,14 +303,6 @@ export default function FindKeywords(): JSX.Element {
       setLanguageCode('en'); // Always use English since dropdown is hidden
       setDataSource(savedData.dataSource);
       hasLoadedSavedData.current = true;
-      
-      // Show a subtle notification that saved data was restored (only once)
-      if (savedData.results.length > 0) {
-        toast('Previous search restored', { 
-          duration: 2000,
-          icon: '💾'
-        });
-      }
     }
     isInitialLoad.current = false;
   }, []);
