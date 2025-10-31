@@ -868,44 +868,65 @@ const AdsPage = () => {
 
           return campaignObj;
         }),
-        keywords: getSortedKeywords().slice(0, 20).map(k => ({
-          keyword: k.keyword,
-          campaign: k.campaignName,
-          impressions: k.impressions,
-          clicks: k.clicks,
-          ctr: k.ctr,
-          cost: k.costMicros,
-          bid: k.cpcBidMicros,
-          avgCpc: k.averageCpcMicros,
-          conversions: k.conversions,
-          conversionRate: k.conversionRate,
-          cpa: k.costPerConversionMicros,
-          conversionValue: k.conversionValueMicros
-        })),
+        keywords: getSortedKeywords().slice(0, 20).map(k => {
+          const keywordObj: any = {
+            keyword: k.keyword,
+            campaign: k.campaignName
+          };
+
+          // Only include metrics that are visible in campaign columns
+          if (campaignsVisibleColumns.impressions) keywordObj.impressions = k.impressions;
+          if (campaignsVisibleColumns.clicks) keywordObj.clicks = k.clicks;
+          if (campaignsVisibleColumns.ctr) keywordObj.ctr = k.ctr;
+          if (campaignsVisibleColumns.cost) keywordObj.cost = k.costMicros;
+          if (campaignsVisibleColumns.avgCpc) keywordObj.avgCpc = k.averageCpcMicros;
+          if (campaignsVisibleColumns.conversions) keywordObj.conversions = k.conversions;
+          if (campaignsVisibleColumns.conversionRate) keywordObj.conversionRate = k.conversionRate;
+          if (campaignsVisibleColumns.cpa) keywordObj.cpa = k.costPerConversionMicros;
+          if (campaignsVisibleColumns.conversionValue) keywordObj.conversionValue = k.conversionValueMicros;
+
+          return keywordObj;
+        }),
         dateRange: {
           start: startDate,
           end: endDate
         }
       };
 
+      // Determine which analysis sections to include based on visible data
+      const hasConversionData = campaignsVisibleColumns.conversions ||
+                               campaignsVisibleColumns.conversionRate ||
+                               campaignsVisibleColumns.cpa ||
+                               campaignsVisibleColumns.conversionValue;
+
+      const analysisSections = [
+        "1. **Performance Overview**: Key insights about overall campaign performance",
+        "2. **Top Performing Campaigns**: Which campaigns are doing well and why",
+        "3. **Underperforming Areas**: Campaigns or keywords that need attention",
+        "4. **Budget Optimization**: Suggestions for budget allocation",
+        "5. **Keyword Strategy**: Recommendations for keyword management, bids, and targeting"
+      ];
+
+      if (hasConversionData) {
+        analysisSections.push("6. **Conversion Optimization**: Ways to improve conversion rates");
+        analysisSections.push("7. **Action Items**: Specific, prioritized recommendations with expected impact");
+      } else {
+        analysisSections.push("6. **Action Items**: Specific, prioritized recommendations with expected impact");
+        analysisSections.push("**Note**: Conversion data is not visible in your current view. Focus analysis on available metrics like impressions, clicks, CTR, and cost efficiency.");
+      }
+
       const prompt = `You are an expert Google Ads specialist with 10+ years of experience optimizing campaigns for various industries.
 
-Analyze this Google Ads campaign data and provide actionable recommendations to improve performance. Note: The data shown includes only the metrics columns that are currently visible in the user's interface - analyze based on the available data.
+Analyze this Google Ads campaign data and provide actionable recommendations to improve performance. IMPORTANT: The data shown includes ONLY the metrics columns that are currently visible in the user's interface. Do NOT mention or analyze any metrics that are not present in the data provided.
 
 CAMPAIGN DATA:
 ${JSON.stringify(campaignData, null, 2)}
 
 Please provide a comprehensive analysis including:
 
-1. **Performance Overview**: Key insights about overall campaign performance
-2. **Top Performing Campaigns**: Which campaigns are doing well and why
-3. **Underperforming Areas**: Campaigns or keywords that need attention
-4. **Budget Optimization**: Suggestions for budget allocation
-5. **Keyword Strategy**: Recommendations for keyword management, bids, and targeting
-6. **Conversion Optimization**: Ways to improve conversion rates
-7. **Action Items**: Specific, prioritized recommendations with expected impact
+${analysisSections.join('\n')}
 
-Be specific with numbers and percentages. Focus on actionable insights that can drive better ROI.`;
+Be specific with numbers and percentages. Focus on actionable insights that can drive better ROI. If conversion data is not available, do not discuss conversions, CPA, or ROI optimization.`;
 
       const response = await fetch("/api/openai", {
         method: "POST",
