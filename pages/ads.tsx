@@ -969,7 +969,18 @@ Be specific with numbers and percentages. Focus on actionable insights based on 
       toast.success('AI analysis completed!');
     } catch (error) {
       console.error('Error analyzing campaigns with AI:', error);
-      toast.error('Failed to analyze campaigns with AI');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error details:', errorMessage);
+
+      // Show more specific error messages
+      if (errorMessage.includes('API key')) {
+        toast.error('AI service configuration issue. Please contact support.');
+      } else if (errorMessage.includes('fetch')) {
+        toast.error('Network error. Please check your connection and try again.');
+      } else {
+        toast.error('Failed to analyze campaigns with AI. Please try again.');
+      }
+
       setShowAiAnalysis(false);
     } finally {
       setAnalyzingCampaigns(false);
