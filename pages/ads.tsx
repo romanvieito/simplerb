@@ -72,20 +72,7 @@ const saveColumnVisibility = (visibility: ColumnVisibilityState) => {
   }
 };
 
-// Load column visibility preferences
-const loadColumnVisibility = (): ColumnVisibilityState | null => {
-  if (typeof window === 'undefined') return null; // SSR safety
-  
-  try {
-    const saved = localStorage.getItem(COLUMN_VISIBILITY_KEY);
-    if (saved) {
-      return JSON.parse(saved) as ColumnVisibilityState;
-    }
-  } catch (error) {
-    console.warn('Failed to load column visibility from localStorage:', error);
-  }
-  return null;
-};
+// Load column visibility preferences - defined later after defaultColumnVisibility
 
 // Sort state type
 type SortState = {
@@ -107,11 +94,17 @@ const saveSortState = (sortState: SortState) => {
 // Load sort state preferences
 const loadSortState = (): SortState | null => {
   if (typeof window === 'undefined') return null; // SSR safety
-  
+
   try {
     const saved = localStorage.getItem(SORT_STATE_KEY);
     if (saved) {
-      return JSON.parse(saved) as SortState;
+      const parsed = JSON.parse(saved) as SortState;
+      // If the saved sort column is no longer valid (like 'bid'), reset to null
+      const validSortColumns: (typeof parsed.sortColumn)[] = ['impressions', 'clicks', 'ctr', 'cost', 'avgCpc', 'conversions', 'conversionRate', 'cpa', 'conversionValue', 'impressionShare', null];
+      if (!validSortColumns.includes(parsed.sortColumn)) {
+        return { sortColumn: null, sortDirection: 'desc' };
+      }
+      return parsed;
     }
   } catch (error) {
     console.warn('Failed to load sort state from localStorage:', error);
@@ -449,6 +442,30 @@ const AdsPage = () => {
     cpa: true,
     conversionValue: true,
     impressionShare: true,
+  };
+
+  // Load column visibility preferences
+  const loadColumnVisibility = (): ColumnVisibilityState | null => {
+    if (typeof window === 'undefined') return null; // SSR safety
+
+    try {
+      const saved = localStorage.getItem(COLUMN_VISIBILITY_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Filter out any old columns that no longer exist (like 'bid')
+        const validKeys = Object.keys(defaultColumnVisibility) as (keyof ColumnVisibilityState)[];
+        const filtered: Partial<ColumnVisibilityState> = {};
+        for (const key of validKeys) {
+          if (key in parsed) {
+            filtered[key] = parsed[key];
+          }
+        }
+        return filtered as ColumnVisibilityState;
+      }
+    } catch (error) {
+      console.warn('Failed to load column visibility from localStorage:', error);
+    }
+    return null;
   };
 
   // Column visibility state - initialize from localStorage or use defaults
@@ -848,7 +865,13 @@ const AdsPage = () => {
       // Collect filtered campaign data only
       const selectedCampaignIdsSet = new Set(selectedCampaignIds);
 
-      // Filter campaigns summary to only selected campaigns
+      // Debug: Log what's being filtered
+      console.log('AI Analysis - Selected Campaign IDs:', selectedCampaignIds);
+      console.log('AI Analysis - Total campaignsSummary:', campaignsSummary.length);
+      console.log('AI Analysis - Total campaignKeywords:', campaignKeywords.length);
+
+      // campaignsSummary should already be filtered by selectedCampaignIds in fetchCampaignsSummary
+      // But let's double-filter to be safe
       const filteredCampaigns = campaignsSummary.filter(c =>
         selectedCampaignIdsSet.has(String(c.id))
       );
@@ -857,6 +880,10 @@ const AdsPage = () => {
       const filteredKeywords = getSortedKeywords().filter(k =>
         selectedCampaignIdsSet.has(k.campaignId)
       );
+
+      console.log('AI Analysis - Filtered campaigns:', filteredCampaigns.length);
+      console.log('AI Analysis - Filtered keywords:', filteredKeywords.length);
+      console.log('AI Analysis - Sample campaign data:', filteredCampaigns.slice(0, 2));
 
       const campaignData = {
         campaigns: filteredCampaigns.map(c => ({
