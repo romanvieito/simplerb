@@ -72,7 +72,20 @@ const saveColumnVisibility = (visibility: ColumnVisibilityState) => {
   }
 };
 
-// Load column visibility preferences - defined later after defaultColumnVisibility
+// Load column visibility preferences
+const loadColumnVisibility = (): ColumnVisibilityState | null => {
+  if (typeof window === 'undefined') return null; // SSR safety
+  
+  try {
+    const saved = localStorage.getItem(COLUMN_VISIBILITY_KEY);
+    if (saved) {
+      return JSON.parse(saved) as ColumnVisibilityState;
+    }
+  } catch (error) {
+    console.warn('Failed to load column visibility from localStorage:', error);
+  }
+  return null;
+};
 
 // Sort state type
 type SortState = {
@@ -94,17 +107,11 @@ const saveSortState = (sortState: SortState) => {
 // Load sort state preferences
 const loadSortState = (): SortState | null => {
   if (typeof window === 'undefined') return null; // SSR safety
-
+  
   try {
     const saved = localStorage.getItem(SORT_STATE_KEY);
     if (saved) {
-      const parsed = JSON.parse(saved) as SortState;
-      // If the saved sort column is no longer valid (like 'bid'), reset to null
-      const validSortColumns: (typeof parsed.sortColumn)[] = ['impressions', 'clicks', 'ctr', 'cost', 'avgCpc', 'conversions', 'conversionRate', 'cpa', 'conversionValue', 'impressionShare', null];
-      if (!validSortColumns.includes(parsed.sortColumn)) {
-        return { sortColumn: null, sortDirection: 'desc' };
-      }
-      return parsed;
+      return JSON.parse(saved) as SortState;
     }
   } catch (error) {
     console.warn('Failed to load sort state from localStorage:', error);
@@ -402,7 +409,7 @@ const AdsPage = () => {
   const [aiAnalysis, setAiAnalysis] = useState<string>('');
   const [showAiAnalysis, setShowAiAnalysis] = useState(false);
   // Sort state - initialize from localStorage or use defaults
-  const [sortColumn, setSortColumn] = useState<'impressions' | 'clicks' | 'ctr' | 'cost' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare' | null>(() => {
+  const [sortColumn, setSortColumn] = useState<'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare' | null>(() => {
     const saved = loadSortState();
     return saved?.sortColumn ?? null;
   });
@@ -442,30 +449,6 @@ const AdsPage = () => {
     cpa: true,
     conversionValue: true,
     impressionShare: true,
-  };
-
-  // Load column visibility preferences
-  const loadColumnVisibility = (): ColumnVisibilityState | null => {
-    if (typeof window === 'undefined') return null; // SSR safety
-
-    try {
-      const saved = localStorage.getItem(COLUMN_VISIBILITY_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        // Filter out any old columns that no longer exist (like 'bid')
-        const validKeys = Object.keys(defaultColumnVisibility) as (keyof ColumnVisibilityState)[];
-        const filtered: Partial<ColumnVisibilityState> = {};
-        for (const key of validKeys) {
-          if (key in parsed) {
-            filtered[key] = parsed[key];
-          }
-        }
-        return filtered as ColumnVisibilityState;
-      }
-    } catch (error) {
-      console.warn('Failed to load column visibility from localStorage:', error);
-    }
-    return null;
   };
 
   // Column visibility state - initialize from localStorage or use defaults
@@ -862,45 +845,30 @@ const AdsPage = () => {
     setShowAiAnalysis(true);
 
     try {
-      // Collect filtered campaign data only
-      const selectedCampaignIdsSet = new Set(selectedCampaignIds);
-
-      // Debug: Log what's being filtered
-      console.log('AI Analysis - Selected Campaign IDs:', selectedCampaignIds);
-      console.log('AI Analysis - Total campaignsSummary:', campaignsSummary.length);
-      console.log('AI Analysis - Total campaignKeywords:', campaignKeywords.length);
-
-      // campaignsSummary should already be filtered by selectedCampaignIds in fetchCampaignsSummary
-      // But let's double-filter to be safe
-      const filteredCampaigns = campaignsSummary.filter(c =>
-        selectedCampaignIdsSet.has(String(c.id))
-      );
-
-      // Filter keywords to only those from selected campaigns
-      const filteredKeywords = getSortedKeywords().filter(k =>
-        selectedCampaignIdsSet.has(k.campaignId)
-      );
-
-      console.log('AI Analysis - Filtered campaigns:', filteredCampaigns.length);
-      console.log('AI Analysis - Filtered keywords:', filteredKeywords.length);
-      console.log('AI Analysis - Sample campaign data:', filteredCampaigns.slice(0, 2));
-
+      // Collect campaign data - only include visible columns
       const campaignData = {
-        campaigns: filteredCampaigns.map(c => ({
-          name: c.name,
-          status: c.status,
-          impressions: c.impressions,
-          clicks: c.clicks,
-          ctr: c.ctr,
-          cost: c.cost,
-          avgCpc: c.cpc,
-          conversions: c.conversions,
-          conversionRate: c.conversionRate,
-          cpa: c.cpa,
-          conversionValue: c.conversionValue,
-          impressionShare: c.impressionShare
-        })),
-        keywords: filteredKeywords.slice(0, 20).map(k => ({
+        campaigns: campaignsSummary.map(c => {
+          const campaignObj: any = {};
+
+          // Always include name and status for context
+          campaignObj.name = c.name;
+          campaignObj.status = c.status;
+
+          // Only include metrics from visible columns
+          if (campaignsVisibleColumns.impressions) campaignObj.impressions = c.impressions;
+          if (campaignsVisibleColumns.clicks) campaignObj.clicks = c.clicks;
+          if (campaignsVisibleColumns.ctr) campaignObj.ctr = c.ctr;
+          if (campaignsVisibleColumns.cost) campaignObj.cost = c.cost;
+          if (campaignsVisibleColumns.avgCpc) campaignObj.avgCpc = c.cpc;
+          if (campaignsVisibleColumns.conversions) campaignObj.conversions = c.conversions;
+          if (campaignsVisibleColumns.conversionRate) campaignObj.conversionRate = c.conversionRate;
+          if (campaignsVisibleColumns.cpa) campaignObj.cpa = c.cpa;
+          if (campaignsVisibleColumns.conversionValue) campaignObj.conversionValue = c.conversionValue;
+          if (campaignsVisibleColumns.impressionShare) campaignObj.impressionShare = c.impressionShare;
+
+          return campaignObj;
+        }),
+        keywords: getSortedKeywords().slice(0, 20).map(k => ({
           keyword: k.keyword,
           campaign: k.campaignName,
           impressions: k.impressions,
@@ -922,7 +890,7 @@ const AdsPage = () => {
 
       const prompt = `You are an expert Google Ads specialist with 10+ years of experience optimizing campaigns for various industries.
 
-Analyze this Google Ads campaign data and provide actionable recommendations to improve performance:
+Analyze this Google Ads campaign data and provide actionable recommendations to improve performance. Note: The data shown includes only the metrics columns that are currently visible in the user's interface - analyze based on the available data.
 
 CAMPAIGN DATA:
 ${JSON.stringify(campaignData, null, 2)}
@@ -1415,7 +1383,7 @@ Be specific with numbers and percentages. Focus on actionable insights that can 
     return sorted;
   };
 
-  const SortArrow = ({ column }: { column: 'impressions' | 'clicks' | 'ctr' | 'cost' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare' }) => {
+  const SortArrow = ({ column }: { column: 'impressions' | 'clicks' | 'ctr' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare' }) => {
     if (sortColumn !== column) {
       return <span className="ml-1 text-gray-400">↕</span>;
     }
