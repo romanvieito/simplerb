@@ -5,6 +5,7 @@ import { Toaster, toast } from "react-hot-toast";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useRouter } from 'next/router';
 import { TablePagination } from "@mui/material";
+import { createParser, ParsedEvent, ReconnectInterval } from "eventsource-parser";
 import SBRContext from "../context/SBRContext";
 import LoadingDots from "../components/LoadingDots";
 
@@ -382,6 +383,10 @@ const AdsPage = () => {
       impressionShare: true,
     }
   );
+  // AI Analysis state
+  const [analyzingCampaigns, setAnalyzingCampaigns] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<string>('');
+  const [showAiAnalysis, setShowAiAnalysis] = useState(false);
   // Sort state - initialize from localStorage or use defaults
   const [sortColumn, setSortColumn] = useState<'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare' | null>(() => {
     const saved = loadSortState();
@@ -740,6 +745,130 @@ const AdsPage = () => {
       toast.error(e instanceof Error ? e.message : 'Failed to load campaign summary');
     } finally {
       setLoadingCampaignsSummary(false);
+    }
+  };
+
+  const analyzeCampaignsWithAI = async () => {
+    if (!user?.emailAddresses[0]?.emailAddress) {
+      toast.error('Please sign in to analyze campaigns');
+      return;
+    }
+
+    if (!admin) {
+      toast.error('Admin access required');
+      return;
+    }
+
+    if (campaignsSummary.length === 0) {
+      toast.error('Please fetch campaign data first');
+      return;
+    }
+
+    setAnalyzingCampaigns(true);
+    setAiAnalysis('');
+    setShowAiAnalysis(true);
+
+    try {
+      // Collect campaign data
+      const campaignData = {
+        campaigns: campaignsSummary.map(c => ({
+          name: c.name,
+          status: c.status,
+          impressions: c.impressions,
+          clicks: c.clicks,
+          ctr: c.ctr,
+          cost: c.cost,
+          avgCpc: c.cpc,
+          conversions: c.conversions,
+          conversionRate: c.conversionRate,
+          cpa: c.cpa,
+          conversionValue: c.conversionValue,
+          impressionShare: c.impressionShare
+        })),
+        keywords: getSortedKeywords().slice(0, 20).map(k => ({
+          keyword: k.keyword,
+          campaign: k.campaignName,
+          impressions: k.impressions,
+          clicks: k.clicks,
+          ctr: k.ctr,
+          cost: k.costMicros,
+          bid: k.cpcBidMicros,
+          avgCpc: k.averageCpcMicros,
+          conversions: k.conversions,
+          conversionRate: k.conversionRate,
+          cpa: k.costPerConversionMicros,
+          conversionValue: k.conversionValueMicros
+        })),
+        dateRange: {
+          start: startDate,
+          end: endDate
+        }
+      };
+
+      const prompt = `You are an expert Google Ads specialist with 10+ years of experience optimizing campaigns for various industries.
+
+Analyze this Google Ads campaign data and provide actionable recommendations to improve performance:
+
+CAMPAIGN DATA:
+${JSON.stringify(campaignData, null, 2)}
+
+Please provide a comprehensive analysis including:
+
+1. **Performance Overview**: Key insights about overall campaign performance
+2. **Top Performing Campaigns**: Which campaigns are doing well and why
+3. **Underperforming Areas**: Campaigns or keywords that need attention
+4. **Budget Optimization**: Suggestions for budget allocation
+5. **Keyword Strategy**: Recommendations for keyword management, bids, and targeting
+6. **Conversion Optimization**: Ways to improve conversion rates
+7. **Action Items**: Specific, prioritized recommendations with expected impact
+
+Be specific with numbers and percentages. Focus on actionable insights that can drive better ROI.`;
+
+      const response = await fetch("/api/openai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, ptemp: 0.7, ptop: 1 }),
+      });
+
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+
+      const data = response.body;
+      if (!data) return;
+
+      const reader = data.getReader();
+      const decoder = new TextDecoder();
+
+      const onParse = (event: ParsedEvent | ReconnectInterval) => {
+        if (event.type === "event") {
+          const data = event.data;
+          try {
+            const text = JSON.parse(data).text ?? "";
+            setAiAnalysis(prev => prev + text);
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      };
+
+      const parser = createParser(onParse);
+      let done = false;
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        const chunkValue = decoder.decode(value);
+        parser.feed(chunkValue);
+      }
+
+      toast.success('AI analysis completed!');
+    } catch (error) {
+      console.error('Error analyzing campaigns with AI:', error);
+      toast.error('Failed to analyze campaigns with AI');
+      setShowAiAnalysis(false);
+    } finally {
+      setAnalyzingCampaigns(false);
     }
   };
 
@@ -1547,6 +1676,18 @@ const AdsPage = () => {
                   {/* Title and Controls on the right */}
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
+                      {/* AI Analysis Button */}
+                      <button
+                        onClick={analyzeCampaignsWithAI}
+                        disabled={analyzingCampaigns}
+                        className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                        </svg>
+                        <span>{analyzingCampaigns ? 'Analyzing...' : 'AI Analysis'}</span>
+                      </button>
+
                       {/* Column Selector */}
                       <div className="flex justify-end relative" ref={campaignsColumnSelectorRef}>
                         <button
@@ -1696,6 +1837,38 @@ const AdsPage = () => {
             </div>
 
           </>
+        )}
+
+        {/* AI Analysis Results - Analysis Tab */}
+        {activeTab === 'analysis' && showAiAnalysis && aiAnalysis && (
+          <div className="w-full mb-8">
+            <div className="bg-white rounded-xl border border-gray-100 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">AI Campaign Analysis</h3>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => navigator.clipboard.writeText(aiAnalysis)}
+                    className="px-3 py-1.5 text-sm text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                  >
+                    Copy
+                  </button>
+                  <button
+                    onClick={() => setShowAiAnalysis(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div className="prose prose-sm max-w-none">
+                <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">
+                  {aiAnalysis}
+                </pre>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Similar Keywords Tab */}
