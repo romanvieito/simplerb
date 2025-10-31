@@ -104,8 +104,7 @@ export default async function handler(
         metrics.conversions_from_interactions_rate,
         metrics.cost_per_conversion,
         metrics.value_per_conversion,
-        metrics.search_impression_share,
-        metrics.quality_score
+        metrics.search_impression_share
       FROM keyword_view
       WHERE campaign.status = 'ENABLED'
         AND ad_group.status = 'ENABLED'
@@ -267,11 +266,6 @@ export default async function handler(
             ? (existing.impressionShare + row.metrics.search_impression_share) / 2 
             : row.metrics.search_impression_share;
         }
-        if (row.metrics?.quality_score !== undefined && row.metrics?.quality_score !== null) {
-          existing.qualityScore = existing.qualityScore !== undefined
-            ? (existing.qualityScore + row.metrics.quality_score) / 2
-            : row.metrics.quality_score;
-        }
       } else {
         const keyword: CampaignKeyword = {
           campaignId,
@@ -296,11 +290,8 @@ export default async function handler(
           valuePerConversionMicros: conversions > 0 
             ? conversionValueMicros / conversions 
             : (row.metrics?.value_per_conversion ? parseFloat(row.metrics.value_per_conversion) * 1000000 : 0),
-          impressionShare: row.metrics?.search_impression_share !== undefined && row.metrics?.search_impression_share !== null 
-            ? row.metrics.search_impression_share 
-            : undefined,
-          qualityScore: row.metrics?.quality_score !== undefined && row.metrics?.quality_score !== null
-            ? row.metrics.quality_score
+          impressionShare: row.metrics?.search_impression_share !== undefined && row.metrics?.search_impression_share !== null
+            ? row.metrics.search_impression_share
             : undefined,
         };
         

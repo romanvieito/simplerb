@@ -1,17 +1,16 @@
 import React, { useState, useContext, useEffect, useCallback, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import Head from "next/head";
 import { Toaster, toast } from "react-hot-toast";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useRouter } from 'next/router';
-import { Box, Button } from "@mui/material";
 import { TablePagination } from "@mui/material";
-import DiamondIcon from '@mui/icons-material/Diamond';
-import LoginIcon from '@mui/icons-material/Login';
 import SBRContext from "../context/SBRContext";
 import LoadingDots from "../components/LoadingDots";
 
 // LocalStorage utility functions for saving/loading campaign keywords
 const STORAGE_KEY = 'last-campaign-keywords';
+const CAMPAIGNS_SUMMARY_KEY = 'last-campaigns-summary';
 const COLUMN_VISIBILITY_KEY = 'ads-table-column-visibility';
 const SORT_STATE_KEY = 'ads-table-sort-state';
 const UI_ACTIVE_TAB_KEY = 'ads-ui-active-tab';
@@ -37,7 +36,6 @@ type ColumnVisibilityState = {
   conversionRate: boolean;
   cpa: boolean;
   conversionValue: boolean;
-  qualityScore: boolean;
   impressionShare: boolean;
 };
 
@@ -69,7 +67,7 @@ const loadColumnVisibility = (): ColumnVisibilityState | null => {
 
 // Sort state type
 type SortState = {
-  sortColumn: 'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'qualityScore' | 'impressionShare' | null;
+  sortColumn: 'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare' | null;
   sortDirection: 'asc' | 'desc';
 };
 
@@ -231,7 +229,7 @@ const saveCampaignKeywords = (data: Omit<SavedCampaignKeywordsData, 'timestamp'>
 
 const loadCampaignKeywords = (): SavedCampaignKeywordsData | null => {
   if (typeof window === 'undefined') return null; // SSR safety
-  
+
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -242,6 +240,59 @@ const loadCampaignKeywords = (): SavedCampaignKeywordsData | null => {
     }
   } catch (error) {
     console.warn('Failed to load campaign keywords from localStorage:', error);
+  }
+  return null;
+};
+
+type CampaignsSummaryData = Array<{
+  id: string;
+  name: string;
+  status: string;
+  type: string;
+  impressions: number;
+  clicks: number;
+  cost: number;
+  conversions: number;
+  conversionValue: number;
+  ctr: number;
+  cpc: number;
+  conversionRate: number;
+  cpa: number;
+  impressionShare?: number;
+}>;
+
+interface SavedCampaignsSummaryData {
+  campaignsSummary: CampaignsSummaryData;
+  startDate: string;
+  endDate: string;
+  selectedCampaignIds: string[];
+  timestamp: number;
+}
+
+const saveCampaignsSummary = (data: Omit<SavedCampaignsSummaryData, 'timestamp'>) => {
+  if (typeof window === 'undefined') return; // SSR safety
+
+  try {
+    const dataWithTimestamp = { ...data, timestamp: Date.now() };
+    localStorage.setItem(CAMPAIGNS_SUMMARY_KEY, JSON.stringify(dataWithTimestamp));
+  } catch (error) {
+    console.warn('Failed to save campaigns summary to localStorage:', error);
+  }
+};
+
+const loadCampaignsSummary = (): SavedCampaignsSummaryData | null => {
+  if (typeof window === 'undefined') return null; // SSR safety
+
+  try {
+    const saved = localStorage.getItem(CAMPAIGNS_SUMMARY_KEY);
+    if (saved) {
+      const data = JSON.parse(saved) as SavedCampaignsSummaryData;
+      // Only load data if it's less than 24 hours old
+      const isRecent = Date.now() - data.timestamp < 24 * 60 * 60 * 1000;
+      return isRecent ? data : null;
+    }
+  } catch (error) {
+    console.warn('Failed to load campaigns summary from localStorage:', error);
   }
   return null;
 };
@@ -266,7 +317,6 @@ interface CampaignKeyword {
   costPerConversionMicros: number;
   valuePerConversionMicros: number;
   impressionShare?: number;
-  qualityScore?: number;
 }
 
 interface SimilarKeyword {
@@ -333,7 +383,7 @@ const AdsPage = () => {
     }
   );
   // Sort state - initialize from localStorage or use defaults
-  const [sortColumn, setSortColumn] = useState<'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'qualityScore' | 'impressionShare' | null>(() => {
+  const [sortColumn, setSortColumn] = useState<'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare' | null>(() => {
     const saved = loadSortState();
     return saved?.sortColumn ?? null;
   });
@@ -372,7 +422,6 @@ const AdsPage = () => {
     conversionRate: true,
     cpa: true,
     conversionValue: true,
-    qualityScore: true,
     impressionShare: true,
   };
 
@@ -396,6 +445,8 @@ const AdsPage = () => {
   // Refs to prevent save loops during initial load
   const isInitialLoad = useRef(true);
   const hasLoadedSavedData = useRef(false);
+  const lastFetchedCampaignsParams = useRef<string | null>(null);
+  const lastFetchedKeywordsParams = useRef<string | null>(null);
   const columnSelectorRef = useRef<HTMLDivElement>(null);
   const inputKwInitializedFromStorage = useRef(false);
 
@@ -483,18 +534,28 @@ const AdsPage = () => {
     setCurrentPage(1);
   }, [campaignKeywords.length]);
 
-  // Load saved campaign keywords on component mount
+  // Load saved campaign keywords and summary on component mount
   useEffect(() => {
-    const savedData = loadCampaignKeywords();
-    if (savedData) {
-      setCampaignKeywords(savedData.campaignKeywords);
-      setSelectedCampaignIds(savedData.selectedCampaignIds);
-      setAvailableCampaigns(savedData.availableCampaigns);
+    const savedKeywordsData = loadCampaignKeywords();
+    if (savedKeywordsData) {
+      setCampaignKeywords(savedKeywordsData.campaignKeywords);
+      setSelectedCampaignIds(savedKeywordsData.selectedCampaignIds);
+      setAvailableCampaigns(savedKeywordsData.availableCampaigns);
       setShowCurrentKeywords(true);
       hasLoadedSavedData.current = true;
     }
+
+    // Load campaigns summary if it matches current date range
+    // (campaigns summary is filtered client-side by selectedCampaignIds)
+    const savedSummaryData = loadCampaignsSummary();
+    if (savedSummaryData &&
+        savedSummaryData.startDate === startDate &&
+        savedSummaryData.endDate === endDate) {
+      setCampaignsSummary(savedSummaryData.campaignsSummary);
+    }
+
     isInitialLoad.current = false;
-  }, []);
+  }, [startDate, endDate, selectedCampaignIds]);
 
   // Initialize selected input keywords when campaign keywords change
   useEffect(() => {
@@ -576,6 +637,9 @@ const AdsPage = () => {
     params.append('startDate', startDate);
     params.append('endDate', endDate);
 
+    // Reset cache for manual fetch
+    lastFetchedKeywordsParams.current = null;
+
     setFetchingKeywords(true);
     try {
       const response = await fetch(`/api/google-ads/get-campaign-keywords?${params.toString()}`, {
@@ -644,6 +708,9 @@ const AdsPage = () => {
     params.append('startDate', startDate);
     params.append('endDate', endDate);
 
+    // Reset cache for manual fetch
+    lastFetchedCampaignsParams.current = null;
+
     setLoadingCampaignsSummary(true);
     try {
       const response = await fetch(`/api/google-ads/metrics?${params.toString()}`, {
@@ -660,6 +727,14 @@ const AdsPage = () => {
         campaigns = campaigns.filter(c => selectedSet.has(String(c.id)));
       }
       setCampaignsSummary(campaigns);
+
+      // Save to localStorage after successful fetch
+      saveCampaignsSummary({
+        campaignsSummary: campaigns,
+        startDate,
+        endDate,
+        selectedCampaignIds
+      });
     } catch (e) {
       console.error('Error fetching campaigns summary:', e);
       toast.error(e instanceof Error ? e.message : 'Failed to load campaign summary');
@@ -700,17 +775,45 @@ const AdsPage = () => {
 
   // Auto-fetch campaigns summary when date range or selection changes (and admin)
   useEffect(() => {
-    if (isLoaded && isSignedIn && admin) {
-      fetchCampaignsSummary();
+    if (!isLoaded || !isSignedIn || !admin) return;
+
+    const paramsKey = `${startDate}-${endDate}-${selectedCampaignIds.sort().join(',')}`;
+
+    // Skip if we already fetched for these exact parameters
+    if (lastFetchedCampaignsParams.current === paramsKey) {
+      return;
     }
+
+    // Skip automatic fetch on initial mount if we loaded saved data from localStorage
+    if (hasLoadedSavedData.current && lastFetchedCampaignsParams.current === null) {
+      lastFetchedCampaignsParams.current = paramsKey;
+      return;
+    }
+
+    fetchCampaignsSummary();
+    lastFetchedCampaignsParams.current = paramsKey;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate, endDate, selectedCampaignIds, isLoaded, isSignedIn, admin]);
 
   // Auto-fetch keywords when date range or selected campaigns change
   useEffect(() => {
-    if (isLoaded && isSignedIn && admin && showKeywordsTable) {
-      fetchCampaignKeywords();
+    if (!isLoaded || !isSignedIn || !admin || !showKeywordsTable) return;
+
+    const paramsKey = `${startDate}-${endDate}-${selectedCampaignIds.sort().join(',')}`;
+
+    // Skip if we already fetched for these exact parameters
+    if (lastFetchedKeywordsParams.current === paramsKey) {
+      return;
     }
+
+    // Skip automatic fetch on initial mount if we loaded saved data from localStorage
+    if (hasLoadedSavedData.current && lastFetchedKeywordsParams.current === null) {
+      lastFetchedKeywordsParams.current = paramsKey;
+      return;
+    }
+
+    fetchCampaignKeywords();
+    lastFetchedKeywordsParams.current = paramsKey;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate, endDate, selectedCampaignIds, isLoaded, isSignedIn, admin, showKeywordsTable]);
 
@@ -928,6 +1031,13 @@ const AdsPage = () => {
     let startDateValue = new Date(today);
 
     switch (preset) {
+      case 'today':
+        // Both start and end date are today
+        break;
+      case 'yesterday':
+        startDateValue.setDate(today.getDate() - 1);
+        endDateValue.setDate(today.getDate() - 1);
+        break;
       case 'last7days':
         startDateValue.setDate(today.getDate() - 7);
         break;
@@ -954,6 +1064,8 @@ const AdsPage = () => {
   };
 
   const datePresets = [
+    { value: 'today', label: 'Today' },
+    { value: 'yesterday', label: 'Yesterday' },
     { value: 'last7days', label: 'Last 7 days' },
     { value: 'last30days', label: 'Last 30 days' },
     { value: 'last90days', label: 'Last 90 days' },
@@ -973,7 +1085,7 @@ const AdsPage = () => {
     return `${(value * 100).toFixed(2)}%`;
   };
 
-  const handleSort = (column: 'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'qualityScore' | 'impressionShare') => {
+  const handleSort = (column: 'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare') => {
     if (sortColumn === column) {
       // Toggle direction if clicking the same column
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -1032,10 +1144,6 @@ const AdsPage = () => {
           aValue = a.conversionValueMicros;
           bValue = b.conversionValueMicros;
           break;
-        case 'qualityScore':
-          aValue = a.qualityScore || 0;
-          bValue = b.qualityScore || 0;
-          break;
         case 'impressionShare':
           aValue = a.impressionShare || 0;
           bValue = b.impressionShare || 0;
@@ -1054,7 +1162,7 @@ const AdsPage = () => {
     return sorted;
   };
 
-  const SortArrow = ({ column }: { column: 'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'qualityScore' | 'impressionShare' }) => {
+  const SortArrow = ({ column }: { column: 'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare' }) => {
     if (sortColumn !== column) {
       return <span className="ml-1 text-gray-400">↕</span>;
     }
@@ -1282,109 +1390,35 @@ const AdsPage = () => {
   }, [selectedInputKeywords]);
 
   return (
-    <div className="flex w-full flex-col items-center justify-center py-4 min-h-screen bg-white">
+    <div className="flex w-full flex-col items-center justify-center py-2 min-h-screen bg-white">
       <Head>
         <title>Ads Pilot</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-8 sm:mt-12">
-        <div className="absolute top-4 left-4 flex items-center space-x-3">
-          {/* Logo */}
-          <div className="flex items-center space-x-0.5">
-            <span className="text-gray-800 font-semibold text-lg">simpler</span>
-            <div className="w-4 h-5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">B</span>
-            </div>
-          </div>
-          
-          {/* Tool Selector */}
-          <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
-            <button 
-              onClick={() => router.push('/domain')}
-              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              Domain
-            </button>
-            <button 
-              onClick={() => router.push('/web')}
-              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              Website
-            </button>
-            <button 
-              onClick={() => router.push('/find-keywords')}
-              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              Keywords
-            </button>
-            <button className="px-3 py-1 bg-white rounded-md text-sm font-medium text-gray-800 shadow-sm">
-              Ads
-            </button>
-          </div>
+      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-2 sm:mt-2">
+        <div className="absolute top-4 left-4 flex items-center space-x-2">
+          {/* Minimal Back Button */}
+          <button
+            onClick={() => router.back()}
+            className="text-gray-600 hover:text-gray-800 text-xl font-light hover:bg-gray-100 rounded px-1 py-0.5 transition-colors"
+          >
+            ‹
+          </button>
+
+          {/* Basic Context Title */}
+          <span className="text-gray-900 font-medium">Ads Pilot</span>
         </div>
 
-        <Box
-          sx={{
-            position: "absolute",
-            top: 16,
-            right: 16,
-            display: "flex",
-            gap: 2,
-            alignItems: "center",
-          }}
-        >
-          {isSignedIn ? (
-            <>
-              <form action="/api/checkout_sessions" method="POST">
-                <input type="hidden" name="tipo" value="STARTER" />
-                <Button
-                  className="bg-black cursor-pointer hover:bg-black/80 rounded-xl"
-                  style={{ textTransform: "none" }}
-                  sx={{
-                    padding: { xs: "3px", sm: 1 },
-                    display:
-                      isSignedIn &&
-                      (subsTplan === "STARTER" || subsTplan === "CREATOR")
-                        ? "none"
-                        : "block",
-                  }}
-                  type="submit"
-                  variant="contained"
-                  role="link"
-                >
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <DiamondIcon sx={{ mr: 0.2, fontSize: "1rem" }} />
-                    Become a Member
-                  </Box>
-                </Button>
-              </form>
-            </>
-          ) : (
-            <button
-              onClick={() => openSignIn()}
-              className="group relative bg-black cursor-pointer rounded-xl text-white font-medium px-4 py-2 hover:bg-black/80 transition-all duration-300 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-black/20 shadow-lg hover:shadow-xl"
-            >
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                <LoginIcon sx={{ fontSize: '1rem' }} />
-                Sign in / up
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-gray-800 to-black rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </button>
-          )}
-        </Box>
 
-        <h1 className="text-2xl text-gray-900 mb-3 tracking-tight">
-          Ads <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Pilot</span>
-        </h1>
 
         {/* Tab Navigation */}
         <div className="w-full max-w-4xl mx-auto mb-6">
           <div className="bg-gray-100 rounded-lg p-1">
-            <div className="flex">
+            <div className="grid grid-cols-2 gap-1">
               <button
                 onClick={() => setActiveTab('analysis')}
-                className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
                   activeTab === 'analysis'
                     ? 'bg-white text-gray-800 shadow-sm'
                     : 'text-gray-600 hover:text-gray-800'
@@ -1394,7 +1428,7 @@ const AdsPage = () => {
               </button>
               <button
                 onClick={() => setActiveTab('similar')}
-                className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
                   activeTab === 'similar'
                     ? 'bg-white text-gray-800 shadow-sm'
                     : 'text-gray-600 hover:text-gray-800'
@@ -1858,7 +1892,6 @@ const AdsPage = () => {
                                key === 'avgCpc' ? 'Avg CPC' :
                                key === 'conversionRate' ? 'Conv. Rate' :
                                key === 'conversionValue' ? 'Conv. Value' :
-                               key === 'qualityScore' ? 'Quality Score' :
                                key === 'impressionShare' ? 'Impression Share' :
                                key.charAt(0).toUpperCase() + key.slice(1)}
                               {key === 'keyword' && <span className="text-xs text-gray-500 ml-1">(always visible)</span>}
@@ -1994,17 +2027,6 @@ const AdsPage = () => {
                             </div>
                           </th>
                         )}
-                        {visibleColumns.qualityScore && (
-                          <th 
-                            className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                            onClick={() => handleSort('qualityScore')}
-                          >
-                            <div className="flex items-center justify-end">
-                              Quality Score
-                              <SortArrow column="qualityScore" />
-                            </div>
-                          </th>
-                        )}
                         {visibleColumns.impressionShare && (
                           <th 
                             className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
@@ -2059,9 +2081,6 @@ const AdsPage = () => {
                           )}
                           {visibleColumns.conversionValue && (
                             <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(kw.conversionValueMicros)}</td>
-                          )}
-                          {visibleColumns.qualityScore && (
-                            <td className="px-4 py-3 text-sm text-gray-900 text-right">{kw.qualityScore !== undefined ? kw.qualityScore.toFixed(1) : 'N/A'}</td>
                           )}
                           {visibleColumns.impressionShare && (
                             <td className="px-4 py-3 text-sm text-gray-900 text-right">{kw.impressionShare !== undefined ? formatPercentage(kw.impressionShare) : 'N/A'}</td>
@@ -2455,6 +2474,7 @@ const AdsPage = () => {
                         </div>
         )}
 
+
         <Toaster
           position="top-center"
           reverseOrder={false}
@@ -2465,5 +2485,5 @@ const AdsPage = () => {
   );
 };
 
-export default AdsPage;
+export default dynamic(() => Promise.resolve(AdsPage), { ssr: false });
 
