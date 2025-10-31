@@ -53,7 +53,6 @@ type ColumnVisibilityState = {
   clicks: boolean;
   ctr: boolean;
   cost: boolean;
-  bid: boolean;
   avgCpc: boolean;
   conversions: boolean;
   conversionRate: boolean;
@@ -90,7 +89,7 @@ const loadColumnVisibility = (): ColumnVisibilityState | null => {
 
 // Sort state type
 type SortState = {
-  sortColumn: 'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare' | null;
+  sortColumn: 'impressions' | 'clicks' | 'ctr' | 'cost' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare' | null;
   sortDirection: 'asc' | 'desc';
 };
 
@@ -410,7 +409,7 @@ const AdsPage = () => {
   const [aiAnalysis, setAiAnalysis] = useState<string>('');
   const [showAiAnalysis, setShowAiAnalysis] = useState(false);
   // Sort state - initialize from localStorage or use defaults
-  const [sortColumn, setSortColumn] = useState<'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare' | null>(() => {
+  const [sortColumn, setSortColumn] = useState<'impressions' | 'clicks' | 'ctr' | 'cost' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare' | null>(() => {
     const saved = loadSortState();
     return saved?.sortColumn ?? null;
   });
@@ -444,7 +443,6 @@ const AdsPage = () => {
     clicks: true,
     ctr: true,
     cost: true,
-    bid: true,
     avgCpc: true,
     conversions: true,
     conversionRate: true,
@@ -847,9 +845,21 @@ const AdsPage = () => {
     setShowAiAnalysis(true);
 
     try {
-      // Collect campaign data
+      // Collect filtered campaign data only
+      const selectedCampaignIdsSet = new Set(selectedCampaignIds);
+
+      // Filter campaigns summary to only selected campaigns
+      const filteredCampaigns = campaignsSummary.filter(c =>
+        selectedCampaignIdsSet.has(String(c.id))
+      );
+
+      // Filter keywords to only those from selected campaigns
+      const filteredKeywords = getSortedKeywords().filter(k =>
+        selectedCampaignIdsSet.has(k.campaignId)
+      );
+
       const campaignData = {
-        campaigns: campaignsSummary.map(c => ({
+        campaigns: filteredCampaigns.map(c => ({
           name: c.name,
           status: c.status,
           impressions: c.impressions,
@@ -863,7 +873,7 @@ const AdsPage = () => {
           conversionValue: c.conversionValue,
           impressionShare: c.impressionShare
         })),
-        keywords: getSortedKeywords().slice(0, 20).map(k => ({
+        keywords: filteredKeywords.slice(0, 20).map(k => ({
           keyword: k.keyword,
           campaign: k.campaignName,
           impressions: k.impressions,
@@ -1305,7 +1315,7 @@ Be specific with numbers and percentages. Focus on actionable insights that can 
     return matchTypeMap[String(matchType)] || String(matchType);
   };
 
-  const handleSort = (column: 'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare') => {
+  const handleSort = (column: 'impressions' | 'clicks' | 'ctr' | 'cost' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare') => {
     if (sortColumn === column) {
       // Toggle direction if clicking the same column
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -1339,10 +1349,6 @@ Be specific with numbers and percentages. Focus on actionable insights that can 
         case 'cost':
           aValue = a.costMicros;
           bValue = b.costMicros;
-          break;
-        case 'bid':
-          aValue = a.cpcBidMicros;
-          bValue = b.cpcBidMicros;
           break;
         case 'avgCpc':
           aValue = a.averageCpcMicros;
@@ -1382,7 +1388,7 @@ Be specific with numbers and percentages. Focus on actionable insights that can 
     return sorted;
   };
 
-  const SortArrow = ({ column }: { column: 'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare' }) => {
+  const SortArrow = ({ column }: { column: 'impressions' | 'clicks' | 'ctr' | 'cost' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare' }) => {
     if (sortColumn !== column) {
       return <span className="ml-1 text-gray-400">↕</span>;
     }
@@ -2236,24 +2242,13 @@ Be specific with numbers and percentages. Focus on actionable insights that can 
                           </th>
                         )}
                         {visibleColumns.cost && (
-                          <th 
+                          <th
                             className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                             onClick={() => handleSort('cost')}
                           >
                             <div className="flex items-center justify-end">
                               Cost
                               <SortArrow column="cost" />
-                            </div>
-                          </th>
-                        )}
-                        {visibleColumns.bid && (
-                          <th 
-                            className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                            onClick={() => handleSort('bid')}
-                          >
-                            <div className="flex items-center justify-end">
-                              Bid Amount
-                              <SortArrow column="bid" />
                             </div>
                           </th>
                         )}
@@ -2351,9 +2346,6 @@ Be specific with numbers and percentages. Focus on actionable insights that can 
                           )}
                           {visibleColumns.cost && (
                             <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(kw.costMicros)}</td>
-                          )}
-                          {visibleColumns.bid && (
-                            <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(kw.cpcBidMicros)}</td>
                           )}
                           {visibleColumns.avgCpc && (
                             <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(kw.averageCpcMicros)}</td>
