@@ -1436,9 +1436,7 @@ const AdsPage = () => {
               >
                 Similar Keywords
                 {campaignKeywords.length > 0 && (
-                  <span className={`ml-2 px-1.5 py-0.5 text-xs rounded-full ${
-                    activeTab === 'similar' ? 'bg-gray-700 text-white' : 'bg-gray-200 text-gray-700'
-                  }`}>
+                  <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700">
                     {campaignKeywords.length}
                   </span>
                 )}
