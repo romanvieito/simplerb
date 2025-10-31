@@ -926,7 +926,7 @@ Please provide a comprehensive analysis including:
 
 ${analysisSections.join('\n')}
 
-Be specific with numbers and percentages. Focus on actionable insights that can drive better ROI. If conversion data is not available, do not discuss conversions, CPA, or ROI optimization.`;
+Be specific with numbers and percentages. Focus on actionable insights based on the available data.`;
 
       const response = await fetch("/api/openai", {
         method: "POST",
