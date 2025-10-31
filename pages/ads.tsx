@@ -39,6 +39,7 @@ type ColumnVisibilityState = {
   keyword: boolean;
   campaign: boolean;
   adGroup: boolean;
+  matchType: boolean;
   impressions: boolean;
   clicks: boolean;
   ctr: boolean;
@@ -429,6 +430,7 @@ const AdsPage = () => {
     keyword: true, // Always visible
     campaign: true,
     adGroup: true,
+    matchType: true,
     impressions: true,
     clicks: true,
     ctr: true,
@@ -1224,6 +1226,19 @@ Be specific with numbers and percentages. Focus on actionable insights that can 
 
   const formatPercentage = (value: number) => {
     return `${(value * 100).toFixed(2)}%`;
+  };
+
+  // Match type mapping from Google Ads API enum values to readable strings
+  const formatMatchType = (matchType: string | number) => {
+    const matchTypeMap: Record<string, string> = {
+      '2': 'EXACT',
+      '3': 'PHRASE',
+      '4': 'BROAD',
+      'EXACT': 'EXACT',
+      'PHRASE': 'PHRASE',
+      'BROAD': 'BROAD'
+    };
+    return matchTypeMap[String(matchType)] || String(matchType);
   };
 
   const handleSort = (column: 'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare') => {
@@ -2091,6 +2106,7 @@ Be specific with numbers and percentages. Focus on actionable insights that can 
                             <span className={`text-sm text-gray-700 ${key === 'keyword' ? 'font-semibold' : ''}`}>
                               {key === 'keyword' ? 'Keyword' :
                                key === 'adGroup' ? 'Ad Group' :
+                               key === 'matchType' ? 'Match Type' :
                                key === 'avgCpc' ? 'Avg CPC' :
                                key === 'conversionRate' ? 'Conv. Rate' :
                                key === 'conversionValue' ? 'Conv. Value' :
@@ -2118,6 +2134,9 @@ Be specific with numbers and percentages. Focus on actionable insights that can 
                         )}
                         {visibleColumns.adGroup && (
                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ad Group</th>
+                        )}
+                        {visibleColumns.matchType && (
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Match Type</th>
                         )}
                         {visibleColumns.impressions && (
                           <th 
@@ -2253,6 +2272,9 @@ Be specific with numbers and percentages. Focus on actionable insights that can 
                           )}
                           {visibleColumns.adGroup && (
                             <td className="px-4 py-3 text-sm text-gray-600">{kw.adGroupName}</td>
+                          )}
+                          {visibleColumns.matchType && (
+                            <td className="px-4 py-3 text-sm text-gray-600 text-left">{formatMatchType(kw.matchType)}</td>
                           )}
                           {visibleColumns.impressions && (
                             <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatNumber(kw.impressions)}</td>
