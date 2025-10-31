@@ -855,7 +855,7 @@ const AdsPage = () => {
               keywords: batch,
               countryCode: similarKeywordsCountryCode,
               languageCode: similarKeywordsLanguageCode,
-              excludeExisting: [], // Don't exclude campaign keywords - we want to find similar ones
+              excludeExisting: Array.from(new Set(campaignKeywords.map(k => k.keyword))), // Exclude existing campaign keywords
             })
           });
 
