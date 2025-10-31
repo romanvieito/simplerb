@@ -5,6 +5,7 @@ import { Toaster, toast } from "react-hot-toast";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useRouter } from 'next/router';
 import { TablePagination } from "@mui/material";
+import Dialog from '@mui/material/Dialog';
 import { createParser, ParsedEvent, ReconnectInterval } from "eventsource-parser";
 import SBRContext from "../context/SBRContext";
 import LoadingDots from "../components/LoadingDots";
@@ -1839,37 +1840,67 @@ Be specific with numbers and percentages. Focus on actionable insights that can 
           </>
         )}
 
-        {/* AI Analysis Results - Analysis Tab */}
-        {activeTab === 'analysis' && showAiAnalysis && aiAnalysis && (
-          <div className="w-full mb-8">
-            <div className="bg-white rounded-xl border border-gray-100 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">AI Campaign Analysis</h3>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => navigator.clipboard.writeText(aiAnalysis)}
-                    className="px-3 py-1.5 text-sm text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-                  >
-                    Copy
-                  </button>
-                  <button
-                    onClick={() => setShowAiAnalysis(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                </div>
+        {/* AI Analysis Results Modal */}
+        <Dialog
+          open={showAiAnalysis && !!aiAnalysis}
+          onClose={() => setShowAiAnalysis(false)}
+          maxWidth="lg"
+          fullWidth
+          PaperProps={{
+            style: {
+              borderRadius: '16px',
+              maxHeight: '90vh'
+            }
+          }}
+        >
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">AI Campaign Analysis</h2>
+                <p className="text-sm text-gray-600 mt-1">Expert Google Ads optimization recommendations</p>
               </div>
-              <div className="prose prose-sm max-w-none">
-                <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">
-                  {aiAnalysis}
-                </pre>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(aiAnalysis);
+                    toast.success('Analysis copied to clipboard!');
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Copy
+                </button>
+                <button
+                  onClick={() => setShowAiAnalysis(false)}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
             </div>
+
+            <div className="bg-gray-50 rounded-lg p-6 max-h-96 overflow-y-auto">
+              <div className="prose prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-strong:text-gray-900 prose-ul:text-gray-700 prose-li:text-gray-700">
+                <div className="whitespace-pre-wrap text-sm leading-relaxed font-sans">
+                  {aiAnalysis}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={() => setShowAiAnalysis(false)}
+                className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
+              >
+                Close
+              </button>
+            </div>
           </div>
-        )}
+        </Dialog>
 
         {/* Similar Keywords Tab */}
         {activeTab === 'similar' && (
