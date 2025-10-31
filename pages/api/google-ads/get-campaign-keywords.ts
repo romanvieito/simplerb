@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getGoogleAdsCustomer, validateAdPilotAccess, handleGoogleAdsError } from './client';
+import { getDefaultDateRange } from './timezone-utils';
 
 interface CampaignKeyword {
   campaignId: string;
@@ -70,12 +71,10 @@ export default async function handler(
       startDateStr = startDateParam;
       endDateStr = endDateParam;
     } else {
-      // Default to last 30 days
-      const endDate = new Date();
-      const startDate = new Date();
-      startDate.setDate(endDate.getDate() - 30);
-      startDateStr = startDate.toISOString().split('T')[0];
-      endDateStr = endDate.toISOString().split('T')[0];
+      // Default to last 30 days using account timezone
+      const dateRange = await getDefaultDateRange(30);
+      startDateStr = dateRange.startDate;
+      endDateStr = dateRange.endDate;
     }
 
     // Query to get all keywords from enabled campaigns with metrics

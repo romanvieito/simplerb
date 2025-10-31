@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getAuth } from '@clerk/nextjs/server';
 import { getGoogleAdsCustomer, validateAdPilotAccess, handleGoogleAdsError, formatCustomerId } from './client';
+import { getDefaultDateRange } from './timezone-utils';
 
 interface MetricsRequest {
   campaignId?: string;
@@ -143,7 +144,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     console.log('Campaign query:', query);
 
-    // Add date range - use provided dates or calculate from days parameter
+    // Add date range - use provided dates or calculate from days parameter using account timezone
     let startDateStr: string;
     let endDateStr: string;
     
@@ -152,12 +153,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       startDateStr = reqStartDate;
       endDateStr = reqEndDate;
     } else {
-      // Use days parameter (existing behavior)
-      const endDate = new Date();
-      const startDate = new Date();
-      startDate.setDate(endDate.getDate() - days);
-      startDateStr = startDate.toISOString().split('T')[0];
-      endDateStr = endDate.toISOString().split('T')[0];
+      // Use days parameter with account timezone
+      const dateRange = await getDefaultDateRange(days);
+      startDateStr = dateRange.startDate;
+      endDateStr = dateRange.endDate;
     }
     
     console.log('Date range:', startDateStr, 'to', endDateStr);

@@ -11,6 +11,15 @@ import { TransitionProps } from '@mui/material/transitions';
 import { createParser, ParsedEvent, ReconnectInterval } from "eventsource-parser";
 import SBRContext from "../context/SBRContext";
 import LoadingDots from "../components/LoadingDots";
+import {
+  formatDateInTimezone,
+  getTodayInTimezone,
+  getYesterdayInTimezone,
+  getLastNDaysInTimezone,
+  getThisMonthInTimezone,
+  getLastMonthInTimezone,
+  DEFAULT_TIMEZONE,
+} from "../utils/googleAdsDates";
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -456,10 +465,9 @@ const AdsPage = () => {
 
   // Date filter state
   const loadedDateFilter = loadDateFilter();
-  const [startDate, setStartDate] = useState<string>(() => loadedDateFilter?.startDate ?? (() => { const d = new Date(); d.setDate(d.getDate() - 7); return d.toISOString().split('T')[0]; })());
-  const [endDate, setEndDate] = useState<string>(() => loadedDateFilter?.endDate ?? new Date().toISOString().split('T')[0]);
-  const [selectedDatePreset, setSelectedDatePreset] = useState<string>(loadedDateFilter?.preset ?? 'last7days');
-  const [showDateFilter, setShowDateFilter] = useState(false);
+  // Account timezone state - default to common Google Ads timezone
+  const [accountTimezone, setAccountTimezone] = useState<string>(DEFAULT_TIMEZONE);
+  const [timezoneLoaded, setTimezoneLoaded] = useState<boolean>(false);
 
   // Refs to prevent save loops during initial load
   const isInitialLoad = useRef(true);
@@ -485,6 +493,62 @@ const AdsPage = () => {
     subsCancel, 
     setSubsCancel    
   } = context;
+
+  // Fetch account timezone on mount
+  useEffect(() => {
+    const fetchTimezone = async () => {
+      if (!isSignedIn || !admin || !user?.emailAddresses[0]?.emailAddress) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/google-ads/timezone', {
+          headers: {
+            'x-user-email': user.emailAddresses[0].emailAddress,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.timezone) {
+            setAccountTimezone(data.timezone);
+            setTimezoneLoaded(true);
+            console.log('✅ Account timezone loaded:', data.timezone);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch account timezone:', error);
+        // Continue with default timezone
+        setTimezoneLoaded(true);
+      }
+    };
+
+    fetchTimezone();
+  }, [isSignedIn, admin, user?.emailAddresses]);
+
+  // Initialize dates with account timezone (fallback to default if not loaded yet)
+  const [startDate, setStartDate] = useState<string>(() => {
+    if (loadedDateFilter?.startDate) return loadedDateFilter.startDate;
+    // Use default timezone for initial state (will update when timezone loads)
+    const last7Days = getLastNDaysInTimezone(7, DEFAULT_TIMEZONE);
+    return last7Days.startDate;
+  });
+  const [endDate, setEndDate] = useState<string>(() => {
+    if (loadedDateFilter?.endDate) return loadedDateFilter.endDate;
+    const last7Days = getLastNDaysInTimezone(7, DEFAULT_TIMEZONE);
+    return last7Days.endDate;
+  });
+  const [selectedDatePreset, setSelectedDatePreset] = useState<string>(loadedDateFilter?.preset ?? 'last7days');
+  const [showDateFilter, setShowDateFilter] = useState(false);
+
+  // Update dates when timezone loads (only if no saved dates)
+  useEffect(() => {
+    if (timezoneLoaded && !loadedDateFilter?.startDate) {
+      const last7Days = getLastNDaysInTimezone(7, accountTimezone);
+      setStartDate(last7Days.startDate);
+      setEndDate(last7Days.endDate);
+    }
+  }, [timezoneLoaded, accountTimezone, loadedDateFilter]);
 
   const isPremiumUser = subsTplan === "STARTER" || subsTplan === "CREATOR";
 
@@ -1167,42 +1231,42 @@ Be specific with numbers and percentages. Focus on actionable insights that can 
     return currentPageKeywords.some(k => selectedSimilarKeywords.has(k.keyword));
   };
 
-  // Date filter helper functions
+  // Date filter helper functions - uses account timezone
   const handleDatePresetChange = (preset: string) => {
-    const today = new Date();
-    let endDateValue = new Date(today);
-    let startDateValue = new Date(today);
+    const tz = timezoneLoaded ? accountTimezone : DEFAULT_TIMEZONE;
+    let startDateStr: string;
+    let endDateStr: string;
 
     switch (preset) {
       case 'today':
-        // Both start and end date are today
+        startDateStr = getTodayInTimezone(tz);
+        endDateStr = getTodayInTimezone(tz);
         break;
       case 'yesterday':
-        startDateValue.setDate(today.getDate() - 1);
-        endDateValue.setDate(today.getDate() - 1);
+        startDateStr = getYesterdayInTimezone(tz);
+        endDateStr = getYesterdayInTimezone(tz);
         break;
       case 'last7days':
-        startDateValue.setDate(today.getDate() - 7);
+        ({ startDate: startDateStr, endDate: endDateStr } = getLastNDaysInTimezone(7, tz));
         break;
       case 'last30days':
-        startDateValue.setDate(today.getDate() - 30);
+        ({ startDate: startDateStr, endDate: endDateStr } = getLastNDaysInTimezone(30, tz));
         break;
       case 'last90days':
-        startDateValue.setDate(today.getDate() - 90);
+        ({ startDate: startDateStr, endDate: endDateStr } = getLastNDaysInTimezone(90, tz));
         break;
       case 'thismonth':
-        startDateValue = new Date(today.getFullYear(), today.getMonth(), 1);
+        ({ startDate: startDateStr, endDate: endDateStr } = getThisMonthInTimezone(tz));
         break;
       case 'lastmonth':
-        startDateValue = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        endDateValue = new Date(today.getFullYear(), today.getMonth(), 0);
+        ({ startDate: startDateStr, endDate: endDateStr } = getLastMonthInTimezone(tz));
         break;
       default:
         return;
     }
 
-    setStartDate(startDateValue.toISOString().split('T')[0]);
-    setEndDate(endDateValue.toISOString().split('T')[0]);
+    setStartDate(startDateStr);
+    setEndDate(endDateStr);
     setSelectedDatePreset(preset);
   };
 
