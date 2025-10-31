@@ -6,9 +6,20 @@ import { useClerk, useUser } from "@clerk/nextjs";
 import { useRouter } from 'next/router';
 import { TablePagination } from "@mui/material";
 import Dialog from '@mui/material/Dialog';
+import Slide from '@mui/material/Slide';
+import { TransitionProps } from '@mui/material/transitions';
 import { createParser, ParsedEvent, ReconnectInterval } from "eventsource-parser";
 import SBRContext from "../context/SBRContext";
 import LoadingDots from "../components/LoadingDots";
+
+const Transition = React.forwardRef(function Transition(
+  props: TransitionProps & {
+    children: React.ReactElement;
+  },
+  ref: React.Ref<unknown>,
+) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
 
 // LocalStorage utility functions for saving/loading campaign keywords
 const STORAGE_KEY = 'last-campaign-keywords';
@@ -1842,62 +1853,51 @@ Be specific with numbers and percentages. Focus on actionable insights that can 
 
         {/* AI Analysis Results Modal */}
         <Dialog
+          fullScreen
           open={showAiAnalysis && !!aiAnalysis}
           onClose={() => setShowAiAnalysis(false)}
-          maxWidth="lg"
-          fullWidth
-          PaperProps={{
-            style: {
-              borderRadius: '16px',
-              maxHeight: '90vh'
-            }
-          }}
+          TransitionComponent={Transition}
         >
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">AI Campaign Analysis</h2>
-                <p className="text-sm text-gray-600 mt-1">Expert Google Ads optimization recommendations</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(aiAnalysis);
-                    toast.success('Analysis copied to clipboard!');
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  Copy
-                </button>
-                <button
-                  onClick={() => setShowAiAnalysis(false)}
-                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 bg-white border-b border-gray-200">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">AI Campaign Analysis</h2>
+              <p className="text-lg text-gray-600 mt-1">Expert Google Ads optimization recommendations</p>
             </div>
-
-            <div className="bg-gray-50 rounded-lg p-6 max-h-96 overflow-y-auto">
-              <div className="prose prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-strong:text-gray-900 prose-ul:text-gray-700 prose-li:text-gray-700">
-                <div className="whitespace-pre-wrap text-sm leading-relaxed font-sans">
-                  {aiAnalysis}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end mt-6">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(aiAnalysis);
+                  toast.success('Analysis copied to clipboard!');
+                }}
+                className="flex items-center gap-2 px-6 py-3 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                Copy Analysis
+              </button>
               <button
                 onClick={() => setShowAiAnalysis(false)}
-                className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
+                className="p-3 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                Close
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-hidden bg-gray-50">
+            <div className="h-full max-w-6xl mx-auto p-8">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 h-full overflow-y-auto">
+                <div className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-p:text-gray-700 prose-strong:text-gray-900 prose-strong:font-semibold prose-ul:text-gray-700 prose-li:text-gray-700 prose-li:leading-relaxed">
+                  <div className="whitespace-pre-wrap leading-relaxed font-sans">
+                    {aiAnalysis}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </Dialog>
