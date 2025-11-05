@@ -123,7 +123,6 @@ Respond as a helpful, expert consultant across all simplerB tools.`;
         { role: 'system', content: systemPrompt },
         ...messages
       ],
-      temperature: 0.7,
       stream: true,
       n: 1,
     };

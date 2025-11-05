@@ -24,7 +24,7 @@ const handler = async (req: any, res: any) => {
       return res.status(401).json({ error: 'Authentication failed' });
     }
 
-    const { prompt, ptemp, ptop } = req.body;
+    const { prompt } = req.body;
 
     if (!prompt) {
       return res.status(400).json({ error: 'No prompt in the request' });
