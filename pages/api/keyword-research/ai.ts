@@ -20,9 +20,10 @@ interface GeneratedKeywordResult {
     monthlySearches: number;
   }>;
   _meta?: {
-    dataSource: 'openai_generated';
+    dataSource: 'openai_generated' | 'google_ads_api';
     reason?: string;
     cached?: boolean;
+    generatedViaAI?: boolean;
   };
 }
 
@@ -118,7 +119,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-5-nano',
+      model: 'gpt-3.5-turbo',
       messages: [
         { role: 'system', content: systemPrompt },
         {
@@ -141,15 +142,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new Error('OpenAI response was not valid JSON');
     }
 
-    if (!Array.isArray(parsed)) {
-      throw new Error('OpenAI response was not an array');
+    let normalizedArray: any[];
+    if (Array.isArray(parsed)) {
+      normalizedArray = parsed;
+    } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.keywords)) {
+      normalizedArray = parsed.keywords;
+    } else {
+      throw new Error('OpenAI response was not an array or object with keywords array');
     }
 
-    const normalizedArray = Array.isArray(parsed)
-      ? parsed
-      : (Array.isArray(parsed.keywords) ? parsed.keywords : []);
-
-    const results: GeneratedKeywordResult[] = normalizedArray
+    const aiResults: GeneratedKeywordResult[] = normalizedArray
       .map((item: any) => {
         const keyword = String(item.keyword ?? '').trim();
         if (!keyword) {
@@ -188,16 +190,90 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           competitionIndex: competitionIndex !== null ? Number(competitionIndex) : undefined,
           monthlySearchVolumes,
           _meta: {
-            dataSource: 'openai_generated',
+            dataSource: 'openai_generated' as const,
             reason: 'Generated via OpenAI',
             cached: false,
           },
         } as GeneratedKeywordResult;
       })
-      .filter(Boolean);
+      .filter((item): item is GeneratedKeywordResult => item !== null);
 
-    if (results.length === 0) {
+    if (aiResults.length === 0) {
       return res.status(200).json([]);
+    }
+
+    // Enrich AI-generated keywords with Google Ads API data
+    const keywordList = aiResults.map(r => r.keyword);
+    let enrichedResults: GeneratedKeywordResult[] = aiResults;
+
+    try {
+      console.log('🔍 Enriching AI-generated keywords with Google Ads data...');
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      
+      const keywordPlanningResponse = await fetch(`${req.headers.origin || 'http://127.0.0.1:3000'}/api/google-ads/keyword-planning-rest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keywords: keywordList, countryCode, languageCode }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+
+      if (keywordPlanningResponse.ok) {
+        const keywordPlanningData = await keywordPlanningResponse.json();
+        
+        if (keywordPlanningData.success && Array.isArray(keywordPlanningData.keywords) && keywordPlanningData.keywords.length > 0) {
+          console.log(`✅ Enriched ${keywordPlanningData.keywords.length} keywords with Google Ads data`);
+          
+          // Create a map of Google Ads data by keyword
+          const googleAdsMap = new Map<string, any>();
+          keywordPlanningData.keywords.forEach((idea: any) => {
+            googleAdsMap.set(idea.keyword.toLowerCase(), idea);
+          });
+
+          // Merge AI competition data with Google Ads metrics
+          enrichedResults = aiResults.map((aiResult) => {
+            const googleAdsData = googleAdsMap.get(aiResult.keyword.toLowerCase());
+            
+            if (googleAdsData) {
+              // Use Google Ads data for volume, CPC, trends, but keep AI competition if it's more detailed
+              return {
+                ...aiResult,
+                searchVolume: googleAdsData.searchVolume ?? aiResult.searchVolume ?? 0,
+                competition: googleAdsData.competition || aiResult.competition,
+                competitionIndex: googleAdsData.competitionIndex ?? aiResult.competitionIndex,
+                lowTopPageBidMicros: googleAdsData.lowTopPageBidMicros,
+                highTopPageBidMicros: googleAdsData.highTopPageBidMicros,
+                avgCpcMicros: googleAdsData.avgCpcMicros,
+                monthlySearchVolumes: googleAdsData.monthlySearchVolumes ?? aiResult.monthlySearchVolumes,
+                _meta: {
+                  dataSource: 'google_ads_api',
+                  reason: 'AI-generated keywords enriched with Google Ads metrics',
+                  cached: false,
+                  generatedViaAI: true,
+                },
+              };
+            }
+            
+            // If no Google Ads data, keep AI result but mark as AI-only
+            return {
+              ...aiResult,
+              _meta: {
+                dataSource: aiResult._meta?.dataSource || 'openai_generated',
+                reason: 'Generated via OpenAI (Google Ads data unavailable)',
+                cached: aiResult._meta?.cached || false,
+              },
+            };
+          });
+        } else {
+          console.log('⚠️ Google Ads API returned no data for enrichment');
+        }
+      } else {
+        console.log('⚠️ Google Ads API enrichment failed, using AI-only data');
+      }
+    } catch (enrichmentError) {
+      console.error('⚠️ Error enriching with Google Ads data:', enrichmentError);
+      // Continue with AI-only results if enrichment fails
     }
 
     if (userId) {
@@ -206,12 +282,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         userPrompt: prompt,
         countryCode,
         languageCode,
-        results,
-        source: 'openai_generated',
+        results: enrichedResults,
+        source: enrichedResults[0]?._meta?.dataSource === 'google_ads_api' ? 'google_ads_api' : 'openai_generated',
       });
     }
 
-    return res.status(200).json(results);
+    return res.status(200).json(enrichedResults);
   } catch (error) {
     console.error('OpenAI keyword generation error:', error);
     let message = 'Failed to generate keywords with AI';
