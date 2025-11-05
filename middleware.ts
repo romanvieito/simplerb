@@ -25,6 +25,7 @@ export default authMiddleware({
     "/api/migrations/run-normalized-migration",
     "/api/migrations/run-conversion-migration",
     "/api/migrations/create-smart-pilot-tables",
+    "/api/migrations/create-keyword-favorites-table",
     "/sign-in(.*)",
     "/sign-up(.*)"
   ]
