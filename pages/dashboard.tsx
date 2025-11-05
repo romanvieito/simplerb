@@ -90,8 +90,6 @@ const Dashboard: React.FC = () => {
           </button>
           <span className="text-gray-900 font-medium">Dashboard</span>
         </div>
-
-
             {/* Welcome Section */}
             <div className="w-full max-w-4xl mx-auto mb-8">
               <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
@@ -159,79 +157,6 @@ const Dashboard: React.FC = () => {
                       <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Feature Cards */}
-            <div className="w-full max-w-4xl mx-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <a
-                  href="/domain"
-                  className="block bg-white rounded-xl border border-gray-100 p-6 hover:border-green-300 hover:shadow-md transition-all"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
-                      </svg>
-                    </div>
-                    <div className="flex-1 text-left">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Domain Generator</h3>
-                      <p className="text-gray-600 text-sm mb-3">Find the perfect domain name for your next project with AI-powered suggestions.</p>
-                      <span className="text-sm text-green-600 font-medium">Try it now →</span>
-                    </div>
-                  </div>
-                </a>
-
-                <a
-                  href="/web"
-                  className="block bg-white rounded-xl border border-gray-100 p-6 hover:border-purple-300 hover:shadow-md transition-all"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1 text-left">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Website Builder</h3>
-                      <p className="text-gray-600 text-sm mb-3">Create beautiful websites quickly and easily with our drag-and-drop builder.</p>
-                      <span className="text-sm text-purple-600 font-medium">Try it now →</span>
-                    </div>
-                  </div>
-                </a>
-
-                <a
-                  href="/ads"
-                  className="block bg-white rounded-xl border border-gray-100 p-6 hover:border-orange-300 hover:shadow-md transition-all"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1 text-left">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Ads Generator</h3>
-                      <p className="text-gray-600 text-sm mb-3">Generate high-converting ads for your campaigns with AI assistance.</p>
-                      <span className="text-sm text-orange-600 font-medium">Try it now →</span>
-                    </div>
-                  </div>
-                </a>
-
-                <div className="bg-white rounded-xl border border-gray-100 p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                      </svg>
-                    </div>
-                    <div className="flex-1 text-left">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">More Coming Soon</h3>
-                      <p className="text-gray-600 text-sm">We're building more powerful tools to help you grow your business.</p>
                     </div>
                   </div>
                 </div>
@@ -311,6 +236,82 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           </div>
+
+
+            {/* Feature Cards */}
+            <div className="w-full max-w-4xl mx-auto mt-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <a
+                  href="/domain"
+                  className="block bg-white rounded-xl border border-gray-100 p-6 hover:border-green-300 hover:shadow-md transition-all"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 text-left">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Domain Generator</h3>
+                      <p className="text-gray-600 text-sm mb-3">Find the perfect domain name for your next project with AI-powered suggestions.</p>
+                      <span className="text-sm text-green-600 font-medium">Try it now →</span>
+                    </div>
+                  </div>
+                </a>
+
+                <a
+                  href="/web"
+                  className="block bg-white rounded-xl border border-gray-100 p-6 hover:border-purple-300 hover:shadow-md transition-all"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 text-left">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Website Builder</h3>
+                      <p className="text-gray-600 text-sm mb-3">Create beautiful websites quickly and easily with our drag-and-drop builder.</p>
+                      <span className="text-sm text-purple-600 font-medium">Try it now →</span>
+                    </div>
+                  </div>
+                </a>
+
+                <a
+                  href="/ads"
+                  className="block bg-white rounded-xl border border-gray-100 p-6 hover:border-orange-300 hover:shadow-md transition-all"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 text-left">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Ads Generator</h3>
+                      <p className="text-gray-600 text-sm mb-3">Generate high-converting ads for your campaigns with AI assistance.</p>
+                      <span className="text-sm text-orange-600 font-medium">Try it now →</span>
+                    </div>
+                  </div>
+                </a>
+
+                <div className="bg-white rounded-xl border border-gray-100 p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 text-left">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">More Coming Soon</h3>
+                      <p className="text-gray-600 text-sm">We're building more powerful tools to help you grow your business.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            
       </main>
     </div>
   );
