@@ -34,7 +34,7 @@ const handler = async (req: any, res: any) => {
     const clientIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     const now = Date.now();
     const windowMs = 60 * 1000; // 1 minute
-    const maxRequests = 10; // 10 requests per minute
+    const maxRequests = 200; // 200 requests per minute
 
     if (!global.rateLimit) global.rateLimit = new Map();
 
