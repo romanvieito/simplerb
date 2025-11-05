@@ -119,7 +119,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-5-nano',
       messages: [
         { role: 'system', content: systemPrompt },
         {
