@@ -457,22 +457,22 @@ export default function FindKeywords(): JSX.Element {
 
     try {
       const method = isCurrentlyFavorite ? 'DELETE' : 'PUT';
-      const body = isCurrentlyFavorite
-        ? undefined
-        : {
-            keyword: result.keyword,
-            countryCode,
-            languageCode,
-            searchVolume: result.searchVolume,
-            competition: result.competition,
-            competitionIndex: result.competitionIndex,
-            avgCpcMicros: result.avgCpcMicros,
-          };
+      const body = {
+        keyword: result.keyword,
+        ...(isCurrentlyFavorite ? {} : {
+          countryCode,
+          languageCode,
+          searchVolume: result.searchVolume,
+          competition: result.competition,
+          competitionIndex: result.competitionIndex,
+          avgCpcMicros: result.avgCpcMicros,
+        })
+      };
 
       const response = await fetch('/api/keyword-favorites', {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: body ? JSON.stringify(body) : undefined,
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {

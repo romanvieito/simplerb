@@ -106,7 +106,7 @@ export default async function handler(
     }
 
     if (request.method === 'DELETE') {
-      const { keyword } = request.query;
+      const { keyword } = request.body;
 
       if (!keyword || typeof keyword !== 'string') {
         throw new Error('Keyword parameter is required');
@@ -114,7 +114,7 @@ export default async function handler(
 
       await sql`
         DELETE FROM keyword_favorites
-        WHERE user_id = ${userId} AND keyword = ${keyword}
+        WHERE user_id = ${userId} AND keyword = ${keyword.trim()}
       `;
 
       return response.status(200).json({
