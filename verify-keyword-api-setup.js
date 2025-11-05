@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 /**
  * Google Ads Keyword Planning API Verification Script
- * 
+ *
  * This script verifies that your environment is properly configured
  * to use REAL Google Ads API data instead of mock data.
  */
+
+// Load environment variables from .env.local
+require('dotenv').config({ path: '.env.local' });
 
 console.log('🔍 Google Ads Keyword Planning Setup Verification\n');
 console.log('='.repeat(60));
