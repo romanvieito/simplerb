@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import { Container, Grid } from '@mui/material';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/router';
 
@@ -22,6 +19,7 @@ const Dashboard: React.FC = () => {
   const { user, isLoaded } = useUser();
   const [favorites, setFavorites] = useState<KeywordFavorite[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'overview' | 'keywords'>('overview');
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -64,10 +62,10 @@ const Dashboard: React.FC = () => {
 
   if (!isLoaded || !user) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="flex w-full flex-col items-center justify-center py-2 min-h-screen bg-white">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-400">
+          <p className="mt-4 text-gray-600">
             {!isLoaded ? 'Loading...' : 'Redirecting to sign in...'}
           </p>
         </div>
@@ -76,166 +74,284 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="flex w-full flex-col items-center justify-center py-2 min-h-screen bg-white">
       <Head>
         <title>Dashboard - SimplerB</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Header credits={0} />
 
-      {/* Hero Section */}
-      <section className="relative min-h-[60vh] flex items-center">
-        <div className="absolute inset-0 bg-gradient-to-b from-red-900/20 to-black/95 z-0"></div>
-        <Container maxWidth="lg" className="relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-6xl md:text-7xl font-bold mb-8 tracking-tight">
-              Your Dashboard
-            </h1>
-            <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-              Manage your keyword favorites and access all your tools in one place.
-            </p>
-          </div>
-        </Container>
-      </section>
+      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-2 sm:mt-2">
+        {/* Header */}
+        <div className="absolute top-4 left-4 flex items-center space-x-2">
+          <button
+            onClick={() => router.back()}
+            className="text-gray-600 hover:text-gray-800 text-xl font-light hover:bg-gray-100 rounded px-1 py-0.5 transition-colors"
+          >
+            ‹
+          </button>
+          <span className="text-gray-900 font-medium">Dashboard</span>
+        </div>
 
-      {/* Dashboard Sections */}
-      <section className="py-32 bg-black">
-        <Container maxWidth="lg">
-          <Grid container spacing={8}>
-
-            {/* Keyword Favorites Section */}
-            <Grid item xs={12} md={6}>
-              <div className="bg-gradient-to-b from-gray-900 to-black border border-gray-800 rounded-2xl p-8">
-                <h2 className="text-3xl font-bold mb-6">
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">
-                    Keyword Favorites
+        {/* Tab Navigation */}
+        <div className="w-full max-w-4xl mx-auto mb-6">
+          <div className="bg-gray-100 rounded-lg p-1">
+            <div className="grid grid-cols-2 gap-1">
+              <button
+                onClick={() => setActiveTab('overview')}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                  activeTab === 'overview'
+                    ? 'bg-white text-gray-800 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setActiveTab('keywords')}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                  activeTab === 'keywords'
+                    ? 'bg-white text-gray-800 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                Keywords
+                {favorites.length > 0 && (
+                  <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700">
+                    {favorites.length}
                   </span>
-                </h2>
-                <p className="text-gray-400 mb-6">
-                  Your saved keywords for research and optimization.
-                </p>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
 
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
+          <>
+            {/* Welcome Section */}
+            <div className="w-full max-w-4xl mx-auto mb-8">
+              <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
+                <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                  Welcome to your Dashboard
+                </h1>
+                <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+                  Manage your keyword favorites and access all your tools in one place. Start by exploring your saved keywords or try out our other features.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <button
+                    onClick={() => setActiveTab('keywords')}
+                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    View Keywords
+                  </button>
+                  <a
+                    href="/find-keywords"
+                    className="px-6 py-3 border border-gray-300 hover:border-gray-400 text-gray-700 rounded-lg font-medium transition-colors"
+                  >
+                    Find Keywords
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="w-full max-w-4xl mx-auto mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white rounded-xl border border-gray-100 p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">Keyword Favorites</p>
+                      <p className="text-2xl font-bold text-gray-900">{favorites.length}</p>
+                    </div>
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl border border-gray-100 p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">Domains Generated</p>
+                      <p className="text-2xl font-bold text-gray-900">0</p>
+                    </div>
+                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl border border-gray-100 p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">Websites Created</p>
+                      <p className="text-2xl font-bold text-gray-900">0</p>
+                    </div>
+                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Feature Cards */}
+            <div className="w-full max-w-4xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <a
+                  href="/domain"
+                  className="block bg-white rounded-xl border border-gray-100 p-6 hover:border-green-300 hover:shadow-md transition-all"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 text-left">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Domain Generator</h3>
+                      <p className="text-gray-600 text-sm mb-3">Find the perfect domain name for your next project with AI-powered suggestions.</p>
+                      <span className="text-sm text-green-600 font-medium">Try it now →</span>
+                    </div>
+                  </div>
+                </a>
+
+                <a
+                  href="/web"
+                  className="block bg-white rounded-xl border border-gray-100 p-6 hover:border-purple-300 hover:shadow-md transition-all"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 text-left">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Website Builder</h3>
+                      <p className="text-gray-600 text-sm mb-3">Create beautiful websites quickly and easily with our drag-and-drop builder.</p>
+                      <span className="text-sm text-purple-600 font-medium">Try it now →</span>
+                    </div>
+                  </div>
+                </a>
+
+                <a
+                  href="/ads"
+                  className="block bg-white rounded-xl border border-gray-100 p-6 hover:border-orange-300 hover:shadow-md transition-all"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 text-left">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Ads Generator</h3>
+                      <p className="text-gray-600 text-sm mb-3">Generate high-converting ads for your campaigns with AI assistance.</p>
+                      <span className="text-sm text-orange-600 font-medium">Try it now →</span>
+                    </div>
+                  </div>
+                </a>
+
+                <div className="bg-white rounded-xl border border-gray-100 p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 text-left">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">More Coming Soon</h3>
+                      <p className="text-gray-600 text-sm">We're building more powerful tools to help you grow your business.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Keywords Tab */}
+        {activeTab === 'keywords' && (
+          <div className="w-full max-w-6xl mx-auto">
+            <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-gray-900">Keyword Favorites</h2>
+                  <a
+                    href="/find-keywords"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    Find Keywords
+                  </a>
+                </div>
+                <p className="text-sm text-gray-600 mt-1">Your saved keywords for research and optimization</p>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
                 {loading ? (
-                  <div className="text-center py-8">
+                  <div className="text-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-400">Loading favorites...</p>
+                    <p className="mt-4 text-gray-600">Loading favorites...</p>
                   </div>
                 ) : favorites.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-400">No keyword favorites yet.</p>
+                  <div className="text-center py-12">
+                    <div className="mb-4">
+                      <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No keyword favorites yet</h3>
+                    <p className="text-gray-600 mb-6">Start by searching for keywords to save your favorites for later.</p>
                     <a
                       href="/find-keywords"
-                      className="inline-block mt-4 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
+                      className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
                     >
                       Find Keywords
                     </a>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <table className="w-full">
                       <thead>
-                        <tr className="border-b border-gray-700">
-                          <th className="text-left py-3 text-gray-300 font-medium">Keyword</th>
-                          <th className="text-left py-3 text-gray-300 font-medium">Volume</th>
-                          <th className="text-left py-3 text-gray-300 font-medium">Competition</th>
-                          <th className="text-left py-3 text-gray-300 font-medium">CPC</th>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Keyword</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Volume</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Competition</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">CPC</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Country</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Added</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {favorites.slice(0, 10).map((favorite, index) => (
-                          <tr key={index} className="border-b border-gray-800 hover:bg-gray-900/50 transition-colors">
-                            <td className="py-3 text-white font-medium">{favorite.keyword}</td>
-                            <td className="py-3 text-gray-300">{favorite.search_volume || 'N/A'}</td>
-                            <td className="py-3 text-gray-300">{favorite.competition || 'N/A'}</td>
-                            <td className="py-3 text-gray-300">{formatCPC(favorite.avg_cpc_micros)}</td>
+                        {favorites.map((favorite, index) => (
+                          <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                            <td className="py-4 px-4 text-sm font-medium text-gray-900">{favorite.keyword}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{favorite.search_volume?.toLocaleString() || 'N/A'}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{favorite.competition || 'N/A'}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{formatCPC(favorite.avg_cpc_micros)}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{favorite.country_code || 'N/A'}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">
+                              {new Date(favorite.created_at).toLocaleDateString()}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-                    {favorites.length > 10 && (
-                      <p className="text-sm text-gray-500 mt-4">
-                        Showing {Math.min(10, favorites.length)} of {favorites.length} favorites
-                      </p>
-                    )}
                   </div>
                 )}
               </div>
-            </Grid>
-
-            {/* Domain Generator Section - Placeholder */}
-            <Grid item xs={12} md={6}>
-              <div className="bg-gradient-to-b from-gray-900 to-black border border-gray-800 rounded-2xl p-8">
-                <h2 className="text-3xl font-bold mb-6">
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-500">
-                    Domain Generator
-                  </span>
-                </h2>
-                <p className="text-gray-400 mb-6">
-                  Find the perfect domain name for your next project.
-                </p>
-                <div className="text-center py-8">
-                  <p className="text-gray-400 mb-4">Coming soon...</p>
-                  <a
-                    href="/domain"
-                    className="inline-block px-6 py-3 bg-green-600 hover:bg-green-700 rounded-lg font-medium transition-colors"
-                  >
-                    Try Domain Generator
-                  </a>
-                </div>
-              </div>
-            </Grid>
-
-            {/* Website Builder Section - Placeholder */}
-            <Grid item xs={12} md={6}>
-              <div className="bg-gradient-to-b from-gray-900 to-black border border-gray-800 rounded-2xl p-8">
-                <h2 className="text-3xl font-bold mb-6">
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">
-                    Website Builder
-                  </span>
-                </h2>
-                <p className="text-gray-400 mb-6">
-                  Create beautiful websites quickly and easily.
-                </p>
-                <div className="text-center py-8">
-                  <p className="text-gray-400 mb-4">Coming soon...</p>
-                  <a
-                    href="/web"
-                    className="inline-block px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium transition-colors"
-                  >
-                    Try Website Builder
-                  </a>
-                </div>
-              </div>
-            </Grid>
-
-            {/* Ads Generator Section - Placeholder */}
-            <Grid item xs={12} md={6}>
-              <div className="bg-gradient-to-b from-gray-900 to-black border border-gray-800 rounded-2xl p-8">
-                <h2 className="text-3xl font-bold mb-6">
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-red-500">
-                    Ads Generator
-                  </span>
-                </h2>
-                <p className="text-gray-400 mb-6">
-                  Generate high-converting ads for your campaigns.
-                </p>
-                <div className="text-center py-8">
-                  <p className="text-gray-400 mb-4">Coming soon...</p>
-                  <a
-                    href="/ads"
-                    className="inline-block px-6 py-3 bg-orange-600 hover:bg-orange-700 rounded-lg font-medium transition-colors"
-                  >
-                    Try Ads Generator
-                  </a>
-                </div>
-              </div>
-            </Grid>
-
-          </Grid>
-        </Container>
-      </section>
-
-      <Footer />
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 };
