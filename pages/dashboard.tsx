@@ -19,7 +19,6 @@ const Dashboard: React.FC = () => {
   const { user, isLoaded } = useUser();
   const [favorites, setFavorites] = useState<KeywordFavorite[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'keywords'>('overview');
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -92,42 +91,7 @@ const Dashboard: React.FC = () => {
           <span className="text-gray-900 font-medium">Dashboard</span>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="w-full max-w-4xl mx-auto mb-6">
-          <div className="bg-gray-100 rounded-lg p-1">
-            <div className="grid grid-cols-2 gap-1">
-              <button
-                onClick={() => setActiveTab('overview')}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                  activeTab === 'overview'
-                    ? 'bg-white text-gray-800 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                Overview
-              </button>
-              <button
-                onClick={() => setActiveTab('keywords')}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
-                  activeTab === 'keywords'
-                    ? 'bg-white text-gray-800 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                Keywords
-                {favorites.length > 0 && (
-                  <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700">
-                    {favorites.length}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
 
-        {/* Overview Tab */}
-        {activeTab === 'overview' && (
-          <>
             {/* Welcome Section */}
             <div className="w-full max-w-4xl mx-auto mb-8">
               <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
@@ -138,12 +102,12 @@ const Dashboard: React.FC = () => {
                   Manage your keyword favorites and access all your tools in one place. Start by exploring your saved keywords or try out our other features.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <button
-                    onClick={() => setActiveTab('keywords')}
-                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                  <a
+                    href="#favorites"
+                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors inline-block"
                   >
-                    View Keywords
-                  </button>
+                    View Favorites
+                  </a>
                   <a
                     href="/find-keywords"
                     className="px-6 py-3 border border-gray-300 hover:border-gray-400 text-gray-700 rounded-lg font-medium transition-colors"
@@ -273,12 +237,9 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-          </>
-        )}
 
-        {/* Keywords Tab */}
-        {activeTab === 'keywords' && (
-          <div className="w-full max-w-6xl mx-auto">
+            {/* Keyword Favorites Section */}
+          <div id="favorites" className="w-full max-w-6xl mx-auto">
             <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
               {/* Header */}
               <div className="px-6 py-4 border-b border-gray-100">
@@ -350,7 +311,6 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           </div>
-        )}
       </main>
     </div>
   );
