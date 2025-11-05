@@ -915,7 +915,7 @@ const AdsPage = () => {
         analysisSections.push("**Note**: Conversion data is not visible in your current view. Focus analysis on available metrics like impressions, clicks, CTR, and cost efficiency.");
       }
 
-      const prompt = `You are an expert Google Ads specialist with 10+ years of experience optimizing campaigns for various industries.
+      const prompt = `You are an expert Google Ads specialist.
 
 Analyze this Google Ads campaign data and provide actionable recommendations to improve performance. IMPORTANT: The data shown includes ONLY the metrics columns that are currently visible in the user's interface. Do NOT mention or analyze any metrics that are not present in the data provided.
 

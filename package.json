@@ -4,7 +4,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "check:token": "node scripts/check-token-health.js"
+    "check:token": "node scripts/check-token-health.js",
+    "monitor:token": "node scripts/monitor-token-health.js",
+    "monitor:token:alert": "node scripts/monitor-token-health.js --alert-only"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.1",

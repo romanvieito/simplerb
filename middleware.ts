@@ -19,6 +19,8 @@ export default authMiddleware({
     "/api/google-ads/keyword-planning",
     "/api/google-ads/keyword-planning-rest",
     "/api/keyword-status",
+    "/api/openai",
+    "/api/test",
     "/api/migrations/run-campaign-analysis",
     "/api/migrations/run-normalized-migration",
     "/api/migrations/run-conversion-migration",

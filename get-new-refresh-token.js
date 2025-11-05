@@ -2,9 +2,9 @@
 
 /**
  * Google Ads API Refresh Token Renewal Script
- * 
+ *
  * This script helps you get a new refresh token when your current one has expired.
- * 
+ *
  * Usage:
  * 1. Run: node get-new-refresh-token.js
  * 2. Visit the provided URL in your browser
@@ -12,6 +12,9 @@
  * 4. Copy the authorization code from the URL
  * 5. Run: node exchange-ads-code.js <authorization_code>
  */
+
+// Load environment variables from .env.local
+require('dotenv').config({path: '.env.local'});
 
 const clientId = process.env.GADS_CLIENT_ID;
 

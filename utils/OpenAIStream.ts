@@ -34,8 +34,6 @@ export async function OpenAIStream(payload: OpenAIStreamPayload) {
     throw new Error('OPENAI_API_KEY environment variable is not configured');
   }
 
-  console.log('OpenAI API Key available:', apiKey.substring(0, 10) + '...');
-
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     headers: {
       "Content-Type": "application/json",

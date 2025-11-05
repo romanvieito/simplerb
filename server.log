@@ -1,0 +1,112 @@
+
+> dev
+> next dev
+
+  ▲ Next.js 14.2.30
+  - Local:        http://localhost:3000
+  - Environments: .env.local, .env
+
+ ✓ Starting...
+ ✓ Ready in 3s
+ ✓ Compiled /middleware in 180ms (338 modules)
+INFO: Clerk: The request to /api/test is being protected (401) because there is no signed-in user, and the path is included in `apiRoutes`. To prevent this behavior, choose one of:
+
+1. To prevent Clerk authentication from protecting (401) the api route, remove the rule matching "/api/test" from the `apiRoutes` array passed to authMiddleware
+2. To make the route accessible to both signed in and signed out users, add "/api/test" to the `publicRoutes` array passed to authMiddleware
+3. To prevent Clerk authentication from running at all, pass `ignoredRoutes: ["/((?!api|trpc))(_next.*|.+\.[\w]+$)", "/api/test"]` to authMiddleware
+4. Pass a custom `afterAuth` to authMiddleware, and replace Clerk's default behavior of redirecting unless a route is included in publicRoutes
+
+For additional information about middleware, please visit https://clerk.com/docs/nextjs/middleware
+(This log only appears in development mode, or if `debug: true` is passed to authMiddleware)
+ ✓ Compiled in 153ms (338 modules)
+ ✓ Compiled /api/test in 248ms (365 modules)
+Test API called
+ POST /api/test 200 in 278ms
+ ✓ Compiled /api/openai in 67ms (367 modules)
+API handler loaded. OPENAI_API_KEY available: true
+OpenAI API handler called with method: POST
+Request body: { prompt: 'Say hello', ptemp: 0.7, ptop: 1 }
+Making OpenAI API call...
+OpenAI response received
+ POST /api/openai 200 in 584ms
+ ○ Compiling /404 ...
+ ✓ Compiled /404 in 1146ms (1477 modules)
+ GET /_next/static/chunks/%5Broot-of-the-server%5D__48d1951a._.css 404 in 1653ms
+ GET /_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_2352e2ab._.js 404 in 1449ms
+ ✓ Compiled in 501ms (1477 modules)
+ GET /_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js 404 in 166ms
+ GET /_next/static/chunks/_fdad9c64._.js 404 in 167ms
+ GET /_next/static/chunks/node_modules_next_dist_client_48ee97d5._.js 404 in 167ms
+ GET /_next/static/chunks/node_modules_next_dist_133d917d._.js 404 in 166ms
+ GET /_next/static/chunks/node_modules_%40swc_helpers_cjs_00636ac3._.js 404 in 166ms
+ GET /_next/static/chunks/_e69f0d32._.js 404 in 165ms
+ GET /_next/static/chunks/node_modules_next_dist_f0c7ae3c._.js 404 in 48ms
+ GET /_next/static/chunks/app_favicon_ico_mjs_2af93229._.js 404 in 49ms
+ GET /_next/static/chunks/node_modules_%40clerk_nextjs_dist_esm_app-router_5cfb0026._.js 404 in 49ms
+ GET /_next/static/chunks/node_modules_%40clerk_shared_dist_49f8ca42._.js 404 in 49ms
+ GET /_next/static/chunks/node_modules_8f81fa7b._.js 404 in 50ms
+ GET /_next/static/chunks/node_modules_%40clerk_clerk-react_dist_96e11733._.js 404 in 50ms
+ GET /_next/static/chunks/node_modules_mixpanel-browser_dist_mixpanel_module_79fa6bc5.js 404 in 42ms
+ GET /_next/static/chunks/lib_d04050fa._.js 404 in 41ms
+ GET /_next/static/chunks/node_modules_c2ee0b74._.js 404 in 42ms
+ GET /_next/static/chunks/_da041697._.js 404 in 42ms
+ GET /_next/static/chunks/app_layout_tsx_85f401e9._.js 404 in 42ms
+ GET /_next/static/chunks/node_modules_8467f87c._.js 404 in 42ms
+ GET /_next/static/chunks/app_page_tsx_0f1255a2._.js 404 in 18ms
+ GET /_next/static/chunks/node_modules_next_dist_b758c999._.js 404 in 18ms
+ GET /_next/static/chunks/app_not-found_tsx_0f1255a2._.js 404 in 18ms
+Clerk: The middleware was skipped for this request URL: http://localhost:3000/manifest.json. For performance reasons, it's recommended to your middleware matcher to:
+export const config = {
+  matcher: ["/((?!.+\\.[\\w]+$|_next).*)","/","/(api|trpc)(.*)"],
+};
+
+Alternatively, you can set your own ignoredRoutes. See https://clerk.com/docs/nextjs/middleware
+(This log only appears in development mode)
+
+ GET /manifest.json 404 in 6ms
+Clerk: The middleware was skipped for this request URL: http://localhost:3000/sw.js. For performance reasons, it's recommended to your middleware matcher to:
+export const config = {
+  matcher: ["/((?!.+\\.[\\w]+$|_next).*)","/","/(api|trpc)(.*)"],
+};
+
+Alternatively, you can set your own ignoredRoutes. See https://clerk.com/docs/nextjs/middleware
+(This log only appears in development mode)
+
+ GET /sw.js 404 in 8ms
+ ✓ Compiled in 998ms (1795 modules)
+ ✓ Compiled in 162ms (1106 modules)
+ ✓ Compiled /api/openai in 143ms (368 modules)
+API handler loaded. OPENAI_API_KEY available: true
+OpenAI API handler called with method: POST
+Request body: { prompt: 'Say hello', ptemp: 0.7, ptop: 1 }
+OpenAI API Key available: sk-proj-1z...
+Full API key length: 56
+API key starts with quotes: false
+ POST /api/openai 200 in 744ms
+ ✓ Compiled in 196ms (1474 modules)
+ ✓ Compiled in 139ms (1474 modules)
+ ✓ Compiled in 112ms (1106 modules)
+ ✓ Compiled in 1335ms (1474 modules)
+ ✓ Compiled in 254ms (1457 modules)
+ ✓ Compiled /api/openai in 33ms (368 modules)
+OpenAI API Key available: sk-proj-1z...
+Full API key length: 56
+API key starts with quotes: false
+Error: recieved non-200 status code, {"status":400,"statusText":"Bad Request","body":"{\n  \"error\": {\n    \"message\": \"Unsupported value: 'temperature' does not support 0.7 with this model. Only the default (1) value is supported.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": \"temperature\",\n    \"code\": \"unsupported_value\"\n  }\n}"}
+ POST /api/openai 200 in 611ms
+ POST /api/openai 400 in 2ms
+ ✓ Compiled in 162ms (1474 modules)
+OpenAI API Key available: sk-proj-1z...
+Full API key length: 56
+API key starts with quotes: false
+ POST /api/openai 200 in 1677ms
+ ✓ Compiled in 48ms (368 modules)
+ ✓ Compiled in 126ms (1474 modules)
+OpenAI API Key available: sk-proj-1z...
+Full API key length: 56
+API key starts with quotes: false
+OpenAI API call with model: gpt-5-nano
+OpenAI API response status: 400 Bad Request
+Error: recieved non-200 status code, {"status":400,"statusText":"Bad Request","body":"{\n  \"error\": {\n    \"message\": \"Unsupported value: 'temperature' does not support 0.7 with this model. Only the default (1) value is supported.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": \"temperature\",\n    \"code\": \"unsupported_value\"\n  }\n}"}
+ POST /api/openai 200 in 131ms
+[?25h
