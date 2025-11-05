@@ -213,6 +213,7 @@ export default function FindKeywords(): JSX.Element {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>('asc');
   const [cacheEnabled, setCacheEnabled] = useState(true);
   const [hasUsedAI, setHasUsedAI] = useState(false);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   const { openSignIn } = useClerk();
 
@@ -369,6 +370,35 @@ export default function FindKeywords(): JSX.Element {
     }
   }, [countryCode]);
 
+  // Load user's favorite keywords
+  const loadFavorites = async () => {
+    try {
+      const response = await fetch('/api/keyword-favorites', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.favorites) {
+          const favoriteKeywords = new Set<string>(data.favorites.map((fav: any) => String(fav.keyword)));
+          setFavorites(favoriteKeywords);
+        }
+      } else if (response.status === 401) {
+        // User not signed in, that's okay - they'll get empty favorites
+        setFavorites(new Set());
+      }
+    } catch (error) {
+      console.error('Error loading favorites:', error);
+      // Silently fail - favorites are not critical
+    }
+  };
+
+  // Load favorites on component mount
+  useEffect(() => {
+    loadFavorites();
+  }, []);
+
   const handleKeywordResearch = async () => {
     setLoading(true);
     setResults([]);
@@ -411,6 +441,79 @@ export default function FindKeywords(): JSX.Element {
       toast.error(error instanceof Error ? error.message : 'An error occurred during keyword research');
     }
     setLoading(false);
+  };
+
+  const handleToggleFavorite = async (result: KeywordResult) => {
+    const isCurrentlyFavorite = favorites.has(result.keyword);
+    const newFavorites = new Set(favorites);
+
+    // Optimistically update UI
+    if (isCurrentlyFavorite) {
+      newFavorites.delete(result.keyword);
+    } else {
+      newFavorites.add(result.keyword);
+    }
+    setFavorites(newFavorites);
+
+    try {
+      const method = isCurrentlyFavorite ? 'DELETE' : 'PUT';
+      const body = isCurrentlyFavorite
+        ? undefined
+        : {
+            keyword: result.keyword,
+            countryCode,
+            languageCode,
+            searchVolume: result.searchVolume,
+            competition: result.competition,
+            competitionIndex: result.competitionIndex,
+            avgCpcMicros: result.avgCpcMicros,
+          };
+
+      const response = await fetch('/api/keyword-favorites', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          // User not signed in - prompt to sign in
+          toast.error('Please sign in to save favorites');
+          // Revert optimistic update
+          const revertFavorites = new Set(favorites);
+          if (isCurrentlyFavorite) {
+            revertFavorites.add(result.keyword);
+          } else {
+            revertFavorites.delete(result.keyword);
+          }
+          setFavorites(revertFavorites);
+          openSignIn();
+          return;
+        }
+        throw new Error('Failed to update favorite');
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success(
+          isCurrentlyFavorite ? 'Removed from favorites' : 'Added to favorites',
+          { duration: 2000 }
+        );
+      }
+    } catch (error) {
+      console.error('Error updating favorite:', error);
+
+      // Revert optimistic update on error
+      const revertFavorites = new Set(favorites);
+      if (isCurrentlyFavorite) {
+        revertFavorites.add(result.keyword);
+      } else {
+        revertFavorites.delete(result.keyword);
+      }
+      setFavorites(revertFavorites);
+
+      toast.error('Failed to update favorite. Please try again.');
+    }
   };
 
   const renderMonthlyTrend = (keyword: string, trend?: KeywordResult['monthlySearchVolumes']) => {
@@ -606,9 +709,15 @@ export default function FindKeywords(): JSX.Element {
                 <table className="w-full text-left table-fixed" style={{ width: '100%', tableLayout: 'fixed' }}>
                   <thead>
                     <tr className="border-b border-gray-200">
-                      <th 
+                      <th
+                        className="font-medium p-3 text-gray-700"
+                        style={{ width: '5%' }}
+                      >
+                        Favorite
+                      </th>
+                      <th
                         className="font-medium p-3 text-gray-700 cursor-pointer hover:bg-gray-50 select-none"
-                        style={{ width: '25%' }}
+                        style={{ width: '20%' }}
                         onClick={() => handleSort('keyword')}
                       >
                         <div className="flex items-center space-x-1">
@@ -700,6 +809,14 @@ export default function FindKeywords(): JSX.Element {
                       .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                       .map((result, index) => (
                       <tr key={`${result.keyword}-${index}`} className="border-b border-gray-100">
+                        <td className="p-3 text-center">
+                          <input
+                            type="checkbox"
+                            checked={favorites.has(result.keyword)}
+                            onChange={() => handleToggleFavorite(result)}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                        </td>
                         <td className="p-3 font-medium flex items-center space-x-2">
                           <span>{result.keyword}</span>
                           {result._meta?.dataSource === 'openai_generated' && (
