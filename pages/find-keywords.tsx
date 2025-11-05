@@ -376,7 +376,7 @@ export default function FindKeywords(): JSX.Element {
       const endpoint = activeTab === 'google' ? '/api/keyword-research' : '/api/keyword-research/ai';
       const payload = activeTab === 'google'
         ? { keywords, countryCode, languageCode, useCache: cacheEnabled, userPrompt: keywords }
-        : { prompt: keywords, countryCode, languageCode };
+        : { prompt: keywords, countryCode, languageCode, useCache: cacheEnabled };
 
       const response = await fetch(endpoint, {
         method: 'POST',
