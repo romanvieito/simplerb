@@ -26,6 +26,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         isOpen={sidebarOpen || (!sidebarCollapsed)}
         collapsed={sidebarCollapsed}
         onClose={() => setSidebarOpen(false)}
+        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
 
       {/* Main Content */}
@@ -50,22 +51,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           </div>
           <div className="w-10"></div> {/* Spacer for centering */}
         </div>
-
-        {/* Desktop Sidebar Toggle */}
-        <button
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="hidden md:flex fixed top-4 left-4 z-50 items-center justify-center w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg border-2 border-white focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all duration-200 group"
-          title={sidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
-        >
-          <svg
-            className={`w-5 h-5 transition-transform duration-200 ${sidebarCollapsed ? 'rotate-180' : ''}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-          </svg>
-        </button>
 
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 md:p-8">

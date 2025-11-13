@@ -69,10 +69,11 @@ interface SidebarProps {
   isOpen?: boolean;
   collapsed?: boolean;
   onClose?: () => void;
+  onToggle?: () => void;
   className?: string;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onClose, className = '' }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onClose, onToggle, className = '' }) => {
   const router = useRouter();
   const { user, isLoaded } = useUser();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -127,13 +128,31 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
         ${className}
       `}>
         {/* Logo/Brand */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="relative p-6 border-b border-gray-200">
           <Link href="/dashboard" onClick={handleNavClick} className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">SB</span>
             </div>
             <span className="text-xl font-bold text-gray-900">SimplerB</span>
           </Link>
+
+          {/* Desktop Toggle Button */}
+          {onToggle && (
+            <button
+              onClick={onToggle}
+              className="absolute top-4 right-4 hidden md:flex items-center justify-center w-8 h-8 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 rounded-lg transition-all duration-200 group"
+              title={collapsed ? "Show sidebar" : "Hide sidebar"}
+            >
+              <svg
+                className={`w-4 h-4 transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* Navigation */}
