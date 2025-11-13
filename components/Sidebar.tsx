@@ -67,11 +67,12 @@ const sidebarItems: SidebarItem[] = [
 
 interface SidebarProps {
   isOpen?: boolean;
+  collapsed?: boolean;
   onClose?: () => void;
   className?: string;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose, className = '' }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onClose, className = '' }) => {
   const router = useRouter();
   const { user, isLoaded } = useUser();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -121,7 +122,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onClose, className = '
       <div className={`
         bg-white border-r border-gray-200 w-64 h-full flex flex-col fixed md:relative
         transform transition-transform duration-300 ease-in-out z-50
-        ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        ${isOpen && !collapsed ? 'translate-x-0' : '-translate-x-full'}
+        ${collapsed ? 'md:hidden' : 'md:translate-x-0'}
         ${className}
       `}>
         {/* Logo/Brand */}
