@@ -205,7 +205,10 @@ const Dashboard: React.FC = () => {
                   </div>
                 </a>
 
-                <div className="bg-white rounded-xl border border-gray-100 p-6">
+                <a
+                  href="/find-keywords"
+                  className="block bg-white rounded-xl border border-gray-100 p-6 hover:border-blue-300 hover:shadow-md transition-all"
+                >
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
                       <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,11 +216,12 @@ const Dashboard: React.FC = () => {
                       </svg>
                     </div>
                     <div className="flex-1 text-left">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">More Coming Soon</h3>
-                      <p className="text-gray-600 text-sm">We're building more powerful tools to help you grow your business.</p>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Keyword Research</h3>
+                      <p className="text-gray-600 text-sm mb-3">Discover high-value keywords and analyze search trends to optimize your content.</p>
+                      <span className="text-sm text-blue-600 font-medium">Try it now →</span>
                     </div>
                   </div>
-                </div>
+                </a>
               </div>
             </div>
     </DashboardLayout>
