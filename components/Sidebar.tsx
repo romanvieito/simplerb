@@ -133,7 +133,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
       <div className={`
         bg-white border-r border-gray-200 h-screen flex flex-col fixed
         transform transition-all duration-300 ease-in-out z-50
-        ${isOpen && !collapsed ? 'translate-x-0 w-64' : '-translate-x-full w-64'}
+        ${isOpen ? 'translate-x-0 w-64' : 'md:translate-x-0 -translate-x-full w-64'}
         ${collapsed ? 'md:w-20' : 'md:w-64'}
         ${className}
       `}>
