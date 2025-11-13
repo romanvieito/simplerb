@@ -137,8 +137,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
 
       {/* Sidebar */}
       <div className={`
-        bg-white border-r border-gray-200 flex flex-col fixed md:relative
-        transform transition-all duration-300 ease-in-out z-50 min-h-screen
+        bg-white border-r border-gray-200 min-h-screen flex flex-col fixed md:relative
+        transform transition-all duration-300 ease-in-out z-50
         ${isOpen && !collapsed ? 'translate-x-0 w-64' : '-translate-x-full w-64'}
         ${collapsed ? 'md:translate-x-0 md:w-20' : 'md:translate-x-0 md:w-64'}
         ${className}
@@ -174,7 +174,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
         </div>
 
         {/* Navigation */}
-        <nav className={`flex-1 py-6 space-y-2 ${collapsed ? 'px-2' : 'px-4'}`}>
+        <nav className={`flex-1 py-6 space-y-2 ${collapsed ? 'px-2' : 'px-4'} overflow-y-auto`}>
           {visibleItems.map((item) => {
             const isActive = router.pathname === item.href;
             return (
@@ -206,35 +206,33 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
             );
           })}
         </nav>
-      </div>
 
-      {/* Footer at bottom of screen */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40">
-        <div className="flex items-center justify-between px-4 py-3">
+        {/* Footer */}
+        <div className="p-4 border-t border-gray-200">
           {/* User Session */}
           {user && (
-            <div className="flex items-center space-x-3 flex-1">
-              <div className="flex-shrink-0">
-                <img
-                  src={user.imageUrl}
-                  alt={user.firstName || 'User'}
-                  className="w-8 h-8 rounded-full"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-gray-900 truncate">
-                  {user.firstName} {user.lastName}
+            <div className={`${collapsed ? 'flex flex-col items-center space-y-2' : 'mb-4'}`}>
+              <div className={`flex items-center ${collapsed ? 'flex-col space-y-2' : 'space-x-3'}`}>
+                <div className="flex-shrink-0">
+                  <img
+                    src={user.imageUrl}
+                    alt={user.firstName || 'User'}
+                    className="w-8 h-8 rounded-full"
+                  />
                 </div>
-                <div className="text-xs text-gray-500 truncate">
-                  {user.emailAddresses[0]?.emailAddress}
-                </div>
+                {!collapsed && (
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-gray-900 truncate">
+                      {user.firstName} {user.lastName}
+                    </div>
+                    <div className="text-xs text-gray-500 truncate">
+                      {user.emailAddresses[0]?.emailAddress}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
-
-          <div className="text-xs text-gray-500">
-            © 2025 SB
-          </div>
         </div>
       </div>
     </>
