@@ -5,7 +5,7 @@ import { DomainInfo, VibeType } from "../utils/Definitions";
 import { createParser, ParsedEvent, ReconnectInterval } from "eventsource-parser";
 import mixpanel from "../utils/mixpanel-config";
 import { useRouter } from "next/router";
-import { useClerk, SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
+import { useClerk, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
 import { Button, Box } from "@mui/material";
 import DiamondIcon from '@mui/icons-material/Diamond';
 import LoginIcon from '@mui/icons-material/Login';
@@ -713,7 +713,6 @@ const DomainPage: React.FC = () => {
                   </Box>
                 </Button>
               </form>
-              <UserButton userProfileUrl="/user" afterSignOutUrl="/" />
             </>
           ) : (
             <button

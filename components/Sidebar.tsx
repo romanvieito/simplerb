@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { useUser } from '@clerk/nextjs';
+import { useUser, UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
 
 interface SidebarItem {
@@ -211,26 +211,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
         <div className="p-4 border-t border-gray-200">
           {/* User Session */}
           {user && (
-            <div className={`${collapsed ? 'flex flex-col items-center space-y-2' : 'mb-4'}`}>
-              <div className={`flex items-center ${collapsed ? 'flex-col space-y-2' : 'space-x-3'}`}>
-                <div className="flex-shrink-0">
-                  <img
-                    src={user.imageUrl}
-                    alt={user.firstName || 'User'}
-                    className="w-8 h-8 rounded-full"
-                  />
-                </div>
-                {!collapsed && (
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 truncate">
-                      {user.firstName} {user.lastName}
-                    </div>
-                    <div className="text-xs text-gray-500 truncate">
-                      {user.emailAddresses[0]?.emailAddress}
-                    </div>
-                  </div>
-                )}
-              </div>
+            <div className={`${collapsed ? 'flex flex-col items-center space-y-2' : 'flex justify-center'}`}>
+              <UserButton
+                userProfileUrl="/user"
+                afterSignOutUrl="/"
+              />
             </div>
           )}
         </div>
