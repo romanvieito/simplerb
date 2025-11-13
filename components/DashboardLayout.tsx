@@ -68,7 +68,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="p-4 md:p-8">
+          <div className="p-4 md:p-8 pb-20">
             {children}
           </div>
         </div>

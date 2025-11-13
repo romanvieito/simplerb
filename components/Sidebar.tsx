@@ -137,8 +137,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
 
       {/* Sidebar */}
       <div className={`
-        bg-white border-r border-gray-200 h-full flex flex-col fixed md:relative
-        transform transition-all duration-300 ease-in-out z-50
+        bg-white border-r border-gray-200 flex flex-col fixed md:relative
+        transform transition-all duration-300 ease-in-out z-50 min-h-screen
         ${isOpen && !collapsed ? 'translate-x-0 w-64' : '-translate-x-full w-64'}
         ${collapsed ? 'md:translate-x-0 md:w-20' : 'md:translate-x-0 md:w-64'}
         ${className}
@@ -161,12 +161,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
                 title={collapsed ? "Expand sidebar" : "Minimize sidebar"}
               >
                 <svg
-                  className={`w-4 h-4 transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`}
+                  className="w-4 h-4 transition-all duration-200"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
             )}
@@ -206,11 +206,34 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
             );
           })}
         </nav>
+      </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-gray-200">
-          <div className="text-xs text-gray-500 text-center">
-            © 2025 SimplerB
+      {/* Footer at bottom of screen */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40">
+        <div className="flex items-center justify-between px-4 py-3">
+          {/* User Session */}
+          {user && (
+            <div className="flex items-center space-x-3 flex-1">
+              <div className="flex-shrink-0">
+                <img
+                  src={user.imageUrl}
+                  alt={user.firstName || 'User'}
+                  className="w-8 h-8 rounded-full"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-gray-900 truncate">
+                  {user.firstName} {user.lastName}
+                </div>
+                <div className="text-xs text-gray-500 truncate">
+                  {user.emailAddresses[0]?.emailAddress}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="text-xs text-gray-500">
+            © 2025 SB
           </div>
         </div>
       </div>
