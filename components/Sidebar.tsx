@@ -131,7 +131,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
 
       {/* Sidebar */}
       <div className={`
-        bg-white border-r border-gray-200 min-h-screen flex flex-col fixed md:relative
+        bg-white border-r border-gray-200 h-screen flex flex-col fixed md:relative
         transform transition-all duration-300 ease-in-out z-50
         ${isOpen && !collapsed ? 'translate-x-0 w-64' : '-translate-x-full w-64'}
         ${collapsed ? 'md:translate-x-0 md:w-20' : 'md:translate-x-0 md:w-64'}
@@ -168,7 +168,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
         </div>
 
         {/* Navigation */}
-        <nav className={`flex-1 py-6 space-y-2 ${collapsed ? 'px-2' : 'px-4'} overflow-y-auto`}>
+        <nav className={`py-6 space-y-2 ${collapsed ? 'px-2' : 'px-4'} overflow-y-auto`}>
           {visibleItems.map((item) => {
             const isActive = router.pathname === item.href;
             return (
@@ -197,7 +197,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-gray-200 mt-auto">
           {/* User Session */}
           {user && (
             <div className={`${collapsed ? 'flex flex-col items-center space-y-2' : 'flex justify-center'}`}>
