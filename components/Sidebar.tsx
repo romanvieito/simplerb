@@ -103,6 +103,22 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
     }
   };
 
+  const handleItemClick = (item: SidebarItem, isActive: boolean, e: React.MouseEvent) => {
+    // Close sidebar on mobile when navigation item is clicked
+    if (onClose && window.innerWidth < 768) {
+      onClose();
+    }
+
+    // If clicking on active item, toggle sidebar instead of navigating
+    if (isActive && onToggle) {
+      e.preventDefault();
+      onToggle();
+      return;
+    }
+
+    // For non-active items, let the Link handle navigation normally
+  };
+
   // Filter sidebar items based on authentication and admin status
   const visibleItems = sidebarItems.filter(item => {
     // Show to all authenticated users unless specifically admin-only
@@ -163,10 +179,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
               <Link
                 key={item.name}
                 href={item.href}
-                onClick={handleNavClick}
+                onClick={(e) => handleItemClick(item, isActive, e)}
                 className={`group flex items-center ${collapsed ? 'justify-center px-2' : 'px-3'} py-3 rounded-lg transition-all duration-200 ${
                   isActive
-                    ? 'bg-blue-50 border-r-2 border-blue-600 text-blue-700'
+                    ? 'bg-blue-50 border-r-2 border-blue-600 text-blue-700 cursor-pointer'
                     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                 }`}
                 title={collapsed ? item.name : undefined}

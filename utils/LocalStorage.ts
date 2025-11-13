@@ -1,23 +1,26 @@
 import { VibeType, DomainInfo, VpTransform } from '../utils/Definitions';
 
 export const getBio = () => {
-    return  window.localStorage.getItem('bio')
+    if (typeof window === 'undefined') return null;
+    return window.localStorage.getItem('bio')
 }
 
 export const getVibe = (): VibeType | null => {
+    if (typeof window === 'undefined') return null;
     const storeVibe = window.localStorage.getItem('vibe');
     if (storeVibe) {
         return JSON.parse(storeVibe) as VibeType;
     }
-    return null;      
+    return null;
 }
 
 export const getDomainFounded = (): DomainInfo[] | null => {
+    if (typeof window === 'undefined') return null;
     const storedf = window.localStorage.getItem('domainfounded');
     if (storedf) {
         return JSON.parse(storedf) as DomainInfo[];
     }
-    return null;    
+    return null;
 }
 
 export const saveBioVite = (bio: any, vibe: VibeType) => {
@@ -51,6 +54,7 @@ export const resetSearch = () => {
   //-----------------------------------------------------------------------------------------
   // Tab index
   export const getVpTabIndex = () => {
+    if (typeof window === 'undefined') return null;
     return window.localStorage.getItem('vpTabIndex')
   }
   export const saveVpTabIndex = (a: any) => {
@@ -59,15 +63,19 @@ export const resetSearch = () => {
 
   // Keywords  
   export const getVpContains = () => {
+    if (typeof window === 'undefined') return null;
     return window.localStorage.getItem('vpContains')
   }
   export const getVpStartsWith = () => {
+    if (typeof window === 'undefined') return null;
     return window.localStorage.getItem('vpStartsWith')
   }
   export const getVpEndsWith = () => {
+    if (typeof window === 'undefined') return null;
     return window.localStorage.getItem('vpEndsWith')
   }
   export const getVpSimilarToThisDomainName = () => {
+    if (typeof window === 'undefined') return null;
     return window.localStorage.getItem('vpSimilarToThisDomainName')
   }        
   export const saveVpKeywords = (a: any, b: any, c: any, d: any) => {
@@ -79,20 +87,23 @@ export const resetSearch = () => {
 
   // Extensions
   export const getVpExtLeft = (): string[] | null => {
+    if (typeof window === 'undefined') return null;
     const store = window.localStorage.getItem('vpExtLeft');
     if (store) {
         return JSON.parse(store) as string[];
     }
-    return null;    
+    return null;
   }
   export const getVpExtChecked = (): string[] | null => {
+    if (typeof window === 'undefined') return null;
     const store = window.localStorage.getItem('vpExtChecked');
     if (store) {
         return JSON.parse(store) as string[];
     }
-    return null;    
-  }    
+    return null;
+  }
   export const getVpFilterExtLeft = (): string | null => {
+    if (typeof window === 'undefined') return null;
     return window.localStorage.getItem('vpFilterExtLeft');
   }  
   export const saveVpExtensions = (a: string[], c: string[], d: any) => {
@@ -103,16 +114,19 @@ export const resetSearch = () => {
 
   // Characters  
   export const getVpTransform = (): VpTransform | null => {
+    if (typeof window === 'undefined') return null;
     const store = window.localStorage.getItem('vpTransform');
     if (store) {
         return JSON.parse(store) as VpTransform;
     }
-    return null;    
-  }  
+    return null;
+  }
   export const getVpMinlength = () => {
+    if (typeof window === 'undefined') return null;
     return window.localStorage.getItem('vpMinlength')
-  }  
+  }
   export const getVpMaxlength = () => {
+    if (typeof window === 'undefined') return null;
     return window.localStorage.getItem('vpMaxlength')
   }  
   export const saveVpCharacters = (a: VpTransform, b: any, c: any) => {
