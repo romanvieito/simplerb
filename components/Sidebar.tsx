@@ -145,19 +145,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
       `}>
         {/* Logo/Brand */}
         <div className="relative px-6 py-4 border-b border-gray-200">
-          <div className={`flex items-center ${collapsed ? 'justify-between' : 'space-x-2'}`}>
-            <Link href="/dashboard" onClick={handleNavClick} className="flex items-center space-x-2 flex-shrink-0">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">SB</span>
-              </div>
-              {!collapsed && <span className="text-xl font-bold text-gray-900 truncate">SimplerB</span>}
-            </Link>
-
+          <div className={`flex items-center ${collapsed ? 'justify-between' : 'space-x-3'}`}>
             {/* Desktop Toggle Button */}
             {onToggle && (
               <button
                 onClick={onToggle}
-                className="flex items-center justify-center w-8 h-8 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 rounded-lg transition-all duration-200 group"
+                className="flex items-center justify-center w-8 h-8 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 rounded-lg transition-all duration-200 group flex-shrink-0"
                 title={collapsed ? "Expand sidebar" : "Minimize sidebar"}
               >
                 <svg
@@ -170,6 +163,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
                 </svg>
               </button>
             )}
+
+            <Link href="/dashboard" onClick={handleNavClick} className="flex items-center space-x-2 flex-shrink-0">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">SB</span>
+              </div>
+              {!collapsed && <span className="text-xl font-bold text-gray-900 truncate">SimplerB</span>}
+            </Link>
           </div>
         </div>
 
