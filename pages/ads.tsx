@@ -603,12 +603,8 @@ const AdsPage = () => {
     initPageData();
   }, [isSignedIn, user, initPageData]);
 
-  // Fetch available campaigns when admin is loaded
-  useEffect(() => {
-    if (isLoaded && isSignedIn && admin && availableCampaigns.length === 0) {
-      fetchAvailableCampaigns();
-    }
-  }, [isLoaded, isSignedIn, admin]);
+  // Fetch available campaigns only when user explicitly requests data
+  // Removed automatic fetching to prevent unwanted API calls on page load
 
   // Reset to page 1 when campaign keywords change
   useEffect(() => {
@@ -1004,6 +1000,7 @@ Be specific with numbers and percentages. Focus on actionable insights based on 
   const fetchAvailableCampaigns = async () => {
     if (!user?.emailAddresses[0]?.emailAddress || !admin) return;
 
+    setLoading(true);
     try {
       const params = new URLSearchParams();
       params.append('startDate', startDate);
@@ -1016,17 +1013,19 @@ Be specific with numbers and percentages. Focus on actionable insights based on 
       });
 
       const data = await response.json();
-      
+
       if (response.ok && data.success) {
         // Extract unique campaigns
         const uniqueCampaigns = Array.from(new Map(
           data.keywords?.map((kw: CampaignKeyword) => [kw.campaignId, { id: kw.campaignId, name: kw.campaignName }]) || []
         ).values()) as Array<{id: string, name: string}>;
-        
+
         setAvailableCampaigns(uniqueCampaigns);
       }
     } catch (error) {
       console.error('Error fetching campaigns:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1698,9 +1697,67 @@ Be specific with numbers and percentages. Focus on actionable insights based on 
             {/* Campaigns Summary */}
             <div className="w-full mb-6">
               <div className="bg-white rounded-xl border border-gray-100 p-4">
+                {/* Load Campaign Data Button - only show when no campaigns are loaded */}
+                {availableCampaigns.length === 0 && admin && isLoaded && isSignedIn && (
+                  <div className="text-center py-8">
+                    <div className="mb-4">
+                      <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Load Your Campaign Data</h3>
+                    <p className="text-sm text-gray-600 mb-4 max-w-md mx-auto">
+                      Connect to Google Ads and load your campaign keywords and performance data for analysis.
+                    </p>
+                    <button
+                      onClick={fetchAvailableCampaigns}
+                      disabled={loading}
+                      className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loading ? (
+                        <>
+                          <LoadingDots />
+                          <span className="ml-2">Loading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                          Load Campaign Data
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+
                 {/* Campaign Selector inside Campaigns Summary (moved above Date Range) */}
                 {availableCampaigns.length > 0 && (
                   <div className="mb-4">
+                    {/* Refresh Campaign Data Button */}
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-medium text-gray-900">Select Campaigns</h4>
+                      <button
+                        onClick={fetchAvailableCampaigns}
+                        disabled={loading}
+                        className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Refresh campaign data"
+                      >
+                        {loading ? (
+                          <>
+                            <LoadingDots />
+                            <span className="ml-1">Refreshing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Refresh
+                          </>
+                        )}
+                      </button>
+                    </div>
                     <div className="flex items-center flex-wrap gap-2">
                       <div className="flex flex-wrap gap-2">
                         {availableCampaigns.map((campaign) => (
