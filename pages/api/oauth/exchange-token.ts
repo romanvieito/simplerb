@@ -39,7 +39,7 @@ export default async function handler(
     const clientId = process.env.GADS_CLIENT_ID;
     const clientSecret = process.env.GADS_CLIENT_SECRET;
     const redirectUri = process.env.NODE_ENV === 'production'
-      ? 'https://your-domain.com/oauth/callback'
+      ? 'https://www.simplerb.com/oauth/callback'
       : 'http://localhost:3000/oauth/callback';
 
     if (!clientId || !clientSecret) {
