@@ -144,31 +144,33 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
         ${className}
       `}>
         {/* Logo/Brand */}
-        <div className="relative p-6 border-b border-gray-200">
-          <Link href="/dashboard" onClick={handleNavClick} className={`flex items-center ${collapsed ? 'justify-center' : 'space-x-2'}`}>
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-bold text-sm">SB</span>
-            </div>
-            {!collapsed && <span className="text-xl font-bold text-gray-900 truncate">SimplerB</span>}
-          </Link>
+        <div className="relative px-6 py-4 border-b border-gray-200">
+          <div className={`flex items-center ${collapsed ? 'justify-between' : 'space-x-2'}`}>
+            <Link href="/dashboard" onClick={handleNavClick} className="flex items-center space-x-2 flex-shrink-0">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">SB</span>
+              </div>
+              {!collapsed && <span className="text-xl font-bold text-gray-900 truncate">SimplerB</span>}
+            </Link>
 
-          {/* Desktop Toggle Button */}
-          {onToggle && (
-            <button
-              onClick={onToggle}
-              className="absolute top-4 right-4 hidden md:flex items-center justify-center w-8 h-8 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 rounded-lg transition-all duration-200 group"
-              title={collapsed ? "Expand sidebar" : "Minimize sidebar"}
-            >
-              <svg
-                className={`w-4 h-4 transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            {/* Desktop Toggle Button */}
+            {onToggle && (
+              <button
+                onClick={onToggle}
+                className="flex items-center justify-center w-8 h-8 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 rounded-lg transition-all duration-200 group"
+                title={collapsed ? "Expand sidebar" : "Minimize sidebar"}
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          )}
+                <svg
+                  className={`w-4 h-4 transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Navigation */}
