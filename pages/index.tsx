@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Head from "next/head";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import { Box, Button, Container, Grid } from "@mui/material";
-import { useClerk, SignedOut } from "@clerk/nextjs";
+import { useClerk, useUser, SignedOut } from "@clerk/nextjs";
+import { useRouter } from 'next/router';
 import type { NextPage } from "next";
 import CPricing from '../components/CPricing';
 import CFAQ from '../components/CFAQ';
@@ -11,6 +12,17 @@ import { Language, Web, Email, Campaign, Login, Dashboard } from '@mui/icons-mat
 import { trackConversion } from '../utils/analytics';
 
 const Home: NextPage = () => {
+  const router = useRouter();
+  const { user, isLoaded } = useUser();
+  const { openSignIn } = useClerk();
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (isLoaded && user) {
+      router.push('/dashboard');
+    }
+  }, [isLoaded, user, router]);
+
   const pages = [{
     name: 'Domain',
     link: '/domain',
@@ -25,8 +37,6 @@ const Home: NextPage = () => {
     icon: Campaign
   },];
 
-  const { openSignIn } = useClerk();
-
   const handleGetStarted = (e: React.MouseEvent<HTMLAnchorElement>) => {
     trackConversion('get_started', pages[0].link);
   };
@@ -39,6 +49,18 @@ const Home: NextPage = () => {
   const handleFeatureClick = (e: React.MouseEvent<HTMLAnchorElement>, featureName: string, url: string) => {
     trackConversion('feature_click', url);
   };
+
+  // Show loading state while checking authentication
+  if (!isLoaded) {
+    return (
+      <div className="flex w-full flex-col items-center justify-center py-2 min-h-screen bg-black text-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-300">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-white">
