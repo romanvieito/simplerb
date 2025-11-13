@@ -150,7 +150,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
             {onToggle && (
               <button
                 onClick={onToggle}
-                className="flex items-center justify-center w-8 h-8 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 rounded-lg transition-all duration-200 group flex-shrink-0"
+                className="flex items-center justify-center w-8 h-8 bg-transparent hover:bg-gray-100 text-gray-600 hover:text-gray-900 rounded-lg transition-all duration-200 group flex-shrink-0"
                 title={collapsed ? "Expand sidebar" : "Minimize sidebar"}
               >
                 <svg
