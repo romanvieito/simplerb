@@ -52,22 +52,20 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </div>
 
         {/* Desktop Sidebar Toggle */}
-        <div className="hidden md:block fixed top-4 left-4 z-40">
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="p-2 bg-white rounded-lg shadow-md border border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-            title={sidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
+        <button
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          className="hidden md:flex fixed top-4 left-4 z-50 items-center justify-center w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg border-2 border-white focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all duration-200 group"
+          title={sidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
+        >
+          <svg
+            className={`w-5 h-5 transition-transform duration-200 ${sidebarCollapsed ? 'rotate-180' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            <svg
-              className={`w-5 h-5 transition-transform duration-200 ${sidebarCollapsed ? 'rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+          </svg>
+        </button>
 
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 md:p-8">
