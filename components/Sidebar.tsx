@@ -121,19 +121,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
 
       {/* Sidebar */}
       <div className={`
-        bg-white border-r border-gray-200 w-64 h-full flex flex-col fixed md:relative
-        transform transition-transform duration-300 ease-in-out z-50
-        ${isOpen && !collapsed ? 'translate-x-0' : '-translate-x-full'}
-        ${collapsed ? 'md:hidden' : 'md:translate-x-0'}
+        bg-white border-r border-gray-200 h-full flex flex-col fixed md:relative
+        transform transition-all duration-300 ease-in-out z-50
+        ${isOpen && !collapsed ? 'translate-x-0 w-64' : '-translate-x-full w-64'}
+        ${collapsed ? 'md:translate-x-0 md:w-20' : 'md:translate-x-0 md:w-64'}
         ${className}
       `}>
         {/* Logo/Brand */}
         <div className="relative p-6 border-b border-gray-200">
-          <Link href="/dashboard" onClick={handleNavClick} className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+          <Link href="/dashboard" onClick={handleNavClick} className={`flex items-center ${collapsed ? 'justify-center' : 'space-x-2'}`}>
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
               <span className="text-white font-bold text-sm">SB</span>
             </div>
-            <span className="text-xl font-bold text-gray-900">SimplerB</span>
+            {!collapsed && <span className="text-xl font-bold text-gray-900 truncate">SimplerB</span>}
           </Link>
 
           {/* Desktop Toggle Button */}
@@ -141,7 +141,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
             <button
               onClick={onToggle}
               className="absolute top-4 right-4 hidden md:flex items-center justify-center w-8 h-8 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 rounded-lg transition-all duration-200 group"
-              title={collapsed ? "Show sidebar" : "Hide sidebar"}
+              title={collapsed ? "Expand sidebar" : "Minimize sidebar"}
             >
               <svg
                 className={`w-4 h-4 transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`}
@@ -156,7 +156,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-2">
+        <nav className={`flex-1 py-6 space-y-2 ${collapsed ? 'px-2' : 'px-4'}`}>
           {visibleItems.map((item) => {
             const isActive = router.pathname === item.href;
             return (
@@ -164,23 +164,26 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
                 key={item.name}
                 href={item.href}
                 onClick={handleNavClick}
-                className={`group flex items-center px-3 py-3 rounded-lg transition-all duration-200 ${
+                className={`group flex items-center ${collapsed ? 'justify-center px-2' : 'px-3'} py-3 rounded-lg transition-all duration-200 ${
                   isActive
                     ? 'bg-blue-50 border-r-2 border-blue-600 text-blue-700'
                     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                 }`}
+                title={collapsed ? item.name : undefined}
               >
-                <div className={`mr-3 ${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`}>
+                <div className={`${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'} ${collapsed ? '' : 'mr-3'}`}>
                   {item.icon}
                 </div>
-                <div className="flex-1">
-                  <div className="font-medium text-sm">{item.name}</div>
-                  {item.description && (
-                    <div className={`text-xs mt-0.5 ${isActive ? 'text-blue-600' : 'text-gray-500'}`}>
-                      {item.description}
-                    </div>
-                  )}
-                </div>
+                {!collapsed && (
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm truncate">{item.name}</div>
+                    {item.description && (
+                      <div className={`text-xs mt-0.5 truncate ${isActive ? 'text-blue-600' : 'text-gray-500'}`}>
+                        {item.description}
+                      </div>
+                    )}
+                  </div>
+                )}
               </Link>
             );
           })}
