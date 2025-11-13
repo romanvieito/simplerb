@@ -46,7 +46,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
       {/* Main Content */}
       <main className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
-        sidebarCollapsed ? 'md:ml-0' : 'md:ml-0'
+        sidebarCollapsed ? 'md:ml-20' : 'md:ml-64'
       }`}>
         {/* Mobile Header */}
         <div className="md:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
