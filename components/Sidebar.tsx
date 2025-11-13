@@ -144,7 +144,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
         ${className}
       `}>
         {/* Logo/Brand */}
-        <div className="relative px-6 py-4 border-b border-gray-200">
+        <div className="relative pl-2 pr-6 py-4 border-b border-gray-200">
           <div className={`flex items-center ${collapsed ? 'justify-between' : 'space-x-3'}`}>
             {/* Desktop Toggle Button */}
             {onToggle && (
