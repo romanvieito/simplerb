@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
-import Head from "next/head";
+import DashboardLayout from "../components/DashboardLayout";
 import { useRouter } from 'next/router';
 import { useUser, useClerk, UserButton } from "@clerk/nextjs";
 import { 
@@ -326,12 +326,7 @@ const SmartPilotPage = () => {
   }
 
   return (
-    <div className="flex max-w-7xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
-      <Head>
-        <title>Pilot - simplerB</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
+    <DashboardLayout title="Smart Pilot">
       <Toaster
         position="top-center"
         reverseOrder={false}
@@ -339,45 +334,6 @@ const SmartPilotPage = () => {
       />
 
       <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4">
-        {/* Header */}
-        <div className="absolute top-4 left-4 flex items-center space-x-3">
-          {/* Logo */}
-          <div className="flex items-center space-x-0.5">
-            <span className="text-gray-800 font-semibold text-lg">simpler</span>
-            <div className="w-4 h-5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">B</span>
-            </div>
-          </div>
-          
-          {/* Tool Selector */}
-          <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
-            <button 
-              onClick={() => router.push('/domain')}
-              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              Domain
-            </button>
-            <button 
-              onClick={() => router.push('/web')}
-              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              Website
-            </button>
-            <button 
-              onClick={() => router.push('/email')}
-              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              Email
-            </button>
-            <button 
-              onClick={() => router.push('/ads')}
-              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              Ads
-            </button>
-          </div>
-        </div>
-
         <Box
           sx={{
             position: "absolute",
@@ -625,7 +581,7 @@ const SmartPilotPage = () => {
           </DialogActions>
         </Dialog>
       </main>
-    </div>
+    </DashboardLayout>
   );
 };
 

@@ -29,6 +29,8 @@ interface GetCampaignKeywordsResponse {
   success: boolean;
   keywords?: CampaignKeyword[];
   error?: string;
+  userMessage?: string;
+  isTokenExpired?: boolean;
   totalKeywords?: number;
   campaigns?: string[];
   adGroups?: string[];
@@ -326,29 +328,14 @@ export default async function handler(
   } catch (error: any) {
     console.error('Error fetching campaign keywords:', error);
     console.error('Error stack:', error?.stack);
-    
+
     const errorInfo = handleGoogleAdsError(error);
-    
-    // Provide more detailed error information
-    let errorMessage = `Failed to fetch keywords: ${errorInfo.message}`;
-    
-    if (error?.code) {
-      errorMessage += ` (Code: ${error.code})`;
-    }
-    
-    if (error?.message?.includes('PERMISSION_DENIED')) {
-      errorMessage = 'Permission denied. Please check your Google Ads API access and customer ID.';
-    } else if (error?.message?.includes('INVALID_ARGUMENT')) {
-      errorMessage = 'Invalid query. Please check your Google Ads account has campaigns with keywords.';
-    } else if (error?.message?.includes('NOT_FOUND')) {
-      errorMessage = 'No campaigns found or customer ID is incorrect.';
-    } else if (error?.message?.includes('invalid_grant')) {
-      errorMessage = 'OAuth token expired. Please refresh your Google Ads API credentials.';
-    }
-    
+
     return res.status(500).json({
       success: false,
-      error: errorMessage,
+      error: errorInfo.message,
+      userMessage: errorInfo.userMessage,
+      isTokenExpired: errorInfo.isTokenExpired,
     });
   }
 }

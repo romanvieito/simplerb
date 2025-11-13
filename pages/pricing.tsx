@@ -1,7 +1,5 @@
 import React, { useEffect } from "react";
-import Head from "next/head";
-import Footer from "../components/Footer";
-import Header from "../components/Header";
+import DashboardLayout from "../components/DashboardLayout";
 import CPricing from "../components/CPricing";
 import { Container } from "@mui/material";
 import CFAQ from "../components/CFAQ";
@@ -13,12 +11,9 @@ export default function PricingPage() {
   }, [trackConversion]);
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <Head>
-        <title>Pricing - Domain Generator</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-      <Header />
+    <DashboardLayout title="Pricing">
+      <div className="min-h-screen bg-black text-white">
+        <div className="pt-8">
       
       {/* Hero Section */}
       <section className="relative pt-20 pb-16">
@@ -61,8 +56,8 @@ export default function PricingPage() {
           <CFAQ />
         </Container>
       </section>
-
-      <Footer />
-    </div>
+        </div>
+      </div>
+    </DashboardLayout>
   );
 }

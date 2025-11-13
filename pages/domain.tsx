@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect, useCallback } from "react";
-import Head from "next/head";
 import { toast, Toaster } from "react-hot-toast";
+import DashboardLayout from "../components/DashboardLayout";
 import { DomainInfo, VibeType } from "../utils/Definitions";
 import { createParser, ParsedEvent, ReconnectInterval } from "eventsource-parser";
 import mixpanel from "../utils/mixpanel-config";
@@ -670,47 +670,8 @@ const DomainPage: React.FC = () => {
   };
 
   return (
-    <div className="flex max-w-6xl mx-auto flex-col items-center justify-center py-4 min-h-screen bg-white">
-      <Head>
-        <title>Domain Generator</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-8 sm:mt-12">
-        <div className="absolute top-4 left-4 flex items-center space-x-3">
-          {/* Logo */}
-          <div className="flex items-center space-x-0.5">
-            <span className="text-gray-800 font-semibold text-lg">simpler</span>
-            <div className="w-4 h-5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">B</span>
-            </div>
-          </div>
-          
-          {/* Tool Selector */}
-          <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
-            <button className="px-3 py-1 bg-white rounded-md text-sm font-medium text-gray-800 shadow-sm">
-              Domain
-            </button>
-            <button 
-              onClick={() => router.push('/web')}
-              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              Website
-            </button>
-            <button 
-              onClick={() => router.push('/find-keywords')}
-              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              Keywords
-            </button>
-            <button 
-              onClick={() => router.push('/ads')}
-              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              Ads
-            </button>
-          </div>
-        </div>
+    <DashboardLayout title="Domain">
+      <div className="flex flex-1 w-full flex-col items-center justify-center text-center">
 
         <h1 className="text-2xl text-gray-900 mb-3 tracking-tight">
           Domain <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Generator</span>
@@ -951,8 +912,8 @@ const DomainPage: React.FC = () => {
           reverseOrder={false}
           toastOptions={{ duration: 2000 }}
         />
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

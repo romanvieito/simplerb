@@ -1,7 +1,6 @@
 import React, { useState, useContext, useRef, useEffect, useCallback } from "react";
-import Head from "next/head";
 import { Toaster, toast } from "react-hot-toast";
-import Header from "../components/Header";
+import DashboardLayout from "../components/DashboardLayout";
 import mixpanel from "../utils/mixpanel-config";
 import Image from "next/image";
 import SBRContext from "../context/SBRContext";
@@ -832,156 +831,28 @@ const WebPage = () => {
     };
 
     toggleEditMode(isEditMode);
+  }, [isEditMode]);
 
-    // Show toast message when entering/exiting edit mode
+  // Show toast message when entering/exiting edit mode
+  useEffect(() => {
     if (isEditMode) {
       toast.success("Edit mode enabled. Click elements to edit text.");
     } else if (generatedSite) {
       toast.success("Changes saved!");
     }
-  }, [isEditMode]);
+  }, [isEditMode, generatedSite]);
 
   return (
-    <div className="flex max-w-6xl mx-auto flex-col items-center justify-center py-4 min-h-screen bg-white">
+    <DashboardLayout title="Website">
       <Toaster position="top-center" />
-      <Head>
-        <title>Website Creator</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
 
       {/* Add this form */}
       <form action="/api/checkout_sessions" method="POST" style={{ display: 'none' }}>
         <input type="hidden" name="tipo" value="STARTER" />
       </form>
 
-      {/* <Header/> */}
-      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4">
-        <div className="absolute top-4 left-4 flex items-center space-x-3">
-          {/* Logo */}
-          <div className="flex items-center space-x-0.5">
-            <span className="text-gray-800 font-semibold text-lg">simpler</span>
-            <div className="w-4 h-5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">B</span>
-            </div>
-          </div>
-          
-          {/* Tool Selector */}
-          <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
-            <button 
-              onClick={() => router.push('/domain')}
-              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              Domain
-            </button>
-            <button className="px-3 py-1 bg-white rounded-md text-sm font-medium text-gray-800 shadow-sm">
-              Website
-            </button>
-            <button 
-              onClick={() => router.push('/find-keywords')}
-              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              Keywords
-            </button>
-            <button 
-              onClick={() => router.push('/ads')}
-              className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              Ads
-            </button>
-          </div>
-
-          {/* Website Builder Navigation */}
-          <div className="flex items-center space-x-1 bg-blue-50 rounded-lg p-1 ml-4">
-            <button 
-              onClick={() => router.push('/web')}
-              className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                router.pathname === '/web' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'text-blue-600 hover:bg-blue-100'
-              }`}
-            >
-              Builder
-            </button>
-            <button 
-              onClick={() => router.push('/sites')}
-              className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                router.pathname === '/sites' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'text-blue-600 hover:bg-blue-100'
-              }`}
-            >
-              My Sites
-            </button>
-          </div>
-        </div>
-
-        <Box
-          sx={{
-            position: "absolute",
-            top: 16,
-            right: 16,
-            display: "flex",
-            gap: 2,
-            alignItems: "center",
-          }}
-        >
-          {isSignedIn ? (
-            <>
-              <form action="/api/checkout_sessions" method="POST">
-                <input type="hidden" name="tipo" value="STARTER" />
-                <Button
-                  className="bg-black cursor-pointer hover:bg-black/80 rounded-xl"
-                  style={{ textTransform: "none" }}
-                  sx={{
-                    padding: { xs: "3px", sm: 1 },
-                    display:
-                      isSignedIn &&
-                      (subsTplan === "STARTER" || subsTplan === "CREATOR")
-                        ? "none"
-                        : "block",
-                  }}
-                  type="submit"
-                  variant="contained"
-                  role="link"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    mixpanel.track("Become a Member Click", {
-                      plan_subscription: 'STARTER',
-                    });  
-                    window.gtag && window.gtag('event', 'conversion', {
-                      'send_to': '16510475658/ZCyECJS9tqYZEIq758A9',
-                    });
-
-                    const form = e.currentTarget.form;
-                    if (form) {
-                      form.submit();
-                    } else {
-                      console.error("Form not found");
-                    }
-                  }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <DiamondIcon sx={{ mr: 0.2, fontSize: "1rem" }} />
-                    Become a Member
-                  </Box>
-                </Button>
-              </form>
-              <UserButton userProfileUrl="/user" afterSignOutUrl="/" />
-            </>
-          ) : (
-            <button
-              onClick={() => openSignIn()}
-              className="group relative bg-black cursor-pointer rounded-xl text-white font-medium px-4 py-2 hover:bg-black/80 transition-all duration-300 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-black/20 shadow-lg hover:shadow-xl"
-            >
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                <LoginIcon sx={{ fontSize: '1rem' }} />
-                Sign in / up
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-gray-800 to-black rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </button>
-          )}
-        </Box>
-
+      {/* Website Builder Content */}
+      <div className="flex flex-1 w-full flex-col items-center justify-center text-center">
         <h1 className="text-2xl text-gray-900 mb-3 tracking-tight">
           Website <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Creator</span>
         </h1>
@@ -1097,10 +968,10 @@ const WebPage = () => {
                 />
             </div>
           </div>
-        </Dialog>       
-        </div>        
-      </main>
-    </div>
+        </Dialog>
+        </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

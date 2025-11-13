@@ -118,25 +118,72 @@ export function extractResourceId(resourceName: string): string | null {
   return parts.length > 0 ? parts[parts.length - 1] : null;
 }
 
+// Check if error is due to expired OAuth token
+export function isTokenExpiredError(error: any): boolean {
+  if (!error) return false;
+
+  // Check for Google Ads API authentication errors
+  if (error?.code === 16) return true; // UNAUTHENTICATED
+
+  // Check for OAuth-specific errors
+  const errorMessage = error?.message?.toLowerCase() || '';
+  const errorDetails = JSON.stringify(error).toLowerCase();
+
+  return (
+    errorMessage.includes('invalid_grant') ||
+    errorMessage.includes('token has expired') ||
+    errorMessage.includes('token expired') ||
+    errorMessage.includes('unauthenticated') ||
+    errorDetails.includes('invalid_grant') ||
+    errorDetails.includes('token has expired')
+  );
+}
+
 // Enhanced error handling for Google Ads API errors
-export function handleGoogleAdsError(error: any): { message: string; code?: string; details?: any } {
+export function handleGoogleAdsError(error: any): {
+  message: string;
+  code?: string;
+  details?: any;
+  isTokenExpired?: boolean;
+  userMessage?: string;
+} {
+  const isExpired = isTokenExpiredError(error);
+
   if (error?.code) {
+    let userMessage = error.message || 'Google Ads API error';
+
+    if (isExpired) {
+      userMessage = 'Your Google Ads API credentials have expired. Please refresh them in the admin panel.';
+    }
+
     return {
       message: error.message || 'Google Ads API error',
       code: error.code.toString(),
-      details: error.details
+      details: error.details,
+      isTokenExpired: isExpired,
+      userMessage
     };
   }
-  
+
   if (error?.message) {
+    let userMessage = error.message;
+
+    if (isExpired) {
+      userMessage = 'Your Google Ads API credentials have expired. Please refresh them in the admin panel.';
+    }
+
     return {
       message: error.message,
-      details: error
+      details: error,
+      isTokenExpired: isExpired,
+      userMessage
     };
   }
-  
+
   return {
     message: 'Unknown Google Ads API error',
-    details: error
+    details: error,
+    isTokenExpired: false,
+    userMessage: 'An unexpected error occurred with Google Ads API.'
   };
 }

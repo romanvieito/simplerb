@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Head from "next/head";
 import { Toaster, toast } from "react-hot-toast";
+import DashboardLayout from "../components/DashboardLayout";
 import { useClerk, SignedIn, SignedOut } from "@clerk/nextjs";
 import { useRouter } from 'next/router';
 import { TablePagination } from "@mui/material";
@@ -537,26 +537,9 @@ export default function FindKeywords(): JSX.Element {
   };
 
   return (
-    <div className="flex max-w-5xl mx-auto flex-col items-center justify-center py-2 min-h-screen">
-      <Head>
-        <title>Find Keywords</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4">
-        <div className="absolute top-4 left-4">
-          {/* Back Button */}
-          <button
-            onClick={() => router.back()}
-            className="flex items-center space-x-1 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            <span>Back</span>
-          </button>
-        </div>
-
+    <DashboardLayout title="Keywords">
+      <Toaster position="top-center" />
+      <div className="flex flex-1 w-full flex-col items-center justify-center text-center">
         <h1 className="text-2xl text-gray-900 mb-1 tracking-tight">
           Keywords <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
             {'Planner'}
@@ -945,10 +928,8 @@ export default function FindKeywords(): JSX.Element {
             Sign in to use Keyword Finder
           </button>
         </SignedOut>
-      </main>
-
-      <Toaster position="top-center" reverseOrder={false} />
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
 

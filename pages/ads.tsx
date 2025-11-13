@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import Head from "next/head";
 import { Toaster, toast } from "react-hot-toast";
+import DashboardLayout from "../components/DashboardLayout";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useRouter } from 'next/router';
 import { TablePagination } from "@mui/material";
@@ -764,7 +764,20 @@ const AdsPage = () => {
 
         toast.success(`Found ${data.totalKeywords} keywords from ${uniqueCampaigns.length} campaign${uniqueCampaigns.length !== 1 ? 's' : ''}`);
       } else {
-        toast.error(data.error || 'Failed to fetch keywords');
+        // Handle Google Ads API errors with better user messaging
+        if (data.isTokenExpired) {
+          toast.error(
+            <div>
+              <div className="font-semibold">Google Ads credentials expired</div>
+              <div className="text-sm mt-1">
+                Please <a href="/admin/oauth-refresh" className="underline text-blue-600 hover:text-blue-800" target="_blank" rel="noopener noreferrer">refresh your token</a> to continue.
+              </div>
+            </div>,
+            { duration: 8000 }
+          );
+        } else {
+          toast.error(data.userMessage || data.error || 'Failed to fetch keywords');
+        }
       }
     } catch (error) {
       console.error('Error fetching keywords:', error);
@@ -1643,28 +1656,9 @@ Be specific with numbers and percentages. Focus on actionable insights based on 
   }, [selectedInputKeywords]);
 
   return (
-    <div className="flex w-full flex-col items-center justify-center py-2 min-h-screen bg-white">
-      <Head>
-        <title>Ads Pilot</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-2 sm:mt-2">
-        <div className="absolute top-4 left-4 flex items-center space-x-2">
-          {/* Minimal Back Button */}
-          <button
-            onClick={() => router.back()}
-            className="text-gray-600 hover:text-gray-800 text-xl font-light hover:bg-gray-100 rounded px-1 py-0.5 transition-colors"
-          >
-            ‹
-          </button>
-
-          {/* Basic Context Title */}
-          <span className="text-gray-900 font-medium">Ads Pilot</span>
-        </div>
-
-
-
+    <DashboardLayout title="Ads">
+      <Toaster position="top-center" />
+      <div className="flex flex-1 w-full flex-col items-center justify-center text-center">
         {/* Tab Navigation */}
         <div className="w-full max-w-4xl mx-auto mb-6">
           <div className="bg-gray-100 rounded-lg p-1">
@@ -2782,13 +2776,8 @@ Be specific with numbers and percentages. Focus on actionable insights based on 
         )}
 
 
-        <Toaster
-          position="top-center"
-          reverseOrder={false}
-          toastOptions={{ duration: 3000 }}
-        />
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

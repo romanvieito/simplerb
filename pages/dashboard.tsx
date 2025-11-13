@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import Head from 'next/head';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/router';
+import DashboardLayout from '../components/DashboardLayout';
 
 interface KeywordFavorite {
   keyword: string;
@@ -73,26 +73,9 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="flex w-full flex-col items-center justify-center py-2 min-h-screen bg-white">
-      <Head>
-        <title>Dashboard - SimplerB</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main className="flex flex-1 w-full flex-col items-center justify-center text-center px-4 mt-2 sm:mt-2">
-        {/* Header */}
-        <div className="absolute top-4 left-4 flex items-center space-x-2">
-          <button
-            onClick={() => router.back()}
-            className="text-gray-600 hover:text-gray-800 text-xl font-light hover:bg-gray-100 rounded px-1 py-0.5 transition-colors"
-          >
-            ‹
-          </button>
-          <span className="text-gray-900 font-medium">Dashboard</span>
-        </div>
-
-            {/* Keyword Favorites Section */}
-          <div id="favorites" className="w-full max-w-6xl mx-auto">
+    <DashboardLayout title="Dashboard">
+      {/* Keyword Favorites Section */}
+      <div id="favorites" className="w-full max-w-6xl mx-auto mb-8">
             <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
               {/* Header */}
               <div className="px-6 py-4 border-b border-gray-100">
@@ -163,11 +146,10 @@ const Dashboard: React.FC = () => {
                 )}
               </div>
             </div>
-          </div>
-
+            </div>
 
             {/* Feature Cards */}
-            <div className="w-full max-w-4xl mx-auto mt-10">
+            <div className="w-full max-w-4xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <a
                   href="/domain"
@@ -238,10 +220,7 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            
-      </main>
-    </div>
+    </DashboardLayout>
   );
 };
 
