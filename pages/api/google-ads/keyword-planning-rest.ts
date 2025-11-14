@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { handleGoogleAdsError } from './client';
 
 interface KeywordPlanningRequest {
   keywords: string[];
@@ -199,36 +200,23 @@ export default async function handler(
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.text();
       console.error('❌ Failed to get access token:', errorData);
-      
-      let errorMessage = 'Failed to authenticate with Google Ads API';
+
       let errorDetails: any = {};
-      
+
       try {
-        const errorJson = JSON.parse(errorData);
-        errorDetails = errorJson;
-        if (errorJson.error_description) {
-          errorMessage = `Failed to authenticate: ${errorJson.error_description}`;
-        } else if (errorJson.error) {
-          errorMessage = `Failed to authenticate: ${errorJson.error}`;
-        }
+        errorDetails = JSON.parse(errorData);
       } catch {
-        // If errorData is not JSON, include it as-is
-        if (errorData) {
-          errorMessage = `Failed to authenticate: ${errorData}`;
-        }
+        errorDetails = { error: errorData };
       }
-      
-      // Provide helpful guidance for common errors
-      if (errorDetails.error === 'invalid_grant') {
-        errorMessage += '. This usually means your refresh token has expired or been revoked. ';
-        errorMessage += 'You may need to generate a new refresh token using the scripts in the root directory. ';
-        errorMessage += 'Note: Refresh tokens are bound to specific OAuth client credentials, so ensure your local GADS_CLIENT_ID and GADS_CLIENT_SECRET match the ones used in production.';
-      }
-      
+
+      const errorInfo = handleGoogleAdsError(errorDetails);
+
       return res.status(500).json({
         success: false,
-        error: errorMessage,
-        errorDetails: errorDetails
+        error: errorInfo.message,
+        errorDetails: errorDetails,
+        isTokenExpired: errorInfo.isTokenExpired,
+        userMessage: errorInfo.userMessage
       });
     }
 
@@ -313,9 +301,22 @@ export default async function handler(
     if (!apiResponse.ok) {
       const errorData = await apiResponse.text();
       console.error('❌ Google Ads API error:', errorData);
+
+      let errorDetails: any = {};
+      try {
+        errorDetails = JSON.parse(errorData);
+      } catch {
+        errorDetails = { error: errorData };
+      }
+
+      const errorInfo = handleGoogleAdsError(errorDetails);
+
       return res.status(500).json({
         success: false,
-        error: `Google Ads API error: ${apiResponse.status} - ${errorData}`
+        error: errorInfo.message,
+        errorDetails: errorDetails,
+        isTokenExpired: errorInfo.isTokenExpired,
+        userMessage: errorInfo.userMessage
       });
     }
 

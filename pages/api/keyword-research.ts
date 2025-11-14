@@ -354,25 +354,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.log(`❌ Google Ads API request failed with status: ${keywordPlanningResponse.status}`);
         console.log('Error details:', errorData);
 
-        // Check if it's a token expiration error
-        const isTokenExpired = errorData.isTokenExpired ||
-                              errorData.errorDetails?.error === 'invalid_grant' ||
-                              (errorData.error && errorData.error.includes('authenticate')) ||
-                              (errorData.error && errorData.error.toLowerCase().includes('token'));
-
-        // If it's an authentication error, pass it through to the user instead of silently falling back
-        if (keywordPlanningResponse.status === 500 && (isTokenExpired || errorData.error)) {
-          if (isTokenExpired) {
-            console.error('❌ Authentication error - token expired');
-            return res.status(500).json({
-              success: false,
-              isTokenExpired: true,
-              error: errorData.error || 'Google Ads API authentication failed',
-              errorDetails: errorData.errorDetails,
-              userMessage: 'Your Google Ads API credentials have expired. Please refresh them in the admin panel.',
-              message: 'Google Ads API authentication failed. Please check your OAuth credentials and refresh token.'
-            });
-          }
+        // If it's a token expiration error from the underlying Google Ads API
+        if (errorData.isTokenExpired) {
+          console.error('❌ Authentication error - token expired');
+          return res.status(500).json({
+            success: false,
+            isTokenExpired: true,
+            error: errorData.error || 'Google Ads API authentication failed',
+            errorDetails: errorData.errorDetails,
+            userMessage: errorData.userMessage || 'Your Google Ads API credentials have expired. Please refresh them in the admin panel.',
+            message: 'Google Ads API authentication failed. Please check your OAuth credentials and refresh token.'
+          });
         }
       }
     } catch (keywordPlanningError) {

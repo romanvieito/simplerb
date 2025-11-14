@@ -194,11 +194,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } catch (enrichmentError) {
       console.error('⚠️ Error enriching with Google Ads data:', enrichmentError);
 
-      // Check if it's a token expiration error
+      // Check if the enrichment error contains token expiration info
       const errorMessage = enrichmentError instanceof Error ? enrichmentError.message : String(enrichmentError);
       const isTokenExpired = errorMessage.toLowerCase().includes('token') ||
                             errorMessage.toLowerCase().includes('authenticate') ||
-                            errorMessage.toLowerCase().includes('invalid_grant');
+                            errorMessage.toLowerCase().includes('invalid_grant') ||
+                            errorMessage.includes('credentials have expired');
 
       if (isTokenExpired) {
         console.error('❌ Google Ads authentication error - cannot enrich AI results');
