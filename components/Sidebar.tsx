@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useRouter } from 'next/router';
 import { useUser, UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
@@ -69,37 +69,18 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onClose, onToggle, className = '' }) => {
   const router = useRouter();
-  const { user, isLoaded } = useUser();
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (!user?.id) return;
-
-      try {
-        const response = await fetch('/api/user/check-admin');
-        const result = await response.json();
-        setIsAdmin(result.isAdmin);
-      } catch (error) {
-        console.error('Failed to check admin status:', error);
-      }
-    };
-
-    if (isLoaded && user) {
-      checkAdminStatus();
-    }
-  }, [isLoaded, user]);
+  const { user } = useUser();
 
   const handleNavClick = () => {
-    // Close sidebar on mobile when navigation item is clicked
-    if (onClose && window.innerWidth < 768) {
+    // Close sidebar on mobile when navigation item is clicked - only on client side
+    if (onClose && typeof window !== 'undefined' && window.innerWidth < 768) {
       onClose();
     }
   };
 
   const handleItemClick = (item: SidebarItem, isActive: boolean, e: React.MouseEvent) => {
-    // Close sidebar on mobile when navigation item is clicked
-    if (onClose && window.innerWidth < 768) {
+    // Close sidebar on mobile when navigation item is clicked - only on client side
+    if (onClose && typeof window !== 'undefined' && window.innerWidth < 768) {
       onClose();
     }
 
@@ -109,11 +90,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
     }
   };
 
-  // Filter sidebar items based on authentication and admin status
-  const visibleItems = sidebarItems.filter(item => {
-    // Show to all authenticated users unless specifically admin-only
-    return !item.adminOnly || isAdmin;
-  });
+  // Show all sidebar items (no admin filtering needed since no items are admin-only)
+  const visibleItems = sidebarItems;
 
   return (
     <>

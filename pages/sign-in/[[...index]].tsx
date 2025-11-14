@@ -10,14 +10,14 @@ export default function SignInPage() {
         </div>
         
         <div className="bg-white rounded-lg shadow-xl p-8">
-          <SignIn 
+          <SignIn
             appearance={{
               elements: {
                 rootBox: "w-full",
                 card: "shadow-none w-full",
-                formButtonPrimary: 
+                formButtonPrimary:
                   "bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200",
-                formFieldInput: 
+                formFieldInput:
                   "rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500",
                 footerActionLink: "text-blue-600 hover:text-blue-700 font-medium",
                 identityPreviewText: "text-gray-700",
@@ -27,8 +27,6 @@ export default function SignInPage() {
             routing="path"
             path="/sign-in"
             signUpUrl="/sign-up"
-            redirectUrl="/ads"
-            afterSignInUrl="/ads"
           />
         </div>
         

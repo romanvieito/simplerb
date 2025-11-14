@@ -379,7 +379,24 @@ const DomainPage: React.FC = () => {
       }
       // --- End Add Timestamp ---
 
-      const response = await fetch("/api/openai", {
+      let generatedResults: DomainInfo[];
+
+      if (process.env.NODE_ENV !== 'production') {
+        // Mock domain generation for development
+        const mockDomains = [
+          'TechFlowAI.com',
+          'SmallBizAI.com',
+          'StartupToolsAI.com',
+          'BizIntelligenceAI.com',
+          'SmartBusinessAI.com'
+        ];
+        generatedResults = mockDomains.map((domain) => ({
+          domain,
+          available: undefined,
+          favorite: false,
+        }));
+      } else {
+        const response = await fetch("/api/openai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt, ptemp: temperature, ptop: 1 }),
@@ -427,6 +444,7 @@ const DomainPage: React.FC = () => {
         available: undefined,
         favorite: false,
       }));
+      }
 
       if (process.env.NODE_ENV !== 'production') {
         console.log("Generated domains:", generatedResults);
