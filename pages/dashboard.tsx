@@ -25,18 +25,17 @@ interface DomainFavorite {
 const Dashboard: React.FC = () => {
   const router = useRouter();
   const { user: realUser, isLoaded } = useUser();
-  const [user, setUser] = useState(realUser);
+  const [user, setUser] = useState(() => {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+      return { id: 'test-user-dashboard' };
+    }
+    return realUser;
+  });
   const [favorites, setFavorites] = useState<KeywordFavorite[]>([]);
   const [domainFavorites, setDomainFavorites] = useState<DomainFavorite[]>([]);
   const [loading, setLoading] = useState(true);
   const [domainLoading, setDomainLoading] = useState(true);
 
-  // Set mock user on client side for development
-  useEffect(() => {
-    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
-      setUser({ id: 'test-user-dashboard' });
-    }
-  }, []);
 
   // Redirect if not authenticated (skip in development with mock user)
   useEffect(() => {
