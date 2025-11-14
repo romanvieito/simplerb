@@ -48,12 +48,14 @@ const handler = async (req: any, res: any) => {
     recentRequests.push(now);
     global.rateLimit.set(clientIP, recentRequests);
 
-    const temperature = (typeof ptemp === 'number') ? ptemp : 0;
-    const top_p = (typeof ptop === 'number') ? ptop : 0;
+    const temperature = (typeof ptemp === 'number') ? ptemp : 1;
+    const top_p = (typeof ptop === 'number') ? ptop : 1;
 
   const payload: OpenAIStreamPayload = {
     model: 'gpt-5-nano',
     messages: [{ role: 'user', content: prompt }],
+    temperature,
+    top_p,
     stream: true,
     n: 1,
   };
