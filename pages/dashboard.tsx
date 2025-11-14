@@ -25,17 +25,24 @@ interface DomainFavorite {
 const Dashboard: React.FC = () => {
   const router = useRouter();
   const { user: realUser, isLoaded } = useUser();
-  const [user, setUser] = useState(() => {
-    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
-      return { id: 'test-user-dashboard' };
-    }
-    return realUser;
-  });
+  const [user, setUser] = useState(null);
   const [favorites, setFavorites] = useState<KeywordFavorite[]>([]);
   const [domainFavorites, setDomainFavorites] = useState<DomainFavorite[]>([]);
   const [loading, setLoading] = useState(true);
   const [domainLoading, setDomainLoading] = useState(true);
 
+
+  // Set user state based on environment and auth status
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') {
+      if (realUser) {
+        setUser(realUser);
+      }
+    } else {
+      // Development: use mock user
+      setUser({ id: 'test-user-dashboard' });
+    }
+  }, [realUser, isLoaded]);
 
   // Redirect if not authenticated (skip in development with mock user)
   useEffect(() => {
@@ -46,7 +53,7 @@ const Dashboard: React.FC = () => {
 
   // Fetch keyword favorites
   const fetchFavorites = async () => {
-    if (!user) return;
+    if (!user || !user.id) return;
 
     try {
       const response = await fetch('/api/keyword-favorites');
@@ -54,7 +61,7 @@ const Dashboard: React.FC = () => {
         const data = await response.json();
         setFavorites(data.favorites || []);
       } else {
-        console.error('Failed to fetch favorites');
+        console.error('Failed to fetch favorites:', response.status, response.statusText);
       }
     } catch (error) {
       console.error('Error fetching favorites:', error);
@@ -72,19 +79,19 @@ const Dashboard: React.FC = () => {
 
   // Fetch domain favorites
   const fetchDomainFavorites = async () => {
-    if (!user) return;
+    if (!user || !user.id) return;
 
     try {
       const response = await fetch('/api/user-domainfavorite', {
         method: 'POST', // Using POST to send user_id in body
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user?.id }),
+        body: JSON.stringify({ user_id: user.id }),
       });
       if (response.ok) {
         const data = await response.json();
         setDomainFavorites(data.favorites || []);
       } else {
-        console.error('Failed to fetch domain favorites');
+        console.error('Failed to fetch domain favorites:', response.status, response.statusText);
       }
     } catch (error) {
       console.error('Error fetching domain favorites:', error);
