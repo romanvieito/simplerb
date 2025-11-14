@@ -103,10 +103,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
       onClose();
     }
 
-    // For active items, toggle sidebar
-    if (isActive && onToggle) {
-      onToggle();
-    }
+    // Don't toggle sidebar on navigation clicks - only the header toggle button should control sidebar state
+    // This prevents the jumping effect when clicking navigation items
   };
 
   // Filter sidebar items based on authentication and admin status
