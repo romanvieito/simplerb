@@ -25,7 +25,8 @@ interface DomainFavorite {
 const Dashboard: React.FC = () => {
   const router = useRouter();
   const { user: realUser, isLoaded } = useUser();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(null);
+  const [internalUserId, setInternalUserId] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<KeywordFavorite[]>([]);
   const [domainFavorites, setDomainFavorites] = useState<DomainFavorite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,8 +49,41 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     if (process.env.NODE_ENV !== 'production') {
       setUser({ id: 'test-user-dashboard' });
+      // In development, use a mock internal user ID
+      setInternalUserId('test-user-dashboard');
     }
   }, []);
+
+  // Fetch internal user ID from database using Clerk user email
+  useEffect(() => {
+    const fetchInternalUserId = async () => {
+      if (process.env.NODE_ENV === 'production' && realUser && isLoaded) {
+        try {
+          const email = realUser.emailAddresses[0]?.emailAddress;
+          if (email) {
+            const response = await fetch(`/api/getUser?email=${email}`);
+            if (response.ok) {
+              const userData = await response.json();
+              if (userData.user && userData.user.id) {
+                setInternalUserId(userData.user.id);
+              } else {
+                setDomainLoading(false);
+              }
+            } else {
+              setDomainLoading(false);
+            }
+          } else {
+            setDomainLoading(false);
+          }
+        } catch (error) {
+          console.error('Error fetching internal user ID:', error);
+          setDomainLoading(false);
+        }
+      }
+    };
+
+    fetchInternalUserId();
+  }, [realUser, isLoaded]);
 
   // Redirect if not authenticated (skip in development with mock user)
   useEffect(() => {
@@ -80,19 +114,27 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     if (user) {
       fetchFavorites();
-      fetchDomainFavorites();
     }
   }, [user]);
 
+  useEffect(() => {
+    if (internalUserId) {
+      fetchDomainFavorites();
+    } else if (process.env.NODE_ENV !== 'production') {
+      // In development, if we have mock user, set loading to false
+      setDomainLoading(false);
+    }
+  }, [internalUserId]);
+
   // Fetch domain favorites
   const fetchDomainFavorites = async () => {
-    if (!user || !user.id) return;
+    if (!internalUserId) return;
 
     try {
       const response = await fetch('/api/user-domainfavorite', {
         method: 'POST', // Using POST to send user_id in body
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user.id }),
+        body: JSON.stringify({ user_id: internalUserId }),
       });
       if (response.ok) {
         const data = await response.json();
@@ -109,6 +151,11 @@ const Dashboard: React.FC = () => {
 
   // Remove domain from favorites
   const removeDomainFavorite = async (namedomain: string) => {
+    if (!internalUserId) {
+      console.error('Internal user ID not available');
+      return;
+    }
+
     try {
       const response = await fetch('/api/user-domainfavorite', {
         method: 'DELETE',
@@ -117,7 +164,7 @@ const Dashboard: React.FC = () => {
         },
         body: JSON.stringify({
           namedomain,
-          user_id: user?.id,
+          user_id: internalUserId,
         }),
       });
 
