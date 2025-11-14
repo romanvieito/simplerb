@@ -255,7 +255,6 @@ const Dashboard: React.FC = () => {
                 )}
               </div>
             </div>
-            </div>
 
             {/* Domain Favorites Section */}
             <div id="domain-favorites" className="w-full max-w-6xl mx-auto mb-8">
