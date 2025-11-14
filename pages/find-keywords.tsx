@@ -747,8 +747,8 @@ export default function FindKeywords(): JSX.Element {
           </div>
 
           {results.length > 0 && (
-            <div className="mt-8 w-full" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)', width: '100vw' }}>
-              <div className="overflow-x-auto w-full px-4">
+            <div className="mt-8 w-full -mx-4 md:-mx-8">
+              <div className="overflow-x-auto w-full px-4 md:px-8">
                 <table className="w-full text-left table-fixed" style={{ width: '100%', tableLayout: 'fixed' }}>
                   <thead>
                     <tr className="border-b border-gray-200">
