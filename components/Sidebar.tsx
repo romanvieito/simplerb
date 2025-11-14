@@ -103,14 +103,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
       onClose();
     }
 
-    // If clicking on active item, toggle sidebar instead of navigating
+    // For active items, toggle sidebar
     if (isActive && onToggle) {
-      e.preventDefault();
       onToggle();
-      return;
     }
-
-    // For non-active items, let the Link handle navigation normally
   };
 
   // Filter sidebar items based on authentication and admin status
@@ -172,26 +168,30 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
           {visibleItems.map((item) => {
             const isActive = router.pathname === item.href;
             return (
-              <Link
+              <div
                 key={item.name}
-                href={item.href}
                 onClick={(e) => handleItemClick(item, isActive, e)}
-                className={`group flex items-center ${collapsed ? 'justify-center px-2' : 'px-3'} py-3 rounded-lg transition-all duration-200 ${
+                className={`group flex items-center ${collapsed ? 'justify-center px-2' : 'px-3'} py-3 rounded-lg transition-all duration-200 cursor-pointer ${
                   isActive
-                    ? 'bg-blue-50 border-r-2 border-blue-600 text-blue-700 cursor-pointer'
+                    ? 'bg-blue-50 border-r-2 border-blue-600 text-blue-700'
                     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                 }`}
                 title={collapsed ? item.name : undefined}
               >
-                <div className={`${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'} ${collapsed ? '' : 'mr-3'}`}>
-                  {item.icon}
-                </div>
-                {!collapsed && (
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm truncate">{item.name}</div>
+                <Link
+                  href={item.href}
+                  className="flex items-center flex-1 min-w-0"
+                >
+                  <div className={`${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'} ${collapsed ? '' : 'mr-3'}`}>
+                    {item.icon}
                   </div>
-                )}
-              </Link>
+                  {!collapsed && (
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm truncate">{item.name}</div>
+                    </div>
+                  )}
+                </Link>
+              </div>
             );
           })}
         </nav>

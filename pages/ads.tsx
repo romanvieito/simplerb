@@ -611,7 +611,7 @@ const AdsPage = () => {
     setCurrentPage(1);
   }, [campaignKeywords.length]);
 
-  // Load saved campaign keywords and summary on component mount
+  // Load saved campaign keywords on component mount only
   useEffect(() => {
     const savedKeywordsData = loadCampaignKeywords();
     if (savedKeywordsData) {
@@ -622,17 +622,19 @@ const AdsPage = () => {
       hasLoadedSavedData.current = true;
     }
 
-    // Load campaigns summary if it matches current date range
-    // (campaigns summary is filtered client-side by selectedCampaignIds)
+    isInitialLoad.current = false;
+  }, []); // Only run once on mount
+
+  // Load campaigns summary when date range changes
+  // (campaigns summary is filtered client-side by selectedCampaignIds)
+  useEffect(() => {
     const savedSummaryData = loadCampaignsSummary();
     if (savedSummaryData &&
         savedSummaryData.startDate === startDate &&
         savedSummaryData.endDate === endDate) {
       setCampaignsSummary(savedSummaryData.campaignsSummary);
     }
-
-    isInitialLoad.current = false;
-  }, [startDate, endDate, selectedCampaignIds]);
+  }, [startDate, endDate]); // Only depend on date range changes
 
   // Initialize selected input keywords when campaign keywords change
   useEffect(() => {
