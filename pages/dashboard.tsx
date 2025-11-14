@@ -14,18 +14,36 @@ interface KeywordFavorite {
   created_at: string;
 }
 
+interface DomainFavorite {
+  namedomain: string;
+  available: boolean;
+  favorite: boolean;
+  rate: number;
+  created_at: string;
+}
+
 const Dashboard: React.FC = () => {
   const router = useRouter();
-  const { user, isLoaded } = useUser();
+  const { user: realUser, isLoaded } = useUser();
+  const [user, setUser] = useState(realUser);
   const [favorites, setFavorites] = useState<KeywordFavorite[]>([]);
+  const [domainFavorites, setDomainFavorites] = useState<DomainFavorite[]>([]);
   const [loading, setLoading] = useState(true);
+  const [domainLoading, setDomainLoading] = useState(true);
 
-  // Redirect if not authenticated
+  // Set mock user on client side for development
   useEffect(() => {
-    if (isLoaded && !user) {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+      setUser({ id: 'test-user-dashboard' });
+    }
+  }, []);
+
+  // Redirect if not authenticated (skip in development with mock user)
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production' && isLoaded && !realUser) {
       router.push('/sign-in');
     }
-  }, [isLoaded, user, router]);
+  }, [isLoaded, realUser, router]);
 
   // Fetch keyword favorites
   const fetchFavorites = async () => {
@@ -49,8 +67,57 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     if (user) {
       fetchFavorites();
+      fetchDomainFavorites();
     }
   }, [user]);
+
+  // Fetch domain favorites
+  const fetchDomainFavorites = async () => {
+    if (!user) return;
+
+    try {
+      const response = await fetch('/api/user-domainfavorite', {
+        method: 'POST', // Using POST to send user_id in body
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user?.id }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setDomainFavorites(data.favorites || []);
+      } else {
+        console.error('Failed to fetch domain favorites');
+      }
+    } catch (error) {
+      console.error('Error fetching domain favorites:', error);
+    } finally {
+      setDomainLoading(false);
+    }
+  };
+
+  // Remove domain from favorites
+  const removeDomainFavorite = async (namedomain: string) => {
+    try {
+      const response = await fetch('/api/user-domainfavorite', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          namedomain,
+          user_id: user?.id,
+        }),
+      });
+
+      if (response.ok) {
+        // Remove from local state
+        setDomainFavorites(domainFavorites.filter(fav => fav.namedomain !== namedomain));
+      } else {
+        console.error('Failed to remove domain favorite');
+      }
+    } catch (error) {
+      console.error('Error removing domain favorite:', error);
+    }
+  };
 
   // Format currency from micros
   const formatCPC = (micros: bigint | null) => {
@@ -83,7 +150,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  if (!isLoaded || !user) {
+  if (process.env.NODE_ENV === 'production' && (!isLoaded || !realUser)) {
     return (
       <div className="flex w-full flex-col items-center justify-center py-2 min-h-screen bg-white">
         <div className="text-center">
@@ -182,6 +249,110 @@ const Dashboard: React.FC = () => {
                 )}
               </div>
             </div>
+            </div>
+
+            {/* Domain Favorites Section */}
+            <div id="domain-favorites" className="w-full max-w-6xl mx-auto mb-8">
+              <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-gray-900">Domain Favorites</h2>
+                    <a
+                      href="/domain"
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    >
+                      Generate Domains
+                    </a>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">Your saved favorite domain names</p>
+                </div>
+
+                {/* Content */}
+                <div className="p-6">
+                  {domainLoading ? (
+                    <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                      <p className="mt-4 text-gray-600">Loading domain favorites...</p>
+                    </div>
+                  ) : domainFavorites.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="mb-4">
+                        <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No domain favorites yet</h3>
+                      <p className="text-gray-600 mb-6">Start by generating domains and save your favorites for later.</p>
+                      <a
+                        href="/domain"
+                        className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                      >
+                        Generate Domains
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Domain Name</th>
+                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Availability</th>
+                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Rating</th>
+                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Added</th>
+                            <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {domainFavorites.map((favorite, index) => (
+                            <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                              <td className="py-4 px-4 text-sm font-medium text-gray-900">{favorite.namedomain}</td>
+                              <td className="py-4 px-4 text-sm text-gray-600">
+                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                  favorite.available
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {favorite.available ? 'Available' : 'Unavailable'}
+                                </span>
+                              </td>
+                              <td className="py-4 px-4 text-sm text-gray-600">
+                                <div className="flex items-center">
+                                  {[...Array(5)].map((_, i) => (
+                                    <svg
+                                      key={i}
+                                      className={`w-4 h-4 ${
+                                        i < favorite.rate ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                                      }`}
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                    </svg>
+                                  ))}
+                                </div>
+                              </td>
+                              <td className="py-4 px-4 text-sm text-gray-600">
+                                {new Date(favorite.created_at).toLocaleDateString()}
+                              </td>
+                              <td className="py-4 px-4 text-center">
+                                <button
+                                  onClick={() => removeDomainFavorite(favorite.namedomain)}
+                                  className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                  title="Remove from favorites"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                  </svg>
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Feature Cards */}

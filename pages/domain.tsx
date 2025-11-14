@@ -126,6 +126,7 @@ const DomainPage: React.FC = () => {
   const [availabilityChecked, setAvailabilityChecked] = useState(false);
   const [temperatureOption, setTemperatureOption] = useState("neutral");
   const [domainExtension, setDomainExtension] = useState('');
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -208,6 +209,123 @@ const DomainPage: React.FC = () => {
   useEffect(() => {
     initPageData();
   }, [isSignedIn, user, initPageData]);
+
+  // Load favorites when user is signed in
+  const loadFavorites = useCallback(async () => {
+    if (!isSignedIn || !user?.id) return;
+
+    try {
+      const response = await fetch('/api/user-domainfavorite', {
+        method: 'POST', // Using POST to send user_id in body
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: dataUser?.id }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const favoriteDomains = new Set(data.favorites?.map((fav: any) => fav.namedomain as string) || []);
+        setFavorites(favoriteDomains);
+      }
+    } catch (error) {
+      console.error('Error loading favorites:', error);
+    }
+  }, [isSignedIn, user?.id, dataUser?.id]);
+
+  useEffect(() => {
+    if (isSignedIn) {
+      loadFavorites();
+    }
+  }, [isSignedIn, loadFavorites]);
+
+  // Toggle favorite status for a domain
+  const toggleFavorite = async (domain: string) => {
+    if (!isSignedIn) {
+      toast.error("Please sign in to save favorites");
+      openSignIn();
+      return;
+    }
+
+    const isFavorite = favorites.has(domain);
+    const newFavorites = new Set(favorites);
+
+    try {
+      if (isFavorite) {
+        // Remove from favorites
+        const response = await fetch('/api/user-domainfavorite', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ namedomain: domain, user_id: dataUser?.id }),
+        });
+
+        if (response.ok) {
+          newFavorites.delete(domain);
+          setFavorites(newFavorites);
+
+          // Update the domain's favorite status in the generated domains
+          setGeneratedDomains(prevDomains =>
+            prevDomains.map(d =>
+              d.domain === domain ? { ...d, favorite: false } : d
+            )
+          );
+
+          // Also update filtered domains if they exist
+          setFilteredDomains(prevFiltered =>
+            prevFiltered.map(d =>
+              d.domain === domain ? { ...d, favorite: false } : d
+            )
+          );
+
+          toast.success("Removed from favorites");
+        } else {
+          throw new Error('Failed to remove from favorites');
+        }
+      } else {
+        // Add to favorites - need to find the domain data
+        const domainData = generatedDomains.find(d => d.domain === domain);
+        if (!domainData) {
+          toast.error("Domain data not found");
+          return;
+        }
+
+        const response = await fetch('/api/user-domainfavorite', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            namedomain: domain,
+            available: domainData.available,
+            favorite: true,
+            rate: 3, // Default rating
+            user_id: dataUser?.id,
+          }),
+        });
+
+        if (response.ok) {
+          newFavorites.add(domain);
+          setFavorites(newFavorites);
+
+          // Update the domain's favorite status in the generated domains
+          setGeneratedDomains(prevDomains =>
+            prevDomains.map(d =>
+              d.domain === domain ? { ...d, favorite: true } : d
+            )
+          );
+
+          // Also update filtered domains if they exist
+          setFilteredDomains(prevFiltered =>
+            prevFiltered.map(d =>
+              d.domain === domain ? { ...d, favorite: true } : d
+            )
+          );
+
+          toast.success("Added to favorites");
+        } else {
+          throw new Error('Failed to add to favorites');
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast.error("Failed to update favorite status");
+    }
+  };
 
   // Load saved domain search data on component mount
   useEffect(() => {
@@ -890,8 +1008,28 @@ const DomainPage: React.FC = () => {
                         key={index}
                         className="flex flex-col justify-stretch items-center bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 h-full group"
                       >
-                        <div className="flex-grow mb-4">
-                           <span className="text-2xl font-bold text-gray-800 block break-words group-hover:text-blue-600 transition-colors duration-200">{domain.domain}</span>
+                        <div className="flex-grow mb-4 relative w-full">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-2xl font-bold text-gray-800 block break-words group-hover:text-blue-600 transition-colors duration-200">{domain.domain}</span>
+                            <button
+                              onClick={() => toggleFavorite(domain.domain)}
+                              className={`p-1 rounded-full transition-all duration-200 hover:scale-110 ${
+                                favorites.has(domain.domain)
+                                  ? 'text-yellow-500 hover:text-yellow-600'
+                                  : 'text-gray-300 hover:text-yellow-400'
+                              }`}
+                              title={favorites.has(domain.domain) ? "Remove from favorites" : "Add to favorites"}
+                            >
+                              <svg
+                                className={`w-6 h-6 ${
+                                  favorites.has(domain.domain) ? 'fill-current' : 'stroke-current fill-transparent'
+                                }`}
+                                viewBox="0 0 24 24"
+                              >
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
                         <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 mt-auto items-center justify-center w-full">
                           <button

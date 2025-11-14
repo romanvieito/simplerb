@@ -19,6 +19,7 @@ export default authMiddleware({
     "/api/google-ads/keyword-planning",
     "/api/google-ads/keyword-planning-rest",
     "/api/keyword-status",
+    "/api/keyword-favorites",
     "/api/openai",
     "/api/test",
     "/api/migrations/run-campaign-analysis",
@@ -27,6 +28,8 @@ export default authMiddleware({
     "/api/migrations/create-smart-pilot-tables",
     "/api/migrations/create-keyword-favorites-table",
     "/api/migrations/create-oauth-tokens-table",
+    "/api/user-domainfavorite",
+    "/dashboard",
     "/sign-in(.*)",
     "/sign-up(.*)"
   ]

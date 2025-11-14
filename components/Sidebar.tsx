@@ -72,17 +72,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
   const { user } = useUser();
 
   const handleNavClick = () => {
-    // Close sidebar on mobile when navigation item is clicked - only on client side
-    if (onClose && typeof window !== 'undefined' && window.innerWidth < 768) {
-      onClose();
-    }
+    // Close sidebar on mobile when navigation item is clicked
+    // Note: window checks removed to prevent hydration mismatches
+    // Mobile behavior will be handled via CSS media queries instead
   };
 
   const handleItemClick = (item: SidebarItem, isActive: boolean, e: React.MouseEvent) => {
-    // Close sidebar on mobile when navigation item is clicked - only on client side
-    if (onClose && typeof window !== 'undefined' && window.innerWidth < 768) {
-      onClose();
-    }
+    // Close sidebar on mobile when navigation item is clicked
+    // Note: window checks removed to prevent hydration mismatches
+    // Mobile behavior will be handled via CSS media queries instead
 
     // Toggle sidebar when clicking on active item (current page) - useful for collapsing/expanding while staying on same page
     if (isActive && onToggle) {

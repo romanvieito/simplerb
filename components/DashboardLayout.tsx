@@ -13,14 +13,15 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Load sidebar collapsed state from localStorage synchronously
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sidebarCollapsed');
-      return saved ? JSON.parse(saved) : false;
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Load sidebar collapsed state from localStorage on client side
+  useEffect(() => {
+    const saved = localStorage.getItem('sidebarCollapsed');
+    if (saved) {
+      setSidebarCollapsed(JSON.parse(saved));
     }
-    return false;
-  });
+  }, []);
 
   // Save sidebar collapsed state to localStorage whenever it changes
   useEffect(() => {
