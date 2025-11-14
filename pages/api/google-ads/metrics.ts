@@ -107,7 +107,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const { campaignId, days = 30, startDate: reqStartDate, endDate: reqEndDate }: MetricsRequest = req.query;
 
-    const customer = getGoogleAdsCustomer();
+    const customer = await getGoogleAdsCustomer();
 
     const adpilotLabel = process.env.ADPILOT_LABEL || 'AdPilot';
 

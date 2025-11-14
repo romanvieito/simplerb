@@ -31,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const { dryRun = false }: MaintenanceRequest = req.body;
 
-    const customer = getGoogleAdsCustomer();
+    const customer = await getGoogleAdsCustomer();
 
     const adpilotLabel = process.env.ADPILOT_LABEL || 'AdPilot';
     const underperformingLabel = `${adpilotLabel}_UNDERPERFORMING`;

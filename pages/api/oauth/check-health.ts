@@ -37,12 +37,33 @@ export default async function handler(
 
     const clientId = process.env.GADS_CLIENT_ID;
     const clientSecret = process.env.GADS_CLIENT_SECRET;
-    const refreshToken = process.env.GADS_REFRESH_TOKEN;
 
-    if (!clientId || !clientSecret || !refreshToken) {
+    if (!clientId || !clientSecret) {
       return res.status(200).json({
         healthy: false,
         error: 'Missing Google Ads environment variables'
+      });
+    }
+
+    // Get refresh token from database
+    let refreshToken: string | null = null;
+    try {
+      const { sql } = await import('@vercel/postgres');
+      const result = await sql`
+        SELECT refresh_token FROM oauth_tokens
+        WHERE service = 'google_ads'
+        LIMIT 1
+      `;
+      refreshToken = result.rows.length > 0 ? result.rows[0].refresh_token : null;
+    } catch (dbError) {
+      console.warn('Failed to get token from database, falling back to env:', dbError);
+      refreshToken = process.env.GADS_REFRESH_TOKEN;
+    }
+
+    if (!refreshToken) {
+      return res.status(200).json({
+        healthy: false,
+        error: 'No Google Ads refresh token found'
       });
     }
 

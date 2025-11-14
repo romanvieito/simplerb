@@ -103,38 +103,26 @@ export default async function handler(
     if (result.refresh_token) {
       console.log('✅ SUCCESS: New refresh token obtained');
 
-      // For development: Store the token in environment (this will be lost on restart)
-      // In production, you'd store this securely in a database or encrypted storage
+      // Store the token in database for production persistence
       try {
-        const fs = require('fs');
-        const path = require('path');
-        const envPath = path.join(process.cwd(), '.env.local');
+        const { sql } = await import('@vercel/postgres');
 
-        // Read current .env.local
-        let envContent = '';
-        if (fs.existsSync(envPath)) {
-          envContent = fs.readFileSync(envPath, 'utf8');
-        }
+        // Insert or update the Google Ads refresh token
+        await sql`
+          INSERT INTO oauth_tokens (service, refresh_token, updated_at)
+          VALUES ('google_ads', ${result.refresh_token}, NOW())
+          ON CONFLICT (service) DO UPDATE SET
+            refresh_token = EXCLUDED.refresh_token,
+            updated_at = NOW()
+        `;
 
-        // Update or add GADS_REFRESH_TOKEN
-        const tokenLine = `GADS_REFRESH_TOKEN=${result.refresh_token}`;
-        if (envContent.includes('GADS_REFRESH_TOKEN=')) {
-          // Replace existing line
-          envContent = envContent.replace(/GADS_REFRESH_TOKEN=.*/, tokenLine);
-        } else {
-          // Add new line
-          envContent += `\n${tokenLine}`;
-        }
+        console.log('✅ Token saved to database');
 
-        // Write back to file
-        fs.writeFileSync(envPath, envContent.trim() + '\n');
-        console.log('✅ Token saved to .env.local');
-
-        // Update process environment for immediate use
+        // Update process environment for immediate use in this request
         process.env.GADS_REFRESH_TOKEN = result.refresh_token;
 
       } catch (storageError) {
-        console.error('❌ Failed to save token:', storageError);
+        console.error('❌ Failed to save token to database:', storageError);
         return res.status(500).json({
           success: false,
           error: 'Token obtained but failed to save. Check server logs.'

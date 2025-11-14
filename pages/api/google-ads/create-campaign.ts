@@ -104,7 +104,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       });
     }
 
-    const customer = getGoogleAdsCustomer();
+    const customer = await getGoogleAdsCustomer();
     const customerId = formatCustomerId(process.env.GADS_LOGIN_CUSTOMER_ID!);
 
     const adpilotLabel = process.env.ADPILOT_LABEL || 'AdPilot';

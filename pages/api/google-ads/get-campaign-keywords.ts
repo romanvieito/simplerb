@@ -62,7 +62,7 @@ export default async function handler(
     const startDateParam = req.query.startDate as string;
     const endDateParam = req.query.endDate as string;
 
-    const customer = getGoogleAdsCustomer();
+    const customer = await getGoogleAdsCustomer();
 
     // Calculate date range for metrics (default to last 30 days if not provided)
     let startDateStr: string;

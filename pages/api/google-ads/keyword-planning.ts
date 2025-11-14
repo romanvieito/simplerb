@@ -77,8 +77,8 @@ export default async function handler(
       });
     }
 
-    const client = getGoogleAdsClient();
-    const customer = getGoogleAdsCustomer();
+    const client = await getGoogleAdsClient();
+    const customer = await getGoogleAdsCustomer();
     // Use GADS_CUSTOMER_ID if available (client account), otherwise fall back to LOGIN_CUSTOMER_ID
     const rawCustomerId = GADS_CUSTOMER_ID || GADS_LOGIN_CUSTOMER_ID;
     const customerId = rawCustomerId ? formatCustomerId(rawCustomerId) : '';

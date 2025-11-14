@@ -24,7 +24,7 @@ export async function getAccountTimezone(): Promise<string> {
 
   try {
     // Fetch timezone from Google Ads API
-    const customer = getGoogleAdsCustomer();
+    const customer = await getGoogleAdsCustomer();
     
     const query = `
       SELECT 

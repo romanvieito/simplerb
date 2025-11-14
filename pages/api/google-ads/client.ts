@@ -1,17 +1,43 @@
 const { GoogleAdsApi } = require('google-ads-api');
 
-export function getGoogleAdsClient() {
+// Helper function to get refresh token from database or environment
+async function getRefreshToken(): Promise<string> {
+  // First try to get from database
+  try {
+    const { sql } = await import('@vercel/postgres');
+    const result = await sql`
+      SELECT refresh_token FROM oauth_tokens
+      WHERE service = 'google_ads'
+      LIMIT 1
+    `;
+    if (result.rows.length > 0 && result.rows[0].refresh_token) {
+      return result.rows[0].refresh_token;
+    }
+  } catch (dbError) {
+    console.warn('Failed to get token from database, falling back to env:', dbError);
+  }
+
+  // Fallback to environment variable
+  const envToken = process.env.GADS_REFRESH_TOKEN;
+  if (!envToken) {
+    throw new Error('No Google Ads refresh token found in database or environment');
+  }
+  return envToken;
+}
+
+export async function getGoogleAdsClient() {
   const {
     GADS_DEVELOPER_TOKEN,
     GADS_CLIENT_ID,
     GADS_CLIENT_SECRET,
-    GADS_REFRESH_TOKEN,
     GADS_LOGIN_CUSTOMER_ID
   } = process.env;
 
-  if (!GADS_DEVELOPER_TOKEN || !GADS_CLIENT_ID || !GADS_CLIENT_SECRET || !GADS_REFRESH_TOKEN || !GADS_LOGIN_CUSTOMER_ID) {
+  if (!GADS_DEVELOPER_TOKEN || !GADS_CLIENT_ID || !GADS_CLIENT_SECRET || !GADS_LOGIN_CUSTOMER_ID) {
     throw new Error('Missing required Google Ads environment variables');
   }
+
+  const refreshToken = await getRefreshToken();
 
   // Create a new client instance each time to avoid issues
   // Use default API version for compatibility with library version
@@ -27,13 +53,14 @@ export function getGoogleAdsClient() {
   return client;
 }
 
-export function getGoogleAdsCustomer() {
-  const client = getGoogleAdsClient();
+export async function getGoogleAdsCustomer() {
+  const client = await getGoogleAdsClient();
   const {
     GADS_LOGIN_CUSTOMER_ID,
-    GADS_REFRESH_TOKEN,
     GADS_CUSTOMER_ID
   } = process.env;
+
+  const refreshToken = await getRefreshToken();
 
   // Use MCC as login, client as customer
   const loginId = GADS_LOGIN_CUSTOMER_ID ? formatCustomerId(GADS_LOGIN_CUSTOMER_ID) : undefined as any;
@@ -48,7 +75,7 @@ export function getGoogleAdsCustomer() {
   return client.Customer({
     // Use MCC as login, client as customer
     customer_id: customerId,
-    refresh_token: GADS_REFRESH_TOKEN,
+    refresh_token: refreshToken,
     login_customer_id: loginId,
     // Add timeout configuration
     timeout: 30000, // 30 seconds
@@ -56,13 +83,13 @@ export function getGoogleAdsCustomer() {
 }
 
 // Enhanced function to get customer with specific customer ID
-export function getGoogleAdsCustomerById(customerId: string) {
-  const client = getGoogleAdsClient();
-  const { GADS_REFRESH_TOKEN } = process.env;
+export async function getGoogleAdsCustomerById(customerId: string) {
+  const client = await getGoogleAdsClient();
+  const refreshToken = await getRefreshToken();
 
   return client.Customer({
     customer_id: customerId,
-    refresh_token: GADS_REFRESH_TOKEN,
+    refresh_token: refreshToken,
     login_customer_id: process.env.GADS_LOGIN_CUSTOMER_ID,
     timeout: 30000,
   });
