@@ -40,7 +40,6 @@ const Dashboard: React.FC = () => {
       }
     } else {
       // Development: use mock user
-      console.log('Setting mock user for development');
       setUser({ id: 'test-user-dashboard' });
     }
   }, [realUser]);
@@ -48,7 +47,6 @@ const Dashboard: React.FC = () => {
   // In development, set mock user immediately on mount
   useEffect(() => {
     if (process.env.NODE_ENV !== 'production') {
-      console.log('Development: Setting mock user on mount');
       setUser({ id: 'test-user-dashboard' });
     }
   }, []);
@@ -81,22 +79,15 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      console.log('User set, fetching favorites:', user);
       fetchFavorites();
       fetchDomainFavorites();
-    } else {
-      console.log('No user set yet');
     }
   }, [user]);
 
   // Fetch domain favorites
   const fetchDomainFavorites = async () => {
-    if (!user || !user.id) {
-      console.log('fetchDomainFavorites: No user or user.id');
-      return;
-    }
+    if (!user || !user.id) return;
 
-    console.log('fetchDomainFavorites: Fetching for user:', user.id);
     try {
       const response = await fetch('/api/user-domainfavorite', {
         method: 'POST', // Using POST to send user_id in body
@@ -105,7 +96,6 @@ const Dashboard: React.FC = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        console.log('fetchDomainFavorites: Received data:', data);
         setDomainFavorites(data.favorites || []);
       } else {
         console.error('Failed to fetch domain favorites:', response.status, response.statusText);
@@ -113,7 +103,6 @@ const Dashboard: React.FC = () => {
     } catch (error) {
       console.error('Error fetching domain favorites:', error);
     } finally {
-      console.log('fetchDomainFavorites: Setting domainLoading to false');
       setDomainLoading(false);
     }
   };
@@ -294,12 +283,6 @@ const Dashboard: React.FC = () => {
 
                 {/* Content */}
                 <div className="p-6">
-                  {/* Debug info */}
-                  <div className="mb-4 p-4 bg-gray-100 rounded text-sm">
-                    <p>Debug: domainLoading={String(domainLoading)}, domainFavorites.length={domainFavorites.length}</p>
-                    <p>User: {user ? `id=${user.id}` : 'null'}</p>
-                  </div>
-
                   {domainLoading ? (
                     <div className="text-center py-12">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
