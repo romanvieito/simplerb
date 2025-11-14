@@ -194,7 +194,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } catch (enrichmentError) {
       console.error('⚠️ Error enriching with Google Ads data:', enrichmentError);
 
-      // Fallback to AI-only results
+      // Check if it's a token expiration error
+      const errorMessage = enrichmentError instanceof Error ? enrichmentError.message : String(enrichmentError);
+      const isTokenExpired = errorMessage.toLowerCase().includes('token') ||
+                            errorMessage.toLowerCase().includes('authenticate') ||
+                            errorMessage.toLowerCase().includes('invalid_grant');
+
+      if (isTokenExpired) {
+        console.error('❌ Google Ads authentication error - cannot enrich AI results');
+        return res.status(500).json({
+          success: false,
+          isTokenExpired: true,
+          error: 'Google Ads API authentication failed',
+          userMessage: 'Your Google Ads API credentials have expired. Please refresh them in the admin panel.',
+          message: 'Google Ads API authentication failed. Please check your OAuth credentials and refresh token.'
+        });
+      }
+
+      // Fallback to AI-only results for other errors
       const aiOnlyResults: GeneratedKeywordResult[] = uniqueKeywords.map((keyword) => ({
         keyword,
         searchVolume: 0,

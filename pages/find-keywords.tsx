@@ -415,10 +415,23 @@ export default function FindKeywords(): JSX.Element {
       });
       const data = await response.json();
       if (!response.ok) {
+        // Check if it's a token expiration error
+        if (data.isTokenExpired) {
+          toast.error(
+            <div>
+              <div className="font-semibold">Google Ads credentials expired</div>
+              <div className="text-sm mt-1">
+                Please <a href="/admin/oauth-refresh" className="underline text-blue-600 hover:text-blue-800" target="_blank" rel="noopener noreferrer">refresh your token</a> to continue.
+              </div>
+            </div>,
+            { duration: 8000 }
+          );
+          return;
+        }
         throw new Error(data.message || 'An error occurred during keyword research');
       }
       setResults(data);
-      
+
       // Check data source from first result
       if (data.length > 0 && data[0]._meta) {
         setDataSource(data[0]._meta.dataSource);

@@ -353,16 +353,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const errorData = await keywordPlanningResponse.json().catch(() => ({}));
         console.log(`❌ Google Ads API request failed with status: ${keywordPlanningResponse.status}`);
         console.log('Error details:', errorData);
-        
+
+        // Check if it's a token expiration error
+        const isTokenExpired = errorData.isTokenExpired ||
+                              errorData.errorDetails?.error === 'invalid_grant' ||
+                              (errorData.error && errorData.error.includes('authenticate')) ||
+                              (errorData.error && errorData.error.toLowerCase().includes('token'));
+
         // If it's an authentication error, pass it through to the user instead of silently falling back
-        if (keywordPlanningResponse.status === 500 && errorData.error) {
-          // Check if it's an authentication/authorization error
-          if (errorData.error.includes('authenticate') || errorData.errorDetails?.error === 'invalid_grant') {
-            console.error('❌ Authentication error - cannot fall back to mock data');
+        if (keywordPlanningResponse.status === 500 && (isTokenExpired || errorData.error)) {
+          if (isTokenExpired) {
+            console.error('❌ Authentication error - token expired');
             return res.status(500).json({
               success: false,
-              error: errorData.error || 'Failed to authenticate with Google Ads API',
+              isTokenExpired: true,
+              error: errorData.error || 'Google Ads API authentication failed',
               errorDetails: errorData.errorDetails,
+              userMessage: 'Your Google Ads API credentials have expired. Please refresh them in the admin panel.',
               message: 'Google Ads API authentication failed. Please check your OAuth credentials and refresh token.'
             });
           }
