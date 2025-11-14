@@ -59,6 +59,30 @@ const Dashboard: React.FC = () => {
     return `$${dollars.toFixed(2)}`;
   };
 
+  // Remove keyword from favorites
+  const removeFavorite = async (keyword: string) => {
+    try {
+      const response = await fetch('/api/keyword-favorites', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          keyword,
+        }),
+      });
+
+      if (response.ok) {
+        // Remove from local state
+        setFavorites(favorites.filter(fav => fav.keyword !== keyword));
+      } else {
+        console.error('Failed to remove favorite');
+      }
+    } catch (error) {
+      console.error('Error removing favorite:', error);
+    }
+  };
+
   if (!isLoaded || !user) {
     return (
       <div className="flex w-full flex-col items-center justify-center py-2 min-h-screen bg-white">
@@ -125,6 +149,7 @@ const Dashboard: React.FC = () => {
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">CPC</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Country</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Added</th>
+                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -137,6 +162,17 @@ const Dashboard: React.FC = () => {
                             <td className="py-4 px-4 text-sm text-gray-600">{favorite.country_code || 'N/A'}</td>
                             <td className="py-4 px-4 text-sm text-gray-600">
                               {new Date(favorite.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="py-4 px-4 text-center">
+                              <button
+                                onClick={() => removeFavorite(favorite.keyword)}
+                                className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                title="Remove from favorites"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                </svg>
+                              </button>
                             </td>
                           </tr>
                         ))}
