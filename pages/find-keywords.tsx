@@ -408,9 +408,14 @@ export default function FindKeywords(): JSX.Element {
         ? { keywords, countryCode, languageCode, useCache: cacheEnabled, userPrompt: keywords }
         : { prompt: keywords, countryCode, languageCode, useCache: cacheEnabled };
 
+      console.log(`[Keyword Research] Starting request to ${endpoint}`, { activeTab, countryCode });
+
       // Add timeout to prevent infinite loading (60 seconds)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000);
+      const timeoutId = setTimeout(() => {
+        console.error('[Keyword Research] Request timed out after 60 seconds');
+        controller.abort();
+      }, 60000);
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -420,6 +425,7 @@ export default function FindKeywords(): JSX.Element {
       });
       
       clearTimeout(timeoutId);
+      console.log(`[Keyword Research] Response received: ${response.status} ${response.statusText}`);
       
       let data;
       try {
@@ -449,10 +455,11 @@ export default function FindKeywords(): JSX.Element {
       
       // Ensure data is an array
       if (!Array.isArray(data)) {
-        console.error('Expected array but got:', data);
+        console.error('[Keyword Research] Expected array but got:', data);
         throw new Error('Invalid response format from server');
       }
       
+      console.log(`[Keyword Research] Successfully received ${data.length} results`);
       setResults(data);
 
       // Check data source from first result
@@ -473,18 +480,25 @@ export default function FindKeywords(): JSX.Element {
         toast.success('Keyword research completed!');
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('[Keyword Research] Error occurred:', error);
       if (error instanceof Error) {
+        console.error('[Keyword Research] Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
         if (error.name === 'AbortError') {
           toast.error('Request timed out. Please try again.');
         } else {
           toast.error(error.message || 'An error occurred during keyword research');
         }
       } else {
+        console.error('[Keyword Research] Unknown error type:', typeof error, error);
         toast.error('An error occurred during keyword research');
       }
     } finally {
       // Always reset loading state, even if there's an error or early return
+      console.log('[Keyword Research] Resetting loading state');
       setLoading(false);
     }
   };

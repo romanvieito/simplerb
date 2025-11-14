@@ -348,6 +348,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           return res.status(200).json(combinedResults);
         } else {
           console.log('⚠️ Google Ads API returned no keywords');
+          // Return cached results if available, otherwise trigger mock fallback
+          if (cachedResults.length > 0) {
+            await saveKeywordSearchHistory({
+              userId,
+              userPrompt,
+              countryCode,
+              languageCode,
+              results: cachedResults,
+              source: 'google_ads_api'
+            });
+            return res.status(200).json(cachedResults);
+          }
+          // If no cached results and no fresh results, throw to trigger mock fallback
+          throw new Error('Google Ads API returned no keywords and no cached results available');
         }
       } else {
         const errorData = await keywordPlanningResponse.json().catch(() => ({}));
@@ -366,6 +380,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             message: 'Google Ads API authentication failed. Please check your OAuth credentials and refresh token.'
           });
         }
+        // If it's not a token expiration error, throw to trigger mock fallback
+        throw new Error(`Google Ads API request failed: ${keywordPlanningResponse.status}`);
       }
     } catch (keywordPlanningError) {
       console.error('❌ Keyword planning service failed:', keywordPlanningError);
