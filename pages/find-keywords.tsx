@@ -408,15 +408,31 @@ export default function FindKeywords(): JSX.Element {
         ? { keywords, countryCode, languageCode, useCache: cacheEnabled, userPrompt: keywords }
         : { prompt: keywords, countryCode, languageCode, useCache: cacheEnabled };
 
+      // Add timeout to prevent infinite loading (60 seconds)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
-      const data = await response.json();
+      
+      clearTimeout(timeoutId);
+      
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        // If response is not valid JSON, handle it gracefully
+        console.error('Failed to parse response as JSON:', jsonError);
+        throw new Error('Invalid response from server. Please try again.');
+      }
+      
       if (!response.ok) {
         // Check if it's a token expiration error
-        if (data.isTokenExpired) {
+        if (data?.isTokenExpired) {
           toast.error(
             <div>
               <div className="font-semibold">Google Ads credentials expired</div>
@@ -428,8 +444,15 @@ export default function FindKeywords(): JSX.Element {
           );
           return;
         }
-        throw new Error(data.message || 'An error occurred during keyword research');
+        throw new Error(data?.message || data?.error || `Server error: ${response.status}`);
       }
+      
+      // Ensure data is an array
+      if (!Array.isArray(data)) {
+        console.error('Expected array but got:', data);
+        throw new Error('Invalid response format from server');
+      }
+      
       setResults(data);
 
       // Check data source from first result
@@ -451,9 +474,19 @@ export default function FindKeywords(): JSX.Element {
       }
     } catch (error) {
       console.error('Error:', error);
-      toast.error(error instanceof Error ? error.message : 'An error occurred during keyword research');
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          toast.error('Request timed out. Please try again.');
+        } else {
+          toast.error(error.message || 'An error occurred during keyword research');
+        }
+      } else {
+        toast.error('An error occurred during keyword research');
+      }
+    } finally {
+      // Always reset loading state, even if there's an error or early return
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleToggleFavorite = async (result: KeywordResult) => {
