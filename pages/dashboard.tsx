@@ -226,13 +226,20 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     if (internalUserId) {
       fetchDomainFavorites();
-      fetchPublishedSites();
     } else if (process.env.NODE_ENV !== 'production') {
       // In development, if we have mock user, set loading to false
       setDomainLoading(false);
-      setSitesLoading(false);
     }
   }, [internalUserId]);
+
+  // Fetch published sites when user is loaded (uses Clerk auth, not internalUserId)
+  useEffect(() => {
+    if (isLoaded && (realUser || process.env.NODE_ENV !== 'production')) {
+      fetchPublishedSites();
+    } else if (isLoaded && !realUser) {
+      setSitesLoading(false);
+    }
+  }, [isLoaded, realUser]);
 
   // Fetch domain favorites
   const fetchDomainFavorites = async () => {
@@ -259,20 +266,18 @@ const Dashboard: React.FC = () => {
 
   // Fetch published sites
   const fetchPublishedSites = async () => {
-    if (!internalUserId) return;
-
-    console.log('Fetching published sites for user ID:', internalUserId);
+    // No need to check internalUserId - Clerk auth is handled server-side
+    console.log('Fetching published sites');
 
     try {
       const response = await fetch('/api/get-user-sites', {
+        method: 'GET',
         headers: {
-          'Authorization': `Bearer ${internalUserId}`,
           'Content-Type': 'application/json'
         }
       });
 
       console.log('Published sites response status:', response.status);
-      console.log('Published sites response headers:', response.headers);
 
       if (response.ok) {
         const data = await response.json();

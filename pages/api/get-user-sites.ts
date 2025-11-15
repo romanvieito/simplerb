@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { sql } from '@vercel/postgres';
+import { getAuth } from '@clerk/nextjs/server';
 
 export default async function handler(
   req: NextApiRequest,
@@ -14,14 +15,12 @@ export default async function handler(
   }
 
   try {
-    // Get the user ID from the authorization header
-    const authHeader = req.headers.authorization;
-    console.log('Auth header:', authHeader);
-    const userId = authHeader?.split(' ')[1];
-    console.log('Extracted userId:', userId);
+    // Get the user ID from Clerk authentication (same as publish-site.ts)
+    const { userId } = getAuth(req);
+    console.log('Clerk userId:', userId);
 
     if (!userId) {
-      console.log('No userId found, returning 401');
+      console.log('No Clerk userId found, returning 401');
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
