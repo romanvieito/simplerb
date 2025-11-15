@@ -58,7 +58,8 @@ export default async function handler(
     const sitesWithUrls = result.rows.map(site => ({
       ...site,
       url: `https://${site.subdomain}.simplerb.com`,
-      screenshot: null // Will be populated once screenshot column is added to database
+      screenshot: null, // Will be populated once screenshot column is added to database
+      favorite: site.favorite ?? false // Default to false if null or undefined
     }));
 
     console.log('Sites with URLs:', sitesWithUrls);

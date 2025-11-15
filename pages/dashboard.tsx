@@ -132,9 +132,20 @@ const Dashboard: React.FC = () => {
     if (savedOrder) {
       try {
         const parsedOrder = JSON.parse(savedOrder);
-        setSectionOrder(parsedOrder);
+        // Validate that all required sections are present
+        const defaultOrder = ['favorites', 'domain-favorites', 'published-sites', 'feature-cards'];
+        const validOrder = parsedOrder.filter((id: string) => defaultOrder.includes(id));
+        // Add any missing sections
+        defaultOrder.forEach(id => {
+          if (!validOrder.includes(id)) {
+            validOrder.push(id);
+          }
+        });
+        setSectionOrder(validOrder.length > 0 ? validOrder : defaultOrder);
       } catch (error) {
         console.error('Error parsing saved section order:', error);
+        // Reset to default order on error
+        setSectionOrder(['favorites', 'domain-favorites', 'published-sites', 'feature-cards']);
       }
     }
 
@@ -286,7 +297,12 @@ const Dashboard: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         console.log('Published sites data:', data);
-        setPublishedSites(data.sites || []);
+        // Ensure all sites have a favorite field (default to false if missing)
+        const sitesWithFavorites = (data.sites || []).map((site: any) => ({
+          ...site,
+          favorite: site.favorite ?? false
+        }));
+        setPublishedSites(sitesWithFavorites);
       } else {
         const errorText = await response.text();
         console.error('Failed to fetch published sites:', response.status, response.statusText, errorText);
@@ -533,6 +549,15 @@ const Dashboard: React.FC = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                       </svg>
                     )}
+                  </button>
+                  <button
+                    onClick={() => fetchFavorites()}
+                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                    title="Refresh keyword data"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
                   </button>
                   <a
                     href="/find-keywords"
@@ -1149,13 +1174,30 @@ const Dashboard: React.FC = () => {
     );
   }
 
+  // Ensure all required sections exist in the sections object
+  const validSectionOrder = sectionOrder.filter(id => sections[id]);
+  // Add any missing sections from the default order
+  const defaultOrder = ['favorites', 'domain-favorites', 'published-sites', 'feature-cards'];
+  defaultOrder.forEach(id => {
+    if (!validSectionOrder.includes(id) && sections[id]) {
+      validSectionOrder.push(id);
+    }
+  });
+
   return (
     <DashboardLayout title="Dashboard">
-      {sectionOrder.map((sectionId) => (
-        <div key={sectionId}>
-          {sections[sectionId]?.component}
-        </div>
-      ))}
+      {validSectionOrder.map((sectionId) => {
+        const section = sections[sectionId];
+        if (!section) {
+          console.warn(`Section ${sectionId} not found in sections object`);
+          return null;
+        }
+        return (
+          <div key={sectionId}>
+            {section.component}
+          </div>
+        );
+      })}
     </DashboardLayout>
   );
 };
