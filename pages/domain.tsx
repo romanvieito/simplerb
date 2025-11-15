@@ -222,7 +222,7 @@ const DomainPage: React.FC = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        const favoriteDomains = new Set(data.favorites?.map((fav: any) => fav.namedomain as string) || []);
+        const favoriteDomains = new Set<string>(data.favorites?.map((fav: any) => fav.namedomain as string) || []);
         setFavorites(favoriteDomains);
       }
     } catch (error) {
@@ -286,6 +286,19 @@ const DomainPage: React.FC = () => {
           return;
         }
 
+        // Use actual rate if available, otherwise default to null (will show as "No rating")
+        // Rate might be 0-10 scale from rating system, convert to 0-5 for display if needed
+        let rateValue: number | null = null;
+        if (domainData.rate !== undefined && domainData.rate !== null) {
+          // If rate is > 5, assume it's on 0-10 scale and convert to 0-5
+          // Otherwise, assume it's already on 0-5 scale
+          rateValue = domainData.rate > 5 
+            ? Math.round((domainData.rate / 10) * 5) 
+            : Math.round(domainData.rate);
+          // Ensure rate is between 0 and 5
+          rateValue = Math.max(0, Math.min(5, rateValue));
+        }
+
         const response = await fetch('/api/user-domainfavorite', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -293,7 +306,7 @@ const DomainPage: React.FC = () => {
             namedomain: domain,
             available: domainData.available,
             favorite: true,
-            rate: 3, // Default rating
+            rate: rateValue,
             user_id: dataUser?.id,
           }),
         });

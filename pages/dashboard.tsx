@@ -16,10 +16,10 @@ interface KeywordFavorite {
 
 interface DomainFavorite {
   namedomain: string;
-  available: boolean;
+  available: boolean | null;
   favorite: boolean;
-  rate: number;
-  created_at: string;
+  rate: number | null;
+  created_at: string | null;
 }
 
 const Dashboard: React.FC = () => {
@@ -366,33 +366,42 @@ const Dashboard: React.FC = () => {
                         <tbody>
                           {domainFavorites.map((favorite, index) => (
                             <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                              <td className="py-4 px-4 text-sm font-medium text-gray-900">{favorite.namedomain}</td>
+                              <td className="py-4 px-4 text-sm font-medium text-gray-900">{favorite.namedomain || 'N/A'}</td>
                               <td className="py-4 px-4 text-sm text-gray-600">
                                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                  favorite.available
+                                  favorite.available === true
                                     ? 'bg-green-100 text-green-800'
-                                    : 'bg-red-100 text-red-800'
+                                    : favorite.available === false
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'bg-gray-100 text-gray-800'
                                 }`}>
-                                  {favorite.available ? 'Available' : 'Unavailable'}
+                                  {favorite.available === true ? 'Available' : favorite.available === false ? 'Unavailable' : 'Unknown'}
                                 </span>
                               </td>
                               <td className="py-4 px-4 text-sm text-gray-600">
                                 <div className="flex items-center">
-                                  {[...Array(5)].map((_, i) => (
-                                    <svg
-                                      key={i}
-                                      className={`w-4 h-4 ${
-                                        i < favorite.rate ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                                      }`}
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                                    </svg>
-                                  ))}
+                                  {favorite.rate !== null && favorite.rate !== undefined ? (
+                                    [...Array(5)].map((_, i) => {
+                                      const rateValue = favorite.rate ?? 0;
+                                      return (
+                                        <svg
+                                          key={i}
+                                          className={`w-4 h-4 ${
+                                            i < rateValue ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                                          }`}
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                        </svg>
+                                      );
+                                    })
+                                  ) : (
+                                    <span className="text-gray-400 text-xs">No rating</span>
+                                  )}
                                 </div>
                               </td>
                               <td className="py-4 px-4 text-sm text-gray-600">
-                                {new Date(favorite.created_at).toLocaleDateString()}
+                                {favorite.created_at ? new Date(favorite.created_at).toLocaleDateString() : 'N/A'}
                               </td>
                               <td className="py-4 px-4 text-center">
                                 <button

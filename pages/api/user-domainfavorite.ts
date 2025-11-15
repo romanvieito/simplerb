@@ -78,15 +78,17 @@ export default async function handler(
     if (request.method === 'PUT') {
       const { namedomain, available, favorite, rate } = request.body;
 
-      if ([namedomain, favorite, rate].some(value => value === undefined)) {
-        throw new Error('Data required');
+      // namedomain and favorite are required, but rate can be null
+      if (namedomain === undefined || favorite === undefined) {
+        throw new Error('Data required: namedomain and favorite are required');
       }
 
       const user_domain_favorite = await sql`SELECT * FROM users_domain_favorite WHERE namedomain=${namedomain} and user_id=${internalUserId}`;
 
       if(user_domain_favorite.rows.length === 1) {
         option = 'update';
-        await sql`UPDATE users_domain_favorite SET favorite = ${favorite} WHERE id = ${user_domain_favorite.rows[0].id}`;
+        // Update favorite, and also update available and rate if provided
+        await sql`UPDATE users_domain_favorite SET favorite = ${favorite}, available = COALESCE(${available}, available), rate = COALESCE(${rate}, rate) WHERE id = ${user_domain_favorite.rows[0].id}`;
       } else {
         option = 'insert';
         await sql`INSERT INTO users_domain_favorite (namedomain, available, favorite, rate, user_id) VALUES (${namedomain}, ${available}, ${favorite}, ${rate}, ${internalUserId});`;
