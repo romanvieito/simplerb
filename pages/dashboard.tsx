@@ -167,6 +167,8 @@ const Dashboard: React.FC = () => {
   const fetchPublishedSites = async () => {
     if (!internalUserId) return;
 
+    console.log('Fetching published sites for user ID:', internalUserId);
+
     try {
       const response = await fetch('/api/get-user-sites', {
         headers: {
@@ -174,11 +176,17 @@ const Dashboard: React.FC = () => {
           'Content-Type': 'application/json'
         }
       });
+
+      console.log('Published sites response status:', response.status);
+      console.log('Published sites response headers:', response.headers);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('Published sites data:', data);
         setPublishedSites(data.sites || []);
       } else {
-        console.error('Failed to fetch published sites:', response.status, response.statusText);
+        const errorText = await response.text();
+        console.error('Failed to fetch published sites:', response.status, response.statusText, errorText);
       }
     } catch (error) {
       console.error('Error fetching published sites:', error);
