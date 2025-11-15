@@ -468,12 +468,7 @@ const Dashboard: React.FC = () => {
   };
 
   // Delete published site
-  const deleteSite = async (subdomain: string) => {
-    if (!internalUserId) {
-      console.error('Internal user ID not available');
-      return;
-    }
-
+  const deleteSite = async (siteId: string, subdomain: string) => {
     if (!confirm(`Are you sure you want to delete ${subdomain}.simplerb.com? This action cannot be undone.`)) {
       return;
     }
@@ -485,14 +480,13 @@ const Dashboard: React.FC = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          subdomain,
-          user_id: internalUserId,
+          siteId,
         }),
       });
 
       if (response.ok) {
         // Remove from local state
-        setPublishedSites(publishedSites.filter(site => site.subdomain !== subdomain));
+        setPublishedSites(publishedSites.filter(site => site.id !== siteId));
       } else {
         console.error('Failed to delete site');
       }
@@ -1015,7 +1009,7 @@ const Dashboard: React.FC = () => {
                                     </svg>
                                   </button>
                                   <button
-                                    onClick={() => deleteSite(site.subdomain)}
+                                    onClick={() => deleteSite(site.id, site.subdomain)}
                                     className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
                                     title="Delete site"
                                   >
