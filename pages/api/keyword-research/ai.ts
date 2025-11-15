@@ -202,14 +202,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             errorMessage.includes('credentials have expired');
 
       if (isTokenExpired) {
-        console.error('❌ Google Ads authentication error - cannot enrich AI results');
-        return res.status(500).json({
-          success: false,
-          isTokenExpired: true,
-          error: 'Google Ads API authentication failed',
-          userMessage: 'Your Google Ads API credentials have expired. Please refresh them in the admin panel.',
-          message: 'Google Ads API authentication failed. Please check your OAuth credentials and refresh token.'
-        });
+        console.log('⚠️ Google Ads authentication error - falling back to AI-only results');
+        // For AI-generated keywords, we fall back to AI-only results instead of showing an error
+        // This allows the AI feature to work even when Google Ads credentials are expired
+        const aiOnlyResults: GeneratedKeywordResult[] = uniqueKeywords.map((keyword) => ({
+          keyword,
+          searchVolume: 0,
+          competition: 'UNKNOWN',
+          _meta: {
+            dataSource: 'openai_generated',
+            reason: 'Generated via OpenAI (Google Ads API credentials expired - using AI-only data)',
+            cached: false,
+          },
+        }));
+
+        if (userId) {
+          await saveKeywordSearchHistory({
+            userId,
+            userPrompt: prompt,
+            countryCode,
+            languageCode,
+            results: aiOnlyResults,
+            source: 'openai_generated',
+          });
+        }
+
+        return res.status(200).json(aiOnlyResults);
       }
 
       // Fallback to AI-only results for other errors
