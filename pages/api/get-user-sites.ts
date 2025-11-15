@@ -38,7 +38,8 @@ export default async function handler(
         subdomain,
         description,
         created_at,
-        updated_at
+        updated_at,
+        favorite
       FROM sites
       WHERE user_id = ${userId}
       ORDER BY created_at DESC

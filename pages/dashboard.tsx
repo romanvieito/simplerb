@@ -36,6 +36,7 @@ interface PublishedSite {
   updated_at: string;
   url: string;
   screenshot: string | null;
+  favorite: boolean;
 }
 
 const Dashboard: React.FC = () => {
@@ -421,6 +422,35 @@ const Dashboard: React.FC = () => {
     setRenameError(null);
   };
 
+  // Toggle site favorite status
+  const toggleSiteFavorite = async (siteId: string, currentFavorite: boolean) => {
+    try {
+      const response = await fetch('/api/toggle-site-favorite', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          siteId,
+          favorite: !currentFavorite,
+        }),
+      });
+
+      if (response.ok) {
+        // Update local state
+        setPublishedSites(publishedSites.map(site =>
+          site.id === siteId
+            ? { ...site, favorite: !currentFavorite }
+            : site
+        ));
+      } else {
+        console.error('Failed to toggle site favorite');
+      }
+    } catch (error) {
+      console.error('Error toggling site favorite:', error);
+    }
+  };
+
   // Delete published site
   const deleteSite = async (subdomain: string) => {
     if (!internalUserId) {
@@ -544,6 +574,7 @@ const Dashboard: React.FC = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-gray-200">
+                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">★</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Keyword</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Volume</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Competition</th>
@@ -556,6 +587,17 @@ const Dashboard: React.FC = () => {
                       <tbody>
                         {favorites.map((favorite, index) => (
                           <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                            <td className="py-4 px-4 text-center">
+                              <button
+                                onClick={() => removeFavorite(favorite.keyword)}
+                                className="inline-flex items-center justify-center w-8 h-8 text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50 rounded-full transition-colors"
+                                title="Remove from favorites"
+                              >
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                              </button>
+                            </td>
                             <td className="py-4 px-4 text-sm font-medium text-gray-900">{favorite.keyword}</td>
                             <td className="py-4 px-4 text-sm text-gray-600">{favorite.search_volume?.toLocaleString() || 'N/A'}</td>
                             <td className="py-4 px-4 text-sm text-gray-600">{favorite.competition || 'N/A'}</td>
@@ -674,6 +716,7 @@ const Dashboard: React.FC = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-gray-200">
+                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">★</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Domain Name</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Availability</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Rating</th>
@@ -684,6 +727,17 @@ const Dashboard: React.FC = () => {
                       <tbody>
                         {domainFavorites.map((favorite, index) => (
                           <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                            <td className="py-4 px-4 text-center">
+                              <button
+                                onClick={() => removeDomainFavorite(favorite.namedomain)}
+                                className="inline-flex items-center justify-center w-8 h-8 text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50 rounded-full transition-colors"
+                                title="Remove from favorites"
+                              >
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                              </button>
+                            </td>
                             <td className="py-4 px-4 text-sm font-medium text-gray-900">{favorite.namedomain || 'N/A'}</td>
                             <td className="py-4 px-4 text-sm text-gray-600">
                               <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
@@ -836,6 +890,7 @@ const Dashboard: React.FC = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-gray-200">
+                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">★</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Subdomain</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Description</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Created</th>
@@ -845,6 +900,21 @@ const Dashboard: React.FC = () => {
                       <tbody>
                         {publishedSites.map((site) => (
                           <tr key={site.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                            <td className="py-4 px-4 text-center">
+                              <button
+                                onClick={() => toggleSiteFavorite(site.id, site.favorite)}
+                                className={`inline-flex items-center justify-center w-8 h-8 rounded-full transition-colors ${
+                                  site.favorite
+                                    ? 'text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50'
+                                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                                }`}
+                                title={site.favorite ? 'Remove from favorites' : 'Add to favorites'}
+                              >
+                                <svg className={`w-4 h-4 ${site.favorite ? 'fill-current' : ''}`} fill={site.favorite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                              </button>
+                            </td>
                             <td className="py-4 px-4 text-sm font-medium text-gray-900">
                               {renamingSubdomain === site.subdomain ? (
                                 <div className="flex items-center gap-2">
