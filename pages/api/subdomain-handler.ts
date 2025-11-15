@@ -1,12 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextApiRequest, NextApiResponse } from 'next';
 import { sql } from '@vercel/postgres';
 
-export const config = {
-  runtime: 'nodejs',
-};
-
-export default async function handler(req: NextRequest) {
-  const hostname = req.headers.get('host') || '';
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const hostname = req.headers.host || '';
   const url = req.url;
 
   console.log('Subdomain handler called:', { hostname, url });
@@ -16,10 +12,10 @@ export default async function handler(req: NextRequest) {
 
   console.log('Is subdomain:', isSubdomain, { hostname });
 
-  // If not a subdomain, pass through to normal Next.js routing
+  // If not a subdomain, return 404 (middleware should handle routing)
   if (!isSubdomain) {
-    console.log('Not a subdomain, passing through');
-    return NextResponse.next();
+    console.log('Not a subdomain, returning 404');
+    return res.status(404).json({ error: 'Not found' });
   }
 
   // Extract subdomain
@@ -40,18 +36,15 @@ export default async function handler(req: NextRequest) {
 
     if (result.rows.length === 0) {
       console.log('Site not found for subdomain:', subdomain);
-      return new NextResponse('Site not found', { status: 404 });
+      return res.status(404).send('Site not found');
     }
 
     console.log('Site found, serving HTML content');
-    return new NextResponse(result.rows[0].html, {
-      headers: {
-        'Content-Type': 'text/html',
-        'Cache-Control': 'public, max-age=3600',
-      },
-    });
+    res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    return res.status(200).send(result.rows[0].html);
   } catch (error) {
     console.error('Error serving subdomain site:', error);
-    return new NextResponse('Error serving site', { status: 500 });
+    return res.status(500).send('Error serving site');
   }
 }

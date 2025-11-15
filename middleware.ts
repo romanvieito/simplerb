@@ -1,7 +1,7 @@
 import { authMiddleware } from "@clerk/nextjs";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export default async function middleware(request: any) {
+export default async function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || '';
 
   // Check if this is a subdomain request
