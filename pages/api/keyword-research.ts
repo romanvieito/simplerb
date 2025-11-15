@@ -237,12 +237,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       // Construct base URL more robustly for production
       const baseUrl = req.headers.origin ||
-                     (req.headers.host ? `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}` : 
-                      process.env.NEXT_PUBLIC_APP_URL || 
+                     (req.headers.host ? `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}` :
+                      process.env.NEXT_PUBLIC_APP_URL ||
                       (process.env.NODE_ENV === 'production' ? 'https://' + (req.headers.host || 'localhost') : 'http://127.0.0.1:3000'));
-      
+
       const internalApiUrl = `${baseUrl}/api/google-ads/keyword-planning-rest`;
       console.log(`🔗 Calling internal API: ${internalApiUrl}`);
+      console.log(`🔍 Headers - origin: ${req.headers.origin}, host: ${req.headers.host}, x-forwarded-proto: ${req.headers['x-forwarded-proto']}`);
+      console.log(`🔍 Environment - NODE_ENV: ${process.env.NODE_ENV}, NEXT_PUBLIC_APP_URL: ${process.env.NEXT_PUBLIC_APP_URL}`);
       
       const controller = new AbortController();
       // Increased timeout to 30 seconds for production (Google Ads API can be slow)
@@ -262,7 +264,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (keywordPlanningResponse.ok) {
         const keywordPlanningData = await keywordPlanningResponse.json();
-        
+        console.log(`📥 Internal API response: success=${keywordPlanningData.success}, usedFallback=${keywordPlanningData.usedFallback}, keywords=${keywordPlanningData.keywords?.length || 0}`);
+
         // Handle case where API returned 0 results (legitimate API response, not a failure)
         if (keywordPlanningData.usedFallback && Array.isArray(keywordPlanningData.keywords)) {
           console.log(`⚠️ Google Ads API returned 0 results for the requested keywords`);
