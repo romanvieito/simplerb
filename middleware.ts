@@ -1,28 +1,45 @@
 import { authMiddleware } from "@clerk/nextjs";
 import { NextRequest, NextResponse } from "next/server";
 
-export default async function middleware(request: NextRequest) {
-  const hostname = request.headers.get('host') || '';
+export default authMiddleware({
+  // Routes that can be accessed while signed out
+  publicRoutes: [
+    "/",
+    "/sign-in",
+    "/sign-up",
+    "/pricing",
+    "/terms",
+    "/privacy",
+    "/api/webhook",
+    "/api/migrations/(.*)",
+    "/api/stripe-webhooks",
+    "/api/check-availability",
+    "/api/get-tlds-godaddy",
+    "/api/oauth/(.*)",
+    "/api/clerk-webhooks"
+  ],
+  // Routes that can always be accessed, and have
+  // no authentication information
+  ignoredRoutes: [
+    "/api/subdomain-handler",
+    "/api/serve-site"
+  ],
+  beforeAuth: (req) => {
+    const hostname = req.headers.get('host') || '';
 
-  // Check if this is a subdomain request
-  const isSubdomain = hostname.includes('.simplerb.com') && !hostname.startsWith('www.') && hostname !== 'simplerb.com';
+    // Check if this is a subdomain request
+    const isSubdomain = hostname.includes('.simplerb.com') && !hostname.startsWith('www.') && hostname !== 'simplerb.com';
 
-  if (isSubdomain) {
-    // Rewrite to subdomain handler for subdomain requests
-    const url = request.nextUrl.clone();
-    url.pathname = '/api/subdomain-handler';
-    return NextResponse.rewrite(url);
-  }
+    if (isSubdomain) {
+      // Rewrite to subdomain handler for subdomain requests
+      const url = req.nextUrl.clone();
+      url.pathname = '/api/subdomain-handler';
+      return NextResponse.rewrite(url);
+    }
 
-  // Skip auth for migration routes
-  if (request.nextUrl.pathname.startsWith('/api/migrations/')) {
     return NextResponse.next();
   }
-
-  // For now, skip Clerk auth to avoid middleware issues
-  // TODO: Fix Clerk middleware configuration
-  return NextResponse.next();
-}
+});
 
 export const config = {
   matcher: [
