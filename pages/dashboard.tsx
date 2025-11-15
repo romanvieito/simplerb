@@ -397,21 +397,25 @@ const Dashboard: React.FC = () => {
       component: (
         <div
           id="favorites"
-          draggable
-          onDragStart={(e) => handleDragStart(e, 'favorites')}
-          onDragOver={handleDragOver}
-          onDrop={(e) => handleDrop(e, 'favorites')}
-          onDragEnd={handleDragEnd}
           className={`w-full max-w-6xl mx-auto mb-8 transition-all duration-200 ${
             draggedSection === 'favorites' ? 'opacity-50' : ''
           } ${minimizedSections.has('favorites') ? 'h-24 overflow-hidden' : ''}`}
+          onDragOver={handleDragOver}
+          onDrop={(e) => handleDrop(e, 'favorites')}
         >
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
             {/* Header */}
             <div className="px-6 py-4 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="cursor-move text-gray-400 hover:text-gray-600">
+                  <div
+                    className="cursor-move text-gray-400 hover:text-gray-600"
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, 'favorites')}
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, 'favorites')}
+                    onDragEnd={handleDragEnd}
+                  >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
                     </svg>
@@ -523,21 +527,25 @@ const Dashboard: React.FC = () => {
       component: (
         <div
           id="domain-favorites"
-          draggable
-          onDragStart={(e) => handleDragStart(e, 'domain-favorites')}
-          onDragOver={handleDragOver}
-          onDrop={(e) => handleDrop(e, 'domain-favorites')}
-          onDragEnd={handleDragEnd}
           className={`w-full max-w-6xl mx-auto mb-8 transition-all duration-200 ${
             draggedSection === 'domain-favorites' ? 'opacity-50' : ''
           } ${minimizedSections.has('domain-favorites') ? 'h-24 overflow-hidden' : ''}`}
+          onDragOver={handleDragOver}
+          onDrop={(e) => handleDrop(e, 'domain-favorites')}
         >
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
             {/* Header */}
             <div className="px-6 py-4 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="cursor-move text-gray-400 hover:text-gray-600">
+                  <div
+                    className="cursor-move text-gray-400 hover:text-gray-600"
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, 'domain-favorites')}
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, 'domain-favorites')}
+                    onDragEnd={handleDragEnd}
+                  >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
                     </svg>
@@ -676,21 +684,25 @@ const Dashboard: React.FC = () => {
       component: (
         <div
           id="published-sites"
-          draggable
-          onDragStart={(e) => handleDragStart(e, 'published-sites')}
-          onDragOver={handleDragOver}
-          onDrop={(e) => handleDrop(e, 'published-sites')}
-          onDragEnd={handleDragEnd}
           className={`w-full max-w-6xl mx-auto mb-8 transition-all duration-200 ${
             draggedSection === 'published-sites' ? 'opacity-50' : ''
           } ${minimizedSections.has('published-sites') ? 'h-24 overflow-hidden' : ''}`}
+          onDragOver={handleDragOver}
+          onDrop={(e) => handleDrop(e, 'published-sites')}
         >
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
             {/* Header */}
             <div className="px-6 py-4 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="cursor-move text-gray-400 hover:text-gray-600">
+                  <div
+                    className="cursor-move text-gray-400 hover:text-gray-600"
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, 'published-sites')}
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, 'published-sites')}
+                    onDragEnd={handleDragEnd}
+                  >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
                     </svg>
@@ -807,17 +819,21 @@ const Dashboard: React.FC = () => {
       component: (
         <div
           id="feature-cards"
-          draggable
-          onDragStart={(e) => handleDragStart(e, 'feature-cards')}
-          onDragOver={handleDragOver}
-          onDrop={(e) => handleDrop(e, 'feature-cards')}
-          onDragEnd={handleDragEnd}
           className={`w-full max-w-4xl mx-auto transition-all duration-200 ${
             draggedSection === 'feature-cards' ? 'opacity-50' : ''
           } ${minimizedSections.has('feature-cards') ? 'h-16 overflow-hidden' : ''}`}
+          onDragOver={handleDragOver}
+          onDrop={(e) => handleDrop(e, 'feature-cards')}
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="cursor-move text-gray-400 hover:text-gray-600">
+            <div
+              className="cursor-move text-gray-400 hover:text-gray-600"
+              draggable
+              onDragStart={(e) => handleDragStart(e, 'feature-cards')}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, 'feature-cards')}
+              onDragEnd={handleDragEnd}
+            >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
               </svg>
