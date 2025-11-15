@@ -22,6 +22,16 @@ interface DomainFavorite {
   created_at: string | null;
 }
 
+interface PublishedSite {
+  id: string;
+  subdomain: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  url: string;
+  screenshot: string | null;
+}
+
 const Dashboard: React.FC = () => {
   const router = useRouter();
   const { user: realUser, isLoaded } = useUser();
@@ -29,8 +39,10 @@ const Dashboard: React.FC = () => {
   const [internalUserId, setInternalUserId] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<KeywordFavorite[]>([]);
   const [domainFavorites, setDomainFavorites] = useState<DomainFavorite[]>([]);
+  const [publishedSites, setPublishedSites] = useState<PublishedSite[]>([]);
   const [loading, setLoading] = useState(true);
   const [domainLoading, setDomainLoading] = useState(true);
+  const [sitesLoading, setSitesLoading] = useState(true);
 
 
   // Set user state based on environment and auth status
@@ -120,9 +132,11 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     if (internalUserId) {
       fetchDomainFavorites();
+      fetchPublishedSites();
     } else if (process.env.NODE_ENV !== 'production') {
       // In development, if we have mock user, set loading to false
       setDomainLoading(false);
+      setSitesLoading(false);
     }
   }, [internalUserId]);
 
@@ -146,6 +160,30 @@ const Dashboard: React.FC = () => {
       console.error('Error fetching domain favorites:', error);
     } finally {
       setDomainLoading(false);
+    }
+  };
+
+  // Fetch published sites
+  const fetchPublishedSites = async () => {
+    if (!internalUserId) return;
+
+    try {
+      const response = await fetch('/api/get-user-sites', {
+        headers: {
+          'Authorization': `Bearer ${internalUserId}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setPublishedSites(data.sites || []);
+      } else {
+        console.error('Failed to fetch published sites:', response.status, response.statusText);
+      }
+    } catch (error) {
+      console.error('Error fetching published sites:', error);
+    } finally {
+      setSitesLoading(false);
     }
   };
 
@@ -207,6 +245,40 @@ const Dashboard: React.FC = () => {
       }
     } catch (error) {
       console.error('Error removing favorite:', error);
+    }
+  };
+
+  // Delete published site
+  const deleteSite = async (subdomain: string) => {
+    if (!internalUserId) {
+      console.error('Internal user ID not available');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete ${subdomain}.simplerb.com? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/delete-site', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          subdomain,
+          user_id: internalUserId,
+        }),
+      });
+
+      if (response.ok) {
+        // Remove from local state
+        setPublishedSites(publishedSites.filter(site => site.subdomain !== subdomain));
+      } else {
+        console.error('Failed to delete site');
+      }
+    } catch (error) {
+      console.error('Error deleting site:', error);
     }
   };
 
@@ -411,6 +483,97 @@ const Dashboard: React.FC = () => {
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                  </svg>
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Published Sites Section */}
+            <div id="published-sites" className="w-full max-w-6xl mx-auto mb-8">
+              <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-gray-900">Published Websites</h2>
+                    <a
+                      href="/web"
+                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    >
+                      Create Website
+                    </a>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">Your published websites and landing pages</p>
+                </div>
+
+                {/* Content */}
+                <div className="p-6">
+                  {sitesLoading ? (
+                    <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+                      <p className="mt-4 text-gray-600">Loading published sites...</p>
+                    </div>
+                  ) : publishedSites.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="mb-4">
+                        <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No published websites yet</h3>
+                      <p className="text-gray-600 mb-6">Create and publish your first website to see it here.</p>
+                      <a
+                        href="/web"
+                        className="inline-flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                      >
+                        Create Website
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Subdomain</th>
+                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Description</th>
+                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Created</th>
+                            <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {publishedSites.map((site) => (
+                            <tr key={site.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                              <td className="py-4 px-4 text-sm font-medium text-gray-900">{site.subdomain}.simplerb.com</td>
+                              <td className="py-4 px-4 text-sm text-gray-600">{site.description || 'No description'}</td>
+                              <td className="py-4 px-4 text-sm text-gray-600">
+                                {new Date(site.created_at).toLocaleDateString()}
+                              </td>
+                              <td className="py-4 px-4 text-center space-x-2">
+                                <a
+                                  href={site.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors"
+                                  title="View live site"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                  </svg>
+                                </a>
+                                <button
+                                  onClick={() => deleteSite(site.subdomain)}
+                                  className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                  title="Delete site"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                   </svg>
                                 </button>
                               </td>
