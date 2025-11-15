@@ -40,9 +40,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     console.log('Site found, serving HTML content');
+
+    // Fix asset URLs to point to the main domain
+    let html = result.rows[0].html;
+    html = html.replace(/(href|src)="\/([^"]*)"/g, '$1="https://simplerb.com/$2"');
+
     res.setHeader('Content-Type', 'text/html');
     res.setHeader('Cache-Control', 'public, max-age=3600');
-    return res.status(200).send(result.rows[0].html);
+    return res.status(200).send(html);
   } catch (error) {
     console.error('Error serving subdomain site:', error);
     return res.status(500).send('Error serving site');
