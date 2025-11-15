@@ -11,8 +11,8 @@ export default async function handler(
   }
 
   try {
-    // Get the user ID from the authorization header
-    const userId = req.headers.authorization?.split(' ')[1];
+    // Get the user ID from Clerk authentication
+    const { userId } = getAuth(req);
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }

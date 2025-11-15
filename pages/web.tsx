@@ -656,8 +656,7 @@ const WebPage = () => {
       const response = await fetch('/api/publish-site', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${dataUser.id}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           html: generatedSite,
