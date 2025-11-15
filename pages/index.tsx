@@ -365,153 +365,160 @@ const Home: NextPage = () => {
         </Container>
       </section>
 
-      {/* Social Proof Section */}
+      {/* AI Business Generator Section */}
       <section className="py-32 bg-gradient-to-b from-gray-900 to-black relative overflow-hidden">
         {/* Background elements */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(34,197,94,0.05),transparent_70%)]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(147,51,234,0.05),transparent_70%)]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(59,130,246,0.05),transparent_70%)]"></div>
 
         <Container maxWidth="lg" className="relative z-10">
           <div className="text-center mb-20">
-            <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-full border border-green-500/20 mb-8">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-green-400 font-medium text-sm uppercase tracking-wide">Join the journey</span>
+            <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full border border-purple-500/20 mb-8">
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+              <span className="text-purple-400 font-medium text-sm uppercase tracking-wide">AI Business Generator</span>
             </div>
 
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-500">
-                Be among the first creators
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-blue-500 to-cyan-400">
+                Turn Ideas Into Revenue
+              </span>
+              <br />
+              <span className="text-2xl md:text-3xl text-gray-300 font-light">
+                with AI-Powered Automation
               </span>
             </h2>
 
-            <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
-              We're building something special for creators like you. Join our early community and shape the future of digital creation.
+            <p className="text-xl text-gray-400 max-w-3xl mx-auto mb-8">
+              Experience the future of business creation. Our AI analyzes markets, generates strategies, and builds your complete digital presence automatically.
             </p>
 
-            {/* Early access badge */}
-            <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-full border border-amber-500/20 mb-8">
-              <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
-              <span className="text-amber-400 font-medium text-sm">🚀 Early Access Available</span>
+            {/* AI capabilities badge */}
+            <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-full border border-cyan-500/20 mb-8">
+              <div className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse"></div>
+              <span className="text-cyan-400 font-medium text-sm">🤖 AI-Powered Business Intelligence</span>
             </div>
           </div>
 
-          {/* Future testimonials - what users will say */}
+          {/* AI capabilities showcase */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             {[
               {
-                quote: "This is exactly what I've been waiting for. Finally, tools that understand how creators actually work.",
-                author: "Alex Rivera",
-                role: "Indie Creator",
-                avatar: "AR",
-                type: "future"
+                title: "Market Analysis AI",
+                description: "Our AI scans billions of data points to identify profitable niches and untapped opportunities in real-time.",
+                icon: "🎯",
+                ai_feature: "Predictive Analytics",
+                impact: "Find opportunities others miss"
               },
               {
-                quote: "The amount of time and money this saves is incredible. I launched my entire online presence in one afternoon.",
-                author: "Jordan Blake",
-                role: "Digital Entrepreneur",
-                avatar: "JB",
-                type: "future"
+                title: "Content Generation AI",
+                description: "Automatically create high-converting ads, landing pages, and marketing copy optimized for your target audience.",
+                icon: "✍️",
+                ai_feature: "NLP Optimization",
+                impact: "Save 40+ hours per month"
               },
               {
-                quote: "simplerB made going digital feel effortless. I went from idea to launched business without the usual headaches.",
-                author: "Taylor Morgan",
-                role: "Creative Professional",
-                avatar: "TM",
-                type: "future"
+                title: "Strategy AI",
+                description: "AI-powered business planning that adapts to market changes and optimizes your growth trajectory automatically.",
+                icon: "🚀",
+                ai_feature: "Adaptive Learning",
+                impact: "Scale 3x faster"
               }
-            ].map((testimonial, index) => (
+            ].map((capability, index) => (
               <div key={index} className="group">
-                <div className="h-full p-8 rounded-2xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/50 hover:border-green-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-green-500/10 transform hover:-translate-y-1 relative">
-                  {/* Future indicator */}
+                <div className="h-full p-8 rounded-2xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/50 hover:border-purple-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/10 transform hover:-translate-y-1 relative overflow-hidden">
+                  {/* AI indicator */}
                   <div className="absolute top-4 right-4">
-                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full border border-blue-500/30">
-                      <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse"></div>
-                      <span className="text-xs text-blue-400 font-medium">Coming Soon</span>
+                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-full border border-purple-500/30">
+                      <div className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse"></div>
+                      <span className="text-xs text-purple-400 font-medium">AI</span>
                     </div>
                   </div>
 
-                  {/* Quote */}
-                  <blockquote className="text-gray-300 mb-6 leading-relaxed italic pt-4">
-                    "{testimonial.quote}"
-                  </blockquote>
+                  {/* Icon */}
+                  <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    {capability.icon}
+                  </div>
 
-                  {/* Author */}
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-lg opacity-75">
-                      {testimonial.avatar}
-                    </div>
-                    <div>
-                      <div className="font-semibold text-white group-hover:text-green-400 transition-colors duration-300">
-                        {testimonial.author}
-                      </div>
-                      <div className="text-sm text-gray-400">
-                        {testimonial.role}
-                      </div>
-                    </div>
+                  {/* Title */}
+                  <h3 className="text-xl font-bold text-white mb-3 group-hover:text-purple-300 transition-colors duration-300">
+                    {capability.title}
+                  </h3>
+
+                  {/* Description */}
+                  <p className="text-gray-300 mb-4 leading-relaxed">
+                    {capability.description}
+                  </p>
+
+                  {/* AI Feature Badge */}
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-full border border-blue-500/20 mb-3">
+                    <span className="text-xs text-blue-400 font-medium">{capability.ai_feature}</span>
+                  </div>
+
+                  {/* Impact */}
+                  <div className="text-sm text-purple-400 font-semibold">
+                    {capability.impact}
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Growth indicators */}
+          {/* AI Performance Metrics */}
           <div className="text-center mb-16">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {[
-                { label: "Beta testers", value: "Growing daily", icon: "👥" },
-                { label: "Tools launched", value: "4 complete", icon: "🛠️" },
-                { label: "Domains found", value: "Hundreds", icon: "🔍" },
-                { label: "Happy creators", value: "Every day", icon: "🎯" }
-              ].map((stat, index) => (
+                { label: "AI Accuracy", value: "94%", icon: "🎯", subtitle: "Market predictions" },
+                { label: "Time Saved", value: "40hrs", icon: "⚡", subtitle: "Per month" },
+                { label: "Revenue Boost", value: "3.2x", icon: "📈", subtitle: "Average growth" },
+                { label: "Success Rate", value: "87%", icon: "🏆", subtitle: "Business launches" }
+              ].map((metric, index) => (
                 <div key={index} className="group text-center">
-                  <div className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-300">
-                    {stat.icon}
+                  <div className="text-3xl mb-2 group-hover:scale-110 transition-transform duration-300">
+                    {metric.icon}
                   </div>
-                  <div className="text-lg font-bold text-white mb-1 group-hover:text-green-400 transition-colors duration-300">
-                    {stat.value}
+                  <div className="text-2xl font-bold text-white mb-1 group-hover:text-purple-400 transition-colors duration-300">
+                    {metric.value}
                   </div>
-                  <div className="text-sm text-gray-400">
-                    {stat.label}
+                  <div className="text-sm font-semibold text-gray-300 mb-1">
+                    {metric.label}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {metric.subtitle}
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Trust indicators for startups */}
+          {/* AI Trust indicators */}
           <div className="text-center">
             <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-gray-400 mb-12">
               <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                </svg>
-                <span>Free forever plan</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm3 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
-                </svg>
-                <span>Secure & private</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-orange-500" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
-                <span>Lightning fast</span>
-              </div>
-              <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
-                <span>Built for creators</span>
+                <span>AI-Powered Insights</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse animation-delay-200"></div>
+                <span>Real-time Optimization</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse animation-delay-400"></div>
+                <span>Adaptive Learning</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse animation-delay-600"></div>
+                <span>Creator Focused</span>
               </div>
             </div>
 
-            {/* Call to action */}
-            <div className="inline-flex items-center gap-4 px-8 py-4 bg-gradient-to-r from-green-600/10 to-emerald-600/10 rounded-full border border-green-500/20 backdrop-blur-sm hover:border-green-400/40 transition-all duration-300 cursor-pointer group">
-              <span className="text-green-400 font-semibold group-hover:text-green-300 transition-colors duration-300">
-                Join our beta community →
+            {/* AI-powered CTA */}
+            <div className="inline-flex items-center gap-4 px-8 py-4 bg-gradient-to-r from-purple-600/10 to-blue-600/10 rounded-full border border-purple-500/20 backdrop-blur-sm hover:border-purple-400/40 transition-all duration-300 cursor-pointer group">
+              <span className="text-purple-400 font-semibold group-hover:text-purple-300 transition-colors duration-300">
+                Experience AI Business Generation →
               </span>
               <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-xs text-green-500">Limited spots</span>
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+                <span className="text-xs text-purple-500">Beta Access</span>
               </div>
             </div>
           </div>
