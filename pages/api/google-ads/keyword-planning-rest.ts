@@ -168,9 +168,14 @@ export default async function handler(
 
     if (!GADS_DEVELOPER_TOKEN || !GADS_CLIENT_ID || !GADS_CLIENT_SECRET || !GADS_REFRESH_TOKEN || !GADS_LOGIN_CUSTOMER_ID) {
       console.log('❌ Missing required Google Ads environment variables');
-      return res.status(500).json({ 
-        success: false, 
-        error: 'Missing required Google Ads environment variables' 
+      console.log(`GADS_DEVELOPER_TOKEN: ${!!GADS_DEVELOPER_TOKEN}`);
+      console.log(`GADS_CLIENT_ID: ${!!GADS_CLIENT_ID}`);
+      console.log(`GADS_CLIENT_SECRET: ${!!GADS_CLIENT_SECRET}`);
+      console.log(`GADS_REFRESH_TOKEN: ${!!GADS_REFRESH_TOKEN}`);
+      console.log(`GADS_LOGIN_CUSTOMER_ID: ${!!GADS_LOGIN_CUSTOMER_ID}`);
+      return res.status(500).json({
+        success: false,
+        error: 'Missing required Google Ads environment variables'
       });
     }
 
@@ -182,6 +187,8 @@ export default async function handler(
       console.log(`   Refresh Token: ${GADS_REFRESH_TOKEN.substring(0, 10)}...`);
       console.log(`   Login Customer ID: ${GADS_LOGIN_CUSTOMER_ID}`);
     }
+
+    console.log('🔑 Attempting to get OAuth access token...');
 
     // Get access token from refresh token
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -196,6 +203,8 @@ export default async function handler(
         grant_type: 'refresh_token',
       }),
     });
+
+    console.log(`🔑 OAuth token response status: ${tokenResponse.status}`);
 
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.text();
