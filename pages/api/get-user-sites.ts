@@ -25,6 +25,12 @@ export default async function handler(
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
+    // First, let's check if there are ANY sites in the database
+    const allSitesResult = await sql`
+      SELECT COUNT(*) as total_sites FROM sites
+    `;
+    console.log('Total sites in database:', allSitesResult.rows[0].total_sites);
+
     // Fetch all sites for the user
     console.log('Querying database for user:', userId);
     const result = await sql`
@@ -41,6 +47,12 @@ export default async function handler(
 
     console.log('Database query result:', result);
     console.log('Number of rows returned:', result.rows.length);
+
+    // Also show all sites for debugging
+    const allUserSites = await sql`
+      SELECT user_id, subdomain, description FROM sites ORDER BY created_at DESC LIMIT 10
+    `;
+    console.log('Recent sites in database:', allUserSites.rows);
 
     // Add the full URL to each site (screenshots will be null until database is updated)
     const sitesWithUrls = result.rows.map(site => ({
