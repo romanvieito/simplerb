@@ -374,64 +374,69 @@ const Home: NextPage = () => {
           <div className="text-center mb-20">
             <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-full border border-green-500/20 mb-8">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-green-400 font-medium text-sm uppercase tracking-wide">Trusted by creators</span>
+              <span className="text-green-400 font-medium text-sm uppercase tracking-wide">Join the journey</span>
             </div>
 
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-500">
-                Join 10,000+ creators
+                Be among the first creators
               </span>
             </h2>
 
-            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              See what creators are saying about their experience with simplerB
+            <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
+              We're building something special for creators like you. Join our early community and shape the future of digital creation.
             </p>
+
+            {/* Early access badge */}
+            <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-full border border-amber-500/20 mb-8">
+              <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+              <span className="text-amber-400 font-medium text-sm">🚀 Early Access Available</span>
+            </div>
           </div>
 
-          {/* Testimonials Grid */}
+          {/* Future testimonials - what users will say */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             {[
               {
-                quote: "simplerB helped me find the perfect domain and launch my website in under an hour. What used to take days now takes minutes!",
-                author: "Sarah Chen",
-                role: "Content Creator",
-                avatar: "SC",
-                rating: 5
+                quote: "This is exactly what I've been waiting for. Finally, tools that understand how creators actually work.",
+                author: "Alex Rivera",
+                role: "Indie Creator",
+                avatar: "AR",
+                type: "future"
               },
               {
-                quote: "The ad generator saved me thousands on marketing. The copy is better than what I was paying agencies for.",
-                author: "Marcus Rodriguez",
-                role: "E-commerce Entrepreneur",
-                avatar: "MR",
-                rating: 5
+                quote: "The amount of time and money this saves is incredible. I launched my entire online presence in one afternoon.",
+                author: "Jordan Blake",
+                role: "Digital Entrepreneur",
+                avatar: "JB",
+                type: "future"
               },
               {
-                quote: "Finally, tools that understand creators. The keyword planner helped me triple my organic traffic.",
-                author: "Emma Thompson",
-                role: "YouTube Creator",
-                avatar: "ET",
-                rating: 5
+                quote: "simplerB made going digital feel effortless. I went from idea to launched business without the usual headaches.",
+                author: "Taylor Morgan",
+                role: "Creative Professional",
+                avatar: "TM",
+                type: "future"
               }
             ].map((testimonial, index) => (
               <div key={index} className="group">
-                <div className="h-full p-8 rounded-2xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/50 hover:border-green-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-green-500/10 transform hover:-translate-y-1">
-                  {/* Rating */}
-                  <div className="flex items-center gap-1 mb-6">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <svg key={i} className="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 24 24">
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                      </svg>
-                    ))}
+                <div className="h-full p-8 rounded-2xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/50 hover:border-green-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-green-500/10 transform hover:-translate-y-1 relative">
+                  {/* Future indicator */}
+                  <div className="absolute top-4 right-4">
+                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full border border-blue-500/30">
+                      <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse"></div>
+                      <span className="text-xs text-blue-400 font-medium">Coming Soon</span>
+                    </div>
                   </div>
 
                   {/* Quote */}
-                  <blockquote className="text-gray-300 mb-6 leading-relaxed italic">
+                  <blockquote className="text-gray-300 mb-6 leading-relaxed italic pt-4">
                     "{testimonial.quote}"
                   </blockquote>
 
                   {/* Author */}
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-lg opacity-75">
                       {testimonial.avatar}
                     </div>
                     <div>
@@ -448,9 +453,33 @@ const Home: NextPage = () => {
             ))}
           </div>
 
-          {/* Trust indicators */}
+          {/* Growth indicators */}
+          <div className="text-center mb-16">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              {[
+                { label: "Beta testers", value: "Growing daily", icon: "👥" },
+                { label: "Tools launched", value: "4 complete", icon: "🛠️" },
+                { label: "Domains found", value: "Hundreds", icon: "🔍" },
+                { label: "Happy creators", value: "Every day", icon: "🎯" }
+              ].map((stat, index) => (
+                <div key={index} className="group text-center">
+                  <div className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-300">
+                    {stat.icon}
+                  </div>
+                  <div className="text-lg font-bold text-white mb-1 group-hover:text-green-400 transition-colors duration-300">
+                    {stat.value}
+                  </div>
+                  <div className="text-sm text-gray-400">
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Trust indicators for startups */}
           <div className="text-center">
-            <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-gray-400">
+            <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-gray-400 mb-12">
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
@@ -464,16 +493,25 @@ const Home: NextPage = () => {
                 <span>Secure & private</span>
               </div>
               <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-purple-500" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                </svg>
-                <span>4.9/5 rating</span>
-              </div>
-              <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-orange-500" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
                 </svg>
                 <span>Lightning fast</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+                <span>Built for creators</span>
+              </div>
+            </div>
+
+            {/* Call to action */}
+            <div className="inline-flex items-center gap-4 px-8 py-4 bg-gradient-to-r from-green-600/10 to-emerald-600/10 rounded-full border border-green-500/20 backdrop-blur-sm hover:border-green-400/40 transition-all duration-300 cursor-pointer group">
+              <span className="text-green-400 font-semibold group-hover:text-green-300 transition-colors duration-300">
+                Join our beta community →
+              </span>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-xs text-green-500">Limited spots</span>
               </div>
             </div>
           </div>
