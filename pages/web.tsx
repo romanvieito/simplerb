@@ -486,14 +486,57 @@ const WebPage = () => {
 
   // Add this helper function near the top of the component
   const generateSubdomain = () => {
-    const base = textDescription
+    // Generate a base from textDescription or use a default
+    let base = textDescription
       .toLowerCase()
       .replace(/[^a-z0-9\s]/g, '')
       .replace(/\s+/g, '-')
+      .replace(/-+/g, '-') // Replace multiple dashes with single dash
+      .replace(/^-|-$/g, '') // Remove leading/trailing dashes
       .substring(0, 20);
     
+    // If base is empty or too short, use a default
+    if (!base || base.length < 2) {
+      base = 'site';
+    }
+    
     const timestamp = Date.now().toString().slice(-4);
-    return `${base}-${timestamp}`;
+    const subdomain = `${base}-${timestamp}`;
+    
+    // Ensure subdomain meets requirements (3-50 chars, alphanumeric and dashes only)
+    if (subdomain.length < 3) {
+      return `site-${timestamp}`;
+    }
+    if (subdomain.length > 50) {
+      return subdomain.substring(0, 46) + timestamp;
+    }
+    
+    return subdomain;
+  };
+
+  // Validate subdomain format
+  const validateSubdomain = (subdomain: string): { valid: boolean; error?: string } => {
+    if (!subdomain || subdomain.trim().length === 0) {
+      return { valid: false, error: 'Subdomain cannot be empty' };
+    }
+    
+    if (subdomain.length < 3) {
+      return { valid: false, error: 'Subdomain must be at least 3 characters' };
+    }
+    
+    if (subdomain.length > 50) {
+      return { valid: false, error: 'Subdomain must be 50 characters or less' };
+    }
+    
+    if (!/^[a-z0-9-]+$/.test(subdomain)) {
+      return { valid: false, error: 'Subdomain can only contain lowercase letters, numbers, and dashes' };
+    }
+    
+    if (subdomain.startsWith('-') || subdomain.endsWith('-')) {
+      return { valid: false, error: 'Subdomain cannot start or end with a dash' };
+    }
+    
+    return { valid: true };
   };
 
   const getViewportWidth = () => {
@@ -595,7 +638,20 @@ const WebPage = () => {
       }
 
       // Use custom subdomain if editing, otherwise generate new one
-      const subdomain = editingSite ? customSubdomain : generateSubdomain();
+      let subdomain = editingSite ? customSubdomain : generateSubdomain();
+      
+      // If editing and customSubdomain is empty, use the editingSite as fallback
+      if (editingSite && (!customSubdomain || customSubdomain.trim() === '')) {
+        subdomain = editingSite;
+      }
+      
+      // Validate subdomain before sending
+      const validation = validateSubdomain(subdomain);
+      if (!validation.valid) {
+        toast.error(validation.error || 'Invalid subdomain format');
+        setIsPublishing(false);
+        return;
+      }
 
       const response = await fetch('/api/publish-site', {
         method: 'POST',
@@ -625,7 +681,15 @@ const WebPage = () => {
         throw new Error(errorMessage);
       }
 
-      setPublishedUrl(data.url);
+      // Handle both response formats: { url: ... } or { success: true, url: ... }
+      const publishedUrl = data.url || (data.success && data.site ? `https://${data.site.subdomain}.simplerb.com` : null);
+      
+      if (!publishedUrl) {
+        console.error('No URL in response:', data);
+        throw new Error('Server did not return a valid URL');
+      }
+
+      setPublishedUrl(publishedUrl);
       
       const action = editingSite ? 'Site updated successfully!' : 'Site published successfully!';
       toast.success(action);
