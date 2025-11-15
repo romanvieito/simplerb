@@ -72,6 +72,12 @@ const Home: NextPage = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-red-900/20 to-black/95 z-0"></div>
         <Container maxWidth="lg" className="relative z-10">
           <div className="max-w-4xl mx-auto text-center">
+            {/* Tool Name */}
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">
+                simplerB
+              </h1>
+            </div>
             <h1 className="text-7xl md:text-8xl font-bold mb-8 tracking-tight">
               Grow digital with {" "}
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">
