@@ -235,9 +235,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Use the new keyword planning service (with timeout)
     console.log('🚀 Attempting to fetch real Google Ads API data...');
     try {
+      // Construct base URL more robustly for production
+      const baseUrl = req.headers.origin ||
+                     (req.headers.host ? `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}` : 
+                      process.env.NEXT_PUBLIC_APP_URL || 
+                      (process.env.NODE_ENV === 'production' ? 'https://' + (req.headers.host || 'localhost') : 'http://127.0.0.1:3000'));
+      
+      const internalApiUrl = `${baseUrl}/api/google-ads/keyword-planning-rest`;
+      console.log(`🔗 Calling internal API: ${internalApiUrl}`);
+      
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 6000);
-      const keywordPlanningResponse = await fetch(`${req.headers.origin || 'http://127.0.0.1:3000'}/api/google-ads/keyword-planning-rest`, {
+      // Increased timeout to 30 seconds for production (Google Ads API can be slow)
+      const timeoutMs = process.env.NODE_ENV === 'production' ? 30000 : 6000;
+      const timeout = setTimeout(() => {
+        console.error(`⏱️ Request timed out after ${timeoutMs}ms`);
+        controller.abort();
+      }, timeoutMs);
+      
+      const keywordPlanningResponse = await fetch(internalApiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ keywords: uncachedKeywords, countryCode, languageCode }),
@@ -251,6 +266,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Check if this is fallback data from Google API (rare with Standard Access)
         if (keywordPlanningData.usedFallback && Array.isArray(keywordPlanningData.keywords)) {
           console.log(`⚠️ Google API returned fallback data despite Standard Access`);
+          console.log(`📋 Reason: ${keywordPlanningData.reason || 'Unknown'}`);
+          
+          // If API returned 0 results but the call succeeded, this is still a real API response
+          // Only mark as fallback if there's an actual error or the API explicitly says it's fallback
           const freshResults: KeywordResult[] = keywordPlanningData.keywords.map((idea: any) => ({
             keyword: idea.keyword,
             searchVolume: idea.searchVolume || 0,
@@ -384,7 +403,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         throw new Error(`Google Ads API request failed: ${keywordPlanningResponse.status}`);
       }
     } catch (keywordPlanningError) {
-      console.error('❌ Keyword planning service failed:', keywordPlanningError);
+      // Check if it's a timeout error
+      const isTimeout = keywordPlanningError instanceof Error && 
+                       (keywordPlanningError.name === 'AbortError' || 
+                        keywordPlanningError.message.includes('timeout') ||
+                        keywordPlanningError.message.includes('aborted'));
+      
+      if (isTimeout) {
+        console.error('⏱️ Keyword planning service timed out');
+        console.error('Error details:', keywordPlanningError);
+      } else {
+        console.error('❌ Keyword planning service failed:', keywordPlanningError);
+        if (keywordPlanningError instanceof Error) {
+          console.error('Error name:', keywordPlanningError.name);
+          console.error('Error message:', keywordPlanningError.message);
+          console.error('Error stack:', keywordPlanningError.stack);
+        }
+      }
       console.log('⚠️ Falling back to mock data');
 
       // Optional deterministic mock fallback to avoid fluctuating values
@@ -410,7 +445,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             competition,
             _meta: {
               dataSource: 'mock_fallback',
-              reason: 'Google Ads API failed or returned no data. With Standard Access, this may be due to network issues or very low-volume keywords.',
+              reason: isTimeout 
+                ? 'Google Ads API request timed out. This may be due to slow network or API response times.'
+                : 'Google Ads API failed or returned no data. With Standard Access, this may be due to network issues or very low-volume keywords.',
               cached: false
             }
           };

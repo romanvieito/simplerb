@@ -321,7 +321,13 @@ export default async function handler(
     }
 
     const responseData = await apiResponse.json();
-    console.log(`📊 Google Ads API response data:`, JSON.stringify(responseData, null, 2));
+    
+    // Log response summary (not full data in production to avoid log bloat)
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`📊 Google Ads API response data:`, JSON.stringify(responseData, null, 2));
+    } else {
+      console.log(`📊 Google Ads API response: ${responseData.results?.length || 0} results`);
+    }
 
     // Process the results
     const keywordIdeas: KeywordIdea[] = (responseData.results || []).map((idea: any) => {
@@ -355,12 +361,17 @@ export default async function handler(
 
     if (keywordIdeas.length === 0) {
       console.warn('⚠️ Google Ads API returned 0 keyword ideas');
+      console.warn(`📝 Requested keywords: ${keywords.join(', ')}`);
+      console.warn(`🌍 Country: ${countryCode}, Language: ${languageCode}`);
+      console.warn(`🔍 This may be normal for very niche keywords or if keywords don't match any search volume data`);
+      
+      // Return success: false but don't mark as fallback - this is a legitimate API response
       return res.status(200).json({
         success: false,
-        usedFallback: true,
+        usedFallback: true, // Keep this for backward compatibility with existing code
         keywords: [],
         metadata: { countryCode, languageCode, totalKeywords: 0 },
-        reason: 'Google Ads API returned no results for the provided keywords.'
+        reason: 'Google Ads API returned no results for the provided keywords. This may be normal for very niche or low-volume keywords.'
       });
     }
 
