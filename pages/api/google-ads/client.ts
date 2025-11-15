@@ -1,7 +1,7 @@
 const { GoogleAdsApi } = require('google-ads-api');
 
 // Helper function to get refresh token from database or environment
-async function getRefreshToken(): Promise<string> {
+export async function getRefreshToken(): Promise<string> {
   // First try to get from database
   try {
     const { sql } = await import('@vercel/postgres');
