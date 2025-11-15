@@ -26,12 +26,6 @@ module.exports = {
       {
         source: '/:path*',
         destination: '/api/subdomain-handler',
-        has: [
-          {
-            type: 'host',
-            value: '(?<subdomain>.*).simplerb.com'
-          }
-        ]
       }
     ];
   },

@@ -7,27 +7,30 @@ export const config = {
 
 export default async function handler(req: NextRequest) {
   const hostname = req.headers.get('host') || '';
-  
-  // Extract subdomain
-  const subdomain = hostname.split('.')[0];
-  
-  // Skip if it's the main domain or www
-  if (subdomain === 'www' || subdomain === 'simplerb') {
+
+  // Check if this is a subdomain request
+  const isSubdomain = hostname.includes('.simplerb.com') && !hostname.startsWith('www.') && hostname !== 'simplerb.com';
+
+  // If not a subdomain, pass through to normal Next.js routing
+  if (!isSubdomain) {
     return NextResponse.next();
   }
-  
+
+  // Extract subdomain
+  const subdomain = hostname.split('.')[0];
+
   try {
     const result = await sql`
-      SELECT html FROM sites 
+      SELECT html FROM sites
       WHERE subdomain = ${subdomain}
-      ORDER BY created_at DESC 
+      ORDER BY created_at DESC
       LIMIT 1
     `;
-    
+
     if (result.rows.length === 0) {
       return new NextResponse('Site not found', { status: 404 });
     }
-    
+
     return new NextResponse(result.rows[0].html, {
       headers: {
         'Content-Type': 'text/html',
