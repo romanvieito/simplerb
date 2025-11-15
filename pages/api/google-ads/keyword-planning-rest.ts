@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { handleGoogleAdsError } from './client';
+import { handleGoogleAdsError, getRefreshToken } from './client';
 
 interface KeywordPlanningRequest {
   keywords: string[];
@@ -161,21 +161,31 @@ export default async function handler(
       GADS_DEVELOPER_TOKEN,
       GADS_CLIENT_ID,
       GADS_CLIENT_SECRET,
-      GADS_REFRESH_TOKEN,
       GADS_LOGIN_CUSTOMER_ID,
       GADS_CUSTOMER_ID
     } = process.env;
 
-    if (!GADS_DEVELOPER_TOKEN || !GADS_CLIENT_ID || !GADS_CLIENT_SECRET || !GADS_REFRESH_TOKEN || !GADS_LOGIN_CUSTOMER_ID) {
+    if (!GADS_DEVELOPER_TOKEN || !GADS_CLIENT_ID || !GADS_CLIENT_SECRET || !GADS_LOGIN_CUSTOMER_ID) {
       console.log('❌ Missing required Google Ads environment variables');
       console.log(`GADS_DEVELOPER_TOKEN: ${!!GADS_DEVELOPER_TOKEN}`);
       console.log(`GADS_CLIENT_ID: ${!!GADS_CLIENT_ID}`);
       console.log(`GADS_CLIENT_SECRET: ${!!GADS_CLIENT_SECRET}`);
-      console.log(`GADS_REFRESH_TOKEN: ${!!GADS_REFRESH_TOKEN}`);
       console.log(`GADS_LOGIN_CUSTOMER_ID: ${!!GADS_LOGIN_CUSTOMER_ID}`);
       return res.status(500).json({
         success: false,
         error: 'Missing required Google Ads environment variables'
+      });
+    }
+
+    // Get refresh token from database or environment (same as other endpoints)
+    let refreshToken: string;
+    try {
+      refreshToken = await getRefreshToken();
+    } catch (tokenError) {
+      console.error('❌ Failed to get refresh token:', tokenError);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to get Google Ads refresh token'
       });
     }
 
@@ -199,7 +209,7 @@ export default async function handler(
       body: new URLSearchParams({
         client_id: GADS_CLIENT_ID,
         client_secret: GADS_CLIENT_SECRET,
-        refresh_token: GADS_REFRESH_TOKEN,
+        refresh_token: refreshToken,
         grant_type: 'refresh_token',
       }),
     });
