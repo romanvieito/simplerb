@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import Head from "next/head";
 import Footer from "../components/Footer";
-import Header from "../components/Header";
 import { Box, Button, Container, Grid } from "@mui/material";
 import { useClerk, useUser, SignedOut } from "@clerk/nextjs";
 import { useRouter } from 'next/router';
@@ -68,8 +67,6 @@ const Home: NextPage = () => {
         <title>Domain Generator</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Header />
-      
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center">
         <div className="absolute inset-0 bg-gradient-to-b from-red-900/20 to-black/95 z-0"></div>
