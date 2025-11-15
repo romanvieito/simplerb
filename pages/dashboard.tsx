@@ -49,6 +49,9 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [domainLoading, setDomainLoading] = useState(true);
   const [sitesLoading, setSitesLoading] = useState(true);
+  const [renamingSubdomain, setRenamingSubdomain] = useState<string | null>(null);
+  const [newSubdomain, setNewSubdomain] = useState<string>('');
+  const [renameError, setRenameError] = useState<string | null>(null);
 
   // Section ordering state
   const [sectionOrder, setSectionOrder] = useState<string[]>([
@@ -353,6 +356,69 @@ const Dashboard: React.FC = () => {
     } catch (error) {
       console.error('Error removing favorite:', error);
     }
+  };
+
+  // Rename subdomain
+  const renameSubdomain = async (originalSubdomain: string, newSubdomainValue: string) => {
+    if (!newSubdomainValue || newSubdomainValue === originalSubdomain) {
+      setRenamingSubdomain(null);
+      setNewSubdomain('');
+      setRenameError(null);
+      return;
+    }
+
+    // Validate subdomain format
+    if (!/^[a-z0-9-]+$/.test(newSubdomainValue) || newSubdomainValue.length < 3 || newSubdomainValue.length > 50) {
+      setRenameError('Invalid subdomain format. Use only lowercase letters, numbers, and hyphens (3-50 characters)');
+      return;
+    }
+
+    setRenameError(null);
+
+    try {
+      const response = await fetch('/api/update-subdomain', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          originalSubdomain,
+          newSubdomain: newSubdomainValue,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Update local state
+        setPublishedSites(publishedSites.map(site =>
+          site.subdomain === originalSubdomain
+            ? { ...site, subdomain: newSubdomainValue, url: data.url }
+            : site
+        ));
+        setRenamingSubdomain(null);
+        setNewSubdomain('');
+      } else {
+        const errorData = await response.json();
+        setRenameError(errorData.message || 'Failed to rename subdomain');
+      }
+    } catch (error) {
+      console.error('Error renaming subdomain:', error);
+      setRenameError('An error occurred while renaming the subdomain');
+    }
+  };
+
+  // Start renaming subdomain
+  const startRenaming = (subdomain: string) => {
+    setRenamingSubdomain(subdomain);
+    setNewSubdomain(subdomain);
+    setRenameError(null);
+  };
+
+  // Cancel renaming
+  const cancelRenaming = () => {
+    setRenamingSubdomain(null);
+    setNewSubdomain('');
+    setRenameError(null);
   };
 
   // Delete published site
@@ -762,6 +828,11 @@ const Dashboard: React.FC = () => {
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
+                    {renameError && renamingSubdomain && (
+                      <div className="mx-6 mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-sm text-red-800">{renameError}</p>
+                      </div>
+                    )}
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-gray-200">
@@ -774,32 +845,91 @@ const Dashboard: React.FC = () => {
                       <tbody>
                         {publishedSites.map((site) => (
                           <tr key={site.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                            <td className="py-4 px-4 text-sm font-medium text-gray-900">{site.subdomain}.simplerb.com</td>
+                            <td className="py-4 px-4 text-sm font-medium text-gray-900">
+                              {renamingSubdomain === site.subdomain ? (
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="text"
+                                    value={newSubdomain}
+                                    onChange={(e) => {
+                                      setNewSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''));
+                                      setRenameError(null);
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        renameSubdomain(site.subdomain, newSubdomain);
+                                      } else if (e.key === 'Escape') {
+                                        cancelRenaming();
+                                      }
+                                    }}
+                                    className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    autoFocus
+                                  />
+                                  <span className="text-gray-500 text-sm">.simplerb.com</span>
+                                </div>
+                              ) : (
+                                <span>{site.subdomain}.simplerb.com</span>
+                              )}
+                            </td>
                             <td className="py-4 px-4 text-sm text-gray-600">{site.description || 'No description'}</td>
                             <td className="py-4 px-4 text-sm text-gray-600">
                               {new Date(site.created_at).toLocaleDateString()}
                             </td>
                             <td className="py-4 px-4 text-center space-x-2">
-                              <a
-                                href={site.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors"
-                                title="View live site"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                </svg>
-                              </a>
-                              <button
-                                onClick={() => deleteSite(site.subdomain)}
-                                className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                                title="Delete site"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                              </button>
+                              {renamingSubdomain === site.subdomain ? (
+                                <>
+                                  <button
+                                    onClick={() => renameSubdomain(site.subdomain, newSubdomain)}
+                                    className="inline-flex items-center justify-center w-8 h-8 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
+                                    title="Save"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={cancelRenaming}
+                                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
+                                    title="Cancel"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <a
+                                    href={site.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors"
+                                    title="View live site"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                  </a>
+                                  <button
+                                    onClick={() => startRenaming(site.subdomain)}
+                                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-full transition-colors"
+                                    title="Rename subdomain"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={() => deleteSite(site.subdomain)}
+                                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                    title="Delete site"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                  </button>
+                                </>
+                              )}
                             </td>
                           </tr>
                         ))}
