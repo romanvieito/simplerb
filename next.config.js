@@ -21,12 +21,12 @@ module.exports = {
       },
     ];
   },
-  async rewrites() {
-    return [
-      {
-        source: '/:path*',
-        destination: '/api/subdomain-handler',
-      }
-    ];
-  },
+  // async rewrites() {
+  //   return [
+  //     {
+  //       source: '/:path*',
+  //       destination: '/api/subdomain-handler',
+  //     }
+  //   ];
+  // },
 };
