@@ -87,81 +87,72 @@ const Home: NextPage = () => {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(99,102,241,0.1),transparent_50%)] z-0"></div>
 
         <Container maxWidth="lg" className="relative z-10 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-5xl mx-auto text-center">
+          <div className="max-w-4xl mx-auto text-center">
+            {/* Digital Importance Message */}
+            <div className="mb-8 animate-fade-in-up">
+              <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-full border border-orange-500/20">
+                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                <span className="text-orange-400 font-medium text-sm uppercase tracking-wide">Digital is more important than ever</span>
+              </div>
+            </div>
+
             {/* Tool Name */}
-            <div className="mb-6 animate-fade-in-up">
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 drop-shadow-lg">
+            <div className="mb-6 animate-fade-in-up animation-delay-200">
+              <h1 className="text-5xl md:text-6xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 drop-shadow-lg">
                 simplerB
               </h1>
             </div>
 
-            {/* Main Headline */}
-            <div className="mb-8 animate-fade-in-up animation-delay-200">
-              <h1 className="text-6xl md:text-8xl lg:text-9xl font-black mb-6 tracking-tight leading-none">
-                Grow digital
+            {/* Main Value Proposition */}
+            <div className="mb-8 animate-fade-in-up animation-delay-400">
+              <div className="text-4xl md:text-6xl lg:text-7xl font-black mb-6 tracking-tight leading-tight">
+                <span className="text-white">1 tool</span>
+                <span className="text-purple-400 mx-4">+</span>
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-500">AI</span>
+                <span className="text-white ml-4">=</span>
                 <br />
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-cyan-400 to-indigo-500 animate-pulse">
-                  with ease
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-500 animate-pulse">
+                  Small Business Growth
                 </span>
-              </h1>
+              </div>
             </div>
 
-            {/* Subtitle */}
-            <div className="mb-12 animate-fade-in-up animation-delay-400">
-              <p className="text-xl md:text-2xl lg:text-3xl text-gray-300 mb-8 max-w-4xl mx-auto leading-relaxed font-light">
-                Everything you need to build, launch, and scale your digital presence.
-                <span className="block mt-2 text-lg md:text-xl text-gray-400 font-normal">
-                  Find domains • Build websites • Create ads • Connect with email
-                </span>
+            {/* Simple Description */}
+            <div className="mb-12 animate-fade-in-up animation-delay-600">
+              <p className="text-xl md:text-2xl text-gray-300 mb-6 max-w-3xl mx-auto leading-relaxed">
+                Everything you need to establish your digital presence and grow your business online.
               </p>
+
+              {/* Feature Pills */}
+              <div className="flex flex-wrap justify-center gap-3 text-sm">
+                <span className="px-4 py-2 bg-blue-500/10 text-blue-400 rounded-full border border-blue-500/20">Find Domains</span>
+                <span className="px-4 py-2 bg-green-500/10 text-green-400 rounded-full border border-green-500/20">Build Websites</span>
+                <span className="px-4 py-2 bg-purple-500/10 text-purple-400 rounded-full border border-purple-500/20">Create Ads</span>
+                <span className="px-4 py-2 bg-orange-500/10 text-orange-400 rounded-full border border-orange-500/20">AI-Powered</span>
+              </div>
             </div>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-fade-in-up animation-delay-600">
+            {/* Simple CTA */}
+            <div className="animate-fade-in-up animation-delay-800">
               <a
                 href={pages[0].link}
-                className="group relative px-10 py-5 bg-gradient-to-r from-white to-gray-100 text-black rounded-full font-bold hover:from-gray-100 hover:to-white transition-all duration-300 shadow-2xl hover:shadow-white/20 text-xl transform hover:scale-105 active:scale-95 border-2 border-transparent hover:border-white/20"
+                className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-white to-gray-100 text-black rounded-full font-bold hover:from-gray-100 hover:to-white transition-all duration-300 shadow-2xl hover:shadow-white/20 text-lg transform hover:scale-105 active:scale-95 border-2 border-transparent hover:border-white/20"
                 onClick={handleGetStarted}
               >
-                <span className="relative z-10 flex items-center gap-3">
-                  🚀 Get Started Free
-                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-indigo-600/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <span>🚀 Start Growing Today</span>
+                <span className="text-sm opacity-75">— Free</span>
               </a>
 
               <SignedOut>
-                <button
-                  onClick={handleSignIn}
-                  className="group relative px-10 py-5 border-2 border-gray-600 rounded-full font-semibold hover:border-white hover:bg-white/5 transition-all duration-300 text-xl transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-white/20 backdrop-blur-sm"
-                >
-                  <span className="relative z-10 flex items-center gap-3">
-                    <Login sx={{ fontSize: '1.5rem' }} />
-                    Sign In
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-white/10 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </button>
+                <div className="mt-6">
+                  <button
+                    onClick={handleSignIn}
+                    className="text-gray-400 hover:text-white transition-colors duration-300 text-sm underline underline-offset-4"
+                  >
+                    Already have an account? Sign in
+                  </button>
+                </div>
               </SignedOut>
-            </div>
-
-            {/* Trust indicators */}
-            <div className="mt-16 animate-fade-in-up animation-delay-800">
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-gray-400">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span>No credit card required</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse animation-delay-500"></div>
-                  <span>Free forever plan</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse animation-delay-1000"></div>
-                  <span>Built for creators</span>
-                </div>
-              </div>
             </div>
           </div>
         </Container>
