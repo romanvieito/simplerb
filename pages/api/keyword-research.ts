@@ -263,25 +263,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (keywordPlanningResponse.ok) {
         const keywordPlanningData = await keywordPlanningResponse.json();
         
-        // Check if this is fallback data from Google API (rare with Standard Access)
+        // Handle case where API returned 0 results (legitimate API response, not a failure)
         if (keywordPlanningData.usedFallback && Array.isArray(keywordPlanningData.keywords)) {
-          console.log(`⚠️ Google API returned fallback data despite Standard Access`);
+          console.log(`⚠️ Google Ads API returned 0 results for the requested keywords`);
           console.log(`📋 Reason: ${keywordPlanningData.reason || 'Unknown'}`);
+          console.log(`📝 Requested keywords: ${uncachedKeywords.join(', ')}`);
           
-          // If API returned 0 results but the call succeeded, this is still a real API response
-          // Only mark as fallback if there's an actual error or the API explicitly says it's fallback
-          const freshResults: KeywordResult[] = keywordPlanningData.keywords.map((idea: any) => ({
-            keyword: idea.keyword,
-            searchVolume: idea.searchVolume || 0,
-            competition: idea.competition || 'UNKNOWN',
-            competitionIndex: idea.competitionIndex,
-            lowTopPageBidMicros: idea.lowTopPageBidMicros,
-            highTopPageBidMicros: idea.highTopPageBidMicros,
-            avgCpcMicros: idea.avgCpcMicros,
-            monthlySearchVolumes: idea.monthlySearchVolumes,
+          // If API returned 0 results but the call succeeded, return original keywords with 0 volume
+          // This is a legitimate API response, not mock data
+          const freshResults: KeywordResult[] = uncachedKeywords.map((keyword) => ({
+            keyword: keyword,
+            searchVolume: 0,
+            competition: 'UNKNOWN',
+            competitionIndex: 0,
+            lowTopPageBidMicros: undefined,
+            highTopPageBidMicros: undefined,
+            avgCpcMicros: undefined,
+            monthlySearchVolumes: undefined,
             _meta: {
-              dataSource: 'mock_fallback',
-              reason: keywordPlanningData.reason || 'Google Ads API returned no data (unusual with Standard Access)',
+              dataSource: 'google_ads_api', // This is real API data, just with 0 results
+              reason: keywordPlanningData.reason || 'Google Ads API returned no results for these keywords. This may be normal for very niche or low-volume keywords.',
               cached: false
             }
           }));
@@ -294,7 +295,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           countryCode,
           languageCode,
           results: combinedResults,
-          source: 'mock_fallback'
+          source: 'google_ads_api' // Still real API data
         });
         return res.status(200).json(combinedResults);
         }

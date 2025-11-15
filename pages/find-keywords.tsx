@@ -468,7 +468,16 @@ export default function FindKeywords(): JSX.Element {
         if (data[0]._meta.generatedViaAI) {
           toast.success('AI-generated ideas enriched with Google Ads metrics');
         } else if (data[0]._meta.dataSource === 'google_ads_api') {
-          toast.success('Google Ads results ready');
+          // Check if results have 0 volume (legitimate API response with no data)
+          const hasZeroVolume = data.some(r => r.searchVolume === 0);
+          if (hasZeroVolume && data.every(r => r.searchVolume === 0)) {
+            toast('📊 Google Ads API returned no search volume data for these keywords', { 
+              icon: 'ℹ️',
+              duration: 5000 
+            });
+          } else {
+            toast.success('Google Ads results ready');
+          }
         } else if (data[0]._meta.dataSource === 'mock_fallback') {
           toast.error('⚠️ Fallback data used - Google Ads API returned no results (unusual with Standard Access)');
         } else if (data[0]._meta.dataSource === 'openai_generated') {
