@@ -59,6 +59,9 @@ const Dashboard: React.FC = () => {
   ]);
   const [draggedSection, setDraggedSection] = useState<string | null>(null);
 
+  // Section minimization state
+  const [minimizedSections, setMinimizedSections] = useState<Set<string>>(new Set());
+
 
   // Set user state based on environment and auth status
   useEffect(() => {
@@ -119,7 +122,7 @@ const Dashboard: React.FC = () => {
     }
   }, [isLoaded, realUser, router]);
 
-  // Load section order from localStorage on mount
+  // Load section order and minimized sections from localStorage on mount
   useEffect(() => {
     const savedOrder = localStorage.getItem('dashboard-section-order');
     if (savedOrder) {
@@ -130,12 +133,27 @@ const Dashboard: React.FC = () => {
         console.error('Error parsing saved section order:', error);
       }
     }
+
+    const savedMinimized = localStorage.getItem('dashboard-minimized-sections');
+    if (savedMinimized) {
+      try {
+        const parsedMinimized = JSON.parse(savedMinimized);
+        setMinimizedSections(new Set(parsedMinimized));
+      } catch (error) {
+        console.error('Error parsing saved minimized sections:', error);
+      }
+    }
   }, []);
 
   // Save section order to localStorage when it changes
   useEffect(() => {
     localStorage.setItem('dashboard-section-order', JSON.stringify(sectionOrder));
   }, [sectionOrder]);
+
+  // Save minimized sections to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('dashboard-minimized-sections', JSON.stringify(Array.from(minimizedSections)));
+  }, [minimizedSections]);
 
   // Drag and drop handlers for section reordering
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, sectionId: string) => {
@@ -165,6 +183,19 @@ const Dashboard: React.FC = () => {
 
   const handleDragEnd = () => {
     setDraggedSection(null);
+  };
+
+  // Toggle minimize/maximize section
+  const toggleMinimizeSection = (sectionId: string) => {
+    setMinimizedSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sectionId)) {
+        newSet.delete(sectionId);
+      } else {
+        newSet.add(sectionId);
+      }
+      return newSet;
+    });
   };
 
   // Fetch keyword favorites
@@ -366,7 +397,9 @@ const Dashboard: React.FC = () => {
           onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, 'favorites')}
           onDragEnd={handleDragEnd}
-          className={`w-full max-w-6xl mx-auto mb-8 ${draggedSection === 'favorites' ? 'opacity-50' : ''}`}
+          className={`w-full max-w-6xl mx-auto mb-8 transition-all duration-200 ${
+            draggedSection === 'favorites' ? 'opacity-50' : ''
+          } ${minimizedSections.has('favorites') ? 'h-24 overflow-hidden' : ''}`}
         >
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
             {/* Header */}
@@ -380,82 +413,101 @@ const Dashboard: React.FC = () => {
                   </div>
                   <h2 className="text-lg font-semibold text-gray-900">Keyword Favorites</h2>
                 </div>
-                <a
-                  href="/find-keywords"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
-                >
-                  Find Keywords
-                </a>
-              </div>
-              <p className="text-sm text-gray-600 mt-1">Your saved keywords for research and optimization</p>
-            </div>
-
-            {/* Content */}
-            <div className="p-6">
-              {loading ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="mt-4 text-gray-600">Loading favorites...</p>
-                </div>
-              ) : favorites.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="mb-4">
-                    <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No keyword favorites yet</h3>
-                  <p className="text-gray-600 mb-6">Start by searching for keywords to save your favorites for later.</p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleMinimizeSection('favorites')}
+                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
+                    title={minimizedSections.has('favorites') ? 'Maximize section' : 'Minimize section'}
+                  >
+                    {minimizedSections.has('favorites') ? (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                      </svg>
+                    )}
+                  </button>
                   <a
                     href="/find-keywords"
-                    className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     Find Keywords
                   </a>
                 </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Keyword</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Volume</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Competition</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">CPC</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Country</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Added</th>
-                        <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {favorites.map((favorite, index) => (
-                        <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                          <td className="py-4 px-4 text-sm font-medium text-gray-900">{favorite.keyword}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{favorite.search_volume?.toLocaleString() || 'N/A'}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{favorite.competition || 'N/A'}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{formatCPC(favorite.avg_cpc_micros)}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{favorite.country_code || 'N/A'}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">
-                            {new Date(favorite.created_at).toLocaleDateString()}
-                          </td>
-                          <td className="py-4 px-4 text-center">
-                            <button
-                              onClick={() => removeFavorite(favorite.keyword)}
-                              className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                              title="Remove from favorites"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                              </svg>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              </div>
+              <p className="text-sm text-gray-600 mt-1">Your saved keywords for research and optimization</p>
             </div>
+
+            {/* Content - only show if not minimized */}
+            {!minimizedSections.has('favorites') && (
+              <div className="p-6">
+                {loading ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading favorites...</p>
+                  </div>
+                ) : favorites.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="mb-4">
+                      <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No keyword favorites yet</h3>
+                    <p className="text-gray-600 mb-6">Start by searching for keywords to save your favorites for later.</p>
+                    <a
+                      href="/find-keywords"
+                      className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                    >
+                      Find Keywords
+                    </a>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Keyword</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Volume</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Competition</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">CPC</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Country</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Added</th>
+                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {favorites.map((favorite, index) => (
+                          <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                            <td className="py-4 px-4 text-sm font-medium text-gray-900">{favorite.keyword}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{favorite.search_volume?.toLocaleString() || 'N/A'}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{favorite.competition || 'N/A'}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{formatCPC(favorite.avg_cpc_micros)}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{favorite.country_code || 'N/A'}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">
+                              {new Date(favorite.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="py-4 px-4 text-center">
+                              <button
+                                onClick={() => removeFavorite(favorite.keyword)}
+                                className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                title="Remove from favorites"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                </svg>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )
@@ -471,7 +523,9 @@ const Dashboard: React.FC = () => {
           onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, 'domain-favorites')}
           onDragEnd={handleDragEnd}
-          className={`w-full max-w-6xl mx-auto mb-8 ${draggedSection === 'domain-favorites' ? 'opacity-50' : ''}`}
+          className={`w-full max-w-6xl mx-auto mb-8 transition-all duration-200 ${
+            draggedSection === 'domain-favorites' ? 'opacity-50' : ''
+          } ${minimizedSections.has('domain-favorites') ? 'h-24 overflow-hidden' : ''}`}
         >
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
             {/* Header */}
@@ -485,109 +539,128 @@ const Dashboard: React.FC = () => {
                   </div>
                   <h2 className="text-lg font-semibold text-gray-900">Domain Favorites</h2>
                 </div>
-                <a
-                  href="/domain"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
-                >
-                  Generate Domains
-                </a>
-              </div>
-              <p className="text-sm text-gray-600 mt-1">Your saved favorite domain names</p>
-            </div>
-
-            {/* Content */}
-            <div className="p-6">
-              {domainLoading ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="mt-4 text-gray-600">Loading domain favorites...</p>
-                </div>
-              ) : domainFavorites.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="mb-4">
-                    <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No domain favorites yet</h3>
-                  <p className="text-gray-600 mb-6">Start by generating domains and save your favorites for later.</p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleMinimizeSection('domain-favorites')}
+                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
+                    title={minimizedSections.has('domain-favorites') ? 'Maximize section' : 'Minimize section'}
+                  >
+                    {minimizedSections.has('domain-favorites') ? (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                      </svg>
+                    )}
+                  </button>
                   <a
                     href="/domain"
-                    className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     Generate Domains
                   </a>
                 </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Domain Name</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Availability</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Rating</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Added</th>
-                        <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {domainFavorites.map((favorite, index) => (
-                        <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                          <td className="py-4 px-4 text-sm font-medium text-gray-900">{favorite.namedomain || 'N/A'}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              favorite.available === true
-                                ? 'bg-green-100 text-green-800'
-                                : favorite.available === false
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}>
-                              {favorite.available === true ? 'Available' : favorite.available === false ? 'Unavailable' : 'Unknown'}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4 text-sm text-gray-600">
-                            <div className="flex items-center">
-                              {favorite.rate !== null && favorite.rate !== undefined ? (
-                                [...Array(5)].map((_, i) => {
-                                  const rateValue = favorite.rate ?? 0;
-                                  return (
-                                    <svg
-                                      key={i}
-                                      className={`w-4 h-4 ${
-                                        i < rateValue ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                                      }`}
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                                    </svg>
-                                  );
-                                })
-                              ) : (
-                                <span className="text-gray-400 text-xs">No rating</span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-4 px-4 text-sm text-gray-600">
-                            {favorite.created_at ? new Date(favorite.created_at).toLocaleDateString() : 'N/A'}
-                          </td>
-                          <td className="py-4 px-4 text-center">
-                            <button
-                              onClick={() => removeDomainFavorite(favorite.namedomain)}
-                              className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                              title="Remove from favorites"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                              </svg>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              </div>
+              <p className="text-sm text-gray-600 mt-1">Your saved favorite domain names</p>
             </div>
+
+            {/* Content - only show if not minimized */}
+            {!minimizedSections.has('domain-favorites') && (
+              <div className="p-6">
+                {domainLoading ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading domain favorites...</p>
+                  </div>
+                ) : domainFavorites.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="mb-4">
+                      <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No domain favorites yet</h3>
+                    <p className="text-gray-600 mb-6">Start by generating domains and save your favorites for later.</p>
+                    <a
+                      href="/domain"
+                      className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                    >
+                      Generate Domains
+                    </a>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Domain Name</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Availability</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Rating</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Added</th>
+                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {domainFavorites.map((favorite, index) => (
+                          <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                            <td className="py-4 px-4 text-sm font-medium text-gray-900">{favorite.namedomain || 'N/A'}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">
+                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                favorite.available === true
+                                  ? 'bg-green-100 text-green-800'
+                                  : favorite.available === false
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}>
+                                {favorite.available === true ? 'Available' : favorite.available === false ? 'Unavailable' : 'Unknown'}
+                              </span>
+                            </td>
+                            <td className="py-4 px-4 text-sm text-gray-600">
+                              <div className="flex items-center">
+                                {favorite.rate !== null && favorite.rate !== undefined ? (
+                                  [...Array(5)].map((_, i) => {
+                                    const rateValue = favorite.rate ?? 0;
+                                    return (
+                                      <svg
+                                        key={i}
+                                        className={`w-4 h-4 ${
+                                          i < rateValue ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                                        }`}
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                      </svg>
+                                    );
+                                  })
+                                ) : (
+                                  <span className="text-gray-400 text-xs">No rating</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-4 px-4 text-sm text-gray-600">
+                              {favorite.created_at ? new Date(favorite.created_at).toLocaleDateString() : 'N/A'}
+                            </td>
+                            <td className="py-4 px-4 text-center">
+                              <button
+                                onClick={() => removeDomainFavorite(favorite.namedomain)}
+                                className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                title="Remove from favorites"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                                </svg>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )
@@ -603,7 +676,9 @@ const Dashboard: React.FC = () => {
           onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, 'published-sites')}
           onDragEnd={handleDragEnd}
-          className={`w-full max-w-6xl mx-auto mb-8 ${draggedSection === 'published-sites' ? 'opacity-50' : ''}`}
+          className={`w-full max-w-6xl mx-auto mb-8 transition-all duration-200 ${
+            draggedSection === 'published-sites' ? 'opacity-50' : ''
+          } ${minimizedSections.has('published-sites') ? 'h-24 overflow-hidden' : ''}`}
         >
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
             {/* Header */}
@@ -617,87 +692,106 @@ const Dashboard: React.FC = () => {
                   </div>
                   <h2 className="text-lg font-semibold text-gray-900">Published Websites</h2>
                 </div>
-                <a
-                  href="/web"
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors"
-                >
-                  Create Website
-                </a>
-              </div>
-              <p className="text-sm text-gray-600 mt-1">Your published websites and landing pages</p>
-            </div>
-
-            {/* Content */}
-            <div className="p-6">
-              {sitesLoading ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
-                  <p className="mt-4 text-gray-600">Loading published sites...</p>
-                </div>
-              ) : publishedSites.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="mb-4">
-                    <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No published websites yet</h3>
-                  <p className="text-gray-600 mb-6">Create and publish your first website to see it here.</p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleMinimizeSection('published-sites')}
+                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
+                    title={minimizedSections.has('published-sites') ? 'Maximize section' : 'Minimize section'}
+                  >
+                    {minimizedSections.has('published-sites') ? (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                      </svg>
+                    )}
+                  </button>
                   <a
                     href="/web"
-                    className="inline-flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     Create Website
                   </a>
                 </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Subdomain</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Description</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Created</th>
-                        <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {publishedSites.map((site) => (
-                        <tr key={site.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                          <td className="py-4 px-4 text-sm font-medium text-gray-900">{site.subdomain}.simplerb.com</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{site.description || 'No description'}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">
-                            {new Date(site.created_at).toLocaleDateString()}
-                          </td>
-                          <td className="py-4 px-4 text-center space-x-2">
-                            <a
-                              href={site.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors"
-                              title="View live site"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                              </svg>
-                            </a>
-                            <button
-                              onClick={() => deleteSite(site.subdomain)}
-                              className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                              title="Delete site"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              </div>
+              <p className="text-sm text-gray-600 mt-1">Your published websites and landing pages</p>
             </div>
+
+            {/* Content - only show if not minimized */}
+            {!minimizedSections.has('published-sites') && (
+              <div className="p-6">
+                {sitesLoading ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading published sites...</p>
+                  </div>
+                ) : publishedSites.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="mb-4">
+                      <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No published websites yet</h3>
+                    <p className="text-gray-600 mb-6">Create and publish your first website to see it here.</p>
+                    <a
+                      href="/web"
+                      className="inline-flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                    >
+                      Create Website
+                    </a>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Subdomain</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Description</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Created</th>
+                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {publishedSites.map((site) => (
+                          <tr key={site.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                            <td className="py-4 px-4 text-sm font-medium text-gray-900">{site.subdomain}.simplerb.com</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{site.description || 'No description'}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">
+                              {new Date(site.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="py-4 px-4 text-center space-x-2">
+                              <a
+                                href={site.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors"
+                                title="View live site"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                              </a>
+                              <button
+                                onClick={() => deleteSite(site.subdomain)}
+                                className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                title="Delete site"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )
@@ -713,7 +807,9 @@ const Dashboard: React.FC = () => {
           onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, 'feature-cards')}
           onDragEnd={handleDragEnd}
-          className={`w-full max-w-4xl mx-auto ${draggedSection === 'feature-cards' ? 'opacity-50' : ''}`}
+          className={`w-full max-w-4xl mx-auto transition-all duration-200 ${
+            draggedSection === 'feature-cards' ? 'opacity-50' : ''
+          } ${minimizedSections.has('feature-cards') ? 'h-16 overflow-hidden' : ''}`}
         >
           <div className="flex items-center gap-3 mb-6">
             <div className="cursor-move text-gray-400 hover:text-gray-600">
@@ -722,8 +818,25 @@ const Dashboard: React.FC = () => {
               </svg>
             </div>
             <h2 className="text-xl font-semibold text-gray-900">Quick Actions</h2>
+            <button
+              onClick={() => toggleMinimizeSection('feature-cards')}
+              className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors ml-auto"
+              title={minimizedSections.has('feature-cards') ? 'Maximize section' : 'Minimize section'}
+            >
+              {minimizedSections.has('feature-cards') ? (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                </svg>
+              )}
+            </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Content - only show if not minimized */}
+          {!minimizedSections.has('feature-cards') && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <a
               href="/domain"
               className="block bg-white rounded-xl border border-gray-100 p-6 hover:border-green-300 hover:shadow-md transition-all"
@@ -795,7 +908,8 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             </a>
-          </div>
+            </div>
+          )}
         </div>
       )
     }
