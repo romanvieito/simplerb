@@ -394,25 +394,25 @@ const Home: NextPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             {[
               {
-                title: "Market Analysis AI",
-                description: "Our AI scans billions of data points to identify profitable niches and untapped opportunities in real-time.",
-                icon: "🎯",
-                ai_feature: "Predictive Analytics",
-                impact: "Find opportunities others miss"
+                title: "Smart Domain Discovery",
+                description: "AI instantly finds available domains that match your business idea and validates their market potential before you buy.",
+                icon: "🔍",
+                ai_feature: "Automated Validation",
+                impact: "Perfect domains in 30 seconds"
               },
               {
-                title: "Content Generation AI",
-                description: "Automatically create high-converting ads, landing pages, and marketing copy optimized for your target audience.",
-                icon: "✍️",
-                ai_feature: "NLP Optimization",
-                impact: "Save 40+ hours per month"
+                title: "AI Website Builder",
+                description: "Transform your idea into a professional website automatically. AI designs, writes content, and optimizes for conversions.",
+                icon: "⚡",
+                ai_feature: "One-Click Launch",
+                impact: "From idea to live site in minutes"
               },
               {
-                title: "Strategy AI",
-                description: "AI-powered business planning that adapts to market changes and optimizes your growth trajectory automatically.",
-                icon: "🚀",
-                ai_feature: "Adaptive Learning",
-                impact: "Scale 3x faster"
+                title: "Revenue-Focused Ads",
+                description: "AI creates and optimizes ad campaigns that turn your ideas into paying customers with automated A/B testing and bidding.",
+                icon: "📈",
+                ai_feature: "Conversion Optimization",
+                impact: "Generate revenue while you sleep"
               }
             ].map((capability, index) => (
               <div key={index} className="group">
