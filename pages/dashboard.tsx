@@ -706,7 +706,23 @@ const Dashboard: React.FC = () => {
                             </td>
                             <td className="py-4 px-4 text-sm font-medium text-gray-900">{favorite.keyword}</td>
                             <td className="py-4 px-4 text-sm text-gray-600">{favorite.search_volume?.toLocaleString() || 'N/A'}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{favorite.competition || 'N/A'}</td>
+                            <td className="py-4 px-4">
+                              <div className="flex items-center space-x-2">
+                                <span className={`px-2 py-1 rounded text-xs ${
+                                  favorite.competition === 'LOW' ? 'bg-green-100 text-green-700' :
+                                  favorite.competition === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700' :
+                                  favorite.competition === 'HIGH' ? 'bg-red-100 text-red-700' :
+                                  'bg-gray-100 text-gray-700'
+                                }`}>
+                                  {favorite.competition || 'UNKNOWN'}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  {favorite.competition_index !== null && favorite.competition_index !== undefined
+                                    ? `(${favorite.competition_index})`
+                                    : '(N/A)'}
+                                </span>
+                              </div>
+                            </td>
                             <td className="py-4 px-4 text-sm text-gray-600">
                               <span className={`font-medium ${
                                 calculateThreeMonthChange(favorite.monthly_search_volumes).startsWith('+')
