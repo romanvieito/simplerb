@@ -167,8 +167,79 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json([]);
     }
 
-    // Enrich AI-generated keywords with Google Ads API data via shared util
+    // Enrich AI-generated keywords with Google Ads API data.
+    // Prefer the same internal REST path used by the "Find Keywords" tab for consistent prod behavior.
     try {
+      // Construct base URL robustly (works in prod and dev)
+      const baseUrl =
+        req.headers.origin ||
+        (req.headers.host
+          ? `${(req.headers['x-forwarded-proto'] as string) || 'https'}://${req.headers.host}`
+          : process.env.NEXT_PUBLIC_APP_URL ||
+            (process.env.NODE_ENV === 'production'
+              ? `https://${req.headers.host || 'localhost'}`
+              : 'http://127.0.0.1:3000'));
+
+      const internalApiUrl = `${baseUrl}/api/google-ads/keyword-planning-rest`;
+
+      const controller = new AbortController();
+      const timeoutMs = process.env.NODE_ENV === 'production' ? 30000 : 10000;
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+      const resp = await fetch(internalApiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keywords: uniqueKeywords, countryCode, languageCode }),
+        signal: controller.signal,
+      }).catch((e) => {
+        throw e;
+      });
+      clearTimeout(timeout);
+
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data?.success && Array.isArray(data.keywords) && data.keywords.length > 0) {
+          const results: GeneratedKeywordResult[] = data.keywords.map((idea: any) => ({
+            keyword: idea.keyword,
+            searchVolume: idea.searchVolume ?? 0,
+            competition: idea.competition ?? 'UNKNOWN',
+            competitionIndex: idea.competitionIndex,
+            lowTopPageBidMicros: idea.lowTopPageBidMicros,
+            highTopPageBidMicros: idea.highTopPageBidMicros,
+            avgCpcMicros: idea.avgCpcMicros,
+            monthlySearchVolumes: idea.monthlySearchVolumes,
+            _meta: {
+              dataSource: 'google_ads_api',
+              reason: 'AI-generated keywords enriched with Google Ads metrics',
+              cached: false,
+              generatedViaAI: true,
+            },
+          }));
+
+          if (userId) {
+            await saveKeywordSearchHistory({
+              userId,
+              userPrompt: prompt,
+              countryCode,
+              languageCode,
+              results,
+              source: 'google_ads_api',
+            });
+          }
+
+          return res.status(200).json(results);
+        }
+        // If internal API responded but without keywords, fall through to util-based enrichment
+      } else {
+        const errorData = await resp.json().catch(() => ({}));
+        // If token expired, fall back to AI-only later
+        if (errorData?.isTokenExpired) {
+          throw new Error('Google Ads API authentication failed (token expired)');
+        }
+        // Fall through to util-based enrichment
+      }
+
+      // Fallback path: use shared util (direct Google API) in case internal path fails
       const results = await runGoogleKeywordResearch({
         keywords: uniqueKeywords,
         countryCode,
