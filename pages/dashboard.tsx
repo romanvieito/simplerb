@@ -45,6 +45,7 @@ const Dashboard: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [internalUserId, setInternalUserId] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<KeywordFavorite[]>([]);
+  const [favoritesLastUpdatedAt, setFavoritesLastUpdatedAt] = useState<string | null>(null);
   const [domainFavorites, setDomainFavorites] = useState<DomainFavorite[]>([]);
   const [publishedSites, setPublishedSites] = useState<PublishedSite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -250,6 +251,17 @@ const Dashboard: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         setFavorites(data.favorites || []);
+        // Compute latest created_at for "Last update" label
+        const list: KeywordFavorite[] = (data.favorites || []) as KeywordFavorite[];
+        if (list.length > 0) {
+          const maxTs = list.reduce<number>((acc, item) => {
+            const t = item.created_at ? new Date(item.created_at).getTime() : 0;
+            return Math.max(acc, t);
+          }, 0);
+          setFavoritesLastUpdatedAt(maxTs ? new Date(maxTs).toLocaleString() : null);
+        } else {
+          setFavoritesLastUpdatedAt(null);
+        }
       } else {
         console.error('Failed to fetch favorites:', response.status, response.statusText);
       }
@@ -257,6 +269,27 @@ const Dashboard: React.FC = () => {
       console.error('Error fetching favorites:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Refresh favorites by updating data from Google Ads API, then reload table
+  const refreshFavorites = async () => {
+    if (!user || !user.id) return;
+    setLoading(true);
+    try {
+      const resp = await fetch('/api/keyword-favorites-refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!resp.ok) {
+        const text = await resp.text();
+        console.error('Failed to refresh favorites:', resp.status, resp.statusText, text);
+      }
+    } catch (e) {
+      console.error('Error refreshing favorites:', e);
+    } finally {
+      // Always re-fetch the latest favorites after attempting refresh
+      await fetchFavorites();
     }
   };
 
@@ -555,6 +588,18 @@ const Dashboard: React.FC = () => {
                     </svg>
                   </div>
                   <h2 className="text-lg font-semibold text-gray-900">Keyword Favorites</h2>
+                  <button
+                    onClick={() => refreshFavorites()}
+                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                    title="Refresh keyword data"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </button>
+                  {favoritesLastUpdatedAt && (
+                    <span className="text-xs text-gray-500">Last update: {favoritesLastUpdatedAt}</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -572,15 +617,6 @@ const Dashboard: React.FC = () => {
                       </svg>
                     )}
                   </button>
-                  <button
-                    onClick={() => fetchFavorites()}
-                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                    title="Refresh keyword data"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  </button>
                   <a
                     href="/find-keywords"
                     className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
@@ -589,7 +625,7 @@ const Dashboard: React.FC = () => {
                   </a>
                 </div>
               </div>
-              <p className="text-sm text-gray-600 mt-1">Your saved keywords for research and optimization</p>
+              <p className="text-sm text-gray-600 mt-1">Your saved keywords for research</p>
             </div>
 
             {/* Content - only show if not minimized */}
@@ -923,7 +959,7 @@ const Dashboard: React.FC = () => {
                   </a>
                 </div>
               </div>
-              <p className="text-sm text-gray-600 mt-1">Your published websites and landing pages</p>
+              <p className="text-sm text-gray-600 mt-1">Your published landing pages</p>
             </div>
 
             {/* Content - only show if not minimized */}
