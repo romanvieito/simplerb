@@ -53,6 +53,34 @@ const Dashboard: React.FC = () => {
   const [renamingSubdomain, setRenamingSubdomain] = useState<string | null>(null);
   const [newSubdomain, setNewSubdomain] = useState<string>('');
   const [renameError, setRenameError] = useState<string | null>(null);
+  const [publishedSitesFilter, setPublishedSitesFilter] = useState<'all' | 'favorites' | 'non-favorites'>('favorites');
+  const [publishedSitesSearch, setPublishedSitesSearch] = useState<string>('');
+
+  // Compute filtered sites
+  const filteredPublishedSites = publishedSites.filter(site => {
+    // First apply favorite filter
+    switch (publishedSitesFilter) {
+      case 'favorites':
+        if (site.favorite !== true) return false;
+        break;
+      case 'non-favorites':
+        if (site.favorite !== false) return false;
+        break;
+      case 'all':
+      default:
+        break;
+    }
+
+    // Then apply search filter
+    if (publishedSitesSearch.trim()) {
+      const searchLower = publishedSitesSearch.toLowerCase();
+      const subdomainMatch = site.subdomain.toLowerCase().includes(searchLower);
+      const descriptionMatch = site.description ? site.description.toLowerCase().includes(searchLower) : false;
+      return subdomainMatch || descriptionMatch;
+    }
+
+    return true;
+  });
 
   // Section ordering state
   const [sectionOrder, setSectionOrder] = useState<string[]>([
@@ -849,6 +877,29 @@ const Dashboard: React.FC = () => {
                   <h2 className="text-lg font-semibold text-gray-900">Published Websites</h2>
                 </div>
                 <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search sites..."
+                      value={publishedSitesSearch}
+                      onChange={(e) => setPublishedSitesSearch(e.target.value)}
+                      className="bg-white border border-gray-200 rounded px-3 py-1 pl-9 text-sm text-gray-700 focus:border-purple-500 focus:outline-none"
+                    />
+                  </div>
+                  <select
+                    value={publishedSitesFilter}
+                    onChange={(e) => setPublishedSitesFilter(e.target.value as 'all' | 'favorites' | 'non-favorites')}
+                    className="bg-white border border-gray-200 rounded px-3 py-1 text-sm text-gray-700 focus:border-purple-500 focus:outline-none"
+                  >
+                    <option value="favorites">⭐ Favorites Only</option>
+                    <option value="non-favorites">Non-Favorites Only</option>
+                    <option value="all">Show All Sites</option>
+                  </select>
                   <button
                     onClick={() => toggleMinimizeSection('published-sites')}
                     className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
@@ -883,21 +934,53 @@ const Dashboard: React.FC = () => {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
                     <p className="mt-4 text-gray-600">Loading published sites...</p>
                   </div>
-                ) : publishedSites.length === 0 ? (
+                ) : filteredPublishedSites.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="mb-4">
                       <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No published websites yet</h3>
-                    <p className="text-gray-600 mb-6">Create and publish your first website to see it here.</p>
-                    <a
-                      href="/web"
-                      className="inline-flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
-                    >
-                      Create Website
-                    </a>
+                    {publishedSites.length === 0 ? (
+                      <>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">No published websites yet</h3>
+                        <p className="text-gray-600 mb-6">Create and publish your first website to see it here.</p>
+                        <a
+                          href="/web"
+                          className="inline-flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                        >
+                          Create Website
+                        </a>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">No websites match your filters</h3>
+                        <p className="text-gray-600 mb-6">
+                          {publishedSitesSearch ? 'Try adjusting your search terms or ' : ''}
+                          Try changing your filter settings.
+                        </p>
+                        {(publishedSitesFilter !== 'all' || publishedSitesSearch) && (
+                          <div className="flex items-center justify-center gap-2">
+                            {publishedSitesFilter !== 'all' && (
+                              <button
+                                onClick={() => setPublishedSitesFilter('all')}
+                                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded-lg transition-colors"
+                              >
+                                Show All Sites
+                              </button>
+                            )}
+                            {publishedSitesSearch && (
+                              <button
+                                onClick={() => setPublishedSitesSearch('')}
+                                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors"
+                              >
+                                Clear Search
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -917,7 +1000,7 @@ const Dashboard: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {publishedSites.map((site) => (
+                        {filteredPublishedSites.map((site) => (
                           <tr key={site.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                             <td className="py-4 px-4 text-center">
                               <button
@@ -1025,7 +1108,7 @@ const Dashboard: React.FC = () => {
                       </tbody>
                     </table>
                   </div>
-                )}
+                )})()
               </div>
             )}
           </div>

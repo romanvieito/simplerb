@@ -167,13 +167,13 @@ export default async function handler(
 
     if (!GADS_DEVELOPER_TOKEN || !GADS_CLIENT_ID || !GADS_CLIENT_SECRET || !GADS_LOGIN_CUSTOMER_ID) {
       console.log('❌ Missing required Google Ads environment variables');
-      console.log(`GADS_DEVELOPER_TOKEN: ${!!GADS_DEVELOPER_TOKEN}`);
-      console.log(`GADS_CLIENT_ID: ${!!GADS_CLIENT_ID}`);
-      console.log(`GADS_CLIENT_SECRET: ${!!GADS_CLIENT_SECRET}`);
-      console.log(`GADS_LOGIN_CUSTOMER_ID: ${!!GADS_LOGIN_CUSTOMER_ID}`);
+      console.log('GADS_DEVELOPER_TOKEN:', GADS_DEVELOPER_TOKEN ? 'SET' : 'NOT SET');
+      console.log('GADS_CLIENT_ID:', GADS_CLIENT_ID ? 'SET' : 'NOT SET');
+      console.log('GADS_CLIENT_SECRET:', GADS_CLIENT_SECRET ? 'SET' : 'NOT SET');
+      console.log('GADS_LOGIN_CUSTOMER_ID:', GADS_LOGIN_CUSTOMER_ID ? 'SET' : 'NOT SET');
       return res.status(500).json({
         success: false,
-        error: 'Missing required Google Ads environment variables'
+        error: 'GADS_REFRESH_TOKEN is not defined'
       });
     }
 
