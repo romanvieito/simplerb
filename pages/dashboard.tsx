@@ -1108,7 +1108,7 @@ const Dashboard: React.FC = () => {
                       </tbody>
                     </table>
                   </div>
-                )})()
+                )}
               </div>
             )}
           </div>
