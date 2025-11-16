@@ -162,7 +162,8 @@ export default async function handler(
       GADS_CLIENT_ID,
       GADS_CLIENT_SECRET,
       GADS_LOGIN_CUSTOMER_ID,
-      GADS_CUSTOMER_ID
+      GADS_CUSTOMER_ID,
+      GADS_REFRESH_TOKEN
     } = process.env;
 
     if (!GADS_DEVELOPER_TOKEN || !GADS_CLIENT_ID || !GADS_CLIENT_SECRET || !GADS_LOGIN_CUSTOMER_ID) {
@@ -173,7 +174,7 @@ export default async function handler(
       console.log('GADS_LOGIN_CUSTOMER_ID:', GADS_LOGIN_CUSTOMER_ID ? 'SET' : 'NOT SET');
       return res.status(500).json({
         success: false,
-        error: 'GADS_REFRESH_TOKEN is not defined'
+        error: 'Missing required Google Ads environment variables'
       });
     }
 

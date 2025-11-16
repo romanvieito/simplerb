@@ -18,6 +18,14 @@ interface KeywordFavorite {
   competition_index: number | null;
   avg_cpc_micros: bigint | null;
   created_at: string;
+  monthly_search_volumes?: Array<{
+    month?: string;
+    year?: number;
+    monthIndex?: number;
+    monthLabel?: string;
+    dateKey?: string;
+    monthlySearches: number;
+  }>;
 }
 
 interface DomainFavorite {
@@ -56,6 +64,21 @@ const Dashboard: React.FC = () => {
   const [renameError, setRenameError] = useState<string | null>(null);
   const [publishedSitesFilter, setPublishedSitesFilter] = useState<'all' | 'favorites' | 'non-favorites'>('favorites');
   const [publishedSitesSearch, setPublishedSitesSearch] = useState<string>('');
+
+  // Compute 3-month change similar to /find-keywords
+  const calculateThreeMonthChange = (monthlyData?: KeywordFavorite['monthly_search_volumes']): string => {
+    if (!monthlyData || monthlyData.length < 4) return 'N/A';
+    const totalMonths = monthlyData.length;
+    const lastMonth = monthlyData[totalMonths - 1];
+    const threeMonthsAgo = monthlyData[totalMonths - 4];
+    if (!lastMonth || !threeMonthsAgo) return 'N/A';
+    const lastMonthSearches = lastMonth.monthlySearches ?? 0;
+    const threeMonthsAgoSearches = threeMonthsAgo.monthlySearches ?? 0;
+    if (threeMonthsAgoSearches === 0) return lastMonthSearches > 0 ? '+∞%' : '0%';
+    const change = ((lastMonthSearches - threeMonthsAgoSearches) / threeMonthsAgoSearches) * 100;
+    const sign = change >= 0 ? '+' : '';
+    return `${sign}${change.toFixed(1)}%`;
+  };
 
   // Compute filtered sites
   const filteredPublishedSites = publishedSites.filter(site => {
@@ -661,7 +684,7 @@ const Dashboard: React.FC = () => {
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Keyword</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Volume</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Competition</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">CPC</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">3-mo Change</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Country</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Added</th>
                           <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
@@ -684,7 +707,17 @@ const Dashboard: React.FC = () => {
                             <td className="py-4 px-4 text-sm font-medium text-gray-900">{favorite.keyword}</td>
                             <td className="py-4 px-4 text-sm text-gray-600">{favorite.search_volume?.toLocaleString() || 'N/A'}</td>
                             <td className="py-4 px-4 text-sm text-gray-600">{favorite.competition || 'N/A'}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{formatCPC(favorite.avg_cpc_micros)}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">
+                              <span className={`font-medium ${
+                                calculateThreeMonthChange(favorite.monthly_search_volumes).startsWith('+')
+                                  ? 'text-green-600'
+                                  : calculateThreeMonthChange(favorite.monthly_search_volumes).startsWith('-')
+                                  ? 'text-red-600'
+                                  : 'text-gray-500'
+                              }`}>
+                                {calculateThreeMonthChange(favorite.monthly_search_volumes)}
+                              </span>
+                            </td>
                             <td className="py-4 px-4 text-sm text-gray-600">{favorite.country_code || 'N/A'}</td>
                             <td className="py-4 px-4 text-sm text-gray-600">
                               {new Date(favorite.created_at).toLocaleDateString()}

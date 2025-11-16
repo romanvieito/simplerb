@@ -22,20 +22,31 @@ export default async function handler(
   let option = '';
   try {
     if (request.method === 'GET') {
-      // Get all favorites for the user
+      // Get all favorites for the user, along with latest monthly trend from keyword_cache when available
       const favorites = await sql`
         SELECT
-          keyword,
-          country_code,
-          language_code,
-          search_volume,
-          competition,
-          competition_index,
-          avg_cpc_micros,
-          created_at
-        FROM keyword_favorites
-        WHERE user_id = ${userId}
-        ORDER BY created_at DESC
+          kf.keyword,
+          kf.country_code,
+          kf.language_code,
+          kf.search_volume,
+          kf.competition,
+          kf.competition_index,
+          kf.avg_cpc_micros,
+          kf.created_at,
+          kc.monthly_search_volumes
+        FROM keyword_favorites kf
+        LEFT JOIN LATERAL (
+          SELECT monthly_search_volumes
+          FROM keyword_cache
+          WHERE keyword = kf.keyword
+            AND country_code = COALESCE(kf.country_code, 'US')
+            AND language_code = COALESCE(kf.language_code, 'en')
+            AND expires_at > NOW()
+          ORDER BY expires_at DESC
+          LIMIT 1
+        ) kc ON TRUE
+        WHERE kf.user_id = ${userId}
+        ORDER BY kf.created_at DESC
       `;
 
       return response.status(200).json({
