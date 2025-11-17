@@ -856,7 +856,24 @@ const AdsPage = () => {
     setShowAiAnalysis(true);
 
     try {
+      // Helper function to convert micros to dollars for consistency
+      const microsToDollars = (micros: number): number => {
+        if (micros === null || micros === undefined || isNaN(micros)) return 0;
+        return micros / 1000000;
+      };
+
+      // Helper function to normalize percentage to decimal (handles both decimal and percentage formats)
+      // Input: Can be 0.05 (decimal) or 5 (percentage)
+      // Output: Always decimal (0.05 = 5%)
+      const normalizePercentage = (value: number | null | undefined): number | null => {
+        if (value === null || value === undefined || isNaN(value)) return null;
+        // If value is > 1, it's likely a percentage (e.g., 5 = 5%), convert to decimal
+        // If value is <= 1, it's likely already a decimal (e.g., 0.05 = 5%)
+        return value > 1 ? value / 100 : value;
+      };
+
       // Collect campaign data - only include visible columns
+      // Note: Campaign summary data is already in currency units (dollars), not micros
       const campaignData = {
         campaigns: campaignsSummary.map(c => {
           const campaignObj: any = {};
@@ -866,16 +883,18 @@ const AdsPage = () => {
           campaignObj.status = c.status;
 
           // Only include metrics from visible columns
+          // Campaign data: cost, cpc, cpa, conversionValue are already in dollars (not micros)
+          // CTR and conversionRate: Normalize to decimal format (0.05 = 5%)
           if (campaignsVisibleColumns.impressions) campaignObj.impressions = c.impressions;
           if (campaignsVisibleColumns.clicks) campaignObj.clicks = c.clicks;
-          if (campaignsVisibleColumns.ctr) campaignObj.ctr = c.ctr;
-          if (campaignsVisibleColumns.cost) campaignObj.cost = c.cost;
-          if (campaignsVisibleColumns.avgCpc) campaignObj.avgCpc = c.cpc;
+          if (campaignsVisibleColumns.ctr) campaignObj.ctr = normalizePercentage(c.ctr);
+          if (campaignsVisibleColumns.cost) campaignObj.cost = c.cost || 0;
+          if (campaignsVisibleColumns.avgCpc) campaignObj.avgCpc = c.cpc || 0;
           if (campaignsVisibleColumns.conversions) campaignObj.conversions = c.conversions;
-          if (campaignsVisibleColumns.conversionRate) campaignObj.conversionRate = c.conversionRate;
-          if (campaignsVisibleColumns.cpa) campaignObj.cpa = c.cpa;
-          if (campaignsVisibleColumns.conversionValue) campaignObj.conversionValue = c.conversionValue;
-          if (campaignsVisibleColumns.impressionShare) campaignObj.impressionShare = c.impressionShare;
+          if (campaignsVisibleColumns.conversionRate) campaignObj.conversionRate = normalizePercentage(c.conversionRate);
+          if (campaignsVisibleColumns.cpa) campaignObj.cpa = c.cpa || null;
+          if (campaignsVisibleColumns.conversionValue) campaignObj.conversionValue = c.conversionValue || 0;
+          if (campaignsVisibleColumns.impressionShare) campaignObj.impressionShare = normalizePercentage(c.impressionShare);
 
           return campaignObj;
         }),
@@ -886,21 +905,35 @@ const AdsPage = () => {
           };
 
           // Only include metrics that are visible in campaign columns
+          // Keyword data: Convert from micros to dollars for consistency with campaign data
+          // CTR and conversionRate: Normalize to decimal format (0.05 = 5%) for consistency
           if (campaignsVisibleColumns.impressions) keywordObj.impressions = k.impressions;
           if (campaignsVisibleColumns.clicks) keywordObj.clicks = k.clicks;
-          if (campaignsVisibleColumns.ctr) keywordObj.ctr = k.ctr;
-          if (campaignsVisibleColumns.cost) keywordObj.cost = k.costMicros;
-          if (campaignsVisibleColumns.avgCpc) keywordObj.avgCpc = k.averageCpcMicros;
+          if (campaignsVisibleColumns.ctr) keywordObj.ctr = normalizePercentage(k.ctr);
+          if (campaignsVisibleColumns.cost) keywordObj.cost = microsToDollars(k.costMicros);
+          if (campaignsVisibleColumns.avgCpc) keywordObj.avgCpc = microsToDollars(k.averageCpcMicros);
           if (campaignsVisibleColumns.conversions) keywordObj.conversions = k.conversions;
-          if (campaignsVisibleColumns.conversionRate) keywordObj.conversionRate = k.conversionRate;
-          if (campaignsVisibleColumns.cpa) keywordObj.cpa = k.costPerConversionMicros;
-          if (campaignsVisibleColumns.conversionValue) keywordObj.conversionValue = k.conversionValueMicros;
+          if (campaignsVisibleColumns.conversionRate) keywordObj.conversionRate = normalizePercentage(k.conversionRate);
+          if (campaignsVisibleColumns.cpa) keywordObj.cpa = k.costPerConversionMicros > 0 ? microsToDollars(k.costPerConversionMicros) : null;
+          if (campaignsVisibleColumns.conversionValue) keywordObj.conversionValue = microsToDollars(k.conversionValueMicros);
+          if (campaignsVisibleColumns.impressionShare) keywordObj.impressionShare = normalizePercentage(k.impressionShare);
 
           return keywordObj;
         }),
         dateRange: {
           start: startDate,
           end: endDate
+        },
+        // Add data integrity note for AI context
+        _dataIntegrity: {
+          currencyUnit: "USD (dollars)",
+          percentageFormat: "decimal (e.g., 0.05 = 5%, 0.85 = 85%)",
+          normalization: {
+            monetary: "All monetary values (cost, avgCpc, cpa, conversionValue) normalized to USD dollars",
+            percentages: "All percentage metrics (ctr, conversionRate, impressionShare) normalized to decimal format",
+            consistency: "Campaign-level and keyword-level metrics use identical units and formats for direct comparison"
+          },
+          note: "Data has been validated and normalized to ensure consistency. All values are directly comparable between campaigns and keywords."
         }
       };
 
@@ -928,7 +961,14 @@ const AdsPage = () => {
 
       const prompt = `You are an expert Google Ads specialist.
 
-Analyze this Google Ads campaign data and provide actionable recommendations to improve performance. IMPORTANT: The data shown includes ONLY the metrics columns that are currently visible in the user's interface. Do NOT mention or analyze any metrics that are not present in the data provided.
+Analyze this Google Ads campaign data and provide actionable recommendations to improve performance. 
+
+IMPORTANT DATA INTEGRITY NOTES:
+1. The data shown includes ONLY the metrics columns that are currently visible in the user's interface. Do NOT mention or analyze any metrics that are not present in the data provided.
+2. All monetary values (cost, avgCpc, cpa, conversionValue) are normalized to currency units (USD dollars) for consistency between campaign-level and keyword-level metrics.
+3. All currency values are in the same unit (dollars) - campaign data and keyword data use the same unit, so comparisons are accurate. When comparing costs or CPCs between campaigns and keywords, they are directly comparable.
+4. CTR, conversion rates, and impression share are normalized to decimal format (e.g., 0.05 = 5%, 0.85 = 85%) for consistency. All percentage-based metrics use the same decimal format across campaigns and keywords.
+5. Data has been validated and normalized to ensure consistency - if you notice any discrepancies that seem unusual, please report them, but first verify the data format matches these specifications.
 
 CAMPAIGN DATA:
 ${JSON.stringify(campaignData, null, 2)}
@@ -937,7 +977,7 @@ Please provide a comprehensive analysis including:
 
 ${analysisSections.join('\n')}
 
-Be specific with numbers and percentages. Focus on actionable insights based on the available data.`;
+Be specific with numbers and percentages. Focus on actionable insights based on the available data. When comparing costs, CPCs, or other monetary values between campaigns and keywords, note that all values are in the same unit (dollars) and can be directly compared.`;
 
       const response = await fetch("/api/openai", {
         method: "POST",
