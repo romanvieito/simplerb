@@ -802,7 +802,7 @@ const Dashboard: React.FC = () => {
                   <h2 className="text-lg font-semibold text-gray-900">Keyword Favorites</h2>
                   <button
                     onClick={() => refreshFavorites()}
-                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
                     title="Refresh keyword data"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -831,7 +831,7 @@ const Dashboard: React.FC = () => {
                   </button>
                   <a
                     href="/find-keywords"
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    className="px-4 py-2 bg-black hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     Find Keywords
                   </a>
@@ -859,7 +859,7 @@ const Dashboard: React.FC = () => {
                     <p className="text-gray-600 mb-6">Start by searching for keywords to save your favorites for later.</p>
                     <a
                       href="/find-keywords"
-                      className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                      className="inline-flex items-center px-6 py-3 bg-black hover:bg-gray-800 text-white rounded-lg font-medium transition-colors"
                     >
                       Find Keywords
                     </a>
@@ -915,9 +915,9 @@ const Dashboard: React.FC = () => {
                             <td className="py-4 px-4 text-sm text-gray-600">
                               <span className={`font-medium ${
                                 calculateThreeMonthChange(favorite.monthly_search_volumes).startsWith('+')
-                                  ? 'text-green-600'
+                                  ? 'text-gray-700'
                                   : calculateThreeMonthChange(favorite.monthly_search_volumes).startsWith('-')
-                                  ? 'text-red-600'
+                                  ? 'text-gray-500'
                                   : 'text-gray-500'
                               }`}>
                                 {calculateThreeMonthChange(favorite.monthly_search_volumes)}
@@ -930,7 +930,7 @@ const Dashboard: React.FC = () => {
                             <td className="py-4 px-4 text-center">
                               <button
                                 onClick={() => removeFavorite(favorite.keyword)}
-                                className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
                                 title="Remove from favorites"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -999,7 +999,7 @@ const Dashboard: React.FC = () => {
                   </button>
                   <a
                     href="/domain"
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    className="px-4 py-2 bg-black hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     Generate Domains
                   </a>
@@ -1027,7 +1027,7 @@ const Dashboard: React.FC = () => {
                     <p className="text-gray-600 mb-6">Start by generating domains and save your favorites for later.</p>
                     <a
                       href="/domain"
-                      className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                      className="inline-flex items-center px-6 py-3 bg-black hover:bg-gray-800 text-white rounded-lg font-medium transition-colors"
                     >
                       Generate Domains
                     </a>
@@ -1063,9 +1063,9 @@ const Dashboard: React.FC = () => {
                             <td className="py-4 px-4 text-sm text-gray-600">
                               <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                                 favorite.available === true
-                                  ? 'bg-green-100 text-green-800'
+                                  ? 'bg-gray-100 text-gray-800'
                                   : favorite.available === false
-                                  ? 'bg-red-100 text-red-800'
+                                  ? 'bg-gray-200 text-gray-700'
                                   : 'bg-gray-100 text-gray-800'
                               }`}>
                                 {favorite.available === true ? 'Available' : favorite.available === false ? 'Unavailable' : 'Unknown'}
@@ -1099,7 +1099,7 @@ const Dashboard: React.FC = () => {
                             <td className="py-4 px-4 text-center">
                               <button
                                 onClick={() => removeDomainFavorite(favorite.namedomain)}
-                                className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
                                 title="Remove from favorites"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1191,7 +1191,7 @@ const Dashboard: React.FC = () => {
                   </button>
                   <a
                     href="/web"
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    className="px-4 py-2 bg-black hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     Create Website
                   </a>
@@ -1221,7 +1221,7 @@ const Dashboard: React.FC = () => {
                         <p className="text-gray-600 mb-6">Create and publish your first website to see it here.</p>
                         <a
                           href="/web"
-                          className="inline-flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                          className="inline-flex items-center px-6 py-3 bg-black hover:bg-gray-800 text-white rounded-lg font-medium transition-colors"
                         >
                           Create Website
                         </a>
@@ -1238,7 +1238,7 @@ const Dashboard: React.FC = () => {
                             {publishedSitesFilter !== 'all' && (
                               <button
                                 onClick={() => setPublishedSitesFilter('all')}
-                                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded-lg transition-colors"
+                                className="px-4 py-2 bg-black hover:bg-gray-800 text-white text-sm rounded-lg transition-colors"
                               >
                                 Show All Sites
                               </button>
@@ -1246,7 +1246,7 @@ const Dashboard: React.FC = () => {
                             {publishedSitesSearch && (
                               <button
                                 onClick={() => setPublishedSitesSearch('')}
-                                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors"
+                                className="px-4 py-2 bg-black hover:bg-gray-800 text-white text-sm rounded-lg transition-colors"
                               >
                                 Clear Search
                               </button>
@@ -1259,8 +1259,8 @@ const Dashboard: React.FC = () => {
                 ) : (
                   <div className="overflow-x-auto">
                     {renameError && renamingSubdomain && (
-                      <div className="mx-6 mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-sm text-red-800">{renameError}</p>
+                      <div className="mx-6 mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                        <p className="text-sm text-gray-800">{renameError}</p>
                       </div>
                     )}
                     <table className="w-full">
@@ -1326,7 +1326,7 @@ const Dashboard: React.FC = () => {
                                 <>
                                   <button
                                     onClick={() => renameSubdomain(site.subdomain, newSubdomain)}
-                                    className="inline-flex items-center justify-center w-8 h-8 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
+                                    className="inline-flex items-center justify-center w-8 h-8 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-full transition-colors"
                                     title="Save"
                                   >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1349,7 +1349,7 @@ const Dashboard: React.FC = () => {
                                     href={site.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors"
+                                    className="inline-flex items-center justify-center w-8 h-8 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-full transition-colors"
                                     title="View live site"
                                   >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1358,7 +1358,7 @@ const Dashboard: React.FC = () => {
                                   </a>
                                   <button
                                     onClick={() => startRenaming(site.subdomain)}
-                                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-full transition-colors"
+                                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
                                     title="Rename subdomain"
                                   >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1367,7 +1367,7 @@ const Dashboard: React.FC = () => {
                                   </button>
                                   <button
                                     onClick={() => deleteSite(site.id, site.subdomain)}
-                                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
                                     title="Delete site"
                                   >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1423,7 +1423,7 @@ const Dashboard: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => fetchCampaignsSummary()}
-                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
                     title="Refresh campaigns data"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1447,7 +1447,7 @@ const Dashboard: React.FC = () => {
                   </button>
                   <a
                     href="/ads"
-                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    className="px-4 py-2 bg-black hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     View Full Ads
                   </a>
@@ -1481,7 +1481,7 @@ const Dashboard: React.FC = () => {
                                 onClick={() => handleDatePresetChange(preset.value)}
                                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                                   selectedDatePreset === preset.value
-                                    ? 'bg-orange-600 text-white'
+                                    ? 'bg-black text-white'
                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                               >
@@ -1530,7 +1530,7 @@ const Dashboard: React.FC = () => {
                                     type="checkbox"
                                     checked={value}
                                     onChange={() => setCampaignsVisibleColumns(prev => ({...prev, [key]: !prev[key as keyof typeof prev]}))}
-                                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                    className="w-4 h-4 text-gray-600 border-gray-300 rounded focus:ring-gray-500"
                                   />
                                   <span className="text-sm text-gray-700">
                                     {key === 'name' ? 'Campaign' :
@@ -1564,7 +1564,7 @@ const Dashboard: React.FC = () => {
                         <p className="text-gray-600 mb-6">No campaign data available for the selected date range.</p>
                         <a
                           href="/ads"
-                          className="inline-flex items-center px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors"
+                          className="inline-flex items-center px-6 py-3 bg-black hover:bg-gray-800 text-white rounded-lg font-medium transition-colors"
                         >
                           View Ads Dashboard
                         </a>
@@ -1706,72 +1706,72 @@ const Dashboard: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <a
               href="/domain"
-              className="block bg-white rounded-xl border border-gray-100 p-6 hover:border-green-300 hover:shadow-md transition-all"
+              className="block bg-white rounded-xl border border-gray-100 p-6 hover:border-gray-300 hover:shadow-md transition-all"
             >
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
                   </svg>
                 </div>
                 <div className="flex-1 text-left">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Domain Generator</h3>
                   <p className="text-gray-600 text-sm mb-3">Find the perfect domain name for your next project with AI-powered suggestions.</p>
-                  <span className="text-sm text-green-600 font-medium">Try it now →</span>
+                  <span className="text-sm text-gray-700 font-medium">Try it now →</span>
                 </div>
               </div>
             </a>
 
             <a
               href="/web"
-              className="block bg-white rounded-xl border border-gray-100 p-6 hover:border-purple-300 hover:shadow-md transition-all"
+              className="block bg-white rounded-xl border border-gray-100 p-6 hover:border-gray-300 hover:shadow-md transition-all"
             >
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
                 <div className="flex-1 text-left">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Website Builder</h3>
                   <p className="text-gray-600 text-sm mb-3">Create beautiful websites quickly and easily with our drag-and-drop builder.</p>
-                  <span className="text-sm text-purple-600 font-medium">Try it now →</span>
+                  <span className="text-sm text-gray-700 font-medium">Try it now →</span>
                 </div>
               </div>
             </a>
 
             <a
               href="/ads"
-              className="block bg-white rounded-xl border border-gray-100 p-6 hover:border-orange-300 hover:shadow-md transition-all"
+              className="block bg-white rounded-xl border border-gray-100 p-6 hover:border-gray-300 hover:shadow-md transition-all"
             >
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
                   </svg>
                 </div>
                 <div className="flex-1 text-left">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Ads Generator</h3>
                   <p className="text-gray-600 text-sm mb-3">Generate high-converting ads for your campaigns with AI assistance.</p>
-                  <span className="text-sm text-orange-600 font-medium">Try it now →</span>
+                  <span className="text-sm text-gray-700 font-medium">Try it now →</span>
                 </div>
               </div>
             </a>
 
             <a
               href="/find-keywords"
-              className="block bg-white rounded-xl border border-gray-100 p-6 hover:border-blue-300 hover:shadow-md transition-all"
+              className="block bg-white rounded-xl border border-gray-100 p-6 hover:border-gray-300 hover:shadow-md transition-all"
             >
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
                 </div>
                 <div className="flex-1 text-left">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Keyword Research</h3>
                   <p className="text-gray-600 text-sm mb-3">Discover high-value keywords and analyze search trends to optimize your content.</p>
-                  <span className="text-sm text-blue-600 font-medium">Try it now →</span>
+                  <span className="text-sm text-gray-700 font-medium">Try it now →</span>
                 </div>
               </div>
             </a>
