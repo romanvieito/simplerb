@@ -1897,7 +1897,7 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
                             onClick={() => handleDatePresetChange(preset.value)}
                             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                               selectedDatePreset === preset.value
-                                ? 'bg-blue-600 text-white'
+                                ? 'bg-black text-white'
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                           >
@@ -1911,7 +1911,7 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
                             onClick={() => setShowDateSubmenu(!showDateSubmenu)}
                             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1 ${
                               submenuDatePresets.some(p => selectedDatePreset === p.value)
-                                ? 'bg-blue-600 text-white'
+                                ? 'bg-black text-white'
                                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                             title="More date options"
@@ -1933,7 +1933,7 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
                                   }}
                                   className={`w-full text-left px-3 py-2 text-xs font-medium rounded-md transition-colors ${
                                     selectedDatePreset === preset.value
-                                      ? 'bg-blue-50 text-blue-700'
+                                      ? 'bg-gray-100 text-black'
                                       : 'text-gray-700 hover:bg-gray-50'
                                   }`}
                                 >
@@ -1953,7 +1953,7 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
                               setStartDate(e.target.value);
                               setSelectedDatePreset('custom');
                             }}
-                            className="px-2 py-1.5 text-xs border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                            className="px-2 py-1.5 text-xs border border-gray-200 rounded-md focus:ring-black focus:border-black"
                           />
                           <input
                             type="date"
@@ -1962,7 +1962,7 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
                               setEndDate(e.target.value);
                               setSelectedDatePreset('custom');
                             }}
-                            className="px-2 py-1.5 text-xs border border-gray-200 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                            className="px-2 py-1.5 text-xs border border-gray-200 rounded-md focus:ring-black focus:border-black"
                           />
                         </div>
                       </div>
@@ -2591,7 +2591,7 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
                             onClick={() => handleItemsPerPageChange(size)}
                             className={`px-3 py-1 text-sm rounded-md transition-colors ${
                               itemsPerPage === size
-                                ? 'bg-blue-600 text-white font-medium'
+                                ? 'bg-black text-white font-medium'
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                             }`}
                           >
@@ -2635,7 +2635,7 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
                               onClick={() => handlePageChange(pageNum)}
                               className={`px-3 py-1 text-sm rounded-md transition-colors ${
                                 currentPage === pageNum
-                                  ? 'bg-blue-600 text-white font-medium'
+                                  ? 'bg-black text-white font-medium'
                                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                               }`}
                             >
