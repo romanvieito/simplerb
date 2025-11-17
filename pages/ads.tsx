@@ -998,7 +998,7 @@ Be specific with numbers and percentages. Focus on actionable insights based on 
     }
   };
 
-  // Initial fetch to get list of campaigns
+  // Initial fetch to get list of campaigns (all types: Search, Performance Max, Remarketing, etc.)
   const fetchAvailableCampaigns = async () => {
     if (!user?.emailAddresses[0]?.emailAddress || !admin) return;
 
@@ -1008,7 +1008,8 @@ Be specific with numbers and percentages. Focus on actionable insights based on 
       params.append('startDate', startDate);
       params.append('endDate', endDate);
 
-      const response = await fetch(`/api/google-ads/get-campaign-keywords?${params.toString()}`, {
+      // Use metrics endpoint to get ALL campaign types (not just Search campaigns with keywords)
+      const response = await fetch(`/api/google-ads/metrics?${params.toString()}`, {
         headers: {
           'x-user-email': user.emailAddresses[0].emailAddress
         }
@@ -1016,11 +1017,12 @@ Be specific with numbers and percentages. Focus on actionable insights based on 
 
       const data = await response.json();
 
-      if (response.ok && data.success) {
-        // Extract unique campaigns
-        const uniqueCampaigns = Array.from(new Map(
-          data.keywords?.map((kw: CampaignKeyword) => [kw.campaignId, { id: kw.campaignId, name: kw.campaignName }]) || []
-        ).values()) as Array<{id: string, name: string}>;
+      if (response.ok && data.success && data.metrics?.campaigns) {
+        // Extract unique campaigns from metrics response (includes all campaign types)
+        const uniqueCampaigns = data.metrics.campaigns.map((c: any) => ({
+          id: String(c.id),
+          name: c.name
+        })) as Array<{id: string, name: string}>;
 
         setAvailableCampaigns(uniqueCampaigns);
       }
