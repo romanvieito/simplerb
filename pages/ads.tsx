@@ -1796,7 +1796,7 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
                     >
                       {loading ? (
                         <>
-                          <LoadingDots />
+                          <LoadingDots color="white" style="small" />
                           <span className="ml-2">Loading...</span>
                         </>
                       ) : (
@@ -1825,7 +1825,7 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
                       >
                         {loading ? (
                           <>
-                            <LoadingDots />
+                            <LoadingDots color="black" style="small" />
                             <span className="ml-1">Refreshing...</span>
                           </>
                         ) : (
@@ -1833,7 +1833,6 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
                             <svg className="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                             </svg>
-                            Refresh
                           </>
                         )}
                       </button>
@@ -1979,8 +1978,18 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
                         disabled={analyzingCampaigns}
                         className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          {/* Robot head outline */}
+                          <rect x="3" y="5" width="14" height="11" rx="2" />
+                          {/* Left eye */}
+                          <circle cx="7" cy="9" r="2" fill="currentColor" />
+                          {/* Right eye */}
+                          <circle cx="13" cy="9" r="2" fill="currentColor" />
+                          {/* Mouth */}
+                          <rect x="6" y="13" width="8" height="2.5" rx="1" fill="currentColor" />
+                          {/* Antenna */}
+                          <circle cx="10" cy="2.5" r="1.2" fill="currentColor" />
+                          <line x1="10" y1="2.5" x2="10" y2="5" />
                         </svg>
                         <span>{analyzingCampaigns ? 'Analyzing...' : 'AI Analysis'}</span>
                       </button>
