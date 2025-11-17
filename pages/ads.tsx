@@ -120,11 +120,11 @@ const loadSortState = (): SortState | null => {
 };
 
 // UI: Active tab
-const saveActiveTab = (tab: 'analysis' | 'similar') => {
+const saveActiveTab = (tab: 'analysis' | 'similar' | 'saved') => {
   if (typeof window === 'undefined') return;
   try { localStorage.setItem(UI_ACTIVE_TAB_KEY, tab); } catch {}
 };
-const loadActiveTab = (): 'analysis' | 'similar' | null => {
+const loadActiveTab = (): 'analysis' | 'similar' | 'saved' | null => {
   if (typeof window === 'undefined') return null;
   try { return (localStorage.getItem(UI_ACTIVE_TAB_KEY) as any) || null; } catch { return null; }
 };
@@ -356,7 +356,7 @@ const AdsPage = () => {
   const { openSignIn } = useClerk();
   const { isLoaded, user, isSignedIn } = useUser();
 
-  const [activeTab, setActiveTab] = useState<'analysis' | 'similar'>(() => loadActiveTab() ?? 'analysis');
+  const [activeTab, setActiveTab] = useState<'analysis' | 'similar' | 'saved'>(() => loadActiveTab() ?? 'analysis');
   const [loading, setLoading] = useState(false);
   const [fetchingKeywords, setFetchingKeywords] = useState(false);
   const [findingSimilar, setFindingSimilar] = useState(false);
@@ -408,6 +408,18 @@ const AdsPage = () => {
   const [analyzingCampaigns, setAnalyzingCampaigns] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<string>('');
   const [showAiAnalysis, setShowAiAnalysis] = useState(false);
+  // Saved analyses state
+  const [savedAnalyses, setSavedAnalyses] = useState<Array<{
+    id: number;
+    analysisText: string;
+    dateRangeStart: string;
+    dateRangeEnd: string;
+    campaignCount: number;
+    createdAt: string;
+    updatedAt: string;
+  }>>([]);
+  const [loadingSavedAnalyses, setLoadingSavedAnalyses] = useState(false);
+  const [selectedSavedAnalysis, setSelectedSavedAnalysis] = useState<typeof savedAnalyses[0] | null>(null);
   // Sort state - initialize from localStorage or use defaults
   const [sortColumn, setSortColumn] = useState<'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare' | null>(() => {
     const saved = loadSortState();
@@ -604,6 +616,14 @@ const AdsPage = () => {
   useEffect(() => {
     initPageData();
   }, [isSignedIn, user, initPageData]);
+
+  // Fetch saved analyses when user is loaded and admin, and when switching to saved tab
+  useEffect(() => {
+    if (isLoaded && isSignedIn && admin && user?.emailAddresses[0]?.emailAddress && activeTab === 'saved') {
+      fetchSavedAnalyses();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, isSignedIn, admin, user?.emailAddresses, activeTab]);
 
   // Fetch available campaigns only when user explicitly requests data
   // Removed automatic fetching to prevent unwanted API calls on page load
@@ -1026,12 +1046,14 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
 
       const reader = data.getReader();
       const decoder = new TextDecoder();
+      let accumulatedAnalysis = '';
 
       const onParse = (event: ParsedEvent | ReconnectInterval) => {
         if (event.type === "event") {
           const data = event.data;
           try {
             const text = JSON.parse(data).text ?? "";
+            accumulatedAnalysis += text;
             setAiAnalysis(prev => prev + text);
           } catch (e) {
             console.error(e);
@@ -1049,7 +1071,39 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
         parser.feed(chunkValue);
       }
 
+      // Save the analysis to the database
+      if (accumulatedAnalysis.trim().length > 0) {
+        try {
+          const saveResponse = await fetch('/api/google-ads/save-ai-analysis', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-user-email': user.emailAddresses[0].emailAddress
+            },
+            body: JSON.stringify({
+              analysisText: accumulatedAnalysis,
+              dateRangeStart: startDate,
+              dateRangeEnd: endDate,
+              campaignCount: campaignsSummary.length
+            })
+          });
+
+          if (saveResponse.ok) {
+            const saveData = await saveResponse.json();
+            console.log('AI analysis saved to database:', saveData.analysisId);
+          } else {
+            console.warn('Failed to save AI analysis to database:', await saveResponse.text());
+          }
+        } catch (saveError) {
+          console.error('Error saving AI analysis to database:', saveError);
+          // Don't show error to user as the analysis was still generated successfully
+        }
+      }
+
       toast.success('AI analysis completed!');
+      
+      // Refresh saved analyses list after new analysis
+      fetchSavedAnalyses();
     } catch (error) {
       console.error('Error analyzing campaigns with AI:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -1067,6 +1121,31 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
       setShowAiAnalysis(false);
     } finally {
       setAnalyzingCampaigns(false);
+    }
+  };
+
+  // Fetch saved AI analyses
+  const fetchSavedAnalyses = async () => {
+    if (!user?.emailAddresses[0]?.emailAddress || !admin) return;
+
+    setLoadingSavedAnalyses(true);
+    try {
+      const response = await fetch('/api/google-ads/get-ai-analyses', {
+        headers: {
+          'x-user-email': user.emailAddresses[0].emailAddress
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setSavedAnalyses(data.analyses || []);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching saved analyses:', error);
+    } finally {
+      setLoadingSavedAnalyses(false);
     }
   };
 
@@ -1741,7 +1820,7 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
         {/* Tab Navigation */}
         <div className="w-full max-w-4xl mx-auto mb-6">
           <div className="bg-gray-100 rounded-lg p-1">
-            <div className="grid grid-cols-2 gap-1">
+            <div className="grid grid-cols-3 gap-1">
               <button
                 onClick={() => setActiveTab('analysis')}
                 className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
@@ -1764,6 +1843,24 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
                 {campaignKeywords.length > 0 && (
                   <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700">
                     {campaignKeywords.length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('saved');
+                  fetchSavedAnalyses();
+                }}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                  activeTab === 'saved'
+                    ? 'bg-white text-gray-800 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                Saved Analyses
+                {savedAnalyses.length > 0 && (
+                  <span className="ml-2 px-1.5 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700">
+                    {savedAnalyses.length}
                   </span>
                 )}
               </button>
@@ -2145,18 +2242,99 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
           </>
         )}
 
+        {/* Saved Analyses Tab */}
+        {activeTab === 'saved' && (
+          <div className="w-full max-w-4xl mx-auto mb-8">
+            <div className="bg-white rounded-xl border border-gray-100 p-6">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Saved AI Analyses</h2>
+                <p className="text-sm text-gray-600 mt-1">View your past campaign analyses</p>
+              </div>
+
+              {loadingSavedAnalyses ? (
+                <div className="py-12 flex justify-center">
+                  <LoadingDots color="black" style="small" />
+                </div>
+              ) : savedAnalyses.length === 0 ? (
+                <div className="py-12 text-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <p className="text-gray-600 mb-4">No saved analyses yet.</p>
+                  <p className="text-sm text-gray-500">Switch to the Campaign Analysis tab to generate an AI analysis.</p>
+                  <button
+                    onClick={() => setActiveTab('analysis')}
+                    className="mt-4 bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition-colors text-sm font-medium"
+                  >
+                    Go to Campaign Analysis
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {savedAnalyses.map((analysis) => (
+                    <div
+                      key={analysis.id}
+                      className="bg-gray-50 rounded-lg border border-gray-200 p-4 hover:bg-gray-100 transition-colors cursor-pointer"
+                      onClick={() => {
+                        setSelectedSavedAnalysis(analysis);
+                        setAiAnalysis(analysis.analysisText);
+                        setShowAiAnalysis(true);
+                      }}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-sm font-medium text-gray-900">
+                              {new Date(analysis.dateRangeStart).toLocaleDateString()} - {new Date(analysis.dateRangeEnd).toLocaleDateString()}
+                            </span>
+                            <span className="text-xs text-gray-500">•</span>
+                            <span className="text-xs text-gray-600">
+                              {analysis.campaignCount} campaign{analysis.campaignCount !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500 mb-2 line-clamp-2">
+                            {analysis.analysisText.substring(0, 150)}...
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {new Date(analysis.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 ml-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* AI Analysis Results Modal */}
         <Dialog
           fullScreen
           open={showAiAnalysis && !!aiAnalysis}
-          onClose={() => setShowAiAnalysis(false)}
+          onClose={() => {
+            setShowAiAnalysis(false);
+            setSelectedSavedAnalysis(null);
+          }}
           TransitionComponent={Transition}
         >
           {/* Header */}
           <div className="flex items-center justify-between p-6 bg-white border-b border-gray-200">
             <div>
               <h2 className="text-3xl font-bold text-gray-900">AI Campaign Analysis</h2>
-              <p className="text-lg text-gray-600 mt-1">Expert Google Ads optimization recommendations</p>
+              <p className="text-lg text-gray-600 mt-1">
+                {selectedSavedAnalysis 
+                  ? `Saved analysis from ${new Date(selectedSavedAnalysis.dateRangeStart).toLocaleDateString()} - ${new Date(selectedSavedAnalysis.dateRangeEnd).toLocaleDateString()}`
+                  : 'Expert Google Ads optimization recommendations'}
+              </p>
+              {selectedSavedAnalysis && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Created: {new Date(selectedSavedAnalysis.createdAt).toLocaleString()}
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <button
