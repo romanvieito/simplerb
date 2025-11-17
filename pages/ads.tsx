@@ -538,6 +538,8 @@ const AdsPage = () => {
   });
   const [selectedDatePreset, setSelectedDatePreset] = useState<string>(loadedDateFilter?.preset ?? 'last7days');
   const [showDateFilter, setShowDateFilter] = useState(false);
+  const [showDateSubmenu, setShowDateSubmenu] = useState(false);
+  const dateSubmenuRef = useRef<HTMLDivElement>(null);
 
   // Update dates when timezone loads (only if no saved dates)
   useEffect(() => {
@@ -695,6 +697,21 @@ const AdsPage = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showCampaignsColumnSelector]);
+
+  // Close date submenu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dateSubmenuRef.current && !dateSubmenuRef.current.contains(event.target as Node)) {
+        setShowDateSubmenu(false);
+      }
+    };
+    if (showDateSubmenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDateSubmenu]);
 
 
   const fetchCampaignKeywords = async () => {
@@ -943,41 +960,56 @@ const AdsPage = () => {
                                campaignsVisibleColumns.cpa ||
                                campaignsVisibleColumns.conversionValue;
 
-      const analysisSections = [
-        "1. **Performance Overview**: Key insights about overall campaign performance",
-        "2. **Top Performing Campaigns**: Which campaigns are doing well and why",
-        "3. **Underperforming Areas**: Campaigns or keywords that need attention",
-        "4. **Budget Optimization**: Suggestions for budget allocation",
-        "5. **Keyword Strategy**: Recommendations for keyword management, bids, and targeting"
-      ];
+      const prompt = `You are an expert Google Ads specialist. Provide a CONCISE, ACTIONABLE optimization plan with concrete steps.
 
-      if (hasConversionData) {
-        analysisSections.push("6. **Conversion Optimization**: Ways to improve conversion rates");
-        analysisSections.push("7. **Action Items**: Specific, prioritized recommendations with expected impact");
-      } else {
-        analysisSections.push("6. **Action Items**: Specific, prioritized recommendations with expected impact");
-        analysisSections.push("**Note**: Conversion data is not visible in your current view. Focus analysis on available metrics like impressions, clicks, CTR, and cost efficiency.");
-      }
-
-      const prompt = `You are an expert Google Ads specialist.
-
-Analyze this Google Ads campaign data and provide actionable recommendations to improve performance. 
+CRITICAL: Keep response under 800 words. Focus on immediate, implementable actions with specific metrics.
 
 IMPORTANT DATA INTEGRITY NOTES:
-1. The data shown includes ONLY the metrics columns that are currently visible in the user's interface. Do NOT mention or analyze any metrics that are not present in the data provided.
-2. All monetary values (cost, avgCpc, cpa, conversionValue) are normalized to currency units (USD dollars) for consistency between campaign-level and keyword-level metrics.
-3. All currency values are in the same unit (dollars) - campaign data and keyword data use the same unit, so comparisons are accurate. When comparing costs or CPCs between campaigns and keywords, they are directly comparable.
-4. CTR, conversion rates, and impression share are normalized to decimal format (e.g., 0.05 = 5%, 0.85 = 85%) for consistency. All percentage-based metrics use the same decimal format across campaigns and keywords.
-5. Data has been validated and normalized to ensure consistency - if you notice any discrepancies that seem unusual, please report them, but first verify the data format matches these specifications.
+1. Only analyze metrics visible in the data provided. Do NOT mention metrics not present.
+2. All monetary values are in USD dollars (campaign and keyword data use same units).
+3. Percentages are in decimal format (0.05 = 5%, 0.85 = 85%).
+4. All values are directly comparable between campaigns and keywords.
 
 CAMPAIGN DATA:
 ${JSON.stringify(campaignData, null, 2)}
 
-Please provide a comprehensive analysis including:
+Provide your analysis in this EXACT format:
 
-${analysisSections.join('\n')}
+## Quick Wins (Top 3 Immediate Actions)
+1. [Specific action] - [Expected impact with numbers]
+2. [Specific action] - [Expected impact with numbers]
+3. [Specific action] - [Expected impact with numbers]
 
-Be specific with numbers and percentages. Focus on actionable insights based on the available data. When comparing costs, CPCs, or other monetary values between campaigns and keywords, note that all values are in the same unit (dollars) and can be directly compared.`;
+## Step-by-Step Optimization Plan
+
+### Priority 1: [Campaign/Keyword Name]
+- **Issue**: [One sentence problem]
+- **Action**: [Specific change to make]
+- **Expected Result**: [Quantified improvement]
+
+### Priority 2: [Campaign/Keyword Name]
+- **Issue**: [One sentence problem]
+- **Action**: [Specific change to make]
+- **Expected Result**: [Quantified improvement]
+
+### Priority 3: [Campaign/Keyword Name]
+- **Issue**: [One sentence problem]
+- **Action**: [Specific change to make]
+- **Expected Result**: [Quantified improvement]
+
+## Budget Reallocation (if applicable)
+- Move $X from [Campaign A] to [Campaign B] because [reason with metrics]
+- Pause/Reduce [Campaign/Keyword] because [reason with metrics]
+
+${hasConversionData ? `## Conversion Optimization
+- [Specific keyword/campaign] - [Action] - [Expected conversion rate improvement]` : ''}
+
+## Next Steps Checklist
+- [ ] [Action 1]
+- [ ] [Action 2]
+- [ ] [Action 3]
+
+Be direct. Use specific numbers. No fluff. Each recommendation must include: WHAT to change, WHY (with data), and EXPECTED OUTCOME (with metrics).`;
 
       const response = await fetch("/api/openai", {
         method: "POST",
@@ -1363,11 +1395,15 @@ Be specific with numbers and percentages. Focus on actionable insights based on 
     setSelectedDatePreset(preset);
   };
 
-  const datePresets = [
+  // Split date presets into main presets and submenu presets
+  const mainDatePresets = [
     { value: 'today', label: 'Today' },
     { value: 'yesterday', label: 'Yesterday' },
     { value: 'last7days', label: 'Last 7 days' },
     { value: 'last30days', label: 'Last 30 days' },
+  ];
+  
+  const submenuDatePresets = [
     { value: 'last90days', label: 'Last 90 days' },
     { value: 'thismonth', label: 'This month' },
     { value: 'lastmonth', label: 'Last month' },
@@ -1854,8 +1890,9 @@ Be specific with numbers and percentages. Focus on actionable insights based on 
                   <div className="bg-gray-50 rounded-xl border border-gray-100 p-4 flex-shrink-0">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                       <span className="text-sm font-medium text-gray-700">Date Range</span>
-                      <div className="flex flex-wrap gap-2">
-                        {datePresets.map((preset) => (
+                      <div className="flex flex-wrap items-center gap-2">
+                        {/* Main date presets */}
+                        {mainDatePresets.map((preset) => (
                           <button
                             key={preset.value}
                             onClick={() => handleDatePresetChange(preset.value)}
@@ -1868,6 +1905,47 @@ Be specific with numbers and percentages. Focus on actionable insights based on 
                             {preset.label}
                           </button>
                         ))}
+                        
+                        {/* 3-dot submenu button */}
+                        <div className="relative" ref={dateSubmenuRef}>
+                          <button
+                            onClick={() => setShowDateSubmenu(!showDateSubmenu)}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1 ${
+                              submenuDatePresets.some(p => selectedDatePreset === p.value)
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                            title="More date options"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                            </svg>
+                          </button>
+                          
+                          {/* Submenu dropdown */}
+                          {showDateSubmenu && (
+                            <div className="absolute left-0 top-full mt-2 bg-white rounded-lg shadow-xl border-2 border-gray-200 p-2 z-20 min-w-[160px]">
+                              {submenuDatePresets.map((preset) => (
+                                <button
+                                  key={preset.value}
+                                  onClick={() => {
+                                    handleDatePresetChange(preset.value);
+                                    setShowDateSubmenu(false);
+                                  }}
+                                  className={`w-full text-left px-3 py-2 text-xs font-medium rounded-md transition-colors ${
+                                    selectedDatePreset === preset.value
+                                      ? 'bg-blue-50 text-blue-700'
+                                      : 'text-gray-700 hover:bg-gray-50'
+                                  }`}
+                                >
+                                  {preset.label}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Custom date inputs */}
                         <div className="flex gap-2">
                           <input
                             type="date"
