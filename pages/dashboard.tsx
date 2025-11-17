@@ -101,6 +101,11 @@ const Dashboard: React.FC = () => {
   const [renameError, setRenameError] = useState<string | null>(null);
   const [publishedSitesFilter, setPublishedSitesFilter] = useState<'all' | 'favorites' | 'non-favorites'>('favorites');
   const [publishedSitesSearch, setPublishedSitesSearch] = useState<string>('');
+  
+  // Selection state for copy to clipboard
+  const [selectedKeywords, setSelectedKeywords] = useState<Set<string>>(new Set());
+  const [selectedDomains, setSelectedDomains] = useState<Set<string>>(new Set());
+  const [selectedSites, setSelectedSites] = useState<Set<string>>(new Set());
 
   // Compute 3-month change similar to /find-keywords
   const calculateThreeMonthChange = (monthlyData?: KeywordFavorite['monthly_search_volumes']): string => {
@@ -740,6 +745,39 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  // Copy selected keywords to clipboard
+  const copySelectedKeywords = () => {
+    const selected = favorites.filter(fav => selectedKeywords.has(fav.keyword));
+    if (selected.length === 0) return;
+    
+    const text = selected.map(fav => fav.keyword).join('\n');
+    navigator.clipboard.writeText(text).catch(err => {
+      console.error('Failed to copy:', err);
+    });
+  };
+
+  // Copy selected domains to clipboard
+  const copySelectedDomains = () => {
+    const selected = domainFavorites.filter(fav => selectedDomains.has(fav.namedomain));
+    if (selected.length === 0) return;
+    
+    const text = selected.map(fav => fav.namedomain).join('\n');
+    navigator.clipboard.writeText(text).catch(err => {
+      console.error('Failed to copy:', err);
+    });
+  };
+
+  // Copy selected sites to clipboard
+  const copySelectedSites = () => {
+    const selected = filteredPublishedSites.filter(site => selectedSites.has(site.id));
+    if (selected.length === 0) return;
+    
+    const text = selected.map(site => `${site.subdomain}.simplerb.com`).join('\n');
+    navigator.clipboard.writeText(text).catch(err => {
+      console.error('Failed to copy:', err);
+    });
+  };
+
   // Delete published site
   const deleteSite = async (siteId: string, subdomain: string) => {
     if (!confirm(`Are you sure you want to delete ${subdomain}.simplerb.com? This action cannot be undone.`)) {
@@ -814,6 +852,14 @@ const Dashboard: React.FC = () => {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
+                  {selectedKeywords.size > 0 && (
+                    <button
+                      onClick={copySelectedKeywords}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    >
+                      Copy Selected ({selectedKeywords.size})
+                    </button>
+                  )}
                   <button
                     onClick={() => toggleMinimizeSection('favorites')}
                     className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
@@ -869,7 +915,20 @@ const Dashboard: React.FC = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-gray-200">
-                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">★</th>
+                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-700 w-12">
+                            <input
+                              type="checkbox"
+                              checked={favorites.length > 0 && favorites.every(fav => selectedKeywords.has(fav.keyword))}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedKeywords(new Set(favorites.map(fav => fav.keyword)));
+                                } else {
+                                  setSelectedKeywords(new Set());
+                                }
+                              }}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                          </th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Keyword</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Volume</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Competition</th>
@@ -883,15 +942,20 @@ const Dashboard: React.FC = () => {
                         {favorites.map((favorite, index) => (
                           <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                             <td className="py-4 px-4 text-center">
-                              <button
-                                onClick={() => removeFavorite(favorite.keyword)}
-                                className="inline-flex items-center justify-center w-8 h-8 text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50 rounded-full transition-colors"
-                                title="Remove from favorites"
-                              >
-                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                                </svg>
-                              </button>
+                              <input
+                                type="checkbox"
+                                checked={selectedKeywords.has(favorite.keyword)}
+                                onChange={(e) => {
+                                  const newSelected = new Set(selectedKeywords);
+                                  if (e.target.checked) {
+                                    newSelected.add(favorite.keyword);
+                                  } else {
+                                    newSelected.delete(favorite.keyword);
+                                  }
+                                  setSelectedKeywords(newSelected);
+                                }}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              />
                             </td>
                             <td className="py-4 px-4 text-sm font-medium text-gray-900">{favorite.keyword}</td>
                             <td className="py-4 px-4 text-sm text-gray-600">{favorite.search_volume?.toLocaleString() || 'N/A'}</td>
@@ -982,6 +1046,14 @@ const Dashboard: React.FC = () => {
                   <h2 className="text-lg font-semibold text-gray-900">Domain Favorites</h2>
                 </div>
                 <div className="flex items-center gap-2">
+                  {selectedDomains.size > 0 && (
+                    <button
+                      onClick={copySelectedDomains}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    >
+                      Copy Selected ({selectedDomains.size})
+                    </button>
+                  )}
                   <button
                     onClick={() => toggleMinimizeSection('domain-favorites')}
                     className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
@@ -1037,7 +1109,20 @@ const Dashboard: React.FC = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-gray-200">
-                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">★</th>
+                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-700 w-12">
+                            <input
+                              type="checkbox"
+                              checked={domainFavorites.length > 0 && domainFavorites.every(fav => selectedDomains.has(fav.namedomain))}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedDomains(new Set(domainFavorites.map(fav => fav.namedomain)));
+                                } else {
+                                  setSelectedDomains(new Set());
+                                }
+                              }}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                          </th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Domain Name</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Availability</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Rating</th>
@@ -1049,15 +1134,20 @@ const Dashboard: React.FC = () => {
                         {domainFavorites.map((favorite, index) => (
                           <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                             <td className="py-4 px-4 text-center">
-                              <button
-                                onClick={() => removeDomainFavorite(favorite.namedomain)}
-                                className="inline-flex items-center justify-center w-8 h-8 text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50 rounded-full transition-colors"
-                                title="Remove from favorites"
-                              >
-                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                                </svg>
-                              </button>
+                              <input
+                                type="checkbox"
+                                checked={selectedDomains.has(favorite.namedomain)}
+                                onChange={(e) => {
+                                  const newSelected = new Set(selectedDomains);
+                                  if (e.target.checked) {
+                                    newSelected.add(favorite.namedomain);
+                                  } else {
+                                    newSelected.delete(favorite.namedomain);
+                                  }
+                                  setSelectedDomains(newSelected);
+                                }}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              />
                             </td>
                             <td className="py-4 px-4 text-sm font-medium text-gray-900">{favorite.namedomain || 'N/A'}</td>
                             <td className="py-4 px-4 text-sm text-gray-600">
@@ -1174,6 +1264,14 @@ const Dashboard: React.FC = () => {
                     <option value="non-favorites">Non-Favorites Only</option>
                     <option value="all">Show All Sites</option>
                   </select>
+                  {selectedSites.size > 0 && (
+                    <button
+                      onClick={copySelectedSites}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    >
+                      Copy Selected ({selectedSites.size})
+                    </button>
+                  )}
                   <button
                     onClick={() => toggleMinimizeSection('published-sites')}
                     className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
@@ -1266,7 +1364,20 @@ const Dashboard: React.FC = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-gray-200">
-                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">★</th>
+                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-700 w-12">
+                            <input
+                              type="checkbox"
+                              checked={filteredPublishedSites.length > 0 && filteredPublishedSites.every(site => selectedSites.has(site.id))}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedSites(new Set(filteredPublishedSites.map(site => site.id)));
+                                } else {
+                                  setSelectedSites(new Set());
+                                }
+                              }}
+                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                          </th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Subdomain</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Description</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Created</th>
@@ -1277,19 +1388,20 @@ const Dashboard: React.FC = () => {
                         {filteredPublishedSites.map((site) => (
                           <tr key={site.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                             <td className="py-4 px-4 text-center">
-                              <button
-                                onClick={() => toggleSiteFavorite(site.id, site.favorite)}
-                                className={`inline-flex items-center justify-center w-8 h-8 rounded-full transition-colors ${
-                                  site.favorite
-                                    ? 'text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50'
-                                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-                                }`}
-                                title={site.favorite ? 'Remove from favorites' : 'Add to favorites'}
-                              >
-                                <svg className={`w-4 h-4 ${site.favorite ? 'fill-current' : ''}`} fill={site.favorite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                                </svg>
-                              </button>
+                              <input
+                                type="checkbox"
+                                checked={selectedSites.has(site.id)}
+                                onChange={(e) => {
+                                  const newSelected = new Set(selectedSites);
+                                  if (e.target.checked) {
+                                    newSelected.add(site.id);
+                                  } else {
+                                    newSelected.delete(site.id);
+                                  }
+                                  setSelectedSites(newSelected);
+                                }}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              />
                             </td>
                             <td className="py-4 px-4 text-sm font-medium text-gray-900">
                               {renamingSubdomain === site.subdomain ? (
