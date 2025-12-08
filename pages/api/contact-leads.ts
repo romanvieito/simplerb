@@ -2,6 +2,13 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { sql } from '@vercel/postgres';
 import { getAuth } from '@clerk/nextjs/server';
 
+// Disable Next.js default body parsing so we can safely handle form posts
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 const ensureTable = async () => {
   await sql`
     CREATE TABLE IF NOT EXISTS site_leads (
@@ -30,12 +37,32 @@ const getSubdomainFromHost = (host?: string | null) => {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     try {
-      const { name, email, message, subdomain } = req.body as {
-        name?: string;
-        email?: string;
-        message?: string;
-        subdomain?: string;
-      };
+      const rawBody = await new Promise<string>((resolve, reject) => {
+        let data = '';
+        req.on('data', (chunk) => {
+          data += chunk;
+        });
+        req.on('end', () => resolve(data));
+        req.on('error', reject);
+      });
+
+      let parsed: Record<string, string | undefined> = {};
+      const contentType = req.headers['content-type'] || '';
+      try {
+        if (contentType.includes('application/json')) {
+          parsed = JSON.parse(rawBody || '{}');
+        } else {
+          const params = new URLSearchParams(rawBody);
+          params.forEach((value, key) => {
+            parsed[key] = value;
+          });
+        }
+      } catch (parseErr) {
+        console.error('Failed to parse contact body', parseErr);
+        return res.status(400).json({ success: false, message: 'Invalid request body' });
+      }
+
+      const { name, email, message, subdomain } = parsed;
 
       const hostSubdomain = getSubdomainFromHost(req.headers.host);
       const targetSubdomain = (subdomain || hostSubdomain || '').trim().toLowerCase();
