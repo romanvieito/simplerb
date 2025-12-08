@@ -51,6 +51,8 @@ const WebPage = () => {
   const [vibe, setVibe] = useState<VibeType>("Professional");
   const [audience, setAudience] = useState("");
   const [trustSignals, setTrustSignals] = useState("");
+  const [leads, setLeads] = useState<Array<{ id: number; subdomain: string; name: string | null; email: string | null; message: string; created_at: string }>>([]);
+  const [leadsLoading, setLeadsLoading] = useState(false);
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -170,6 +172,29 @@ const WebPage = () => {
   useEffect(() => {
     initPageData();
   }, [isSignedIn, user, initPageData]);
+
+  // Fetch leads for signed-in user
+  useEffect(() => {
+    const loadLeads = async () => {
+      if (!isSignedIn) return;
+      setLeadsLoading(true);
+      try {
+        const resp = await fetch('/api/contact-leads');
+        if (!resp.ok) {
+          throw new Error('Failed to load leads');
+        }
+        const data = await resp.json();
+        if (data?.success && Array.isArray(data.leads)) {
+          setLeads(data.leads);
+        }
+      } catch (err) {
+        console.error('Error loading leads', err);
+      } finally {
+        setLeadsLoading(false);
+      }
+    };
+    loadLeads();
+  }, [isSignedIn]);
 
   // Check for edit parameter in URL
   useEffect(() => {
@@ -453,11 +478,12 @@ const WebPage = () => {
       Style: ${designPlan.design_style}. Typography: ${designPlan.typography || 'system sans-serif'}.
       Palette: ${(designPlan.color_palette || ['#0f172a', '#2563eb', '#f43f5e']).join(', ')}.
       Sections (in this order): 
-      1) Hero with H1 using the brand, a short subheadline, and a primary CTA button labeled "${designPlan.cta || 'Get Started'}".
+      1) Hero with H1 using the brand, a short subheadline, and a primary CTA button labeled "${designPlan.cta || 'Get Started'}" that links to #contact.
       2) 3 concise feature highlights with headings and one-line descriptions tailored to the audience.
       3) Services/offer section with bullets.
       4) "Why choose us" block with 3 short benefits; if trust signals provided, weave them in plainly. If none provided, use generic strengths and a simple guarantee without making up specifics.
       5) Secondary CTA + simple contact/footer.
+      Contact: include a minimal contact section with id="contact" containing a form (name optional, email optional, message required) that posts to /api/contact-leads with method="POST" and includes a hidden subdomain field (if present). Avoid using href="#" anywhere; default CTA target should be #contact.
       Images (use <img> tags, include alt text, prefer Pexels URLs; use placeholders only if missing):
       ${images.map(img => `${img.type}: ${img.pexels?.url || 'https://via.placeholder.com/1920x1080'} (alt: ${img.alt_text || img.type})`).join('\n')}${domainBranding}
 
@@ -511,9 +537,37 @@ const WebPage = () => {
       const hasHtml = cleanedWebsite.toLowerCase().includes('<html');
       const hasBody = cleanedWebsite.toLowerCase().includes('<body');
       const safeTitle = selectedDomain || 'Your Site';
-      const finalHtml = hasHtml && hasBody
+      let finalHtml = hasHtml && hasBody
         ? cleanedWebsite
         : `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${safeTitle}</title></head><body>${cleanedWebsite}</body></html>`;
+
+      const ensureContactSection = (html: string) => {
+        let updated = html.replace(/href="#"/g, 'href="#contact"');
+        const hasContactId = /id=["']contact["']/.test(updated);
+        const contactBlock = `
+<section id="contact" style="padding:48px 20px; background:#f8fafc; border-top:1px solid #e5e7eb;">
+  <div style="max-width:760px; margin:0 auto; text-align:center;">
+    <h2 style="font-size:28px; margin-bottom:12px;">Request info</h2>
+    <p style="color:#4b5563; margin-bottom:24px;">Tell us about your project. We’ll follow up soon.</p>
+    <form action="/api/contact-leads" method="POST" style="display:grid; gap:12px; text-align:left;">
+      <input type="hidden" name="subdomain" value="${selectedDomain || ''}" />
+      <input name="name" placeholder="Your name (optional)" style="padding:12px 14px; border:1px solid #e5e7eb; border-radius:8px;" />
+      <input name="email" type="email" placeholder="Your email (optional)" style="padding:12px 14px; border:1px solid #e5e7eb; border-radius:8px;" />
+      <textarea name="message" required rows="3" placeholder="Project details" style="padding:12px 14px; border:1px solid #e5e7eb; border-radius:8px; resize:vertical;"></textarea>
+      <button type="submit" style="background:#2563eb; color:white; padding:12px 16px; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Send</button>
+    </form>
+  </div>
+</section>`;
+        if (hasContactId) {
+          return updated;
+        }
+        if (updated.includes('</body>')) {
+          return updated.replace('</body>', `${contactBlock}</body>`);
+        }
+        return `${updated}${contactBlock}`;
+      };
+
+      finalHtml = ensureContactSection(finalHtml);
 
       setGeneratedSite(finalHtml);
       setOpenWebSite(true);
@@ -1072,6 +1126,38 @@ const WebPage = () => {
             </div>
           </form>
         </div>
+
+        {isSignedIn && (
+          <div className="w-full max-w-4xl mx-auto mt-6">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-lg font-semibold text-gray-900">Recent leads</h2>
+                {leadsLoading && <span className="text-sm text-gray-500">Loading…</span>}
+              </div>
+              {!leadsLoading && leads.length === 0 && (
+                <p className="text-sm text-gray-500">No leads yet.</p>
+              )}
+              <div className="divide-y divide-gray-200">
+                {leads.slice(0, 5).map((lead) => (
+                  <div key={lead.id} className="py-3">
+                    <div className="text-sm text-gray-900 font-medium">
+                      {lead.subdomain || '—'}
+                    </div>
+                    <div className="text-sm text-gray-700">
+                      {lead.message.slice(0, 140)}
+                      {lead.message.length > 140 ? '…' : ''}
+                    </div>
+                    <div className="text-xs text-gray-500 flex items-center gap-2 mt-1">
+                      {lead.name && <span>{lead.name}</span>}
+                      {lead.email && <span>• {lead.email}</span>}
+                      <span>• {new Date(lead.created_at).toLocaleString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div>
         <Dialog
