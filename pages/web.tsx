@@ -29,6 +29,7 @@ const Transition = React.forwardRef(function Transition(
 // Add type for subscription plan
 type SubscriptionPlan = 'CREATOR' | 'STARTER' | 'FREE';
 
+const MIN_DESCRIPTION_LENGTH = 20;
 const WebPage = () => {
   const router = useRouter();
   const { openSignIn } = useClerk();
@@ -232,6 +233,13 @@ const WebPage = () => {
     setLoading(true);
 
     try {
+      const trimmedDescription = textDescription.trim();
+      if (trimmedDescription.length < MIN_DESCRIPTION_LENGTH) {
+        toast.error(`Please provide at least ${MIN_DESCRIPTION_LENGTH} characters describing your site.`);
+        setLoading(false);
+        return;
+      }
+
       if (!isPremiumUser) {
         toast((t) => (
           <div className="flex flex-col items-center p-4">
@@ -290,18 +298,22 @@ const WebPage = () => {
        */
       const domainContext = selectedDomain ? ` for ${selectedDomain}` : "";
       const vibeContext = vibe !== "Professional" ? ` with a ${vibe.toLowerCase()} vibe` : "";
+      const brandName = selectedDomain || "Your Business";
       
-      const designerPrompt = `Design minimal website${domainContext}${vibeContext} for: ${textDescription}
-      Return raw JSON without any markdown formatting or code blocks. Start with opening brace and end with closing brace:
+      const designerPrompt = `Design a single-page, mobile-first marketing site${domainContext}${vibeContext} for: ${trimmedDescription}
+      Return raw JSON only (no markdown, no code fences). Start with opening brace and end with closing brace:
       {
         "reference_website": "URL",
         "design_style": "5-word style description",
-        "layout_sections": ["simple informative hero, features and pick just one more section"],
+        "layout_sections": ["Hero with CTA", "3 feature highlights", "Offer or services", "Why choose us (generic benefits/guarantees)", "Simple contact/footer"],
+        "color_palette": ["primary hex", "secondary hex", "accent hex"],
+        "typography": "font pairing guidance",
+        "cta": "short CTA text",
         "images": [
           {
             "type": "hero",
             "search_query": "2-3 word query",
-            "alt_text": "3-word alt text"
+            "alt_text": "3-word alt text describing the image"
           },
           {
             "type": "feature1",
@@ -315,6 +327,11 @@ const WebPage = () => {
           },
           {
             "type": "feature3",
+            "search_query": "2-3 word query",
+            "alt_text": "2-word alt text"
+          },
+          {
+            "type": "supporting",
             "search_query": "2-3 word query",
             "alt_text": "2-word alt text"
           }
@@ -354,7 +371,24 @@ const WebPage = () => {
         design_style: string;
         layout_sections: string[];
         images: DesignImage[];
+        color_palette?: string[];
+        typography?: string;
+        cta?: string;
       }
+
+      const validateDesignPlan = (plan: DesignPlan): { valid: boolean; error?: string } => {
+        if (!plan || typeof plan !== 'object') return { valid: false, error: 'Design plan is missing.' };
+        if (!plan.layout_sections || !Array.isArray(plan.layout_sections) || plan.layout_sections.length === 0) {
+          return { valid: false, error: 'Design plan is missing layout sections.' };
+        }
+        if (!plan.images || !Array.isArray(plan.images) || plan.images.length === 0) {
+          return { valid: false, error: 'Design plan is missing image guidance.' };
+        }
+        if (!plan.images.every(img => img?.type && img?.search_query)) {
+          return { valid: false, error: 'Image entries require type and search query.' };
+        }
+        return { valid: true };
+      };
 
       // Parse the designer's JSON response
       let designPlan: DesignPlan;
@@ -363,6 +397,7 @@ const WebPage = () => {
         const cleanJson = designerResult.data.content[0].text
           .replace(/^```json\s*/, '') // Remove opening ```json
           .replace(/```\s*$/, '')     // Remove closing ```
+          .replace(/^```\s*/, '')     // Remove generic ```
           .trim();                    // Remove any extra whitespace
         
         designPlan = JSON.parse(cleanJson) as DesignPlan;
@@ -373,8 +408,9 @@ const WebPage = () => {
       }
 
       // Validate required properties
-      if (!designPlan.images) {
-        throw new Error("Designer response missing required properties");
+      const validationResult = validateDesignPlan(designPlan);
+      if (!validationResult.valid) {
+        throw new Error(validationResult.error || "Designer response missing required properties");
       }
 
       // Fetch all images based on the designer's specifications
@@ -402,20 +438,26 @@ const WebPage = () => {
        */
       const domainBranding = selectedDomain ? `\n\nBranding: Use ${selectedDomain} as the main brand/company name throughout the site.` : "";
       
-      const developerPrompt = `Create a minimal landing page.
-      Ref: ${designPlan.reference_website}
-      Style: ${designPlan.design_style}
-      Sections: ${designPlan.layout_sections?.join(', ')}
-      
-      Images:
-      ${images.map(img => `${img.type}: ${img.pexels?.url || 'https://via.placeholder.com/1920x1080'}`).join('\n')}${domainBranding}
+      const developerPrompt = `Create a clean, single HTML landing page (no markdown, no code fences, no scripts).
+      Brand name: ${brandName}.
+      Reference: ${designPlan.reference_website}.
+      Style: ${designPlan.design_style}. Typography: ${designPlan.typography || 'system sans-serif'}.
+      Palette: ${(designPlan.color_palette || ['#0f172a', '#2563eb', '#f43f5e']).join(', ')}.
+      Sections (in this order): 
+      1) Hero with H1 using the brand, a short subheadline, and a primary CTA button labeled "${designPlan.cta || 'Get Started'}".
+      2) 3 concise feature highlights with headings and one-line descriptions.
+      3) Services/offer section with bullets.
+      4) "Why choose us" block with 3 short benefits (no client names needed) plus an optional simple guarantee line.
+      5) Secondary CTA + simple contact/footer.
+      Images (use <img> tags, include alt text, prefer Pexels URLs; use placeholders only if missing):
+      ${images.map(img => `${img.type}: ${img.pexels?.url || 'https://via.placeholder.com/1920x1080'} (alt: ${img.alt_text || img.type})`).join('\n')}${domainBranding}
 
-      Requirements:
-      1. Single page only (no navigation)
-      2. Mobile-first design
-      3. ${vibe} tone and style throughout
-      
-      Please return only the code, nothing else.`;
+      Rules:
+      - Mobile-first responsive layout with max-width container, generous spacing, and readable line lengths.
+      - Use semantic HTML5 (section, header, main, footer). Do not include nav menus.
+      - Inline a <style> block with minimal, modern CSS; avoid external assets and heavy gradients.
+      - Ensure contrast and accessible font sizes; buttons have hover/focus states.
+      - Do not wrap output in markdown fences; return only the HTML document string.`;
 
       // Second API call - Website Development
       const developerResponse = await fetch("/api/anthropic-developer", {
@@ -447,10 +489,24 @@ const WebPage = () => {
 
       // Clean up any remaining markdown formatting
       const cleanedWebsite = sanitizedWebsite
-        .replace(/^```html\n/, '')  // Remove opening ```html
-        .replace(/```$/, '');       // Remove closing ```
+        .replace(/^```html\n?/, '')  // Remove opening ```html
+        .replace(/^```\n?/, '')      // Remove any generic opening fences
+        .replace(/```$/, '')         // Remove closing ```
+        .trim();
 
-      setGeneratedSite(cleanedWebsite);
+      if (!cleanedWebsite) {
+        throw new Error("Generated site was empty. Please try again.");
+      }
+
+      // If the model omitted <html>/<body>, wrap it to keep the preview usable.
+      const hasHtml = cleanedWebsite.toLowerCase().includes('<html');
+      const hasBody = cleanedWebsite.toLowerCase().includes('<body');
+      const safeTitle = selectedDomain || 'Your Site';
+      const finalHtml = hasHtml && hasBody
+        ? cleanedWebsite
+        : `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${safeTitle}</title></head><body>${cleanedWebsite}</body></html>`;
+
+      setGeneratedSite(finalHtml);
       setOpenWebSite(true);
 
       mixpanel.track("Web Generated", {
