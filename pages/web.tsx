@@ -1224,7 +1224,9 @@ const WebPage = () => {
               </div>
               {leadsLoading && <p className="text-sm text-gray-500">Loading leads…</p>}
               {!leadsLoading && leads.length === 0 && (
-                <p className="text-sm text-gray-500">No leads yet.</p>
+                <p className="text-sm text-gray-500">
+                  No leads yet — submissions from your published site's contact form will show up here once visitors start sending messages.
+                </p>
               )}
               <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
                 {leads.slice(0, 20).map((lead) => (
