@@ -1046,11 +1046,12 @@ const WebPage = () => {
                 <label className="block text-sm font-medium text-gray-700 text-left mb-2">
                   Who is this for? (optional)
                 </label>
-                <input
+                <textarea
                   value={audience}
                   onChange={(e) => setAudience(e.target.value)}
                   maxLength={200}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  rows={3}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
                   placeholder="e.g., Homeowners in suburbs, small business owners, busy parents"
                 />
               </div>
