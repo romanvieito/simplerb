@@ -1046,9 +1046,20 @@ const WebPage = () => {
 
       {/* Website Builder Content */}
       <div className="flex flex-1 w-full flex-col items-center justify-center text-center">
-        <h1 className="text-2xl text-gray-900 mb-3 tracking-tight">
-          Website <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Creator</span>
-        </h1>
+        <div className="w-full max-w-4xl mx-auto flex items-center justify-between px-2">
+          <h1 className="text-2xl text-gray-900 my-3 tracking-tight">
+            Website <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Creator</span>
+          </h1>
+          {isSignedIn && (
+            <button
+              type="button"
+              onClick={() => setIsLeadsModalOpen(true)}
+              className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-4"
+            >
+              {leadsLoading ? 'Loading leads…' : 'View recent leads'}
+            </button>
+          )}
+        </div>
 
         {/* Main Input Area - Mockup Style */}
         <div className="w-full max-w-4xl mx-auto mt-8">
@@ -1137,18 +1148,6 @@ const WebPage = () => {
             </div>
           </form>
         </div>
-
-        {isSignedIn && (
-          <div className="w-full max-w-4xl mx-auto mt-4 text-right">
-            <button
-              type="button"
-              onClick={() => setIsLeadsModalOpen(true)}
-              className="inline-flex items-center px-3 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-all duration-150"
-            >
-              {leadsLoading ? 'Loading leads…' : 'View recent leads'}
-            </button>
-          </div>
-        )}
 
         <div>
         <Dialog
