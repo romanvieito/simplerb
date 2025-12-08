@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useContext, useRef, useCallback, useMemo } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/router';
 import DashboardLayout from '../components/DashboardLayout';
@@ -23,6 +23,7 @@ interface KeywordFavorite {
   competition: string | null;
   competition_index: number | null;
   avg_cpc_micros: bigint | null;
+  category?: string | null;
   created_at: string;
   monthly_search_volumes?: Array<{
     month?: string;
@@ -106,6 +107,60 @@ const Dashboard: React.FC = () => {
   const [selectedKeywords, setSelectedKeywords] = useState<Set<string>>(new Set());
   const [selectedDomains, setSelectedDomains] = useState<Set<string>>(new Set());
   const [selectedSites, setSelectedSites] = useState<Set<string>>(new Set());
+  const [categoryFilter, setCategoryFilter] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'all';
+    const stored = localStorage.getItem('dashboard-category-filter');
+    return stored || 'all';
+  });
+  const [newCategoryName, setNewCategoryName] = useState<string>('');
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
+  const [draggedKeyword, setDraggedKeyword] = useState<string | null>(null);
+  const [savingCategoryFor, setSavingCategoryFor] = useState<string | null>(null);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
+  const [moveTargetCategory, setMoveTargetCategory] = useState<string>('');
+  const UNCATEGORIZED_KEY = '__uncategorized__';
+
+  const normalizeCategory = (value?: string | null) => (value ? value.trim() : '');
+  const displayCategory = (value?: string | null) => normalizeCategory(value) || 'Uncategorized';
+
+  const allCategories = useMemo(() => {
+    const collected = new Set<string>();
+    favorites.forEach((fav) => {
+      const cat = normalizeCategory(fav.category);
+      if (cat) collected.add(cat);
+    });
+    customCategories.forEach((cat) => {
+      const normalized = normalizeCategory(cat);
+      if (normalized) collected.add(normalized);
+    });
+    return [UNCATEGORIZED_KEY, ...Array.from(collected).sort((a, b) => a.localeCompare(b))];
+  }, [favorites, customCategories]);
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { [UNCATEGORIZED_KEY]: 0 };
+    favorites.forEach((fav) => {
+      const key = normalizeCategory(fav.category) || UNCATEGORIZED_KEY;
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    return counts;
+  }, [favorites]);
+
+  const filteredFavorites = useMemo(() => {
+    return favorites.filter((fav) => {
+      if (categoryFilter === 'all') return true;
+      if (categoryFilter === UNCATEGORIZED_KEY) return !normalizeCategory(fav.category);
+      return normalizeCategory(fav.category) === normalizeCategory(categoryFilter);
+    });
+  }, [favorites, categoryFilter]);
+
+  const sortedFavorites = useMemo(() => {
+    return [...filteredFavorites].sort((a, b) => {
+      const aCat = normalizeCategory(a.category) || 'zzzz';
+      const bCat = normalizeCategory(b.category) || 'zzzz';
+      if (aCat !== bCat) return aCat.localeCompare(bCat);
+      return a.keyword.localeCompare(b.keyword);
+    });
+  }, [filteredFavorites]);
 
   // Match 3-mo change logic used in /find-keywords
   const calculateThreeMonthChange = (monthlyData?: KeywordFavorite['monthly_search_volumes']): string => {
@@ -301,6 +356,12 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('dashboard-minimized-sections', JSON.stringify(Array.from(minimizedSections)));
   }, [minimizedSections]);
+
+  // Persist category filter
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('dashboard-category-filter', categoryFilter);
+  }, [categoryFilter]);
 
   // Drag and drop handlers for section reordering
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, sectionId: string) => {
@@ -783,6 +844,102 @@ const Dashboard: React.FC = () => {
     });
   };
 
+  const handleCreateCategory = () => {
+    const normalized = normalizeCategory(newCategoryName);
+    if (!normalized) return;
+    if (!customCategories.some(cat => normalizeCategory(cat) === normalized)) {
+      setCustomCategories([...customCategories, normalized]);
+    }
+    setCategoryFilter(normalized);
+    setNewCategoryName('');
+  };
+
+  const updateKeywordCategory = async (keyword: string, categoryKey: string | null) => {
+    setSavingCategoryFor(keyword);
+    setCategoryError(null);
+    const finalCategory = categoryKey === UNCATEGORIZED_KEY ? null : categoryKey;
+    try {
+      const resp = await fetch('/api/keyword-favorites', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keyword, category: finalCategory })
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(text || 'Failed to update category');
+      }
+
+      setFavorites(prev =>
+        prev.map(fav =>
+          fav.keyword === keyword ? { ...fav, category: finalCategory } : fav
+        )
+      );
+
+      if (finalCategory && !customCategories.some(cat => normalizeCategory(cat) === normalizeCategory(finalCategory))) {
+        setCustomCategories([...customCategories, finalCategory]);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error updating category';
+      setCategoryError(message);
+      console.error(message);
+    } finally {
+      setSavingCategoryFor(null);
+      setDraggedKeyword(null);
+    }
+  };
+
+  const handleDropCategory = (categoryKey: string) => {
+    if (!draggedKeyword) return;
+    const targetCategory = categoryKey === UNCATEGORIZED_KEY ? '' : normalizeCategory(categoryKey);
+    const current = favorites.find((fav) => fav.keyword === draggedKeyword);
+    if (current && normalizeCategory(current.category) === targetCategory) {
+      setDraggedKeyword(null);
+      return;
+    }
+    updateKeywordCategory(draggedKeyword, categoryKey);
+  };
+
+  const updateSelectedKeywordsCategory = async (keywords: string[], categoryKey: string) => {
+    if (keywords.length === 0) return;
+    setSavingCategoryFor('__bulk__');
+    setCategoryError(null);
+    const finalCategory = categoryKey === UNCATEGORIZED_KEY ? null : categoryKey;
+    try {
+      await Promise.all(
+        keywords.map((keyword) =>
+          fetch('/api/keyword-favorites', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ keyword, category: finalCategory }),
+          }).then((resp) => {
+            if (!resp.ok) {
+              return resp.text().then((t) => {
+                throw new Error(t || 'Failed to update category');
+              });
+            }
+          })
+        )
+      );
+
+      setFavorites((prev) =>
+        prev.map((fav) =>
+          keywords.includes(fav.keyword) ? { ...fav, category: finalCategory } : fav
+        )
+      );
+
+      if (finalCategory && !customCategories.some((cat) => normalizeCategory(cat) === normalizeCategory(finalCategory))) {
+        setCustomCategories([...customCategories, finalCategory]);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error updating category';
+      setCategoryError(message);
+      console.error(message);
+    } finally {
+      setSavingCategoryFor(null);
+    }
+  };
+
   // Delete published site
   const deleteSite = async (siteId: string, subdomain: string) => {
     if (!confirm(`Are you sure you want to delete ${subdomain}.simplerb.com? This action cannot be undone.`)) {
@@ -865,6 +1022,87 @@ const Dashboard: React.FC = () => {
                       Copy Selected ({selectedKeywords.size})
                     </button>
                   )}
+                  {selectedKeywords.size > 0 && (
+                    <select
+                      value={moveTargetCategory || 'choose'}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'choose') return;
+                        if (val === '__add__') {
+                          const name = window.prompt('New category name?');
+                          const normalized = normalizeCategory(name || '');
+                          if (normalized) {
+                            if (!customCategories.some((cat) => normalizeCategory(cat) === normalized)) {
+                              setCustomCategories([...customCategories, normalized]);
+                            }
+                            updateSelectedKeywordsCategory(Array.from(selectedKeywords), normalized);
+                            setCategoryFilter(normalized);
+                            setMoveTargetCategory(normalized);
+                          }
+                          e.target.value = 'choose';
+                          return;
+                        }
+                        updateSelectedKeywordsCategory(Array.from(selectedKeywords), val);
+                        setMoveTargetCategory(val);
+                      }}
+                      className="h-9 bg-white border border-gray-200 rounded px-2 text-sm text-gray-700 focus:border-gray-300 focus:outline-none"
+                      title="Move selected keywords"
+                    >
+                      <option value="choose">Move to...</option>
+                      <option value={UNCATEGORIZED_KEY}>Uncategorized</option>
+                      {allCategories
+                        .filter((cat) => cat !== UNCATEGORIZED_KEY)
+                        .map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
+                      <option value="__add__">+ Add category</option>
+                    </select>
+                  )}
+                  <div className="hidden sm:flex flex-wrap items-center gap-2">
+                    <select
+                      value={categoryFilter}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '__add__') {
+                          const name = window.prompt('New category name?');
+                          const normalized = normalizeCategory(name || '');
+                          if (normalized) {
+                            if (!customCategories.some(cat => normalizeCategory(cat) === normalized)) {
+                              setCustomCategories([...customCategories, normalized]);
+                            }
+                            setCategoryFilter(normalized);
+                          } else {
+                            setCategoryFilter('all');
+                          }
+                          return;
+                        }
+                        setCategoryFilter(val);
+                      }}
+                      className="h-8 bg-white border border-gray-200 rounded px-2 text-xs text-gray-700 focus:border-gray-300 focus:outline-none"
+                      title="Filter categories"
+                    >
+                      <option value="all">All</option>
+                      <option value={UNCATEGORIZED_KEY}>
+                        Uncategorized ({categoryCounts[UNCATEGORIZED_KEY] || 0})
+                      </option>
+                      {allCategories
+                        .filter((cat) => cat !== UNCATEGORIZED_KEY)
+                        .map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat} ({categoryCounts[cat] || 0})
+                          </option>
+                        ))}
+                      <option value="__add__">+ Add category</option>
+                    </select>
+                  </div>
+                  <a
+                    href="/find-keywords"
+                    className="ml-2 px-4 py-2 bg-black hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    Find Keywords
+                  </a>
                   <button
                     onClick={() => toggleMinimizeSection('favorites')}
                     className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
@@ -880,16 +1118,16 @@ const Dashboard: React.FC = () => {
                       </svg>
                     )}
                   </button>
-                  <a
-                    href="/find-keywords"
-                    className="px-4 py-2 bg-black hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors"
-                  >
-                    Find Keywords
-                  </a>
                 </div>
               </div>
               <p className="text-sm text-gray-600 mt-1">Your saved keywords for research</p>
             </div>
+            <div className="border-b border-gray-100" />
+            {categoryError && (
+              <div className="px-6 py-2 border-b border-gray-100 bg-red-50 text-red-700 text-sm">
+                {categoryError}
+              </div>
+            )}
 
             {/* Content - only show if not minimized */}
             {!minimizedSections.has('favorites') && (
@@ -923,10 +1161,10 @@ const Dashboard: React.FC = () => {
                           <th className="text-center py-3 px-4 text-sm font-medium text-gray-700 w-12">
                             <input
                               type="checkbox"
-                              checked={favorites.length > 0 && favorites.every(fav => selectedKeywords.has(fav.keyword))}
+                              checked={sortedFavorites.length > 0 && sortedFavorites.every(fav => selectedKeywords.has(fav.keyword))}
                               onChange={(e) => {
                                 if (e.target.checked) {
-                                  setSelectedKeywords(new Set(favorites.map(fav => fav.keyword)));
+                                  setSelectedKeywords(new Set(sortedFavorites.map(fav => fav.keyword)));
                                 } else {
                                   setSelectedKeywords(new Set());
                                 }
@@ -935,6 +1173,9 @@ const Dashboard: React.FC = () => {
                             />
                           </th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Keyword</th>
+                          {categoryFilter === 'all' && (
+                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Category</th>
+                          )}
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Volume</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Competition</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">3-mo Change</th>
@@ -944,8 +1185,16 @@ const Dashboard: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {favorites.map((favorite, index) => (
-                          <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        {sortedFavorites.map((favorite) => (
+                          <tr
+                            key={favorite.keyword}
+                            className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
+                              draggedKeyword === favorite.keyword ? 'opacity-60' : ''
+                            }`}
+                            draggable
+                            onDragStart={() => setDraggedKeyword(favorite.keyword)}
+                            onDragEnd={() => setDraggedKeyword(null)}
+                          >
                             <td className="py-4 px-4 text-center">
                               <input
                                 type="checkbox"
@@ -963,6 +1212,18 @@ const Dashboard: React.FC = () => {
                               />
                             </td>
                             <td className="py-4 px-4 text-sm font-medium text-gray-900">{favorite.keyword}</td>
+                            {categoryFilter === 'all' && (
+                              <td className="py-4 px-4 text-sm text-gray-600">
+                                <div className="flex items-center gap-2">
+                                  <span className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700">
+                                    {displayCategory(favorite.category)}
+                                  </span>
+                                  {savingCategoryFor === favorite.keyword && (
+                                    <span className="text-xs text-gray-500">Updating...</span>
+                                  )}
+                                </div>
+                              </td>
+                            )}
                             <td className="py-4 px-4 text-sm text-gray-600">{favorite.search_volume?.toLocaleString() || 'N/A'}</td>
                             <td className="py-4 px-4">
                               <div className="flex items-center space-x-2">

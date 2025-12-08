@@ -32,6 +32,7 @@ export default async function handler(
           kf.competition,
           kf.competition_index,
           kf.avg_cpc_micros,
+          kf.category,
           kf.created_at,
           kc.monthly_search_volumes
         FROM keyword_favorites kf
@@ -63,8 +64,17 @@ export default async function handler(
         searchVolume,
         competition,
         competitionIndex,
-        avgCpcMicros
+        avgCpcMicros,
+        category
       } = request.body;
+
+      const categoryProvided = Object.prototype.hasOwnProperty.call(request.body, 'category');
+      const normalizedCategory =
+        categoryProvided && typeof category === 'string' && category.trim()
+          ? category.trim().slice(0, 100)
+          : categoryProvided
+          ? null
+          : undefined;
 
       if (!keyword || !keyword.trim()) {
         throw new Error('Keyword is required');
@@ -79,17 +89,32 @@ export default async function handler(
       if (existingFavorite.rows.length === 1) {
         option = 'update';
         // Update existing favorite
-        await sql`
-          UPDATE keyword_favorites SET
-            country_code = ${countryCode || null},
-            language_code = ${languageCode || null},
-            search_volume = ${searchVolume || null},
-            competition = ${competition || null},
-            competition_index = ${competitionIndex || null},
-            avg_cpc_micros = ${avgCpcMicros || null},
-            created_at = NOW()
-          WHERE id = ${existingFavorite.rows[0].id}
-        `;
+        if (categoryProvided) {
+          await sql`
+            UPDATE keyword_favorites SET
+              country_code = ${countryCode || null},
+              language_code = ${languageCode || null},
+              search_volume = ${searchVolume || null},
+              competition = ${competition || null},
+              competition_index = ${competitionIndex || null},
+              avg_cpc_micros = ${avgCpcMicros || null},
+              category = ${normalizedCategory ?? null},
+              created_at = NOW()
+            WHERE id = ${existingFavorite.rows[0].id}
+          `;
+        } else {
+          await sql`
+            UPDATE keyword_favorites SET
+              country_code = ${countryCode || null},
+              language_code = ${languageCode || null},
+              search_volume = ${searchVolume || null},
+              competition = ${competition || null},
+              competition_index = ${competitionIndex || null},
+              avg_cpc_micros = ${avgCpcMicros || null},
+              created_at = NOW()
+            WHERE id = ${existingFavorite.rows[0].id}
+          `;
+        }
       } else {
         option = 'insert';
         // Insert new favorite
@@ -102,7 +127,8 @@ export default async function handler(
             search_volume,
             competition,
             competition_index,
-            avg_cpc_micros
+            avg_cpc_micros,
+            category
           ) VALUES (
             ${userId},
             ${keyword.trim()},
@@ -111,7 +137,8 @@ export default async function handler(
             ${searchVolume || null},
             ${competition || null},
             ${competitionIndex || null},
-            ${avgCpcMicros || null}
+            ${avgCpcMicros || null},
+            ${normalizedCategory ?? null}
           )
         `;
       }
@@ -120,6 +147,33 @@ export default async function handler(
         success: true,
         message: `${option} successful`,
         operation: option
+      });
+    }
+
+    if (request.method === 'PATCH') {
+      option = 'patch';
+      const { keyword, category } = request.body;
+      if (!keyword || typeof keyword !== 'string') {
+        throw new Error('Keyword parameter is required');
+      }
+
+      const normalizedCategory =
+        typeof category === 'string' && category.trim() ? category.trim().slice(0, 100) : null;
+
+      const result = await sql`
+        UPDATE keyword_favorites
+        SET category = ${normalizedCategory}
+        WHERE user_id = ${userId} AND keyword = ${keyword.trim()}
+        RETURNING keyword
+      `;
+
+      if (result.rowCount === 0) {
+        return response.status(404).json({ error: 'Favorite not found' });
+      }
+
+      return response.status(200).json({
+        success: true,
+        category: normalizedCategory
       });
     }
 
