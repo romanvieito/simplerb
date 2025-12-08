@@ -1021,7 +1021,7 @@ const Dashboard: React.FC = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
                     </svg>
                   </div>
-                  <h2 className="text-lg font-semibold text-gray-900">Keyword Favorites</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">Opportunities</h2>
                   <button
                     onClick={() => refreshFavorites()}
                     className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
@@ -1123,7 +1123,7 @@ const Dashboard: React.FC = () => {
                     href="/find-keywords"
                     className="ml-2 px-4 py-2 bg-black hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors"
                   >
-                    Find Keywords
+                    Find Opportunities
                   </a>
                   <button
                     onClick={() => toggleMinimizeSection('favorites')}
