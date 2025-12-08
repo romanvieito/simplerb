@@ -53,6 +53,7 @@ const WebPage = () => {
   const [trustSignals, setTrustSignals] = useState("");
   const [leads, setLeads] = useState<Array<{ id: number; subdomain: string; name: string | null; email: string | null; message: string; created_at: string }>>([]);
   const [leadsLoading, setLeadsLoading] = useState(false);
+  const [isLeadsModalOpen, setIsLeadsModalOpen] = useState(false);
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -542,6 +543,16 @@ const WebPage = () => {
         : `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${safeTitle}</title></head><body>${cleanedWebsite}</body></html>`;
 
       const ensureContactSection = (html: string) => {
+        const escapeAttr = (value: string) =>
+          value
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/'/g, '&#39;');
+
+        const escapedSubdomain = selectedDomain ? escapeAttr(selectedDomain) : '';
+
         let updated = html.replace(/href="#"/g, 'href="#contact"');
         const hasContactId = /id=["']contact["']/.test(updated);
         const contactBlock = `
@@ -550,7 +561,7 @@ const WebPage = () => {
     <h2 style="font-size:28px; margin-bottom:12px;">Request info</h2>
     <p style="color:#4b5563; margin-bottom:24px;">Tell us about your project. We’ll follow up soon.</p>
     <form action="/api/contact-leads" method="POST" style="display:grid; gap:12px; text-align:left;">
-      <input type="hidden" name="subdomain" value="${selectedDomain || ''}" />
+      ${escapedSubdomain ? `<input type="hidden" name="subdomain" value="${escapedSubdomain}" />` : ''}
       <input name="name" placeholder="Your name (optional)" style="padding:12px 14px; border:1px solid #e5e7eb; border-radius:8px;" />
       <input name="email" type="email" placeholder="Your email (optional)" style="padding:12px 14px; border:1px solid #e5e7eb; border-radius:8px;" />
       <textarea name="message" required rows="3" placeholder="Project details" style="padding:12px 14px; border:1px solid #e5e7eb; border-radius:8px; resize:vertical;"></textarea>
@@ -1128,34 +1139,14 @@ const WebPage = () => {
         </div>
 
         {isSignedIn && (
-          <div className="w-full max-w-4xl mx-auto mt-6">
-            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-lg font-semibold text-gray-900">Recent leads</h2>
-                {leadsLoading && <span className="text-sm text-gray-500">Loading…</span>}
-              </div>
-              {!leadsLoading && leads.length === 0 && (
-                <p className="text-sm text-gray-500">No leads yet.</p>
-              )}
-              <div className="divide-y divide-gray-200">
-                {leads.slice(0, 5).map((lead) => (
-                  <div key={lead.id} className="py-3">
-                    <div className="text-sm text-gray-900 font-medium">
-                      {lead.subdomain || '—'}
-                    </div>
-                    <div className="text-sm text-gray-700">
-                      {lead.message.slice(0, 140)}
-                      {lead.message.length > 140 ? '…' : ''}
-                    </div>
-                    <div className="text-xs text-gray-500 flex items-center gap-2 mt-1">
-                      {lead.name && <span>{lead.name}</span>}
-                      {lead.email && <span>• {lead.email}</span>}
-                      <span>• {new Date(lead.created_at).toLocaleString()}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div className="w-full max-w-4xl mx-auto mt-4 text-right">
+            <button
+              type="button"
+              onClick={() => setIsLeadsModalOpen(true)}
+              className="inline-flex items-center px-3 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-all duration-150"
+            >
+              {leadsLoading ? 'Loading leads…' : 'View recent leads'}
+            </button>
           </div>
         )}
 
@@ -1215,6 +1206,48 @@ const WebPage = () => {
           </div>
         </Dialog>
         </div>
+        {isSignedIn && (
+          <Dialog
+            open={isLeadsModalOpen}
+            onClose={() => setIsLeadsModalOpen(false)}
+            maxWidth="sm"
+            fullWidth
+          >
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-lg font-semibold text-gray-900">Recent leads</h2>
+                <button
+                  onClick={() => setIsLeadsModalOpen(false)}
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  Close
+                </button>
+              </div>
+              {leadsLoading && <p className="text-sm text-gray-500">Loading leads…</p>}
+              {!leadsLoading && leads.length === 0 && (
+                <p className="text-sm text-gray-500">No leads yet.</p>
+              )}
+              <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                {leads.slice(0, 20).map((lead) => (
+                  <div key={lead.id} className="py-3">
+                    <div className="text-sm text-gray-900 font-medium">
+                      {lead.subdomain || '—'}
+                    </div>
+                    <div className="text-sm text-gray-700">
+                      {lead.message.slice(0, 160)}
+                      {lead.message.length > 160 ? '…' : ''}
+                    </div>
+                    <div className="text-xs text-gray-500 flex items-center gap-2 mt-1">
+                      {lead.name && <span>{lead.name}</span>}
+                      {lead.email && <span>• {lead.email}</span>}
+                      <span>• {new Date(lead.created_at).toLocaleString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Dialog>
+        )}
       </div>
     </DashboardLayout>
   );
