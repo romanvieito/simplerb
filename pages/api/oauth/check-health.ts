@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getAuth } from '@clerk/nextjs/server';
 import https from 'https';
+import { getRefreshToken } from '../google-ads/client';
 
 interface TokenHealthResponse {
   healthy: boolean;
@@ -19,22 +20,6 @@ export default async function handler(
       return res.status(401).json({ healthy: false, error: 'Not authenticated' });
     }
 
-    // Check if user is admin
-    let isAdmin = false;
-    try {
-      const { sql } = await import('@vercel/postgres');
-      const result = await sql`
-        SELECT admin FROM users WHERE id = ${userId} LIMIT 1
-      `;
-      isAdmin = result.rows.length > 0 && result.rows[0].admin === true;
-    } catch (error) {
-      console.warn('Admin check failed:', error);
-    }
-
-    if (!isAdmin) {
-      return res.status(403).json({ healthy: false, error: 'Admin access required' });
-    }
-
     const clientId = process.env.GADS_CLIENT_ID;
     const clientSecret = process.env.GADS_CLIENT_SECRET;
 
@@ -45,20 +30,20 @@ export default async function handler(
       });
     }
 
-    // Get refresh token from database
+    // Get refresh token for this user (falls back to service token)
     let refreshToken: string | null = null;
-    try {
-      const { sql } = await import('@vercel/postgres');
-      const result = await sql`
-        SELECT refresh_token FROM oauth_tokens
-        WHERE service = 'google_ads'
-        LIMIT 1
-      `;
-      refreshToken = result.rows.length > 0 ? result.rows[0].refresh_token : null;
-    } catch (dbError) {
-      console.warn('Failed to get token from database, falling back to env:', dbError);
-      refreshToken = process.env.GADS_REFRESH_TOKEN;
+  try {
+    const tokenInfo = await getRefreshToken({ userId });
+    refreshToken = tokenInfo.refreshToken;
+  } catch (tokenError: any) {
+    if (tokenError?.message?.includes('oauth_tokens')) {
+      return res.status(200).json({
+        healthy: false,
+        error: 'Database schema out of date. Run add-user-columns-to-oauth-tokens migration.',
+      });
     }
+    console.warn('Failed to get user token, will report missing:', tokenError);
+  }
 
     if (!refreshToken) {
       return res.status(200).json({

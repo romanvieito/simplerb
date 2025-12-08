@@ -1,28 +1,92 @@
 const { GoogleAdsApi } = require('google-ads-api');
 
-// Helper function to get refresh token from database or environment
-export async function getRefreshToken(): Promise<string> {
-  // First try to get from database
+type TokenLookupParams = {
+  userId?: string | null;
+  userEmail?: string | null;
+};
+
+type TokenInfo = {
+  refreshToken: string;
+  customerId?: string | null;
+  source: 'user' | 'service-db' | 'service-env';
+};
+
+/**
+ * Fetch a Google Ads refresh token + customer id for a given user.
+ * Falls back to the legacy service-level token for compatibility.
+ */
+export async function getRefreshToken(params: TokenLookupParams = {}): Promise<TokenInfo> {
+  const { userId, userEmail } = params;
+
+  // 1) User-scoped token by user_id or email
+  try {
+    const { sql } = await import('@vercel/postgres');
+    let result;
+
+    if (userId) {
+      result = await sql`
+        SELECT refresh_token, customer_id
+        FROM oauth_tokens
+        WHERE service = 'google_ads' AND user_id = ${userId}
+        ORDER BY updated_at DESC
+        LIMIT 1
+      `;
+    } else if (userEmail) {
+      result = await sql`
+        SELECT refresh_token, customer_id
+        FROM oauth_tokens
+        WHERE service = 'google_ads' AND user_email = ${userEmail}
+        ORDER BY updated_at DESC
+        LIMIT 1
+      `;
+    }
+
+    if (result && result.rows.length > 0 && result.rows[0].refresh_token) {
+      return {
+        refreshToken: result.rows[0].refresh_token,
+        customerId: result.rows[0].customer_id,
+        source: 'user',
+      };
+    }
+  } catch (dbError: any) {
+    if (dbError?.code === '42703') {
+      console.warn('oauth_tokens missing customer_id/user_id columns; run add-user-columns-to-oauth-tokens migration.');
+    } else {
+      console.warn('Failed to get user token from database, will fall back to service token:', dbError);
+    }
+  }
+
+  // 2) Service-level token from DB (legacy)
   try {
     const { sql } = await import('@vercel/postgres');
     const result = await sql`
-      SELECT refresh_token FROM oauth_tokens
-      WHERE service = 'google_ads'
+      SELECT refresh_token, customer_id
+      FROM oauth_tokens
+      WHERE service = 'google_ads' AND user_id IS NULL
+      ORDER BY updated_at DESC
       LIMIT 1
     `;
     if (result.rows.length > 0 && result.rows[0].refresh_token) {
-      return result.rows[0].refresh_token;
+      return {
+        refreshToken: result.rows[0].refresh_token,
+        customerId: result.rows[0].customer_id,
+        source: 'service-db',
+      };
     }
-  } catch (dbError) {
-    console.warn('Failed to get token from database, falling back to env:', dbError);
+  } catch (dbError: any) {
+    if (dbError?.code === '42703') {
+      console.warn('oauth_tokens missing customer_id/user_id columns; run add-user-columns-to-oauth-tokens migration.');
+    } else {
+      console.warn('Failed to get service token from database, will fall back to env:', dbError);
+    }
   }
 
-  // Fallback to environment variable
+  // 3) Env fallback
   const envToken = process.env.GADS_REFRESH_TOKEN;
   if (!envToken) {
-    throw new Error('No Google Ads refresh token found in database or environment');
+    throw new Error('No Google Ads refresh token found for this user or service. Please connect Google Ads.');
   }
-  return envToken;
+  return { refreshToken: envToken, customerId: process.env.GADS_CUSTOMER_ID, source: 'service-env' };
 }
 
 export async function getGoogleAdsClient() {
@@ -30,14 +94,11 @@ export async function getGoogleAdsClient() {
     GADS_DEVELOPER_TOKEN,
     GADS_CLIENT_ID,
     GADS_CLIENT_SECRET,
-    GADS_LOGIN_CUSTOMER_ID
   } = process.env;
 
-  if (!GADS_DEVELOPER_TOKEN || !GADS_CLIENT_ID || !GADS_CLIENT_SECRET || !GADS_LOGIN_CUSTOMER_ID) {
+  if (!GADS_DEVELOPER_TOKEN || !GADS_CLIENT_ID || !GADS_CLIENT_SECRET) {
     throw new Error('Missing required Google Ads environment variables');
   }
-
-  const refreshToken = await getRefreshToken();
 
   // Create a new client instance each time to avoid issues
   // Use default API version for compatibility with library version
@@ -53,43 +114,47 @@ export async function getGoogleAdsClient() {
   return client;
 }
 
-export async function getGoogleAdsCustomer() {
+type CustomerParams = TokenLookupParams & {
+  customerId?: string | null;
+  loginCustomerId?: string | null;
+};
+
+export async function getGoogleAdsCustomer(params: CustomerParams = {}) {
+  const { userId, userEmail, customerId: customerIdOverride, loginCustomerId } = params;
   const client = await getGoogleAdsClient();
-  const {
-    GADS_LOGIN_CUSTOMER_ID,
-    GADS_CUSTOMER_ID
-  } = process.env;
 
-  const refreshToken = await getRefreshToken();
+  const tokenInfo = await getRefreshToken({ userId, userEmail });
 
-  // Use MCC as login, client as customer
-  const loginId = GADS_LOGIN_CUSTOMER_ID ? formatCustomerId(GADS_LOGIN_CUSTOMER_ID) : undefined as any;
-  const customerId = GADS_CUSTOMER_ID ? formatCustomerId(GADS_CUSTOMER_ID) : (loginId || '');
+  const derivedCustomerId = customerIdOverride
+    || tokenInfo.customerId
+    || process.env.GADS_CUSTOMER_ID
+    || process.env.GADS_LOGIN_CUSTOMER_ID;
 
-  // Validate customer ID is not empty
-  if (!customerId || customerId.trim() === '') {
-    throw new Error('Customer ID is missing or invalid. Please check your GADS_CUSTOMER_ID or GADS_LOGIN_CUSTOMER_ID environment variable.');
+  if (!derivedCustomerId || derivedCustomerId.trim() === '') {
+    throw new Error('Google Ads customer ID is missing. Connect your Google Ads account to continue.');
   }
 
-  // Updated initialization for v21 with enhanced error handling
+  const formattedCustomerId = formatCustomerId(derivedCustomerId);
+  const loginId = loginCustomerId
+    ? formatCustomerId(loginCustomerId)
+    : (process.env.GADS_LOGIN_CUSTOMER_ID ? formatCustomerId(process.env.GADS_LOGIN_CUSTOMER_ID) : undefined as any);
+
   return client.Customer({
-    // Use MCC as login, client as customer
-    customer_id: customerId,
-    refresh_token: refreshToken,
+    customer_id: formattedCustomerId,
+    refresh_token: tokenInfo.refreshToken,
     login_customer_id: loginId,
-    // Add timeout configuration
-    timeout: 30000, // 30 seconds
+    timeout: 30000,
   });
 }
 
-// Enhanced function to get customer with specific customer ID
-export async function getGoogleAdsCustomerById(customerId: string) {
+// Enhanced function to get customer with specific customer ID for a user
+export async function getGoogleAdsCustomerById(customerId: string, params: TokenLookupParams = {}) {
   const client = await getGoogleAdsClient();
-  const refreshToken = await getRefreshToken();
+  const tokenInfo = await getRefreshToken(params);
 
   return client.Customer({
-    customer_id: customerId,
-    refresh_token: refreshToken,
+    customer_id: formatCustomerId(customerId),
+    refresh_token: tokenInfo.refreshToken,
     login_customer_id: process.env.GADS_LOGIN_CUSTOMER_ID,
     timeout: 30000,
   });

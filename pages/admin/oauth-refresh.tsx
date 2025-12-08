@@ -14,6 +14,7 @@ export default function OAuthRefresh() {
   const [tokenHealth, setTokenHealth] = useState<TokenHealth>({ status: 'unknown', lastChecked: null });
   const [isChecking, setIsChecking] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [customerId, setCustomerId] = useState('');
 
   useEffect(() => {
     if (!isLoaded || !user) return;
@@ -44,6 +45,11 @@ export default function OAuthRefresh() {
   };
 
   const initiateOAuthFlow = () => {
+    if (!customerId || customerId.trim().length === 0) {
+      alert('Please enter your Google Ads customer ID (no dashes).');
+      return;
+    }
+
     setIsRefreshing(true);
 
     // Generate OAuth URL
@@ -60,7 +66,8 @@ export default function OAuthRefresh() {
       `scope=${encodeURIComponent('https://www.googleapis.com/auth/adwords')}&` +
       `response_type=code&` +
       `access_type=offline&` +
-      `prompt=consent`;
+      `prompt=consent&` +
+      `state=${encodeURIComponent(customerId.replace(/-/g, ''))}`;
 
     // Redirect to Google OAuth
     window.location.href = authUrl;
@@ -164,6 +171,20 @@ export default function OAuthRefresh() {
                 <h3 className="text-sm font-medium text-blue-800 mb-2">
                   How to refresh your token:
                 </h3>
+
+                <div className="mb-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Google Ads Customer ID (no dashes)
+                  </label>
+                  <input
+                    type="text"
+                    value={customerId}
+                    onChange={(e) => setCustomerId(e.target.value)}
+                    placeholder="1234567890"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Used to link your own Google Ads account.</p>
+                </div>
                 <ol className="text-sm text-blue-700 space-y-1 mb-4">
                   <li>1. Click the "Start OAuth Flow" button below</li>
                   <li>2. Sign in to your Google account</li>

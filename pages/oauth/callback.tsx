@@ -10,12 +10,18 @@ interface OAuthCallbackProps {
 
 export default function OAuthCallback({ userId, isAdmin }: OAuthCallbackProps) {
   const router = useRouter();
-  const { code, error } = router.query;
+  const { code, error, state } = router.query;
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
+  const [customerId, setCustomerId] = useState<string>('');
 
   useEffect(() => {
     if (!code && !error) return;
+
+    // Populate customer ID from state if provided
+    if (typeof state === 'string' && state.trim().length > 0) {
+      setCustomerId(state);
+    }
 
     if (error) {
       setStatus('error');
@@ -26,9 +32,15 @@ export default function OAuthCallback({ userId, isAdmin }: OAuthCallbackProps) {
     if (code && typeof code === 'string') {
       exchangeCodeForToken(code);
     }
-  }, [code, error]);
+  }, [code, error, state]);
 
   const exchangeCodeForToken = async (authorizationCode: string) => {
+    if (!customerId || customerId.trim().length === 0) {
+      setStatus('error');
+      setMessage('Customer ID is required to complete Google Ads connection.');
+      return;
+    }
+
     try {
       setStatus('loading');
       setMessage('Exchanging authorization code for refresh token...');
@@ -41,6 +53,7 @@ export default function OAuthCallback({ userId, isAdmin }: OAuthCallbackProps) {
         body: JSON.stringify({
           code: authorizationCode,
           userId: userId,
+          customerId,
         }),
       });
 
@@ -111,6 +124,22 @@ export default function OAuthCallback({ userId, isAdmin }: OAuthCallbackProps) {
           <p className="text-gray-600 mb-6">
             {message}
           </p>
+
+          {status !== 'success' && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Google Ads Customer ID (no dashes)
+              </label>
+              <input
+                type="text"
+                value={customerId}
+                onChange={(e) => setCustomerId(e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g. 1234567890"
+              />
+              <p className="text-xs text-gray-500 mt-1">You can copy this from your Google Ads account.</p>
+            </div>
+          )}
 
           {status === 'success' && (
             <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-4">

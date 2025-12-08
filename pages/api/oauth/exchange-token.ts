@@ -5,6 +5,7 @@ import https from 'https';
 interface ExchangeTokenRequest {
   code: string;
   userId: string;
+  customerId?: string;
 }
 
 interface ExchangeTokenResponse {
@@ -23,7 +24,7 @@ export default async function handler(
 
   try {
     const { userId } = getAuth(req);
-    const { code }: ExchangeTokenRequest = req.body;
+    const { code, customerId }: ExchangeTokenRequest = req.body;
 
     if (!userId) {
       return res.status(401).json({ success: false, error: 'Not authenticated' });
@@ -34,6 +35,10 @@ export default async function handler(
 
     if (!code) {
       return res.status(400).json({ success: false, error: 'Authorization code is required' });
+    }
+
+    if (!customerId) {
+      return res.status(400).json({ success: false, error: 'Customer ID is required to link Google Ads' });
     }
 
     const clientId = process.env.GADS_CLIENT_ID;
@@ -107,19 +112,33 @@ export default async function handler(
       try {
         const { sql } = await import('@vercel/postgres');
 
-        // Insert or update the Google Ads refresh token
+        // Fetch user email for easier lookup/debugging
+        let userEmail: string | null = null;
+        try {
+          const userResult = await sql`
+            SELECT email FROM users WHERE id = ${userId} LIMIT 1
+          `;
+          userEmail = userResult.rows[0]?.email || null;
+        } catch (lookupErr) {
+          console.warn('Could not fetch user email for token save:', lookupErr);
+        }
+
+        // Insert or update the Google Ads refresh token for this user
         await sql`
-          INSERT INTO oauth_tokens (service, refresh_token, updated_at)
-          VALUES ('google_ads', ${result.refresh_token}, NOW())
-          ON CONFLICT (service) DO UPDATE SET
+          INSERT INTO oauth_tokens (service, refresh_token, customer_id, user_id, user_email, updated_at)
+          VALUES ('google_ads', ${result.refresh_token}, ${customerId}, ${userId}, ${userEmail}, NOW())
+          ON CONFLICT (service, user_id) DO UPDATE SET
             refresh_token = EXCLUDED.refresh_token,
+            customer_id = EXCLUDED.customer_id,
+            user_email = EXCLUDED.user_email,
             updated_at = NOW()
         `;
 
-        console.log('✅ Token saved to database');
+        console.log('✅ Token saved to database for user', userId);
 
-        // Update process environment for immediate use in this request
+        // Update process environment for immediate use in this request (legacy fallback)
         process.env.GADS_REFRESH_TOKEN = result.refresh_token;
+        process.env.GADS_CUSTOMER_ID = customerId;
 
       } catch (storageError) {
         console.error('❌ Failed to save token to database:', storageError);

@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { handleGoogleAdsError, getRefreshToken } from './client';
+import { getAuth } from '@clerk/nextjs/server';
+import { handleGoogleAdsError, getRefreshToken, formatCustomerId } from './client';
 
 interface KeywordPlanningRequest {
   keywords: string[];
@@ -143,6 +144,14 @@ export default async function handler(
   }
 
   try {
+    const auth = getAuth(req);
+    const headerUserId = req.headers['x-user-id'] as string | undefined;
+    const userId = auth.userId || headerUserId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+    const userEmail = req.headers['x-user-email'] as string | undefined;
+
     const { keywords, countryCode = 'US', languageCode = 'en' }: KeywordPlanningRequest = req.body;
 
     console.log('🔍 Google Ads Keyword Planning REST API called');
@@ -163,7 +172,6 @@ export default async function handler(
       GADS_CLIENT_SECRET,
       GADS_LOGIN_CUSTOMER_ID,
       GADS_CUSTOMER_ID,
-      GADS_REFRESH_TOKEN
     } = process.env;
 
     if (!GADS_DEVELOPER_TOKEN || !GADS_CLIENT_ID || !GADS_CLIENT_SECRET || !GADS_LOGIN_CUSTOMER_ID) {
@@ -180,13 +188,16 @@ export default async function handler(
 
     // Get refresh token from database or environment (same as other endpoints)
     let refreshToken: string;
+    let customerIdFromToken: string | null | undefined = null;
     try {
-      refreshToken = await getRefreshToken();
+      const tokenInfo = await getRefreshToken({ userId, userEmail });
+      refreshToken = tokenInfo.refreshToken;
+      customerIdFromToken = tokenInfo.customerId;
     } catch (tokenError) {
       console.error('❌ Failed to get refresh token:', tokenError);
       return res.status(500).json({
         success: false,
-        error: 'Failed to get Google Ads refresh token'
+        error: 'Failed to get Google Ads refresh token. Please connect your Google Ads account.'
       });
     }
 
@@ -195,7 +206,7 @@ export default async function handler(
       console.log('🔐 OAuth Configuration:');
       console.log(`   Client ID: ${GADS_CLIENT_ID.substring(0, 10)}...`);
       console.log(`   Client Secret: ${GADS_CLIENT_SECRET.substring(0, 6)}...`);
-      console.log(`   Refresh Token: ${GADS_REFRESH_TOKEN.substring(0, 10)}...`);
+      console.log(`   Refresh Token: ${refreshToken.substring(0, 6)}...`);
       console.log(`   Login Customer ID: ${GADS_LOGIN_CUSTOMER_ID}`);
     }
 
@@ -280,8 +291,15 @@ export default async function handler(
     const geoId = geoIdMap[countryCode] ?? 2840; // Default to US
     console.log(`🗺️ Using geo ID: ${geoId} for country: ${countryCode}`);
 
-    // Use the customer ID from environment
-    const customerId = GADS_CUSTOMER_ID || GADS_LOGIN_CUSTOMER_ID;
+    // Use the customer ID from user token or environment
+    const customerIdRaw = customerIdFromToken || GADS_CUSTOMER_ID || GADS_LOGIN_CUSTOMER_ID;
+    if (!customerIdRaw) {
+      return res.status(400).json({
+        success: false,
+        error: 'No Google Ads customer ID found. Please reconnect your Google Ads account.'
+      });
+    }
+    const customerId = formatCustomerId(customerIdRaw);
 
     // Build the REST API request
     const requestBody: any = {

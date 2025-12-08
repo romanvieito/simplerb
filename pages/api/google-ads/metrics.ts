@@ -107,7 +107,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const { campaignId, days = 30, startDate: reqStartDate, endDate: reqEndDate }: MetricsRequest = req.query;
 
-    const customer = await getGoogleAdsCustomer();
+    const customer = await getGoogleAdsCustomer({ userId, userEmail });
 
     const adpilotLabel = process.env.ADPILOT_LABEL || 'AdPilot';
 
@@ -154,7 +154,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       endDateStr = reqEndDate;
     } else {
       // Use days parameter with account timezone
-      const dateRange = await getDefaultDateRange(days);
+      const dateRange = await getDefaultDateRange(days, { userId, userEmail });
       startDateStr = dateRange.startDate;
       endDateStr = dateRange.endDate;
     }

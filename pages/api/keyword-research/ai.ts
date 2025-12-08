@@ -186,9 +186,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const timeoutMs = process.env.NODE_ENV === 'production' ? 30000 : 10000;
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
+      const forwardHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (req.headers.cookie) {
+        forwardHeaders.cookie = req.headers.cookie as string;
+      }
+      // Forward identifiers for user-scoped tokens
+      if (userId) forwardHeaders['x-user-id'] = userId;
+      if (req.headers['x-user-email']) {
+        forwardHeaders['x-user-email'] = String(req.headers['x-user-email']);
+      }
+
       const resp = await fetch(internalApiUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: forwardHeaders,
         body: JSON.stringify({ keywords: uniqueKeywords, countryCode, languageCode }),
         signal: controller.signal,
       }).catch((e) => {

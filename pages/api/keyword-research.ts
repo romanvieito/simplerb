@@ -254,9 +254,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         controller.abort();
       }, timeoutMs);
       
+      const forwardHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (req.headers.cookie) {
+        forwardHeaders.cookie = req.headers.cookie;
+      }
+      // Pass Clerk-derived identifiers to the downstream handler for user-scoped token lookup
+      if (userId) forwardHeaders['x-user-id'] = userId;
+      if (req.headers['x-user-email']) {
+        forwardHeaders['x-user-email'] = String(req.headers['x-user-email']);
+      }
+
       const keywordPlanningResponse = await fetch(internalApiUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: forwardHeaders,
         body: JSON.stringify({ keywords: uncachedKeywords, countryCode, languageCode }),
         signal: controller.signal,
       });

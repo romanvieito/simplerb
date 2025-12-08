@@ -11,11 +11,16 @@ let cachedTimezone: string | null = null;
 let timezoneCacheTime: number = 0;
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 
+type UserContext = {
+  userId?: string | null;
+  userEmail?: string | null;
+};
+
 /**
  * Get the account timezone from Google Ads API (with caching)
  * @returns The account timezone string (e.g., 'America/Los_Angeles')
  */
-export async function getAccountTimezone(): Promise<string> {
+export async function getAccountTimezone(ctx: UserContext = {}): Promise<string> {
   // Return cached timezone if available and not expired
   const now = Date.now();
   if (cachedTimezone && (now - timezoneCacheTime) < CACHE_TTL) {
@@ -24,7 +29,10 @@ export async function getAccountTimezone(): Promise<string> {
 
   try {
     // Fetch timezone from Google Ads API
-    const customer = await getGoogleAdsCustomer();
+    const customer = await getGoogleAdsCustomer({
+      userId: ctx.userId || undefined,
+      userEmail: ctx.userEmail || undefined,
+    });
     
     const query = `
       SELECT 
@@ -61,8 +69,8 @@ export async function getAccountTimezone(): Promise<string> {
  * @param days - Number of days to go back
  * @returns Object with startDate and endDate strings
  */
-export async function getDefaultDateRange(days: number = 30): Promise<{ startDate: string; endDate: string }> {
-  const timezone = await getAccountTimezone();
+export async function getDefaultDateRange(days: number = 30, ctx: UserContext = {}): Promise<{ startDate: string; endDate: string }> {
+  const timezone = await getAccountTimezone(ctx);
   return getLastNDaysInTimezone(days, timezone);
 }
 

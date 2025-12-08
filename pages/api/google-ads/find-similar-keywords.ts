@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { getAuth } from '@clerk/nextjs/server';
 import { validateAdPilotAccess } from './client';
 
 interface FindSimilarKeywordsRequest {
@@ -40,6 +41,11 @@ export default async function handler(
   }
 
   try {
+    const { userId } = getAuth(req);
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
     // Validate admin access
     const userEmail = req.headers['x-user-email'] as string;
     if (!(await validateAdPilotAccess(userEmail))) {
@@ -84,6 +90,8 @@ export default async function handler(
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
+                'x-user-id': userId,
+                'x-user-email': userEmail || '',
               },
               body: JSON.stringify({
                 keywords: [sourceKeyword],

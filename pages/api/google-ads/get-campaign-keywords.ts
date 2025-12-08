@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { getAuth } from '@clerk/nextjs/server';
 import { getGoogleAdsCustomer, validateAdPilotAccess, handleGoogleAdsError } from './client';
 import { getDefaultDateRange } from './timezone-utils';
 
@@ -45,6 +46,11 @@ export default async function handler(
   }
 
   try {
+    const { userId } = getAuth(req);
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized - please sign in' });
+    }
+
     // Validate admin access
     const userEmail = req.headers['x-user-email'] as string;
     if (!(await validateAdPilotAccess(userEmail))) {
@@ -62,7 +68,7 @@ export default async function handler(
     const startDateParam = req.query.startDate as string;
     const endDateParam = req.query.endDate as string;
 
-    const customer = await getGoogleAdsCustomer();
+    const customer = await getGoogleAdsCustomer({ userId, userEmail });
 
     // Calculate date range for metrics (default to last 30 days if not provided)
     let startDateStr: string;
@@ -74,7 +80,7 @@ export default async function handler(
       endDateStr = endDateParam;
     } else {
       // Default to last 30 days using account timezone
-      const dateRange = await getDefaultDateRange(30);
+      const dateRange = await getDefaultDateRange(30, { userId, userEmail });
       startDateStr = dateRange.startDate;
       endDateStr = dateRange.endDate;
     }

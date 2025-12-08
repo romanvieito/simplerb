@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getGoogleAdsCustomer, validateAdPilotAccess } from './client';
+import { getAuth } from '@clerk/nextjs/server';
+import { validateAdPilotAccess } from './client';
 import { getAccountTimezone } from './timezone-utils';
 
 interface TimezoneResponse {
@@ -17,6 +18,11 @@ export default async function handler(
   }
 
   try {
+    const { userId } = getAuth(req);
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+
     // Validate admin access
     const userEmail = req.headers['x-user-email'] as string;
     if (!(await validateAdPilotAccess(userEmail))) {
@@ -24,7 +30,7 @@ export default async function handler(
     }
 
     // Get account timezone (uses caching internally)
-    const timezone = await getAccountTimezone();
+    const timezone = await getAccountTimezone({ userId, userEmail });
 
     return res.status(200).json({
       success: true,

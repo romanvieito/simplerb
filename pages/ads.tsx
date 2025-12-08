@@ -421,7 +421,7 @@ const AdsPage = () => {
   const [loadingSavedAnalyses, setLoadingSavedAnalyses] = useState(false);
   const [selectedSavedAnalysis, setSelectedSavedAnalysis] = useState<typeof savedAnalyses[0] | null>(null);
   // Sort state - initialize from localStorage or use defaults
-  const [sortColumn, setSortColumn] = useState<'impressions' | 'clicks' | 'ctr' | 'cost' | 'bid' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare' | null>(() => {
+  const [sortColumn, setSortColumn] = useState<'impressions' | 'clicks' | 'ctr' | 'cost' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare' | null>(() => {
     const saved = loadSortState();
     return saved?.sortColumn ?? null;
   });
@@ -478,6 +478,8 @@ const AdsPage = () => {
   // Account timezone state - default to common Google Ads timezone
   const [accountTimezone, setAccountTimezone] = useState<string>(DEFAULT_TIMEZONE);
   const [timezoneLoaded, setTimezoneLoaded] = useState<boolean>(false);
+  const [tokenHealthy, setTokenHealthy] = useState<boolean | null>(null);
+  const [tokenHealthError, setTokenHealthError] = useState<string | null>(null);
 
   // Refs to prevent save loops during initial load
   const isInitialLoad = useRef(true);
@@ -515,6 +517,7 @@ const AdsPage = () => {
         const response = await fetch('/api/google-ads/timezone', {
           headers: {
             'x-user-email': user.emailAddresses[0].emailAddress,
+            'x-user-id': user.id,
           },
         });
 
@@ -535,6 +538,26 @@ const AdsPage = () => {
 
     fetchTimezone();
   }, [isSignedIn, admin, user?.emailAddresses]);
+
+  // Check Google Ads token health for current user
+  useEffect(() => {
+    if (!isLoaded || !user) return;
+
+    const checkHealth = async () => {
+      try {
+        const res = await fetch('/api/oauth/check-health');
+        const data = await res.json();
+        setTokenHealthy(data.healthy ?? false);
+        setTokenHealthError(data.error || null);
+      } catch (err) {
+        console.error('Failed to check token health', err);
+        setTokenHealthy(false);
+        setTokenHealthError('Failed to verify Google Ads connection.');
+      }
+    };
+
+    checkHealth();
+  }, [isLoaded, user?.id]);
 
   // Initialize dates with account timezone (fallback to default if not loaded yet)
   const [startDate, setStartDate] = useState<string>(() => {
@@ -760,7 +783,8 @@ const AdsPage = () => {
     try {
       const response = await fetch(`/api/google-ads/get-campaign-keywords?${params.toString()}`, {
         headers: {
-          'x-user-email': user.emailAddresses[0].emailAddress
+          'x-user-email': user.emailAddresses[0].emailAddress,
+          'x-user-id': user.id,
         }
       });
 
@@ -843,7 +867,10 @@ const AdsPage = () => {
     setLoadingCampaignsSummary(true);
     try {
       const response = await fetch(`/api/google-ads/metrics?${params.toString()}`, {
-        headers: { 'x-user-email': user.emailAddresses[0].emailAddress }
+        headers: { 
+          'x-user-email': user.emailAddresses[0].emailAddress,
+          'x-user-id': user.id,
+        }
       });
       const data = await response.json();
       if (!response.ok || !data.success) {
@@ -1162,7 +1189,8 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
       // Use metrics endpoint to get ALL campaign types (not just Search campaigns with keywords)
       const response = await fetch(`/api/google-ads/metrics?${params.toString()}`, {
         headers: {
-          'x-user-email': user.emailAddresses[0].emailAddress
+          'x-user-email': user.emailAddresses[0].emailAddress,
+          'x-user-id': user.id,
         }
       });
 
@@ -1260,7 +1288,8 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
-              'x-user-email': user.emailAddresses[0].emailAddress
+              'x-user-email': user.emailAddresses[0].emailAddress,
+              'x-user-id': user.id,
             },
             body: JSON.stringify({
               keywords: batch,
@@ -1586,7 +1615,7 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
     return sorted;
   };
 
-  const SortArrow = ({ column }: { column: 'impressions' | 'clicks' | 'ctr' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare' }) => {
+  const SortArrow = ({ column }: { column: 'impressions' | 'clicks' | 'ctr' | 'cost' | 'avgCpc' | 'conversions' | 'conversionRate' | 'cpa' | 'conversionValue' | 'impressionShare' }) => {
     if (sortColumn !== column) {
       return <span className="ml-1 text-gray-400">↕</span>;
     }
@@ -1817,6 +1846,24 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
     <DashboardLayout title="Ads">
       <Toaster position="top-center" />
       <div className="flex flex-1 w-full flex-col items-center justify-center text-center">
+        {tokenHealthy === false && (
+          <div className="w-full max-w-4xl mx-auto mb-4">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-left">
+              <p className="text-sm font-semibold text-yellow-800">Connect your Google Ads account</p>
+              <p className="text-sm text-yellow-700 mt-1">
+                {tokenHealthError || 'No Google Ads token found for your account. Please connect to continue.'}
+              </p>
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => router.push('/admin/oauth-refresh')}
+                  className="bg-blue-600 text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Connect Google Ads
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Tab Navigation */}
         <div className="w-full max-w-4xl mx-auto mb-6">
           <div className="bg-gray-100 rounded-lg p-1">
@@ -1875,7 +1922,7 @@ Be direct. Use specific numbers. No fluff. Each recommendation must include: WHA
             <div className="w-full mb-6">
               <div className="bg-white rounded-xl border border-gray-100 p-4">
                 {/* Load Campaign Data Button - only show when no campaigns are loaded */}
-                {availableCampaigns.length === 0 && admin && isLoaded && isSignedIn && (
+                {availableCampaigns.length === 0 && campaignKeywords.length === 0 && campaignsSummary.length === 0 && admin && isLoaded && isSignedIn && (
                   <div className="text-center py-8">
                     <div className="mb-4">
                       <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
