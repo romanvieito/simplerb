@@ -107,16 +107,21 @@ const Dashboard: React.FC = () => {
   const [selectedDomains, setSelectedDomains] = useState<Set<string>>(new Set());
   const [selectedSites, setSelectedSites] = useState<Set<string>>(new Set());
 
-  // Compute 3-month change similar to /find-keywords
+  // Match 3-mo change logic used in /find-keywords
   const calculateThreeMonthChange = (monthlyData?: KeywordFavorite['monthly_search_volumes']): string => {
     if (!monthlyData || monthlyData.length < 4) return 'N/A';
+
     const totalMonths = monthlyData.length;
-    const lastMonth = monthlyData[totalMonths - 1];
-    const threeMonthsAgo = monthlyData[totalMonths - 4];
+    const lastMonth = monthlyData[totalMonths - 1]; // Most recent month
+    const threeMonthsAgo = monthlyData[totalMonths - 4]; // 3 months ago
+
     if (!lastMonth || !threeMonthsAgo) return 'N/A';
+
     const lastMonthSearches = lastMonth.monthlySearches ?? 0;
     const threeMonthsAgoSearches = threeMonthsAgo.monthlySearches ?? 0;
+
     if (threeMonthsAgoSearches === 0) return lastMonthSearches > 0 ? '+∞%' : '0%';
+
     const change = ((lastMonthSearches - threeMonthsAgoSearches) / threeMonthsAgoSearches) * 100;
     const sign = change >= 0 ? '+' : '';
     return `${sign}${change.toFixed(1)}%`;

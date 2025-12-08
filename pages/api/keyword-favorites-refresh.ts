@@ -113,6 +113,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const lowTopPageBidMicros = k.lowTopPageBidMicros ?? null;
         const highTopPageBidMicros = k.highTopPageBidMicros ?? null;
         const avgCpcMicros = k.avgCpcMicros ?? null;
+        const monthlySearchVolumes = k.monthlySearchVolumes ?? null;
 
         updates.push(sql`
           UPDATE keyword_favorites SET
@@ -122,6 +123,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             avg_cpc_micros = ${avgCpcMicros},
             created_at = NOW()
           WHERE user_id = ${userId} AND keyword = ${keyword}
+        `);
+
+        // Upsert into keyword_cache so dashboard can read monthly trend data
+        updates.push(sql`
+          INSERT INTO keyword_cache (
+            keyword, country_code, language_code, search_volume, competition,
+            competition_index, low_top_page_bid_micros, high_top_page_bid_micros,
+            avg_cpc_micros, monthly_search_volumes, data_source, expires_at
+          ) VALUES (
+            ${keyword}, ${group.countryCode}, ${group.languageCode}, ${searchVolume},
+            ${competition}, ${competitionIndex}, ${lowTopPageBidMicros}, ${highTopPageBidMicros},
+            ${avgCpcMicros}, ${JSON.stringify(monthlySearchVolumes)}, 'google_ads_refresh', NOW() + INTERVAL '30 days'
+          ) ON CONFLICT (keyword, country_code, language_code) DO UPDATE SET
+            search_volume = EXCLUDED.search_volume,
+            competition = EXCLUDED.competition,
+            competition_index = EXCLUDED.competition_index,
+            low_top_page_bid_micros = EXCLUDED.low_top_page_bid_micros,
+            high_top_page_bid_micros = EXCLUDED.high_top_page_bid_micros,
+            avg_cpc_micros = EXCLUDED.avg_cpc_micros,
+            monthly_search_volumes = EXCLUDED.monthly_search_volumes,
+            data_source = EXCLUDED.data_source,
+            expires_at = EXCLUDED.expires_at,
+            created_at = NOW()
         `);
         totalRefreshed += 1;
       }
