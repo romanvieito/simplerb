@@ -43,6 +43,7 @@ const calculateThreeMonthChange = (monthlyData?: KeywordResult['monthlySearchVol
 
 // LocalStorage utility functions for saving/loading search data
 const STORAGE_KEY = 'last-keyword-search';
+const ACTIVE_TAB_STORAGE_KEY = 'keyword-active-tab';
 
 interface SavedSearchData {
   keywords: string;
@@ -252,6 +253,11 @@ export default function FindKeywords(): JSX.Element {
 
   const handleTabChange = (tab: 'google' | 'ai') => {
     setActiveTab(tab);
+    try {
+      localStorage.setItem(ACTIVE_TAB_STORAGE_KEY, tab);
+    } catch (error) {
+      console.warn('Failed to persist tab selection:', error);
+    }
     // Mark AI as used if user switches to AI tab
     if (tab === 'ai' && !hasUsedAI) {
       localStorage.setItem('hasUsedAIKeywords', 'true');
@@ -321,6 +327,16 @@ export default function FindKeywords(): JSX.Element {
 
   // Load saved search data on component mount
   useEffect(() => {
+    // Restore last selected tab (Google vs AI)
+    try {
+      const savedTab = localStorage.getItem(ACTIVE_TAB_STORAGE_KEY);
+      if (savedTab === 'google' || savedTab === 'ai') {
+        setActiveTab(savedTab);
+      }
+    } catch (error) {
+      console.warn('Failed to load tab selection from localStorage:', error);
+    }
+
     const savedData = loadSearchData();
     if (savedData) {
       setKeywords(savedData.keywords);
@@ -606,12 +622,12 @@ export default function FindKeywords(): JSX.Element {
   };
 
   return (
-    <DashboardLayout title="Keywords">
+    <DashboardLayout title="Opportunities">
       <Toaster position="top-center" />
       <div className="flex flex-1 w-full flex-col items-center justify-center text-center">
         <h1 className="text-2xl text-gray-900 mb-1 tracking-tight">
-          Keywords <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-            {'Planner'}
+          Opportunities <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+            {'Helper'}
           </span>
         </h1>
 
@@ -674,55 +690,18 @@ export default function FindKeywords(): JSX.Element {
                   </div>
                   
                   <div className="flex items-center space-x-3">
-                    {/* Enhanced Tabs Component */}
-                    <div className="flex items-center bg-gray-100 rounded-lg p-1 shadow-sm">
-                      <button
-                        onClick={() => handleTabChange('google')}
-                        className={`group relative px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 flex items-center space-x-2 ${
-                          activeTab === 'google' 
-                            ? 'bg-white text-blue-600 shadow-sm' 
-                            : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                        title="Search for keywords using Google Ads data"
-                      >
-                        <svg 
-                          xmlns="http://www.w3.org/2000/svg" 
-                          className={`h-4 w-4 transition-transform duration-200 ${activeTab === 'google' ? 'scale-110' : 'group-hover:scale-105'}`} 
-                          fill="none" 
-                          viewBox="0 0 24 24" 
-                          stroke="currentColor"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <span>Find Keywords</span>
-                      </button>
-                      <button
-                        onClick={() => handleTabChange('ai')}
-                        className={`group relative px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 flex items-center space-x-2 ${
-                          activeTab === 'ai' 
-                            ? 'bg-white text-purple-600 shadow-sm' 
-                            : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                        title="Generate keyword ideas with AI"
-                      >
-                        <svg 
-                          xmlns="http://www.w3.org/2000/svg" 
-                          className={`h-4 w-4 transition-transform duration-200 ${activeTab === 'ai' ? 'scale-110' : 'group-hover:scale-105'}`}
-                          fill="none" 
-                          viewBox="0 0 24 24" 
-                          stroke="currentColor"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                        </svg>
-                        <span>AI Prompt</span>
-                        {activeTab !== 'ai' && !hasUsedAI && (
-                          <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
-                          </span>
-                        )}
-                      </button>
-                    </div>
+                    {/* Mode toggle */}
+                    <label className="flex items-center space-x-3 bg-gray-100 rounded-lg px-3 py-2 shadow-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={activeTab === 'ai'}
+                        onChange={(e) => handleTabChange(e.target.checked ? 'ai' : 'google')}
+                        className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                      />
+                      <div className="flex flex-col text-left">
+                        <span className="text-sm font-medium text-gray-800">Use AI</span>
+                      </div>
+                    </label>
                     
                     <button
                       onClick={handleKeywordResearch}

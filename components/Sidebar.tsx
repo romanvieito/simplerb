@@ -49,7 +49,7 @@ const sidebarItems: SidebarItem[] = [
     ),
   },
   {
-    name: 'Keywords',
+    name: 'Opportunities',
     href: '/find-keywords',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

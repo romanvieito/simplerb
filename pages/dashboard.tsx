@@ -2147,7 +2147,7 @@ const Dashboard: React.FC = () => {
                   </svg>
                 </div>
                 <div className="flex-1 text-left">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Keyword Research</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Find Opportunities</h3>
                   <p className="text-gray-600 text-sm mb-3">Discover high-value keywords and analyze search trends to optimize your content.</p>
                   <span className="text-sm text-gray-700 font-medium">Try it now →</span>
                 </div>
