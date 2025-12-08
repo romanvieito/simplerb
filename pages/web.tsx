@@ -49,6 +49,8 @@ const WebPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState("");
   const [vibe, setVibe] = useState<VibeType>("Professional");
+  const [audience, setAudience] = useState("");
+  const [trustSignals, setTrustSignals] = useState("");
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -234,6 +236,8 @@ const WebPage = () => {
 
     try {
       const trimmedDescription = textDescription.trim();
+      const trimmedAudience = audience.trim();
+      const trimmedTrust = trustSignals.trim();
       if (trimmedDescription.length < MIN_DESCRIPTION_LENGTH) {
         toast.error(`Please provide at least ${MIN_DESCRIPTION_LENGTH} characters describing your site.`);
         setLoading(false);
@@ -301,6 +305,9 @@ const WebPage = () => {
       const brandName = selectedDomain || "Your Business";
       
       const designerPrompt = `Design a single-page, mobile-first marketing site${domainContext}${vibeContext} for: ${trimmedDescription}
+      Audience: ${trimmedAudience || 'General small business buyers; keep tone welcoming.'}
+      Trust signals to use if provided: ${trimmedTrust || 'Use generic benefits and a simple satisfaction guarantee. Do not invent names, logos, or metrics.'}
+      
       Return raw JSON only (no markdown, no code fences). Start with opening brace and end with closing brace:
       {
         "reference_website": "URL",
@@ -441,13 +448,15 @@ const WebPage = () => {
       const developerPrompt = `Create a clean, single HTML landing page (no markdown, no code fences, no scripts).
       Brand name: ${brandName}.
       Reference: ${designPlan.reference_website}.
+      Target audience: ${trimmedAudience || 'General small business buyers; keep it broadly appealing.'}
+      Trust signals to include: ${trimmedTrust || 'Use generic benefits and a simple satisfaction guarantee; do not invent names, logos, or metrics.'}
       Style: ${designPlan.design_style}. Typography: ${designPlan.typography || 'system sans-serif'}.
       Palette: ${(designPlan.color_palette || ['#0f172a', '#2563eb', '#f43f5e']).join(', ')}.
       Sections (in this order): 
       1) Hero with H1 using the brand, a short subheadline, and a primary CTA button labeled "${designPlan.cta || 'Get Started'}".
-      2) 3 concise feature highlights with headings and one-line descriptions.
+      2) 3 concise feature highlights with headings and one-line descriptions tailored to the audience.
       3) Services/offer section with bullets.
-      4) "Why choose us" block with 3 short benefits (no client names needed) plus an optional simple guarantee line.
+      4) "Why choose us" block with 3 short benefits; if trust signals provided, weave them in plainly. If none provided, use generic strengths and a simple guarantee without making up specifics.
       5) Secondary CTA + simple contact/footer.
       Images (use <img> tags, include alt text, prefer Pexels URLs; use placeholders only if missing):
       ${images.map(img => `${img.type}: ${img.pexels?.url || 'https://via.placeholder.com/1920x1080'} (alt: ${img.alt_text || img.type})`).join('\n')}${domainBranding}
@@ -1028,6 +1037,36 @@ const WebPage = () => {
                     )}
                   </button>
                 </div>
+              </div>
+            </div>
+
+            {/* Additional context fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                <label className="block text-sm font-medium text-gray-700 text-left mb-2">
+                  Who is this for? (optional)
+                </label>
+                <input
+                  value={audience}
+                  onChange={(e) => setAudience(e.target.value)}
+                  maxLength={200}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g., Homeowners in suburbs, small business owners, busy parents"
+                />
+              </div>
+
+              <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                <label className="block text-sm font-medium text-gray-700 text-left mb-2">
+                  Trust signals (optional)
+                </label>
+                <textarea
+                  value={trustSignals}
+                  onChange={(e) => setTrustSignals(e.target.value)}
+                  maxLength={280}
+                  rows={3}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  placeholder="e.g., 500+ projects, 24h response, licensed/insured, partner brands, satisfaction guarantee"
+                />
               </div>
             </div>
           </form>
