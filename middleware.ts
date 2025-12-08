@@ -16,7 +16,8 @@ export default authMiddleware({
     "/api/check-availability",
     "/api/get-tlds-godaddy",
     "/api/oauth/(.*)",
-    "/api/clerk-webhooks"
+    "/api/clerk-webhooks",
+    "/api/contact-leads"
   ],
   // Routes that can always be accessed, and have
   // no authentication information
@@ -26,12 +27,16 @@ export default authMiddleware({
   ],
   beforeAuth: (req) => {
     const hostname = req.headers.get('host') || '';
+    const pathname = req.nextUrl.pathname;
 
     // Check if this is a subdomain request
     const isSubdomain = hostname.includes('.simplerb.com') && !hostname.startsWith('www.') && hostname !== 'simplerb.com';
 
-    if (isSubdomain) {
-      // Rewrite to subdomain handler for subdomain requests
+    // For subdomain requests, only rewrite if it's NOT an API call.
+    // This keeps the generated site's API endpoints (e.g., contact form submissions)
+    // working while still serving the stored HTML for normal page views.
+    if (isSubdomain && !pathname.startsWith('/api')) {
+      // Rewrite to subdomain handler for subdomain page requests
       const url = req.nextUrl.clone();
       url.pathname = '/api/subdomain-handler';
       return NextResponse.rewrite(url);
