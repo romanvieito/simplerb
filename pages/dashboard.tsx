@@ -85,6 +85,95 @@ type CampaignsColumns = {
   impressionShare: boolean;
 };
 
+type MonthlyTrendPoint = NonNullable<KeywordFavorite['monthly_search_volumes']>[number];
+
+const MonthlyTrendChart: React.FC<{ keyword: string; trend: MonthlyTrendPoint[] }> = ({ keyword, trend }) => {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  const lastTwelve = trend.slice(-12);
+  const maxVolume = Math.max(...lastTwelve.map((point) => point.monthlySearches));
+  const minVolume = Math.min(...lastTwelve.map((point) => point.monthlySearches));
+  const chartRange = maxVolume - minVolume;
+  const chartHeight = 40;
+  const yAxisWidth = 45;
+  const paddingTop = 5;
+  const paddingBottom = 5;
+  const innerRange = 100 - paddingTop - paddingBottom;
+
+  const formatTopNumber = (num: number): string => {
+    if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
+    if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;
+    return num.toLocaleString();
+  };
+
+  return (
+    <div className="relative" style={{ paddingRight: `${yAxisWidth}px` }}>
+      {hoveredIndex !== null && lastTwelve[hoveredIndex] && (
+        <div className="absolute -top-1 left-1/2 z-20 -translate-x-1/2 -translate-y-full pointer-events-none">
+          <div className="bg-gray-900 text-white px-2 py-1 rounded text-xs whitespace-nowrap">
+            {lastTwelve[hoveredIndex].monthLabel}: {lastTwelve[hoveredIndex].monthlySearches.toLocaleString()}
+          </div>
+        </div>
+      )}
+
+      <div
+        className="absolute right-0 top-0 text-xs text-gray-500 font-medium"
+        style={{ width: `${yAxisWidth - 4}px`, textAlign: 'left', paddingLeft: '4px' }}
+      >
+        {formatTopNumber(maxVolume)}
+      </div>
+
+      <svg
+        className="w-full"
+        height={chartHeight}
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        onMouseLeave={() => setHoveredIndex(null)}
+      >
+        {lastTwelve.length > 1 && (
+          <>
+            <path
+              d={lastTwelve
+                .map((point, idx) => {
+                  const normalized = chartRange === 0 ? 0.5 : (point.monthlySearches - minVolume) / chartRange;
+                  const x = lastTwelve.length === 1 ? 50 : (idx / (lastTwelve.length - 1)) * 100;
+                  const y = paddingTop + (1 - normalized) * innerRange;
+                  return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`;
+                })
+                .join(' ')}
+              fill="none"
+              stroke="rgb(99,102,241)"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+
+            {lastTwelve.map((point, idx) => {
+              const normalized = chartRange === 0 ? 0.5 : (point.monthlySearches - minVolume) / chartRange;
+              const x = lastTwelve.length === 1 ? 50 : (idx / (lastTwelve.length - 1)) * 100;
+              const y = paddingTop + (1 - normalized) * innerRange;
+              const isHovered = hoveredIndex === idx;
+
+              return (
+                <g key={`${keyword}-${point.dateKey}`} onMouseEnter={() => setHoveredIndex(idx)} className="cursor-pointer">
+                  <circle cx={x} cy={y} r="6" fill="transparent" />
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={isHovered ? '1.5' : '0.8'}
+                    fill="rgb(99,102,241)"
+                    className="transition-all"
+                  />
+                </g>
+              );
+            })}
+          </>
+        )}
+      </svg>
+    </div>
+  );
+};
+
 const Dashboard: React.FC = () => {
   const router = useRouter();
   const { user: realUser, isLoaded } = useUser();
@@ -203,6 +292,27 @@ const Dashboard: React.FC = () => {
     const change = ((lastMonthSearches - threeMonthsAgoSearches) / threeMonthsAgoSearches) * 100;
     const sign = change >= 0 ? '+' : '';
     return `${sign}${change.toFixed(1)}%`;
+  };
+
+  const renderMonthlyTrend = (keyword: string, trend?: KeywordFavorite['monthly_search_volumes']) => {
+    if (!trend || trend.length === 0) {
+      return <span className="text-xs text-gray-400">No trend data</span>;
+    }
+
+    return <MonthlyTrendChart keyword={keyword} trend={trend} />;
+  };
+
+  const getFavoritesLastMonthLabel = (): string | null => {
+    const firstWithTrend = favorites.find(
+      (fav) => fav.monthly_search_volumes && fav.monthly_search_volumes.length > 0
+    );
+    if (!firstWithTrend?.monthly_search_volumes) return null;
+
+    const lastPoint =
+      firstWithTrend.monthly_search_volumes[firstWithTrend.monthly_search_volumes.length - 1];
+    if (!lastPoint || !lastPoint.monthLabel) return null;
+
+    return lastPoint.monthLabel.split(' ')[0];
   };
 
   // Compute filtered sites
@@ -1202,7 +1312,9 @@ const Dashboard: React.FC = () => {
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Competition</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">3-mo Change</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Country</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Added</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
+                            {getFavoritesLastMonthLabel() ? `Trend (${getFavoritesLastMonthLabel()})` : 'Trend'}
+                          </th>
                           <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
                         </tr>
                       </thead>
@@ -1276,8 +1388,8 @@ const Dashboard: React.FC = () => {
                               </span>
                             </td>
                             <td className="py-4 px-4 text-sm text-gray-600">{favorite.country_code || 'N/A'}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600">
-                              {new Date(favorite.created_at).toLocaleDateString()}
+                            <td className="py-4 px-4 align-middle">
+                              {renderMonthlyTrend(favorite.keyword, favorite.monthly_search_volumes)}
                             </td>
                             <td className="py-4 px-4 text-center">
                               <button
