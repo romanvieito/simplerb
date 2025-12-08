@@ -91,12 +91,17 @@ const Dashboard: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [internalUserId, setInternalUserId] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<KeywordFavorite[]>([]);
-  const [favoritesLastUpdatedAt, setFavoritesLastUpdatedAt] = useState<string | null>(null);
   const [domainFavorites, setDomainFavorites] = useState<DomainFavorite[]>([]);
   const [publishedSites, setPublishedSites] = useState<PublishedSite[]>([]);
   const [loading, setLoading] = useState(true);
   const [domainLoading, setDomainLoading] = useState(true);
   const [sitesLoading, setSitesLoading] = useState(true);
+  const [userTimeZone, setUserTimeZone] = useState<string>(() => {
+    if (typeof Intl !== 'undefined' && typeof Intl.DateTimeFormat === 'function') {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    }
+    return 'UTC';
+  });
   const [renamingSubdomain, setRenamingSubdomain] = useState<string | null>(null);
   const [newSubdomain, setNewSubdomain] = useState<string>('');
   const [renameError, setRenameError] = useState<string | null>(null);
@@ -144,6 +149,24 @@ const Dashboard: React.FC = () => {
     });
     return counts;
   }, [favorites]);
+
+  const favoritesLastUpdatedAt = useMemo(() => {
+    if (favorites.length === 0) return null;
+
+    const maxTs = favorites.reduce<number>((acc, item) => {
+      const t = item.created_at ? new Date(item.created_at).getTime() : 0;
+      return Number.isFinite(t) ? Math.max(acc, t) : acc;
+    }, 0);
+
+    if (!maxTs) return null;
+
+    try {
+      return new Date(maxTs).toLocaleString(undefined, { timeZone: userTimeZone });
+    } catch (err) {
+      console.error('Error formatting last updated time:', err);
+      return new Date(maxTs).toLocaleString();
+    }
+  }, [favorites, userTimeZone]);
 
   const filteredFavorites = useMemo(() => {
     return favorites.filter((fav) => {
@@ -313,6 +336,16 @@ const Dashboard: React.FC = () => {
     }
   }, [isLoaded, realUser, router]);
 
+  // Capture user timezone on the client
+  useEffect(() => {
+    if (typeof Intl !== 'undefined' && typeof Intl.DateTimeFormat === 'function') {
+      const detectedTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (detectedTz) {
+        setUserTimeZone(detectedTz);
+      }
+    }
+  }, []);
+
   // Load section order and minimized sections from localStorage on mount
   useEffect(() => {
     const savedOrder = localStorage.getItem('dashboard-section-order');
@@ -415,17 +448,6 @@ const Dashboard: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         setFavorites(data.favorites || []);
-        // Compute latest created_at for "Last update" label
-        const list: KeywordFavorite[] = (data.favorites || []) as KeywordFavorite[];
-        if (list.length > 0) {
-          const maxTs = list.reduce<number>((acc, item) => {
-            const t = item.created_at ? new Date(item.created_at).getTime() : 0;
-            return Math.max(acc, t);
-          }, 0);
-          setFavoritesLastUpdatedAt(maxTs ? new Date(maxTs).toLocaleString() : null);
-        } else {
-          setFavoritesLastUpdatedAt(null);
-        }
       } else {
         console.error('Failed to fetch favorites:', response.status, response.statusText);
       }
@@ -1120,7 +1142,7 @@ const Dashboard: React.FC = () => {
                   </button>
                 </div>
               </div>
-              <p className="text-sm text-gray-600 mt-1">Your saved keywords for research</p>
+              <p className="text-sm text-gray-600 mt-1">Your saved keywords for research opportunities</p>
             </div>
             <div className="border-b border-gray-100" />
             {categoryError && (
