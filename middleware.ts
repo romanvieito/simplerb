@@ -1,24 +1,29 @@
 import { authMiddleware } from "@clerk/nextjs";
 import { NextRequest, NextResponse } from "next/server";
 
+const DEV_BYPASS_AUTH = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true';
+
+const basePublicRoutes = [
+  "/",
+  "/sign-in",
+  "/sign-up",
+  "/dashboard",
+  "/pricing",
+  "/terms",
+  "/privacy",
+  "/api/webhook",
+  "/api/migrations/(.*)",
+  "/api/stripe-webhooks",
+  "/api/check-availability",
+  "/api/get-tlds-godaddy",
+  "/api/oauth/(.*)",
+  "/api/clerk-webhooks",
+  "/api/contact-leads"
+];
+
 export default authMiddleware({
   // Routes that can be accessed while signed out
-  publicRoutes: [
-    "/",
-    "/sign-in",
-    "/sign-up",
-    "/pricing",
-    "/terms",
-    "/privacy",
-    "/api/webhook",
-    "/api/migrations/(.*)",
-    "/api/stripe-webhooks",
-    "/api/check-availability",
-    "/api/get-tlds-godaddy",
-    "/api/oauth/(.*)",
-    "/api/clerk-webhooks",
-    "/api/contact-leads"
-  ],
+  publicRoutes: DEV_BYPASS_AUTH ? ["/(.*)"] : basePublicRoutes,
   // Routes that can always be accessed, and have
   // no authentication information
   ignoredRoutes: [
@@ -26,6 +31,11 @@ export default authMiddleware({
     "/api/serve-site"
   ],
   beforeAuth: (req) => {
+    if (DEV_BYPASS_AUTH) {
+      // In dev bypass mode, skip Clerk middleware entirely
+      return NextResponse.next();
+    }
+
     const hostname = req.headers.get('host') || '';
     const pathname = req.nextUrl.pathname;
 

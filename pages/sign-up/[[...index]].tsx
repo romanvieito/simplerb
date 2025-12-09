@@ -1,6 +1,32 @@
 import { SignUp } from "@clerk/nextjs";
+import { useEffect } from "react";
+import { useRouter } from "next/router";
+
+const DEV_BYPASS_AUTH = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true';
 
 export default function SignUpPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (DEV_BYPASS_AUTH) {
+      router.replace("/dashboard");
+    }
+  }, [router]);
+
+  // In dev bypass, avoid rendering Clerk widget entirely to prevent missing-key errors
+  if (DEV_BYPASS_AUTH) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Redirecting…</h1>
+            <p className="text-gray-600">Dev bypass enabled — sending you to the dashboard.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
@@ -10,6 +36,11 @@ export default function SignUpPage() {
         </div>
         
         <div className="bg-white rounded-lg shadow-xl p-8">
+          {DEV_BYPASS_AUTH && (
+            <div className="mb-4 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-800 border border-blue-100">
+              Dev bypass enabled — redirecting to dashboard.
+            </div>
+          )}
           <SignUp 
             appearance={{
               elements: {
@@ -43,4 +74,17 @@ export default function SignUpPage() {
       </div>
     </div>
   );
+}
+
+export async function getServerSideProps() {
+  if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') {
+    return {
+      redirect: {
+        destination: '/dashboard',
+        permanent: false,
+      },
+    };
+  }
+
+  return { props: {} };
 }

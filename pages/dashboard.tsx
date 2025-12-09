@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import DashboardLayout from '../components/DashboardLayout';
 import SBRContext from '../context/SBRContext';
 import LoadingDots from '../components/LoadingDots';
+import { getAuth } from '@clerk/nextjs/server';
 import {
   getLastNDaysInTimezone,
   DEFAULT_TIMEZONE,
@@ -505,6 +506,31 @@ const Dashboard: React.FC = () => {
     if (typeof window === 'undefined') return;
     localStorage.setItem('dashboard-category-filter', categoryFilter);
   }, [categoryFilter]);
+
+  // Load published sites filter/search from localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const storedFilter = localStorage.getItem('dashboard-published-sites-filter');
+    if (storedFilter === 'all' || storedFilter === 'favorites' || storedFilter === 'non-favorites') {
+      setPublishedSitesFilter(storedFilter);
+    }
+
+    const storedSearch = localStorage.getItem('dashboard-published-sites-search');
+    if (storedSearch !== null) {
+      setPublishedSitesSearch(storedSearch);
+    }
+  }, []);
+
+  // Persist published sites filter/search
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('dashboard-published-sites-filter', publishedSitesFilter);
+  }, [publishedSitesFilter]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('dashboard-published-sites-search', publishedSitesSearch);
+  }, [publishedSitesSearch]);
 
   // Drag and drop handlers for section reordering
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, sectionId: string) => {
@@ -2336,3 +2362,18 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
+
+export async function getServerSideProps(context: any) {
+  const { userId } = getAuth(context.req);
+
+  if (!userId) {
+    return {
+      redirect: {
+        destination: '/sign-in',
+        permanent: false,
+      },
+    };
+  }
+
+  return { props: {} };
+}
