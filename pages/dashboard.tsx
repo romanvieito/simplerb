@@ -5,6 +5,7 @@ import DashboardLayout from '../components/DashboardLayout';
 import SBRContext from '../context/SBRContext';
 import LoadingDots from '../components/LoadingDots';
 import { getAuth } from '@clerk/nextjs/server';
+import Dialog from '@mui/material/Dialog';
 import {
   getLastNDaysInTimezone,
   DEFAULT_TIMEZONE,
@@ -53,6 +54,15 @@ interface PublishedSite {
   url: string;
   screenshot: string | null;
   favorite: boolean;
+}
+
+interface ContactLead {
+  id: number;
+  subdomain: string | null;
+  name: string | null;
+  email: string | null;
+  message: string;
+  created_at: string;
 }
 
 interface CampaignSummary {
@@ -181,7 +191,7 @@ const CAMPAIGNS_DATE_RANGE_STORAGE_KEY = 'dashboard-campaigns-date-range';
 
 const Dashboard: React.FC = () => {
   const router = useRouter();
-  const { user: realUser, isLoaded } = useUser();
+  const { user: realUser, isLoaded, isSignedIn } = useUser();
   const [user, setUser] = useState<any>(null);
   const [internalUserId, setInternalUserId] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<KeywordFavorite[]>([]);
@@ -201,6 +211,7 @@ const Dashboard: React.FC = () => {
   const [renameError, setRenameError] = useState<string | null>(null);
   const [publishedSitesFilter, setPublishedSitesFilter] = useState<'all' | 'favorites' | 'non-favorites'>('favorites');
   const [publishedSitesSearch, setPublishedSitesSearch] = useState<string>('');
+  const [searchExpanded, setSearchExpanded] = useState<boolean>(false);
   
   // Selection state for copy to clipboard
   const [selectedKeywords, setSelectedKeywords] = useState<Set<string>>(new Set());
@@ -218,6 +229,9 @@ const Dashboard: React.FC = () => {
   const [categoryError, setCategoryError] = useState<string | null>(null);
   const [moveTargetCategory, setMoveTargetCategory] = useState<string>('');
   const UNCATEGORIZED_KEY = '__uncategorized__';
+  const [leads, setLeads] = useState<ContactLead[]>([]);
+  const [leadsLoading, setLeadsLoading] = useState(false);
+  const [leadsModalOpen, setLeadsModalOpen] = useState(false);
 
   const normalizeCategory = (value?: string | null) => (value ? value.trim() : '');
   const displayCategory = (value?: string | null) => normalizeCategory(value) || 'Uncategorized';
@@ -879,6 +893,32 @@ const Dashboard: React.FC = () => {
       setSitesLoading(false);
     }
   };
+
+  // Fetch recent contact leads for the signed-in user
+  const fetchLeads = useCallback(async () => {
+    if (!isSignedIn) return;
+    setLeadsLoading(true);
+    try {
+      const resp = await fetch('/api/contact-leads');
+      if (!resp.ok) {
+        throw new Error('Failed to load leads');
+      }
+      const data = await resp.json();
+      if (data?.success && Array.isArray(data.leads)) {
+        setLeads(data.leads);
+      }
+    } catch (error) {
+      console.error('Error loading leads:', error);
+    } finally {
+      setLeadsLoading(false);
+    }
+  }, [isSignedIn]);
+
+  useEffect(() => {
+    if (leadsModalOpen) {
+      fetchLeads();
+    }
+  }, [leadsModalOpen, fetchLeads]);
 
   // Remove domain from favorites
   const removeDomainFavorite = async (namedomain: string) => {
@@ -1728,21 +1768,38 @@ const Dashboard: React.FC = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
                     </svg>
                   </div>
-                  <h2 className="text-lg font-semibold text-gray-900">Published Websites</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">Web</h2>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div
+                    className={`relative flex items-center transition-all duration-200 ${searchExpanded || publishedSitesSearch ? 'w-56 sm:w-64' : 'w-9'}`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setSearchExpanded(true)}
+                      className="absolute inset-y-0 left-0 pl-2 flex items-center text-gray-500 hover:text-gray-700"
+                      aria-label="Search websites"
+                    >
                       <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
-                    </div>
+                    </button>
                     <input
                       type="text"
                       placeholder="Search sites..."
                       value={publishedSitesSearch}
                       onChange={(e) => setPublishedSitesSearch(e.target.value)}
-                      className="bg-white border border-gray-200 rounded px-3 py-1 pl-9 text-sm text-gray-700 focus:border-purple-500 focus:outline-none"
+                      onFocus={() => setSearchExpanded(true)}
+                      onBlur={() => {
+                        if (!publishedSitesSearch.trim()) {
+                          setSearchExpanded(false);
+                        }
+                      }}
+                      className={`bg-white border border-gray-200 rounded pl-8 pr-3 text-sm text-gray-700 focus:border-purple-500 focus:outline-none transition-all duration-200 ${
+                        searchExpanded || publishedSitesSearch
+                          ? 'py-1 opacity-100'
+                          : 'py-0 h-9 opacity-0 pointer-events-none'
+                      }`}
                     />
                   </div>
                   <select
@@ -1754,6 +1811,14 @@ const Dashboard: React.FC = () => {
                     <option value="non-favorites">Non-Favorites Only</option>
                     <option value="all">Show All Sites</option>
                   </select>
+                  {isSignedIn && (
+                    <button
+                      onClick={() => setLeadsModalOpen(true)}
+                      className="text-sm text-gray-600 hover:text-gray-800 underline underline-offset-4 whitespace-nowrap"
+                    >
+                      {leadsLoading ? 'Loading leads…' : 'View recent leads'}
+                    </button>
+                  )}
                   {selectedSites.size > 0 && (
                     <button
                       onClick={copySelectedSites}
@@ -1868,9 +1933,10 @@ const Dashboard: React.FC = () => {
                               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                             />
                           </th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Subdomain</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Web</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Description</th>
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Created</th>
+                          <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">Favorite</th>
                           <th className="text-center py-3 px-4 text-sm font-medium text-gray-700">Actions</th>
                         </tr>
                       </thead>
@@ -1922,6 +1988,25 @@ const Dashboard: React.FC = () => {
                             <td className="py-4 px-4 text-sm text-gray-600">{site.description || 'No description'}</td>
                             <td className="py-4 px-4 text-sm text-gray-600">
                               {new Date(site.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="py-4 px-4 text-center">
+                              <button
+                                onClick={() => toggleSiteFavorite(site.id, site.favorite)}
+                                className="inline-flex items-center justify-center w-9 h-9 rounded-full hover:bg-gray-50 text-yellow-500"
+                                title={site.favorite ? 'Unfavorite' : 'Favorite'}
+                              >
+                                <svg
+                                  className="w-5 h-5"
+                                  viewBox="0 0 24 24"
+                                  fill={site.favorite ? 'currentColor' : 'none'}
+                                  stroke="currentColor"
+                                  strokeWidth="1.8"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                </svg>
+                              </button>
                             </td>
                             <td className="py-4 px-4 text-center space-x-2">
                               {renamingSubdomain === site.subdomain ? (
@@ -2421,6 +2506,50 @@ const Dashboard: React.FC = () => {
           </div>
         );
       })}
+      {isSignedIn && (
+        <Dialog
+          open={leadsModalOpen}
+          onClose={() => setLeadsModalOpen(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-lg font-semibold text-gray-900">Recent leads</h2>
+              <button
+                onClick={() => setLeadsModalOpen(false)}
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                Close
+              </button>
+            </div>
+            {leadsLoading && <p className="text-sm text-gray-500">Loading leads…</p>}
+            {!leadsLoading && leads.length === 0 && (
+              <p className="text-sm text-gray-500">
+                No leads yet — submissions from your published site's contact form will show here once visitors start sending messages.
+              </p>
+            )}
+            <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+              {leads.slice(0, 20).map((lead) => (
+                <div key={lead.id} className="py-3">
+                  <div className="text-sm text-gray-900 font-medium">
+                    {lead.subdomain || '—'}
+                  </div>
+                  <div className="text-sm text-gray-700">
+                    {lead.message.slice(0, 160)}
+                    {lead.message.length > 160 ? '…' : ''}
+                  </div>
+                  <div className="text-xs text-gray-500 flex items-center gap-2 mt-1">
+                    {lead.name && <span>{lead.name}</span>}
+                    {lead.email && <span>• {lead.email}</span>}
+                    <span>• {new Date(lead.created_at).toLocaleString()}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Dialog>
+      )}
     </DashboardLayout>
   );
 };
