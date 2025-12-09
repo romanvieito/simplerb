@@ -27,7 +27,7 @@ const isIgnoredRoute = createRouteMatcher([
   "/api/serve-site"
 ]);
 
-export default clerkMiddleware((auth, req) => {
+export default clerkMiddleware(async (auth, req) => {
   if (isIgnoredRoute(req)) {
     return NextResponse.next();
   }
@@ -48,7 +48,7 @@ export default clerkMiddleware((auth, req) => {
   }
 
   if (!isPublicRoute(req)) {
-    auth().protect();
+    await auth.protect();
   }
 
   return NextResponse.next();
