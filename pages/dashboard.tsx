@@ -175,6 +175,10 @@ const MonthlyTrendChart: React.FC<{ keyword: string; trend: MonthlyTrendPoint[] 
   );
 };
 
+const CAMPAIGNS_COLUMNS_STORAGE_KEY = 'dashboard-campaigns-columns';
+const CAMPAIGNS_DATE_PRESET_STORAGE_KEY = 'dashboard-campaigns-date-preset';
+const CAMPAIGNS_DATE_RANGE_STORAGE_KEY = 'dashboard-campaigns-date-range';
+
 const Dashboard: React.FC = () => {
   const router = useRouter();
   const { user: realUser, isLoaded } = useUser();
@@ -380,6 +384,9 @@ const Dashboard: React.FC = () => {
   const campaignsColumnSelectorRef = useRef<HTMLDivElement>(null);
   const [accountTimezone, setAccountTimezone] = useState<string>(DEFAULT_TIMEZONE);
   const [timezoneLoaded, setTimezoneLoaded] = useState<boolean>(false);
+  const campaignPrefsLoadedRef = useRef<boolean>(false);
+  const campaignDatesInitializedRef = useRef<boolean>(false);
+  const initialCampaignDatePresetRef = useRef<string>('last7days');
   
   // Date filter state for campaigns
   const last7Days = getLastNDaysInTimezone(7, DEFAULT_TIMEZONE);
@@ -532,6 +539,63 @@ const Dashboard: React.FC = () => {
     localStorage.setItem('dashboard-published-sites-search', publishedSitesSearch);
   }, [publishedSitesSearch]);
 
+  // Load saved campaigns preferences (columns + date filters) once on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (campaignPrefsLoadedRef.current) return;
+
+    try {
+      const savedColumns = localStorage.getItem(CAMPAIGNS_COLUMNS_STORAGE_KEY);
+      if (savedColumns) {
+        const parsed = JSON.parse(savedColumns);
+        if (parsed && typeof parsed === 'object') {
+          setCampaignsVisibleColumns((prev) => ({ ...prev, ...parsed }));
+        }
+      }
+
+      const savedPreset = localStorage.getItem(CAMPAIGNS_DATE_PRESET_STORAGE_KEY);
+      if (savedPreset) {
+        setSelectedDatePreset(savedPreset);
+        initialCampaignDatePresetRef.current = savedPreset;
+      }
+
+      const savedRange = localStorage.getItem(CAMPAIGNS_DATE_RANGE_STORAGE_KEY);
+      if (savedRange) {
+        const parsedRange = JSON.parse(savedRange);
+        if (parsedRange?.startDate && parsedRange?.endDate) {
+          setCampaignsStartDate(parsedRange.startDate);
+          setCampaignsEndDate(parsedRange.endDate);
+          campaignDatesInitializedRef.current = true;
+        }
+      }
+    } catch (err) {
+      console.error('Error loading dashboard state from localStorage:', err);
+    } finally {
+      campaignPrefsLoadedRef.current = true;
+    }
+  }, []);
+
+  // Persist campaigns columns selection
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(CAMPAIGNS_COLUMNS_STORAGE_KEY, JSON.stringify(campaignsVisibleColumns));
+  }, [campaignsVisibleColumns]);
+
+  // Persist campaigns date preset
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(CAMPAIGNS_DATE_PRESET_STORAGE_KEY, selectedDatePreset);
+  }, [selectedDatePreset]);
+
+  // Persist campaigns date range
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(
+      CAMPAIGNS_DATE_RANGE_STORAGE_KEY,
+      JSON.stringify({ startDate: campaignsStartDate, endDate: campaignsEndDate })
+    );
+  }, [campaignsStartDate, campaignsEndDate]);
+
   // Drag and drop handlers for section reordering
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, sectionId: string) => {
     setDraggedSection(sectionId);
@@ -671,10 +735,10 @@ const Dashboard: React.FC = () => {
 
   // Update dates when timezone loads
   useEffect(() => {
-    if (timezoneLoaded) {
-      const last7Days = getLastNDaysInTimezone(7, accountTimezone);
-      setCampaignsStartDate(last7Days.startDate);
-      setCampaignsEndDate(last7Days.endDate);
+    if (!timezoneLoaded) return;
+    if (!campaignDatesInitializedRef.current) {
+      handleDatePresetChange(initialCampaignDatePresetRef.current || 'last7days');
+      campaignDatesInitializedRef.current = true;
     }
   }, [timezoneLoaded, accountTimezone]);
 
