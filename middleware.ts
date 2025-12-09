@@ -1,5 +1,5 @@
-import { authMiddleware } from "@clerk/nextjs/server";
-import { NextRequest, NextResponse } from "next/server";
+import { clerkMiddleware } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 const DEV_BYPASS_AUTH = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true';
 
@@ -21,7 +21,7 @@ const basePublicRoutes = [
   "/api/contact-leads"
 ];
 
-export default authMiddleware({
+export default clerkMiddleware({
   // Routes that can be accessed while signed out
   publicRoutes: DEV_BYPASS_AUTH ? ["/(.*)"] : basePublicRoutes,
   // Routes that can always be accessed, and have
