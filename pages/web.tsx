@@ -57,6 +57,7 @@ const WebPage = () => {
   const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(null);
   const [actionChipPos, setActionChipPos] = useState<{ top: number; left: number } | null>(null);
   const [undoStack, setUndoStack] = useState<string[]>([]);
+  const selectedElementRef = useRef<HTMLElement | null>(null);
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -748,6 +749,7 @@ const WebPage = () => {
     if (selectedElement) {
       selectedElement.style.outline = '';
     }
+    selectedElementRef.current = null;
     setSelectedElement(null);
     setActionChipPos(null);
   };
@@ -1170,26 +1172,26 @@ const WebPage = () => {
       if (!isEditMode) return;
       const target = event.target as HTMLElement;
       if (!target) return;
-      event.preventDefault();
-      event.stopPropagation();
 
       if (target.tagName === 'HTML' || target.tagName === 'BODY' || target.tagName === 'HEAD') {
         clearSelection();
         return;
       }
 
-      if (selectedElement && selectedElement !== target) {
-        selectedElement.style.outline = '';
+      if (selectedElementRef.current && selectedElementRef.current !== target) {
+        selectedElementRef.current.style.outline = '';
       }
 
       target.style.outline = '2px solid #2563eb';
+      selectedElementRef.current = target;
       setSelectedElement(target);
       updateActionChipPosition(target);
     };
 
     const handleScrollOrResize = () => {
-      if (selectedElement) {
-        updateActionChipPosition(selectedElement);
+      const current = selectedElementRef.current;
+      if (current) {
+        updateActionChipPosition(current);
       }
     };
 
@@ -1201,12 +1203,12 @@ const WebPage = () => {
       iframeDoc.removeEventListener('click', handleClick, true);
       iframeWin?.removeEventListener('scroll', handleScrollOrResize, true);
       window.removeEventListener('resize', handleScrollOrResize);
-      if (selectedElement) {
-        selectedElement.style.outline = '';
+      if (selectedElementRef.current) {
+        selectedElementRef.current.style.outline = '';
       }
       clearSelection();
     };
-  }, [isEditMode, generatedSite, selectedElement]);
+  }, [isEditMode, generatedSite]);
 
   // Show toast message when entering/exiting edit mode
   useEffect(() => {
