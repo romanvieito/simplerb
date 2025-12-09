@@ -45,6 +45,66 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let html = result.rows[0].html;
     html = html.replace(/(href|src)="\/([^"]*)"/g, '$1="https://simplerb.com/$2"');
 
+    // Inject contact form handler to keep users on-page (no JSON redirect)
+    const contactScript = `
+<script id="contact-leads-handler">
+(function() {
+  const bind = () => {
+    const forms = Array.from(document.querySelectorAll('form[action*="/api/contact-leads"]'));
+    if (!forms.length) return;
+    forms.forEach((form) => {
+      if ((form as any)._contactBound) return;
+      (form as any)._contactBound = true;
+      let statusEl = form.querySelector('[data-contact-status]');
+      if (!statusEl) {
+        statusEl = document.createElement('div');
+        statusEl.setAttribute('data-contact-status', 'true');
+        statusEl.setAttribute('style', 'margin-top:10px; font-size:14px; color:#2563eb; min-height:20px;');
+        form.insertAdjacentElement('afterend', statusEl);
+      }
+
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        statusEl!.textContent = 'Sending...';
+        (statusEl as HTMLElement).style.color = '#2563eb';
+
+        const formData = new FormData(form);
+        try {
+          const resp = await fetch(form.action || '/api/contact-leads', {
+            method: form.method || 'POST',
+            body: formData
+          });
+          if (resp.ok) {
+            statusEl!.textContent = 'Message sent! We will reply soon.';
+            (statusEl as HTMLElement).style.color = '#16a34a';
+            form.reset();
+          } else {
+            statusEl!.textContent = 'Something went wrong. Please try again.';
+            (statusEl as HTMLElement).style.color = '#dc2626';
+          }
+        } catch (err) {
+          statusEl!.textContent = 'Network error. Please try again.';
+          (statusEl as HTMLElement).style.color = '#dc2626';
+        }
+      });
+    });
+  };
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    bind();
+  } else {
+    document.addEventListener('DOMContentLoaded', bind);
+  }
+})();
+</script>`;
+
+    if (!html.includes('contact-leads-handler')) {
+      if (html.includes('</body>')) {
+        html = html.replace('</body>', `${contactScript}</body>`);
+      } else {
+        html = `${html}${contactScript}`;
+      }
+    }
+
     res.setHeader('Content-Type', 'text/html');
     res.setHeader('Cache-Control', 'public, max-age=3600');
     return res.status(200).send(html);
