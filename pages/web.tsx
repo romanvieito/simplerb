@@ -59,6 +59,75 @@ const WebPage = () => {
   const [undoStack, setUndoStack] = useState<string[]>([]);
   const selectedElementRef = useRef<HTMLElement | null>(null);
 
+  const toTitleCaseWord = (word: string): string =>
+    word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : word;
+
+  const formatBrandFromDomain = (domain: string): string => {
+    if (!domain) return '';
+    const cleaned = domain
+      .replace(/^https?:\/\//i, '')
+      .split('/')[0]
+      .replace(/\.[a-z]{2,}$/i, '')
+      .replace(/[-_]+/g, ' ')
+      .trim();
+    if (!cleaned) return '';
+    return cleaned
+      .split(/\s+/)
+      .map(toTitleCaseWord)
+      .join(' ');
+  };
+
+  const deriveBrandName = (description: string): string => {
+    const fallback = 'Launch Studio';
+    const cleaned = description
+      .replace(/[\r\n]+/g, ' ')
+      .replace(/[^a-zA-Z0-9\s&'-]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!cleaned) return fallback;
+
+    const stopWords = new Set([
+      'a',
+      'an',
+      'the',
+      'my',
+      'our',
+      'your',
+      'for',
+      'and',
+      'or',
+      'with',
+      'to',
+      'of',
+      'in',
+      'site',
+      'website',
+      'business',
+      'company',
+      'brand',
+      'agency',
+      'store',
+      'shop',
+      'startup',
+      'service',
+      'services',
+    ]);
+
+    const words = cleaned.split(' ').filter(Boolean);
+    const meaningful = words.filter((word) => !stopWords.has(word.toLowerCase()));
+    const source = meaningful.length >= 2 ? meaningful : words;
+
+    const brand = source
+      .slice(0, 3)
+      .map(toTitleCaseWord)
+      .join(' ')
+      .slice(0, 40)
+      .trim();
+
+    return brand.length >= 3 ? brand : fallback;
+  };
+
   const context = useContext(SBRContext);
   if (!context) {
     throw new Error("SBRContext must be used within a SBRProvider");
@@ -332,7 +401,8 @@ const WebPage = () => {
        */
       const domainContext = selectedDomain ? ` for ${selectedDomain}` : "";
       const vibeContext = vibe !== "Professional" ? ` with a ${vibe.toLowerCase()} vibe` : "";
-      const brandName = selectedDomain || "Your Business";
+      const brandFromDomain = formatBrandFromDomain(selectedDomain);
+      const brandName = brandFromDomain || deriveBrandName(trimmedDescription);
       
       const designerPrompt = `Design a single-page, mobile-first marketing site${domainContext}${vibeContext} for: ${trimmedDescription}
       Audience: ${trimmedAudience || 'General small business buyers; keep tone welcoming.'}
@@ -473,7 +543,9 @@ const WebPage = () => {
        * 2. Prevents timeout issues in serverless functions
        * 3. Better error handling for each step
        */
-      const domainBranding = selectedDomain ? `\n\nBranding: Use ${selectedDomain} as the main brand/company name throughout the site.` : "";
+      const domainBranding = brandName
+        ? `\n\nBranding: Use ${brandName} as the main brand/company name throughout the site.`
+        : "";
       
       const developerPrompt = `Create a clean, single HTML landing page (no markdown, no code fences, no scripts).
       Brand name: ${brandName}.
@@ -493,6 +565,7 @@ const WebPage = () => {
       ${images.map(img => `${img.type}: ${img.pexels?.url || 'https://via.placeholder.com/1920x1080'} (alt: ${img.alt_text || img.type})`).join('\n')}${domainBranding}
 
       Rules:
+      - Never use placeholder brand names like "Your Business", "Company Name", or "Acme"; use ${brandName} consistently across headings, hero, and title.
       - Mobile-first responsive layout with max-width container, generous spacing, and readable line lengths.
       - Use semantic HTML5 (section, header, main, footer). Do not include nav menus.
       - Inline a <style> block with minimal, modern CSS; avoid external assets and heavy gradients.
@@ -541,7 +614,7 @@ const WebPage = () => {
       // If the model omitted <html>/<body>, wrap it to keep the preview usable.
       const hasHtml = cleanedWebsite.toLowerCase().includes('<html');
       const hasBody = cleanedWebsite.toLowerCase().includes('<body');
-      const safeTitle = selectedDomain || 'Your Site';
+      const safeTitle = brandName || selectedDomain || 'Landing Page';
       let finalHtml = hasHtml && hasBody
         ? cleanedWebsite
         : `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${safeTitle}</title></head><body>${cleanedWebsite}</body></html>`;
@@ -580,8 +653,8 @@ const WebPage = () => {
           const contactStatusRegex = /data-contact-status=["']true["']/;
           if (!contactStatusRegex.test(updated)) {
             updated = updated.replace(
-              new RegExp('</form>', 'i'),
-              `$1<div data-contact-status="true" style="margin-top:10px; font-size:14px; color:#2563eb; min-height:20px;"></div>`
+              /<\/form>/i,
+              '</form><div data-contact-status="true" style="margin-top:10px; font-size:14px; color:#2563eb; min-height:20px;"></div>'
             );
           }
         } else {
