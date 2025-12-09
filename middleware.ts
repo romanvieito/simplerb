@@ -1,4 +1,4 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 const DEV_BYPASS_AUTH = process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true';
@@ -21,39 +21,37 @@ const basePublicRoutes = [
   "/api/contact-leads"
 ];
 
-export default clerkMiddleware({
-  // Routes that can be accessed while signed out
-  publicRoutes: DEV_BYPASS_AUTH ? ["/(.*)"] : basePublicRoutes,
-  // Routes that can always be accessed, and have
-  // no authentication information
-  ignoredRoutes: [
-    "/api/subdomain-handler",
-    "/api/serve-site"
-  ],
-  beforeAuth: (req) => {
-    if (DEV_BYPASS_AUTH) {
-      // In dev bypass mode, skip Clerk middleware entirely
-      return NextResponse.next();
-    }
+const isPublicRoute = createRouteMatcher(DEV_BYPASS_AUTH ? ["/(.*)"] : basePublicRoutes);
+const isIgnoredRoute = createRouteMatcher([
+  "/api/subdomain-handler",
+  "/api/serve-site"
+]);
 
-    const hostname = req.headers.get('host') || '';
-    const pathname = req.nextUrl.pathname;
-
-    // Check if this is a subdomain request
-    const isSubdomain = hostname.includes('.simplerb.com') && !hostname.startsWith('www.') && hostname !== 'simplerb.com';
-
-    // For subdomain requests, only rewrite if it's NOT an API call.
-    // This keeps the generated site's API endpoints (e.g., contact form submissions)
-    // working while still serving the stored HTML for normal page views.
-    if (isSubdomain && !pathname.startsWith('/api')) {
-      // Rewrite to subdomain handler for subdomain page requests
-      const url = req.nextUrl.clone();
-      url.pathname = '/api/subdomain-handler';
-      return NextResponse.rewrite(url);
-    }
-
+export default clerkMiddleware((auth, req) => {
+  if (isIgnoredRoute(req)) {
     return NextResponse.next();
   }
+
+  if (DEV_BYPASS_AUTH) {
+    return NextResponse.next();
+  }
+
+  const hostname = req.headers.get('host') || '';
+  const pathname = req.nextUrl.pathname;
+
+  const isSubdomain = hostname.includes('.simplerb.com') && !hostname.startsWith('www.') && hostname !== 'simplerb.com';
+
+  if (isSubdomain && !pathname.startsWith('/api')) {
+    const url = req.nextUrl.clone();
+    url.pathname = '/api/subdomain-handler';
+    return NextResponse.rewrite(url);
+  }
+
+  if (!isPublicRoute(req)) {
+    auth().protect();
+  }
+
+  return NextResponse.next();
 });
 
 export const config = {
