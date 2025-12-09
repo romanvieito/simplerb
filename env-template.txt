@@ -5,6 +5,11 @@
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_your_publishable_key_here
 CLERK_SECRET_KEY=sk_test_your_secret_key_here
 
+# Frontend API / custom domain (set to your Clerk instance domain, e.g. clerk.simplerb.com)
+CLERK_DOMAIN=clerk.your-domain.com
+# If you prefer, you can use NEXT_PUBLIC_CLERK_FRONTEND_API instead of CLERK_DOMAIN
+# NEXT_PUBLIC_CLERK_FRONTEND_API=clerk.your-domain.com
+
 # Clerk URL Configuration
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
