@@ -567,8 +567,44 @@ const WebPage = () => {
       <textarea name="message" required rows="3" placeholder="Project details" style="padding:12px 14px; border:1px solid #e5e7eb; border-radius:8px; resize:vertical;"></textarea>
       <button type="submit" style="background:#2563eb; color:white; padding:12px 16px; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Send</button>
     </form>
+    <div id="contact-status" style="margin-top:10px; font-size:14px; color:#2563eb; min-height:20px;"></div>
   </div>
-</section>`;
+</section>
+<script>
+(function() {
+  const section = document.getElementById('contact');
+  if (!section) return;
+  const form = section.querySelector('form');
+  const statusEl = document.getElementById('contact-status');
+  if (!form || !statusEl) return;
+
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    statusEl.textContent = 'Sending...';
+    statusEl.style.color = '#2563eb';
+
+    const formData = new FormData(form);
+    try {
+      const resp = await fetch(form.action, {
+        method: form.method || 'POST',
+        body: formData
+      });
+
+      if (resp.ok) {
+        statusEl.textContent = 'Message sent! We will reply soon.';
+        statusEl.style.color = '#16a34a';
+        form.reset();
+      } else {
+        statusEl.textContent = 'Something went wrong. Please try again.';
+        statusEl.style.color = '#dc2626';
+      }
+    } catch (err) {
+      statusEl.textContent = 'Network error. Please try again.';
+      statusEl.style.color = '#dc2626';
+    }
+  });
+})();
+</script>`;
         if (hasContactId) {
           return updated;
         }
