@@ -54,6 +54,9 @@ const WebPage = () => {
   const [leads, setLeads] = useState<Array<{ id: number; subdomain: string; name: string | null; email: string | null; message: string; created_at: string }>>([]);
   const [leadsLoading, setLeadsLoading] = useState(false);
   const [isLeadsModalOpen, setIsLeadsModalOpen] = useState(false);
+  const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(null);
+  const [actionChipPos, setActionChipPos] = useState<{ top: number; left: number } | null>(null);
+  const [undoStack, setUndoStack] = useState<string[]>([]);
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -567,51 +570,87 @@ const WebPage = () => {
       <textarea name="message" required rows="3" placeholder="Project details" style="padding:12px 14px; border:1px solid #e5e7eb; border-radius:8px; resize:vertical;"></textarea>
       <button type="submit" style="background:#2563eb; color:white; padding:12px 16px; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Send</button>
     </form>
-    <div id="contact-status" style="margin-top:10px; font-size:14px; color:#2563eb; min-height:20px;"></div>
+    <div data-contact-status="true" style="margin-top:10px; font-size:14px; color:#2563eb; min-height:20px;"></div>
   </div>
-</section>
-<script>
+</section>`;
+
+        if (hasContactId) {
+          // Ensure existing contact section has a status placeholder
+          const contactStatusRegex = /data-contact-status=["']true["']/;
+          if (!contactStatusRegex.test(updated)) {
+            updated = updated.replace(
+              new RegExp('</form>', 'i'),
+              `$1<div data-contact-status="true" style="margin-top:10px; font-size:14px; color:#2563eb; min-height:20px;"></div>`
+            );
+          }
+        } else {
+          if (updated.includes('</body>')) {
+            updated = updated.replace('</body>', `${contactBlock}</body>`);
+          } else {
+            updated = `${updated}${contactBlock}`;
+          }
+        }
+
+        const contactScript = `
+<script id="contact-leads-handler">
 (function() {
-  const section = document.getElementById('contact');
-  if (!section) return;
-  const form = section.querySelector('form');
-  const statusEl = document.getElementById('contact-status');
-  if (!form || !statusEl) return;
-
-  form.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    statusEl.textContent = 'Sending...';
-    statusEl.style.color = '#2563eb';
-
-    const formData = new FormData(form);
-    try {
-      const resp = await fetch(form.action, {
-        method: form.method || 'POST',
-        body: formData
-      });
-
-      if (resp.ok) {
-        statusEl.textContent = 'Message sent! We will reply soon.';
-        statusEl.style.color = '#16a34a';
-        form.reset();
-      } else {
-        statusEl.textContent = 'Something went wrong. Please try again.';
-        statusEl.style.color = '#dc2626';
+  const bind = () => {
+    const forms = Array.from(document.querySelectorAll('form[action*="/api/contact-leads"]'));
+    if (!forms.length) return;
+    forms.forEach((form) => {
+      if (form.dataset.contactBound === 'true') return;
+      form.dataset.contactBound = 'true';
+      let statusEl = form.querySelector('[data-contact-status]');
+      if (!statusEl) {
+        statusEl = document.createElement('div');
+        statusEl.setAttribute('data-contact-status', 'true');
+        statusEl.style.cssText = 'margin-top:10px; font-size:14px; color:#2563eb; min-height:20px;';
+        form.insertAdjacentElement('afterend', statusEl);
       }
-    } catch (err) {
-      statusEl.textContent = 'Network error. Please try again.';
-      statusEl.style.color = '#dc2626';
-    }
-  });
+
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        statusEl.textContent = 'Sending...';
+        statusEl.style.color = '#2563eb';
+
+        const formData = new FormData(form);
+        try {
+          const resp = await fetch(form.action || '/api/contact-leads', {
+            method: form.method || 'POST',
+            body: formData
+          });
+          if (resp.ok) {
+            statusEl.textContent = 'Message sent! We will reply soon.';
+            statusEl.style.color = '#16a34a';
+            form.reset();
+          } else {
+            statusEl.textContent = 'Something went wrong. Please try again.';
+            statusEl.style.color = '#dc2626';
+          }
+        } catch (err) {
+          statusEl.textContent = 'Network error. Please try again.';
+          statusEl.style.color = '#dc2626';
+        }
+      });
+    });
+  };
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    bind();
+  } else {
+    document.addEventListener('DOMContentLoaded', bind);
+  }
 })();
 </script>`;
-        if (hasContactId) {
-          return updated;
+
+        if (!updated.includes('contact-leads-handler')) {
+          if (updated.includes('</body>')) {
+            updated = updated.replace('</body>', `${contactScript}</body>`);
+          } else {
+            updated = `${updated}${contactScript}`;
+          }
         }
-        if (updated.includes('</body>')) {
-          return updated.replace('</body>', `${contactBlock}</body>`);
-        }
-        return `${updated}${contactBlock}`;
+
+        return updated;
       };
 
       finalHtml = ensureContactSection(finalHtml);
@@ -703,6 +742,60 @@ const WebPage = () => {
     }
     
     return { valid: true };
+  };
+
+  const clearSelection = () => {
+    if (selectedElement) {
+      selectedElement.style.outline = '';
+    }
+    setSelectedElement(null);
+    setActionChipPos(null);
+  };
+
+  const updateActionChipPosition = (element: HTMLElement) => {
+    if (!iframeRef.current) return;
+    const elementRect = element.getBoundingClientRect();
+    const iframeRect = iframeRef.current.getBoundingClientRect();
+    setActionChipPos({
+      top: iframeRect.top + elementRect.top + window.scrollY - 8,
+      left: iframeRect.left + elementRect.right + window.scrollX - 80,
+    });
+  };
+
+  const handleDeleteSelected = () => {
+    const iframeDoc = iframeRef.current?.contentDocument;
+    if (!iframeDoc || !selectedElement) return;
+
+    const tag = selectedElement.tagName.toLowerCase();
+    if (tag === 'html' || tag === 'body' || tag === 'head') {
+      toast.error('Cannot delete this element');
+      return;
+    }
+
+    const snapshot = iframeDoc.documentElement.outerHTML;
+    setUndoStack((prev) => {
+      const next = [snapshot, ...prev];
+      return next.slice(0, 5);
+    });
+
+    selectedElement.remove();
+    clearSelection();
+    const updatedHtml = iframeDoc.documentElement.outerHTML;
+    setGeneratedSite(updatedHtml);
+    toast.success('Element deleted');
+  };
+
+  const handleUndoDelete = () => {
+    setUndoStack((prev) => {
+      if (!prev.length) {
+        toast.error('Nothing to undo');
+        return prev;
+      }
+      const [latest, ...rest] = prev;
+      setGeneratedSite(latest);
+      clearSelection();
+      return rest;
+    });
   };
 
   const getViewportWidth = () => {
@@ -1055,12 +1148,65 @@ const WebPage = () => {
 
       // Save changes when exiting edit mode
       if (!editable) {
+        clearSelection();
         setGeneratedSite(iframeDoc.documentElement.outerHTML);
       }
     };
 
     toggleEditMode(isEditMode);
   }, [isEditMode]);
+
+  useEffect(() => {
+    if (!isEditMode) {
+      clearSelection();
+      return;
+    }
+
+    const iframeDoc = iframeRef.current?.contentDocument;
+    const iframeWin = iframeRef.current?.contentWindow;
+    if (!iframeDoc) return;
+
+    const handleClick = (event: MouseEvent) => {
+      if (!isEditMode) return;
+      const target = event.target as HTMLElement;
+      if (!target) return;
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (target.tagName === 'HTML' || target.tagName === 'BODY' || target.tagName === 'HEAD') {
+        clearSelection();
+        return;
+      }
+
+      if (selectedElement && selectedElement !== target) {
+        selectedElement.style.outline = '';
+      }
+
+      target.style.outline = '2px solid #2563eb';
+      setSelectedElement(target);
+      updateActionChipPosition(target);
+    };
+
+    const handleScrollOrResize = () => {
+      if (selectedElement) {
+        updateActionChipPosition(selectedElement);
+      }
+    };
+
+    iframeDoc.addEventListener('click', handleClick, true);
+    iframeWin?.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
+
+    return () => {
+      iframeDoc.removeEventListener('click', handleClick, true);
+      iframeWin?.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
+      if (selectedElement) {
+        selectedElement.style.outline = '';
+      }
+      clearSelection();
+    };
+  }, [isEditMode, generatedSite, selectedElement]);
 
   // Show toast message when entering/exiting edit mode
   useEffect(() => {
@@ -1193,6 +1339,35 @@ const WebPage = () => {
           TransitionComponent={Transition}
         >
           <PreviewToolbar />
+          {isEditMode && selectedElement && actionChipPos && (
+            <div
+              style={{
+                position: 'fixed',
+                top: actionChipPos.top,
+                left: actionChipPos.left,
+                zIndex: 1300,
+              }}
+              className="flex items-center space-x-2 bg-white border border-gray-200 shadow-lg rounded-full px-3 py-1"
+            >
+              <span className="text-xs text-gray-600 truncate max-w-[120px]">
+                {selectedElement.tagName.toLowerCase()}
+              </span>
+              <button
+                onClick={handleDeleteSelected}
+                className="text-xs bg-red-500 text-white px-2 py-1 rounded-full hover:bg-red-600 transition-colors"
+              >
+                Delete
+              </button>
+              {undoStack.length > 0 && (
+                <button
+                  onClick={handleUndoDelete}
+                  className="text-xs bg-gray-800 text-white px-2 py-1 rounded-full hover:bg-gray-900 transition-colors"
+                >
+                  Undo
+                </button>
+              )}
+            </div>
+          )}
           <div style={{
             marginTop: '60px',
             height: 'calc(100vh - 60px)',
