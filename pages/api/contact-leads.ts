@@ -35,14 +35,29 @@ const getSubdomainFromHost = (host?: string | null) => {
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Allow preflight and simple CORS for embedded forms on customer domains
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    return res.status(200).end();
+  }
+
+  // Allow GET/POST without CORS restrictions; keep permissive for form posts
+  res.setHeader('Access-Control-Allow-Origin', '*');
+
+  if (req.method === 'HEAD') {
+    return res.status(200).end();
+  }
+
   if (req.method === 'POST') {
     try {
-      const rawBody = await new Promise<string>((resolve, reject) => {
-        let data = '';
+      const rawBody = await new Promise<Buffer>((resolve, reject) => {
+        const chunks: Buffer[] = [];
         req.on('data', (chunk) => {
-          data += chunk;
+          chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
         });
-        req.on('end', () => resolve(data));
+        req.on('end', () => resolve(Buffer.concat(chunks)));
         req.on('error', reject);
       });
 
@@ -50,9 +65,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const contentType = req.headers['content-type'] || '';
       try {
         if (contentType.includes('application/json')) {
-          parsed = JSON.parse(rawBody || '{}');
+          parsed = JSON.parse(rawBody.toString('utf8') || '{}');
+        } else if (contentType.includes('multipart/form-data')) {
+          // Handle multipart form submissions (FormData fetch or plain form posts)
+          const request = new Request('http://localhost', {
+            method: 'POST',
+            headers: { 'content-type': contentType },
+            body: rawBody
+          });
+          const formData = await request.formData();
+          formData.forEach((value, key) => {
+            if (typeof value === 'string') {
+              parsed[key] = value;
+            }
+          });
         } else {
-          const params = new URLSearchParams(rawBody);
+          const params = new URLSearchParams(rawBody.toString('utf8'));
           params.forEach((value, key) => {
             parsed[key] = value;
           });

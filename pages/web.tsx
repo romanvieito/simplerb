@@ -688,10 +688,18 @@ const WebPage = () => {
         statusEl.style.color = '#2563eb';
 
         const formData = new FormData(form);
+        const urlEncoded = new URLSearchParams();
+        formData.forEach((value, key) => {
+          if (typeof value === 'string') {
+            urlEncoded.append(key, value);
+          }
+        });
+
         try {
           const resp = await fetch(form.action || '/api/contact-leads', {
             method: form.method || 'POST',
-            body: formData
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: urlEncoded.toString()
           });
           if (resp.ok) {
             statusEl.textContent = 'Message sent! We will reply soon.';

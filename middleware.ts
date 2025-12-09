@@ -26,6 +26,10 @@ const isIgnoredRoute = createRouteMatcher([
   "/api/subdomain-handler",
   "/api/serve-site"
 ]);
+const isContactLeadRoute = createRouteMatcher([
+  "/api/contact-leads",
+  "/api/contact-leads/(.*)"
+]);
 
 export default clerkMiddleware(async (auth, req) => {
   if (isIgnoredRoute(req)) {
@@ -38,6 +42,11 @@ export default clerkMiddleware(async (auth, req) => {
 
   const hostname = req.headers.get('host') || '';
   const pathname = req.nextUrl.pathname;
+
+  // Always bypass Clerk for public lead submissions so POST forms don't redirect to Clerk
+  if (isContactLeadRoute(req)) {
+    return NextResponse.next();
+  }
 
   const isSubdomain = hostname.includes('.simplerb.com') && !hostname.startsWith('www.') && hostname !== 'simplerb.com';
 
