@@ -2083,12 +2083,54 @@ const Dashboard: React.FC = () => {
       component: (
         <div
           id="ads"
-          className={`w-full max-w-6xl mx-auto mb-8 transition-all duration-200 ${
+          className={`w-full max-w-6xl mx-auto mb-8 transition-all duration-200 relative ${
             draggedSection === 'ads' ? 'opacity-50' : ''
           } ${minimizedSections.has('ads') ? 'h-24 overflow-hidden' : ''}`}
           onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, 'ads')}
         >
+          {/* Campaigns Column Selector Dropdown - positioned outside overflow-hidden container */}
+          {showCampaignsColumnSelector && (
+            <div className="absolute right-6 top-16 z-50">
+              <div className="bg-white rounded-lg shadow-xl border-2 border-gray-200 p-4 min-w-[220px]">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-sm font-semibold text-gray-900">Show/Hide Columns</h3>
+                  <button
+                    onClick={() => setShowCampaignsColumnSelector(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {Object.entries(campaignsVisibleColumns).map(([key, value]) => (
+                    <label
+                      key={key}
+                      className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={value}
+                        onChange={() => setCampaignsVisibleColumns(prev => ({...prev, [key]: !prev[key as keyof typeof prev]}))}
+                        className="w-4 h-4 text-gray-600 border-gray-300 rounded focus:ring-gray-500"
+                      />
+                      <span className="text-sm text-gray-700">
+                        {key === 'name' ? 'Campaign' :
+                         key === 'avgCpc' ? 'Avg CPC' :
+                         key === 'conversionRate' ? 'Conv. Rate' :
+                         key === 'conversionValue' ? 'Conv. Value' :
+                         key === 'impressionShare' ? 'Impr. Share' :
+                         key.charAt(0).toUpperCase() + key.slice(1)}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
             {/* Header */}
             <div className="px-6 py-4 border-b border-gray-100">
@@ -2194,45 +2236,6 @@ const Dashboard: React.FC = () => {
                             <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                           </svg>
                         </button>
-                        
-                        {showCampaignsColumnSelector && (
-                          <div className="absolute right-0 top-full mt-2 bg-white rounded-lg shadow-xl border-2 border-gray-200 p-4 z-50 min-w-[220px]">
-                            <div className="flex justify-between items-center mb-3">
-                              <h3 className="text-sm font-semibold text-gray-900">Show/Hide Columns</h3>
-                              <button
-                                onClick={() => setShowCampaignsColumnSelector(false)}
-                                className="text-gray-400 hover:text-gray-600"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                                </svg>
-                              </button>
-                            </div>
-                            <div className="space-y-2 max-h-96 overflow-y-auto">
-                              {Object.entries(campaignsVisibleColumns).map(([key, value]) => (
-                                <label
-                                  key={key}
-                                  className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={value}
-                                    onChange={() => setCampaignsVisibleColumns(prev => ({...prev, [key]: !prev[key as keyof typeof prev]}))}
-                                    className="w-4 h-4 text-gray-600 border-gray-300 rounded focus:ring-gray-500"
-                                  />
-                                  <span className="text-sm text-gray-700">
-                                    {key === 'name' ? 'Campaign' :
-                                     key === 'avgCpc' ? 'Avg CPC' :
-                                     key === 'conversionRate' ? 'Conv. Rate' :
-                                     key === 'conversionValue' ? 'Conv. Value' :
-                                     key === 'impressionShare' ? 'Impr. Share' :
-                                     key.charAt(0).toUpperCase() + key.slice(1)}
-                                  </span>
-                                </label>
-                              ))}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     </div>
 
