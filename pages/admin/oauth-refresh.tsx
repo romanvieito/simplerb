@@ -57,7 +57,7 @@ export default function OAuthRefresh() {
       '263912475921-vblhu1ecqsqha47k7tsp13coh3he7c17.apps.googleusercontent.com';
 
     const redirectUri = process.env.NODE_ENV === 'production'
-      ? 'https://www.simplerb.com/oauth/callback'
+      ? 'https://simplerb.com/oauth/callback'
       : 'http://localhost:3000/oauth/callback';
 
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
