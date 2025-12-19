@@ -396,6 +396,7 @@ const Dashboard: React.FC = () => {
   });
   const [showCampaignsColumnSelector, setShowCampaignsColumnSelector] = useState(false);
   const campaignsColumnSelectorRef = useRef<HTMLDivElement>(null);
+  const campaignsColumnDropdownRef = useRef<HTMLDivElement>(null);
   const [accountTimezone, setAccountTimezone] = useState<string>(DEFAULT_TIMEZONE);
   const [timezoneLoaded, setTimezoneLoaded] = useState<boolean>(false);
   const campaignPrefsLoadedRef = useRef<boolean>(false);
@@ -792,7 +793,10 @@ const Dashboard: React.FC = () => {
   // Close campaigns column selector when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (campaignsColumnSelectorRef.current && !campaignsColumnSelectorRef.current.contains(event.target as Node)) {
+      const isOutsideButton = campaignsColumnSelectorRef.current && !campaignsColumnSelectorRef.current.contains(event.target as Node);
+      const isOutsideDropdown = campaignsColumnDropdownRef.current && !campaignsColumnDropdownRef.current.contains(event.target as Node);
+
+      if (isOutsideButton && isOutsideDropdown) {
         setShowCampaignsColumnSelector(false);
       }
     };
@@ -2091,7 +2095,7 @@ const Dashboard: React.FC = () => {
         >
           {/* Campaigns Column Selector Dropdown - positioned outside overflow-hidden container */}
           {showCampaignsColumnSelector && (
-            <div className="absolute right-6 top-16 z-50">
+            <div ref={campaignsColumnDropdownRef} className="absolute right-6 top-16 z-50">
               <div className="bg-white rounded-lg shadow-xl border-2 border-gray-200 p-4 min-w-[220px]">
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-sm font-semibold text-gray-900">Show/Hide Columns</h3>
