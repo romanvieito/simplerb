@@ -16,12 +16,14 @@ export default function OAuthCallback({ userId, isAdmin }: OAuthCallbackProps) {
   const [customerId, setCustomerId] = useState<string>('');
 
   useEffect(() => {
-    if (!code && !error) return;
-
     // Populate customer ID from state if provided
     if (typeof state === 'string' && state.trim().length > 0) {
       setCustomerId(state);
     }
+  }, [state]);
+
+  useEffect(() => {
+    if (!code && !error) return;
 
     if (error) {
       setStatus('error');
@@ -29,10 +31,10 @@ export default function OAuthCallback({ userId, isAdmin }: OAuthCallbackProps) {
       return;
     }
 
-    if (code && typeof code === 'string') {
+    if (code && typeof code === 'string' && customerId && customerId.trim().length > 0) {
       exchangeCodeForToken(code);
     }
-  }, [code, error, state]);
+  }, [code, error, customerId]);
 
   const exchangeCodeForToken = async (authorizationCode: string) => {
     if (!customerId || customerId.trim().length === 0) {
