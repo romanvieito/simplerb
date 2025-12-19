@@ -2195,7 +2195,7 @@ const Dashboard: React.FC = () => {
                         </button>
                         
                         {showCampaignsColumnSelector && (
-                          <div className="absolute right-0 top-full mt-2 bg-white rounded-lg shadow-xl border-2 border-gray-200 p-4 z-20 min-w-[220px]">
+                          <div className="absolute right-0 top-full mt-2 bg-white rounded-lg shadow-xl border-2 border-gray-200 p-4 z-50 min-w-[220px]">
                             <div className="flex justify-between items-center mb-3">
                               <h3 className="text-sm font-semibold text-gray-900">Show/Hide Columns</h3>
                               <button
