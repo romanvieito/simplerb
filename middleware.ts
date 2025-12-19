@@ -20,7 +20,8 @@ const basePublicRoutes = [
   "/api/clerk-webhooks",
   "/api/contact-leads",
   "/api/keyword-favorites",
-  "/api/keyword-favorites-refresh"
+  "/api/keyword-favorites-refresh",
+  "/api/google-ads/(.*)"
 ];
 
 const isPublicRoute = createRouteMatcher(DEV_BYPASS_AUTH ? ["/(.*)"] : basePublicRoutes);

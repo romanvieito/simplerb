@@ -78,7 +78,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
       const resp = await fetch(internalApiUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': userId
+        },
         body: JSON.stringify({
           keywords: group.keywords,
           countryCode: group.countryCode,
