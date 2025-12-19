@@ -8,6 +8,8 @@ import { getAuth } from '@clerk/nextjs/server';
 import Dialog from '@mui/material/Dialog';
 import {
   getLastNDaysInTimezone,
+  getTodayInTimezone,
+  getYesterdayInTimezone,
   DEFAULT_TIMEZONE,
 } from '../utils/googleAdsDates';
 
@@ -818,11 +820,11 @@ const Dashboard: React.FC = () => {
       case 'last7days':
         ({ startDate: startDateStr, endDate: endDateStr } = getLastNDaysInTimezone(7, tz));
         break;
-      case 'last30days':
-        ({ startDate: startDateStr, endDate: endDateStr } = getLastNDaysInTimezone(30, tz));
+      case 'today':
+        startDateStr = endDateStr = getTodayInTimezone(tz);
         break;
-      case 'last90days':
-        ({ startDate: startDateStr, endDate: endDateStr } = getLastNDaysInTimezone(90, tz));
+      case 'yesterday':
+        startDateStr = endDateStr = getYesterdayInTimezone(tz);
         break;
       default:
         return;
@@ -2207,8 +2209,8 @@ const Dashboard: React.FC = () => {
                           <div className="flex flex-wrap gap-2">
                             {[
                               { value: 'last7days', label: 'Last 7 days' },
-                              { value: 'last30days', label: 'Last 30 days' },
-                              { value: 'last90days', label: 'Last 90 days' },
+                              { value: 'today', label: 'Today' },
+                              { value: 'yesterday', label: 'Yesterday' },
                             ].map((preset) => (
                               <button
                                 key={preset.value}
