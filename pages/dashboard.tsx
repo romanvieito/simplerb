@@ -378,7 +378,7 @@ const Dashboard: React.FC = () => {
   if (!context) {
     throw new Error("SBRContext must be used within a SBRProvider");
   }
-  const { admin } = context;
+  const { admin, setAdmin } = context;
   const [campaignsSummary, setCampaignsSummary] = useState<CampaignSummary[]>([]);
   const [loadingCampaigns, setLoadingCampaigns] = useState(false);
   const [campaignsVisibleColumns, setCampaignsVisibleColumns] = useState<CampaignsColumns>({
@@ -442,6 +442,7 @@ const Dashboard: React.FC = () => {
               const userData = await response.json();
               if (userData.user && userData.user.id) {
                 setInternalUserId(userData.user.id);
+                setAdmin(userData.user.admin || false);
               } else {
                 setDomainLoading(false);
               }
