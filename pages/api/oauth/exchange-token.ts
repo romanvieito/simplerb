@@ -123,16 +123,37 @@ export default async function handler(
           console.warn('Could not fetch user email for token save:', lookupErr);
         }
 
-        // Insert or update the Google Ads refresh token for this user
-        await sql`
-          INSERT INTO oauth_tokens (service, refresh_token, customer_id, user_id, user_email, updated_at)
-          VALUES ('google_ads', ${result.refresh_token}, ${customerId}, ${userId}, ${userEmail}, NOW())
-          ON CONFLICT (service, user_id) DO UPDATE SET
-            refresh_token = EXCLUDED.refresh_token,
-            customer_id = EXCLUDED.customer_id,
-            user_email = EXCLUDED.user_email,
-            updated_at = NOW()
-        `;
+        // Insert or update the Google Ads refresh token for this user.
+        // Note: some deployments may still have the legacy schema with UNIQUE(service) and/or missing columns.
+        // We'll try the modern per-user upsert first, and fall back to a service-level token if needed.
+        try {
+          await sql`
+            INSERT INTO oauth_tokens (service, refresh_token, customer_id, user_id, user_email, updated_at)
+            VALUES ('google_ads', ${result.refresh_token}, ${customerId}, ${userId}, ${userEmail}, NOW())
+            ON CONFLICT (service, user_id) DO UPDATE SET
+              refresh_token = EXCLUDED.refresh_token,
+              customer_id = EXCLUDED.customer_id,
+              user_email = EXCLUDED.user_email,
+              updated_at = NOW()
+          `;
+        } catch (perUserUpsertError: any) {
+          console.warn('Per-user oauth_tokens upsert failed; attempting legacy service-level save:', perUserUpsertError);
+
+          // Legacy fallback: table may only have (service, refresh_token, updated_at) with UNIQUE(service)
+          try {
+            await sql`
+              INSERT INTO oauth_tokens (service, refresh_token, updated_at)
+              VALUES ('google_ads', ${result.refresh_token}, NOW())
+              ON CONFLICT (service) DO UPDATE SET
+                refresh_token = EXCLUDED.refresh_token,
+                updated_at = NOW()
+            `;
+          } catch (legacySaveError: any) {
+            // Final fallback: even updated_at column may not exist in some schemas (extremely old).
+            console.error('Legacy oauth_tokens save failed:', legacySaveError);
+            throw perUserUpsertError;
+          }
+        }
 
         console.log('✅ Token saved to database for user', userId);
 
