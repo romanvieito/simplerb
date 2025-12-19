@@ -18,7 +18,9 @@ const basePublicRoutes = [
   "/api/get-tlds-godaddy",
   "/api/oauth/(.*)",
   "/api/clerk-webhooks",
-  "/api/contact-leads"
+  "/api/contact-leads",
+  "/api/keyword-favorites",
+  "/api/keyword-favorites-refresh"
 ];
 
 const isPublicRoute = createRouteMatcher(DEV_BYPASS_AUTH ? ["/(.*)"] : basePublicRoutes);
