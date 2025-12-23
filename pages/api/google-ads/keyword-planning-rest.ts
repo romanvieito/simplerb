@@ -272,20 +272,24 @@ export default async function handler(
     const languageId = languageIdMap[languageCode.toLowerCase()] ?? 1000;
 
     // Country/Geo target constant IDs (Google Ads)
+    // Updated with correct current geo target constants as of Google Ads API v17
+    // NOTE: These IDs can change over time. If countries stop working, check:
+    // https://developers.google.com/google-ads/api/reference/rpc/latest/GeoTargetConstantService
+    // or use the suggestGeoTargetConstants method for dynamic resolution
     const geoIdMap: Record<string, number> = {
       US: 2840,
       GB: 2826,
       CA: 2120,
       AU: 2036,
-      DE: 2760,
-      FR: 250,
-      ES: 724,
-      IT: 380,
-      NL: 528,
-      SE: 752,
-      NO: 578,
-      DK: 208,
-      FI: 246,
+      DE: 2276,
+      FR: 2250,
+      ES: 2724,
+      IT: 2380,
+      NL: 2528,
+      SE: 2752,
+      NO: 2578,
+      DK: 2208,
+      FI: 2246,
       WORLD: 2840, // Default to US for WORLD
     };
     const geoId = geoIdMap[countryCode] ?? 2840; // Default to US

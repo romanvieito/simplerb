@@ -117,18 +117,22 @@ export default async function handler(
       FI: 'Finland',
     };
 
-    const resolvedCountryName = countryNameMap[countryCode] || countryCode;
     let geoTargetResource: string | undefined;
-    try {
-      const geoResp: any = await client.service.geoTargetConstants.suggestGeoTargetConstants({
-        locale: 'en',
-        country_code: countryCode,
-        location_names: { names: [resolvedCountryName] },
-      });
-      const suggestion = geoResp?.geo_target_constant_suggestions?.[0];
-      geoTargetResource = suggestion?.geo_target_constant?.resource_name;
-    } catch (e) {
-      // Best-effort; leave undefined if lookup failed
+
+    // Handle WORLD specially - don't add geo targeting for worldwide
+    if (countryCode !== 'WORLD') {
+      const resolvedCountryName = countryNameMap[countryCode] || countryCode;
+      try {
+        const geoResp: any = await client.service.geoTargetConstants.suggestGeoTargetConstants({
+          locale: 'en',
+          country_code: countryCode,
+          location_names: { names: [resolvedCountryName] },
+        });
+        const suggestion = geoResp?.geo_target_constant_suggestions?.[0];
+        geoTargetResource = suggestion?.geo_target_constant?.resource_name;
+      } catch (e) {
+        // Best-effort; leave undefined if lookup failed
+      }
     }
 
     // Language constant IDs (Google Ads) - fallback to English 1000
