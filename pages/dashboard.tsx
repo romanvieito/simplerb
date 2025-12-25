@@ -471,19 +471,26 @@ const Dashboard: React.FC = () => {
     }
   }, []);
 
-  // Fetch internal user ID from database using Clerk user email
+  // Fetch internal user ID and admin status from database using Clerk user email
   useEffect(() => {
-    const fetchInternalUserId = async () => {
+    const fetchUserData = async () => {
       if (process.env.NODE_ENV === 'production' && realUser && isLoaded) {
         try {
           const email = realUser.emailAddresses[0]?.emailAddress;
           if (email) {
-            const response = await fetch(`/api/getUser?email=${email}`);
-            if (response.ok) {
-              const userData = await response.json();
+            // First check admin status
+            const adminResponse = await fetch('/api/user/check-admin');
+            if (adminResponse.ok) {
+              const adminData = await adminResponse.json();
+              setAdmin(adminData.isAdmin);
+            }
+
+            // Then get user data
+            const userResponse = await fetch(`/api/getUser?email=${email}`);
+            if (userResponse.ok) {
+              const userData = await userResponse.json();
               if (userData.user && userData.user.id) {
                 setInternalUserId(userData.user.id);
-                setAdmin(userData.user.admin || false);
               } else {
                 setDomainLoading(false);
               }
@@ -494,13 +501,16 @@ const Dashboard: React.FC = () => {
             setDomainLoading(false);
           }
         } catch (error) {
-          console.error('Error fetching internal user ID:', error);
+          console.error('Error fetching user data:', error);
           setDomainLoading(false);
         }
+      } else if (process.env.NODE_ENV !== 'production') {
+        // In development, grant admin access for testing
+        setAdmin(true);
       }
     };
 
-    fetchInternalUserId();
+    fetchUserData();
   }, [realUser, isLoaded]);
 
   // Redirect if not authenticated (skip in development with mock user)
@@ -980,6 +990,14 @@ const Dashboard: React.FC = () => {
     }
   }, [isSignedIn]);
 
+  // Fetch leads when user is signed in
+  useEffect(() => {
+    if (isSignedIn) {
+      fetchLeads();
+    } else if (isLoaded && !realUser) {
+      setLeadsLoading(false);
+    }
+  }, [isSignedIn, isLoaded, realUser, fetchLeads]);
 
   // Remove domain from favorites
   const removeDomainFavorite = async (namedomain: string) => {
