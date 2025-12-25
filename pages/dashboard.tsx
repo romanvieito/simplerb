@@ -2475,7 +2475,7 @@ const Dashboard: React.FC = () => {
       component: (
         <div
           id="feature-cards"
-          className={`w-full max-w-4xl mx-auto transition-all duration-200 ${
+          className={`w-full max-w-4xl mx-auto mb-8 transition-all duration-200 ${
             draggedSection === 'feature-cards' ? 'opacity-50' : ''
           } ${minimizedSections.has('feature-cards') ? 'h-16 overflow-hidden' : ''}`}
           onDragOver={handleDragOver}
