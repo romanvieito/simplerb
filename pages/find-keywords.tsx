@@ -626,8 +626,8 @@ export default function FindKeywords(): JSX.Element {
       <Toaster position="top-center" />
       <div className="flex flex-1 w-full flex-col items-center justify-center text-center">
         <h1 className="text-2xl text-gray-900 mb-1 tracking-tight">
-          Opportunities <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-            {'Helper'}
+          Find your next <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+            {'Opportunity'}
           </span>
         </h1>
 
