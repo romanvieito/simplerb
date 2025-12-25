@@ -1315,15 +1315,7 @@ const WebPage = () => {
           <h1 className="text-2xl text-gray-900 my-3 tracking-tight">
             Website <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Creator</span>
           </h1>
-          {isSignedIn && (
-            <button
-              type="button"
-              onClick={() => setIsLeadsModalOpen(true)}
-              className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-4"
-            >
-              {leadsLoading ? 'Loading leads…' : 'View recent leads'}
-            </button>
-          )}
+         
         </div>
 
         {/* Main Input Area - Mockup Style */}
