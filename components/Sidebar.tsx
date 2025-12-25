@@ -110,26 +110,24 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
         ${className}
       `}>
         {/* Logo/Brand */}
-        <div className="relative pl-2 pr-6 py-4 border-b border-gray-200">
-          <div className={`flex items-center ${collapsed ? 'justify-between' : 'space-x-3'}`}>
-            <Link href="/dashboard" onClick={handleNavClick} className="flex items-center space-x-2 flex-shrink-0">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">SB</span>
-              </div>
-              {!collapsed && <span className="text-xl font-bold text-gray-900 truncate">SimplerB</span>}
-            </Link>
-          </div>
+        <div className="relative py-4 border-b border-gray-200 flex justify-center">
+          <Link href="/dashboard" onClick={handleNavClick} className="flex items-center space-x-2 flex-shrink-0">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">SB</span>
+            </div>
+            {!collapsed && <span className="text-xl font-bold text-gray-900 truncate">SimplerB</span>}
+          </Link>
         </div>
 
         {/* Navigation */}
-        <nav className={`py-6 space-y-2 ${collapsed ? 'px-2' : 'px-4'} overflow-y-auto`}>
+        <nav className="py-6 space-y-2 overflow-y-auto flex flex-col items-center">
           {visibleItems.map((item) => {
             const isActive = router.pathname === item.href;
             return (
               <div
                 key={item.name}
                 onClick={(e) => handleItemClick(item, isActive, e)}
-                className={`group flex items-center ${collapsed ? 'justify-center px-2' : 'px-3'} py-3 rounded-lg transition-all duration-200 cursor-pointer ${
+                className={`group flex items-center justify-center ${collapsed ? 'w-12' : 'w-full max-w-56'} py-3 rounded-lg transition-all duration-200 cursor-pointer ${
                   isActive
                     ? 'bg-blue-50 border-r-2 border-blue-600 text-blue-700'
                     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
