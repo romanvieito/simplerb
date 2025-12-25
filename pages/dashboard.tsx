@@ -1368,7 +1368,7 @@ const Dashboard: React.FC = () => {
                   </div>
                   <a
                     href="/find-keywords"
-                    className="ml-2 px-4 py-2 bg-black hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors"
+                    className="ml-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 border border-gray-300 hover:border-gray-400 text-sm font-medium rounded-md transition-colors"
                   >
                     Find Opportunities
                   </a>
@@ -1417,7 +1417,7 @@ const Dashboard: React.FC = () => {
                     <p className="text-gray-600 mb-6">Start by searching for keywords to save your favorites for later.</p>
                     <a
                       href="/find-keywords"
-                      className="inline-flex items-center px-6 py-3 bg-black hover:bg-gray-800 text-white rounded-lg font-medium transition-colors"
+                      className="inline-flex items-center px-6 py-3 text-gray-600 hover:text-gray-900 border border-gray-300 hover:border-gray-400 text-sm font-medium rounded-md transition-colors"
                     >
                       Find Keywords
                     </a>
@@ -1608,7 +1608,7 @@ const Dashboard: React.FC = () => {
                   </button>
                   <a
                     href="/domain"
-                    className="px-4 py-2 bg-black hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors"
+                    className="px-3 py-1.5 text-gray-600 hover:text-gray-900 border border-gray-300 hover:border-gray-400 text-sm font-medium rounded-md transition-colors"
                   >
                     Generate Domains
                   </a>
@@ -1636,7 +1636,7 @@ const Dashboard: React.FC = () => {
                     <p className="text-gray-600 mb-6">Start by generating domains and save your favorites for later.</p>
                     <a
                       href="/domain"
-                      className="inline-flex items-center px-6 py-3 bg-black hover:bg-gray-800 text-white rounded-lg font-medium transition-colors"
+                      className="inline-flex items-center px-6 py-3 text-gray-600 hover:text-gray-900 border border-gray-300 hover:border-gray-400 text-sm font-medium rounded-md transition-colors"
                     >
                       Generate Domains
                     </a>
@@ -1851,7 +1851,7 @@ const Dashboard: React.FC = () => {
                   </button>
                   <a
                     href="/web"
-                    className="px-4 py-2 bg-black hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors"
+                    className="px-3 py-1.5 text-gray-600 hover:text-gray-900 border border-gray-300 hover:border-gray-400 text-sm font-medium rounded-md transition-colors"
                   >
                     Create Website
                   </a>
@@ -1881,7 +1881,7 @@ const Dashboard: React.FC = () => {
                         <p className="text-gray-600 mb-6">Create and publish your first website to see it here.</p>
                         <a
                           href="/web"
-                          className="inline-flex items-center px-6 py-3 bg-black hover:bg-gray-800 text-white rounded-lg font-medium transition-colors"
+                          className="inline-flex items-center px-6 py-3 text-gray-600 hover:text-gray-900 border border-gray-300 hover:border-gray-400 text-sm font-medium rounded-md transition-colors"
                         >
                           Create Website
                         </a>
@@ -1898,7 +1898,7 @@ const Dashboard: React.FC = () => {
                             {publishedSitesFilter !== 'all' && (
                               <button
                                 onClick={() => setPublishedSitesFilter('all')}
-                                className="px-4 py-2 bg-black hover:bg-gray-800 text-white text-sm rounded-lg transition-colors"
+                                className="px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 hover:border-gray-400 text-sm font-medium rounded-md transition-colors"
                               >
                                 Show All Sites
                               </button>
@@ -1906,7 +1906,7 @@ const Dashboard: React.FC = () => {
                             {publishedSitesSearch && (
                               <button
                                 onClick={() => setPublishedSitesSearch('')}
-                                className="px-4 py-2 bg-black hover:bg-gray-800 text-white text-sm rounded-lg transition-colors"
+                                className="px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 hover:border-gray-400 text-sm font-medium rounded-md transition-colors"
                               >
                                 Clear Search
                               </button>
@@ -2183,7 +2183,7 @@ const Dashboard: React.FC = () => {
                   </button>
                   <a
                     href="/ads"
-                    className="px-4 py-2 bg-black hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors"
+                    className="px-3 py-1.5 text-gray-600 hover:text-gray-900 border border-gray-300 hover:border-gray-400 text-sm font-medium rounded-md transition-colors"
                   >
                     View Full Ads
                   </a>
@@ -2261,7 +2261,7 @@ const Dashboard: React.FC = () => {
                         <p className="text-gray-600 mb-6">No campaign data available for the selected date range.</p>
                         <a
                           href="/ads"
-                          className="inline-flex items-center px-6 py-3 bg-black hover:bg-gray-800 text-white rounded-lg font-medium transition-colors"
+                          className="inline-flex items-center px-6 py-3 text-gray-600 hover:text-gray-900 border border-gray-300 hover:border-gray-400 text-sm font-medium rounded-md transition-colors"
                         >
                           View Ads Dashboard
                         </a>
