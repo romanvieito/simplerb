@@ -133,17 +133,17 @@ const Home: NextPage = () => {
             </div>
 
             {/* Simple CTA */}
-            <div className="animate-fade-in-up animation-delay-800">
-              <a
-                href={pages[0].link}
-                className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-white to-gray-100 text-black rounded-full font-bold hover:from-gray-100 hover:to-white transition-all duration-300 shadow-2xl hover:shadow-white/20 text-lg transform hover:scale-105 active:scale-95 border-2 border-transparent hover:border-white/20"
-                onClick={handleGetStarted}
-              >
-                <span>🚀 Start Growing Today</span>
-                <span className="text-sm opacity-75">— Free</span>
-              </a>
+            <SignedOut>
+              <div className="animate-fade-in-up animation-delay-800">
+                <a
+                  href={pages[0].link}
+                  className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-white to-gray-100 text-black rounded-full font-bold hover:from-gray-100 hover:to-white transition-all duration-300 shadow-2xl hover:shadow-white/20 text-lg transform hover:scale-105 active:scale-95 border-2 border-transparent hover:border-white/20"
+                  onClick={handleGetStarted}
+                >
+                  <span>🚀 Start Growing Today</span>
+                  <span className="text-sm opacity-75">— Free</span>
+                </a>
 
-              <SignedOut>
                 <div className="mt-6">
                   <button
                     onClick={handleSignIn}
@@ -152,8 +152,8 @@ const Home: NextPage = () => {
                     Already have an account? Sign in
                   </button>
                 </div>
-              </SignedOut>
-            </div>
+              </div>
+            </SignedOut>
           </div>
         </Container>
 
