@@ -112,24 +112,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
         {/* Logo/Brand */}
         <div className="relative pl-2 pr-6 py-4 border-b border-gray-200">
           <div className={`flex items-center ${collapsed ? 'justify-between' : 'space-x-3'}`}>
-            {/* Desktop Toggle Button */}
-            {onToggle && (
-              <button
-                onClick={onToggle}
-                className="flex items-center justify-center w-8 h-8 bg-transparent hover:bg-gray-100 text-gray-600 hover:text-gray-900 rounded-lg transition-all duration-200 group flex-shrink-0"
-                title={collapsed ? "Expand sidebar" : "Minimize sidebar"}
-              >
-                <svg
-                  className="w-4 h-4 transition-all duration-200"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-            )}
-
             <Link href="/dashboard" onClick={handleNavClick} className="flex items-center space-x-2 flex-shrink-0">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">SB</span>
