@@ -120,7 +120,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
         </div>
 
         {/* Navigation */}
-        <nav className="py-6 space-y-2 overflow-y-auto flex flex-col items-center">
+        <nav className="py-6 space-y-2 overflow-y-auto flex flex-col items-center px-4">
           {visibleItems.map((item) => {
             const isActive = router.pathname === item.href;
             return (
@@ -136,7 +136,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, collapsed = false, onC
               >
                 <Link
                   href={item.href}
-                  className="flex items-center flex-1 min-w-0"
+                  className="flex items-center"
                 >
                   <div className={`${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'} ${collapsed ? '' : 'mr-3'}`}>
                     {item.icon}
