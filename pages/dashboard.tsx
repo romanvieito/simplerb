@@ -233,6 +233,9 @@ const Dashboard: React.FC = () => {
   const UNCATEGORIZED_KEY = '__uncategorized__';
   const [leads, setLeads] = useState<ContactLead[]>([]);
   const [leadsLoading, setLeadsLoading] = useState(false);
+  const [leadsFilter, setLeadsFilter] = useState<'all' | 'last7days' | 'last30days'>('all');
+  const [leadsSearch, setLeadsSearch] = useState<string>('');
+  const [leadsSearchExpanded, setLeadsSearchExpanded] = useState<boolean>(false);
 
   const normalizeCategory = (value?: string | null) => (value ? value.trim() : '');
   const displayCategory = (value?: string | null) => normalizeCategory(value) || 'Uncategorized';
@@ -356,6 +359,41 @@ const Dashboard: React.FC = () => {
       const subdomainMatch = site.subdomain.toLowerCase().includes(searchLower);
       const descriptionMatch = site.description ? site.description.toLowerCase().includes(searchLower) : false;
       return subdomainMatch || descriptionMatch;
+    }
+
+    return true;
+  });
+
+  // Compute filtered leads
+  const filteredLeads = leads.filter(lead => {
+    // First apply date filter
+    if (leadsFilter !== 'all') {
+      const leadDate = new Date(lead.created_at);
+      const now = new Date();
+      let cutoffDate: Date;
+
+      switch (leadsFilter) {
+        case 'last7days':
+          cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case 'last30days':
+          cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        default:
+          cutoffDate = new Date(0); // Show all if filter is invalid
+      }
+
+      if (leadDate < cutoffDate) return false;
+    }
+
+    // Then apply search filter
+    if (leadsSearch.trim()) {
+      const searchLower = leadsSearch.toLowerCase();
+      const subdomainMatch = lead.subdomain ? lead.subdomain.toLowerCase().includes(searchLower) : false;
+      const nameMatch = lead.name ? lead.name.toLowerCase().includes(searchLower) : false;
+      const emailMatch = lead.email ? lead.email.toLowerCase().includes(searchLower) : false;
+      const messageMatch = lead.message.toLowerCase().includes(searchLower);
+      return subdomainMatch || nameMatch || emailMatch || messageMatch;
     }
 
     return true;
@@ -544,6 +582,16 @@ const Dashboard: React.FC = () => {
     if (storedSearch !== null) {
       setPublishedSitesSearch(storedSearch);
     }
+
+    const storedLeadsFilter = localStorage.getItem('dashboard-leads-filter');
+    if (storedLeadsFilter === 'all' || storedLeadsFilter === 'last7days' || storedLeadsFilter === 'last30days') {
+      setLeadsFilter(storedLeadsFilter);
+    }
+
+    const storedLeadsSearch = localStorage.getItem('dashboard-leads-search');
+    if (storedLeadsSearch !== null) {
+      setLeadsSearch(storedLeadsSearch);
+    }
   }, []);
 
   // Persist published sites filter/search
@@ -556,6 +604,17 @@ const Dashboard: React.FC = () => {
     if (typeof window === 'undefined') return;
     localStorage.setItem('dashboard-published-sites-search', publishedSitesSearch);
   }, [publishedSitesSearch]);
+
+  // Persist leads filter/search
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('dashboard-leads-filter', leadsFilter);
+  }, [leadsFilter]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('dashboard-leads-search', leadsSearch);
+  }, [leadsSearch]);
 
   // Load saved campaigns preferences (columns + date filters) once on mount
   useEffect(() => {
@@ -2111,6 +2170,55 @@ const Dashboard: React.FC = () => {
                   </button>
                 </div>
                 <div className="flex items-center gap-2">
+                  <div
+                    className={`relative flex items-center transition-all duration-200 ${leadsSearchExpanded || leadsSearch ? 'w-56 sm:w-64' : 'w-9'}`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setLeadsSearchExpanded(true)}
+                      className="absolute inset-y-0 left-0 pl-2 flex items-center text-gray-500 hover:text-gray-700"
+                      aria-label="Search leads"
+                    >
+                      <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </button>
+                    <input
+                      type="text"
+                      placeholder="Search leads..."
+                      value={leadsSearch}
+                      onChange={(e) => setLeadsSearch(e.target.value)}
+                      onFocus={() => setLeadsSearchExpanded(true)}
+                      onBlur={() => {
+                        if (!leadsSearch.trim()) {
+                          setLeadsSearchExpanded(false);
+                        }
+                      }}
+                      className={`bg-white border border-gray-200 rounded pl-8 pr-3 text-sm text-gray-700 focus:border-purple-500 focus:outline-none transition-all duration-200 ${
+                        leadsSearchExpanded || leadsSearch
+                          ? 'py-1 opacity-100'
+                          : 'py-0 h-9 opacity-0 pointer-events-none'
+                      }`}
+                    />
+                  </div>
+                  <select
+                    value={leadsFilter}
+                    onChange={(e) => setLeadsFilter(e.target.value as 'all' | 'last7days' | 'last30days')}
+                    className="bg-white border border-gray-200 rounded px-3 py-1 text-sm text-gray-700 focus:border-purple-500 focus:outline-none"
+                  >
+                    <option value="all">All Time</option>
+                    <option value="last7days">Last 7 Days</option>
+                    <option value="last30days">Last 30 Days</option>
+                  </select>
+                  <button
+                    onClick={() => fetchLeads()}
+                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
+                    title="Refresh leads data"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </button>
                   <button
                     onClick={() => toggleMinimizeSection('leads')}
                     className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
@@ -2139,15 +2247,45 @@ const Dashboard: React.FC = () => {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
                     <p className="mt-4 text-gray-600">Loading leads...</p>
                   </div>
-                ) : leads.length === 0 ? (
+                ) : filteredLeads.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="mb-4">
                       <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No leads yet</h3>
-                    <p className="text-gray-600 mb-6">Contact form submissions from your published websites will appear here.</p>
+                    {leads.length === 0 ? (
+                      <>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">No leads yet</h3>
+                        <p className="text-gray-600 mb-6">Contact form submissions from your published websites will appear here.</p>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">No leads match your filters</h3>
+                        <p className="text-gray-600 mb-6">
+                          {(leadsFilter !== 'all' || leadsSearch) && (
+                            <div className="flex items-center justify-center gap-2">
+                              {leadsFilter !== 'all' && (
+                                <button
+                                  onClick={() => setLeadsFilter('all')}
+                                  className="px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 hover:border-gray-400 text-sm font-medium rounded-md transition-colors"
+                                >
+                                  Show All Time
+                                </button>
+                              )}
+                              {leadsSearch && (
+                                <button
+                                  onClick={() => setLeadsSearch('')}
+                                  className="px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 hover:border-gray-400 text-sm font-medium rounded-md transition-colors"
+                                >
+                                  Clear Search
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </p>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -2161,7 +2299,7 @@ const Dashboard: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {leads.map((lead) => (
+                        {filteredLeads.map((lead) => (
                           <tr key={lead.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                             <td className="py-4 px-4 text-sm text-gray-900 font-medium">
                               {lead.subdomain || '—'}
