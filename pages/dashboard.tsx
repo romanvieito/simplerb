@@ -233,7 +233,6 @@ const Dashboard: React.FC = () => {
   const UNCATEGORIZED_KEY = '__uncategorized__';
   const [leads, setLeads] = useState<ContactLead[]>([]);
   const [leadsLoading, setLeadsLoading] = useState(false);
-  const [leadsModalOpen, setLeadsModalOpen] = useState(false);
 
   const normalizeCategory = (value?: string | null) => (value ? value.trim() : '');
   const displayCategory = (value?: string | null) => normalizeCategory(value) || 'Uncategorized';
@@ -367,6 +366,7 @@ const Dashboard: React.FC = () => {
     'favorites',
     'domain-favorites',
     'published-sites',
+    'leads',
     'ads',
     'feature-cards'
   ]);
@@ -489,7 +489,7 @@ const Dashboard: React.FC = () => {
       try {
         const parsedOrder = JSON.parse(savedOrder);
         // Validate that all required sections are present
-        const defaultOrder = ['favorites', 'domain-favorites', 'published-sites', 'ads', 'feature-cards'];
+        const defaultOrder = ['favorites', 'domain-favorites', 'published-sites', 'leads', 'ads', 'feature-cards'];
         const validOrder = parsedOrder.filter((id: string) => defaultOrder.includes(id));
         // Add any missing sections
         defaultOrder.forEach(id => {
@@ -501,7 +501,7 @@ const Dashboard: React.FC = () => {
       } catch (error) {
         console.error('Error parsing saved section order:', error);
         // Reset to default order on error
-        setSectionOrder(['favorites', 'domain-favorites', 'published-sites', 'ads', 'feature-cards']);
+        setSectionOrder(['favorites', 'domain-favorites', 'published-sites', 'leads', 'ads', 'feature-cards']);
       }
     }
 
@@ -921,11 +921,6 @@ const Dashboard: React.FC = () => {
     }
   }, [isSignedIn]);
 
-  useEffect(() => {
-    if (leadsModalOpen) {
-      fetchLeads();
-    }
-  }, [leadsModalOpen, fetchLeads]);
 
   // Remove domain from favorites
   const removeDomainFavorite = async (namedomain: string) => {
@@ -1279,7 +1274,7 @@ const Dashboard: React.FC = () => {
                     </svg>
                   </button>
                   {favoritesLastUpdatedAt && (
-                    <span className="text-xs text-gray-500">Last update: {favoritesLastUpdatedAt}</span>
+                    <span className="text-[8px] text-gray-400">Last update: {favoritesLastUpdatedAt}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
@@ -1366,12 +1361,6 @@ const Dashboard: React.FC = () => {
                       <option value="__add__">+ Add category</option>
                     </select>
                   </div>
-                  <a
-                    href="/find-keywords"
-                    className="ml-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 border border-gray-300 hover:border-gray-400 text-sm font-medium rounded-md transition-colors"
-                  >
-                    Find Opportunities
-                  </a>
                   <button
                     onClick={() => toggleMinimizeSection('favorites')}
                     className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
@@ -1387,6 +1376,12 @@ const Dashboard: React.FC = () => {
                       </svg>
                     )}
                   </button>
+                  <a
+                    href="/find-keywords"
+                    className="ml-2 px-3 py-1.5 text-gray-600 hover:text-gray-900 border border-gray-300 hover:border-gray-400 text-sm font-medium rounded-md transition-colors"
+                  >
+                    Find Opportunities
+                  </a>
                 </div>
               </div>
               <p className="text-sm text-gray-600 mt-1">Your saved keywords for research opportunities</p>
@@ -1818,14 +1813,6 @@ const Dashboard: React.FC = () => {
                     <option value="non-favorites">Non-Favorites Only</option>
                     <option value="all">Show All Sites</option>
                   </select>
-                  {isSignedIn && (
-                    <button
-                      onClick={() => setLeadsModalOpen(true)}
-                      className="text-sm text-gray-600 hover:text-gray-800 underline underline-offset-4 whitespace-nowrap"
-                    >
-                      {leadsLoading ? 'Loading leads…' : 'View recent leads'}
-                    </button>
-                  )}
                   {selectedSites.size > 0 && (
                     <button
                       onClick={copySelectedSites}
@@ -2083,6 +2070,132 @@ const Dashboard: React.FC = () => {
         </div>
       )
     },
+    'leads': {
+      id: 'leads',
+      title: 'Recent Leads',
+      component: (
+        <div
+          id="leads"
+          className={`w-full max-w-6xl mx-auto mb-8 transition-all duration-200 ${
+            draggedSection === 'leads' ? 'opacity-50' : ''
+          } ${minimizedSections.has('leads') ? 'h-24 overflow-hidden' : ''}`}
+          onDragOver={handleDragOver}
+          onDrop={(e) => handleDrop(e, 'leads')}
+        >
+          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="cursor-move text-gray-400 hover:text-gray-600"
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, 'leads')}
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, 'leads')}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                    </svg>
+                  </div>
+                  <h2 className="text-lg font-semibold text-gray-900">Leads</h2>
+                  <button
+                    onClick={() => fetchLeads()}
+                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
+                    title="Refresh leads data"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleMinimizeSection('leads')}
+                    className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
+                    title={minimizedSections.has('leads') ? 'Maximize section' : 'Minimize section'}
+                  >
+                    {minimizedSections.has('leads') ? (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mt-1">Contact form submissions from your published websites</p>
+            </div>
+
+            {/* Content - only show if not minimized */}
+            {!minimizedSections.has('leads') && (
+              <div className="p-6">
+                {leadsLoading ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading leads...</p>
+                  </div>
+                ) : leads.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="mb-4">
+                      <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No leads yet</h3>
+                    <p className="text-gray-600 mb-6">Contact form submissions from your published websites will appear here.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Website</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Message</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Contact</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leads.map((lead) => (
+                          <tr key={lead.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                            <td className="py-4 px-4 text-sm text-gray-900 font-medium">
+                              {lead.subdomain || '—'}
+                            </td>
+                            <td className="py-4 px-4 text-sm text-gray-700 max-w-xs">
+                              <div className="truncate" title={lead.message}>
+                                {lead.message.slice(0, 100)}
+                                {lead.message.length > 100 ? '...' : ''}
+                              </div>
+                            </td>
+                            <td className="py-4 px-4 text-sm text-gray-600">
+                              <div className="flex flex-col gap-1">
+                                {lead.name && <span className="font-medium text-gray-900">{lead.name}</span>}
+                                {lead.email && <span>{lead.email}</span>}
+                              </div>
+                            </td>
+                            <td className="py-4 px-4 text-sm text-gray-500">
+                              {new Date(lead.created_at).toLocaleDateString()}
+                              <div className="text-xs">
+                                {new Date(lead.created_at).toLocaleTimeString()}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )
+    },
     'ads': {
       id: 'ads',
       title: 'Campaigns',
@@ -2185,7 +2298,7 @@ const Dashboard: React.FC = () => {
                     href="/ads"
                     className="px-3 py-1.5 text-gray-600 hover:text-gray-900 border border-gray-300 hover:border-gray-400 text-sm font-medium rounded-md transition-colors"
                   >
-                    View Full Ads
+                    View Campaigns
                   </a>
                 </div>
               </div>
@@ -2516,50 +2629,6 @@ const Dashboard: React.FC = () => {
           </div>
         );
       })}
-      {isSignedIn && (
-        <Dialog
-          open={leadsModalOpen}
-          onClose={() => setLeadsModalOpen(false)}
-          maxWidth="sm"
-          fullWidth
-        >
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-semibold text-gray-900">Recent leads</h2>
-              <button
-                onClick={() => setLeadsModalOpen(false)}
-                className="text-sm text-gray-500 hover:text-gray-700"
-              >
-                Close
-              </button>
-            </div>
-            {leadsLoading && <p className="text-sm text-gray-500">Loading leads…</p>}
-            {!leadsLoading && leads.length === 0 && (
-              <p className="text-sm text-gray-500">
-                No leads yet — submissions from your published site's contact form will show here once visitors start sending messages.
-              </p>
-            )}
-            <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
-              {leads.slice(0, 20).map((lead) => (
-                <div key={lead.id} className="py-3">
-                  <div className="text-sm text-gray-900 font-medium">
-                    {lead.subdomain || '—'}
-                  </div>
-                  <div className="text-sm text-gray-700">
-                    {lead.message.slice(0, 160)}
-                    {lead.message.length > 160 ? '…' : ''}
-                  </div>
-                  <div className="text-xs text-gray-500 flex items-center gap-2 mt-1">
-                    {lead.name && <span>{lead.name}</span>}
-                    {lead.email && <span>• {lead.email}</span>}
-                    <span>• {new Date(lead.created_at).toLocaleString()}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </Dialog>
-      )}
     </DashboardLayout>
   );
 };
