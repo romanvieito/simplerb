@@ -2406,8 +2406,6 @@ const Dashboard: React.FC = () => {
                     </svg>
                   </div>
                   <h2 className="text-lg font-semibold text-gray-900">Campaigns</h2>
-                </div>
-                <div className="flex items-center gap-2">
                   <button
                     onClick={() => fetchCampaignsSummary()}
                     className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
@@ -2417,6 +2415,8 @@ const Dashboard: React.FC = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
                   </button>
+                </div>
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => toggleMinimizeSection('ads')}
                     className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
