@@ -50,3 +50,17 @@ OPENAI_API_KEY=sk-proj-your_openai_api_key_here
 ADPILOT_ADMIN_EMAILS=your-email@example.com,admin@example.com
 ADPILOT_LABEL=AdPilot
 ADPILOT_VALIDATE_ONLY=false
+
+# ===================================
+# GODADDY DOMAIN API CONFIGURATION
+# ===================================
+# Get these from: https://developer.godaddy.com/keys
+GODADDY_API_KEY=your_godaddy_api_key_here
+GODADDY_API_SECRET=your_godaddy_api_secret_here
+
+# Production: https://api.godaddy.com/v1 (real domain purchases)
+# Test: https://api.ote-godaddy.com/v1 (test environment, no real charges)
+GODADDY_API_URL=https://api.ote-godaddy.com/v1
+
+# Set to 'production' for real domain purchases, anything else for test mode
+NODE_ENV=development
