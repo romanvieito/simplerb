@@ -6,6 +6,7 @@ import SBRContext from '../context/SBRContext';
 import LoadingDots from '../components/LoadingDots';
 import { getAuth } from '@clerk/nextjs/server';
 import Dialog from '@mui/material/Dialog';
+import DomainPurchaseModal from '../components/DomainPurchaseModal';
 import {
   getLastNDaysInTimezone,
   getTodayInTimezone,
@@ -236,6 +237,10 @@ const Dashboard: React.FC = () => {
   const [leadsFilter, setLeadsFilter] = useState<'all' | 'last7days' | 'last30days'>('all');
   const [leadsSearch, setLeadsSearch] = useState<string>('');
   const [leadsSearchExpanded, setLeadsSearchExpanded] = useState<boolean>(false);
+
+  // Domain purchase state
+  const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
+  const [selectedDomainForPurchase, setSelectedDomainForPurchase] = useState("");
 
   const normalizeCategory = (value?: string | null) => (value ? value.trim() : '');
   const displayCategory = (value?: string | null) => normalizeCategory(value) || 'Uncategorized';
@@ -1195,6 +1200,13 @@ const Dashboard: React.FC = () => {
     setNewCategoryName('');
   };
 
+  const handlePurchaseDomain = (subdomain: string) => {
+    // Suggest the subdomain as a .com domain
+    const suggestedDomain = `${subdomain}.com`;
+    setSelectedDomainForPurchase(suggestedDomain);
+    setPurchaseModalOpen(true);
+  };
+
   const updateKeywordCategory = async (keyword: string, categoryKey: string | null) => {
     setSavingCategoryFor(keyword);
     setCategoryError(null);
@@ -2115,6 +2127,15 @@ const Dashboard: React.FC = () => {
                                     </svg>
                                   </a>
                                   <button
+                                    onClick={() => handlePurchaseDomain(site.subdomain)}
+                                    className="inline-flex items-center justify-center w-8 h-8 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-full transition-colors"
+                                    title="Buy domain"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                    </svg>
+                                  </button>
+                                  <button
                                     onClick={() => startRenaming(site.subdomain)}
                                     className="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors"
                                     title="Rename subdomain"
@@ -2776,6 +2797,16 @@ const Dashboard: React.FC = () => {
           </div>
         );
       })}
+
+      <DomainPurchaseModal
+        open={purchaseModalOpen}
+        onClose={() => setPurchaseModalOpen(false)}
+        domain={selectedDomainForPurchase}
+        onSuccess={() => {
+          setPurchaseModalOpen(false);
+          // Could add a success toast or refresh the sites list here
+        }}
+      />
     </DashboardLayout>
   );
 };
