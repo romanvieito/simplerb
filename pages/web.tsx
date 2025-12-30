@@ -1161,20 +1161,66 @@ const WebPage = () => {
 
           {publishedUrl && (
             <button
-              onClick={() => {
-                // Generate domain suggestions based on website description
-                if (textDescription) {
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  // Use the real AI domain generator from /domain page
+                  const prompt = `
+                    Role: You are Seth Godin.
+                    Objective: Generate 3 memorable, brief, and simple domain names based on the following input:
+                    Client's input: ${textDescription}
+                    Vibe: Professional
+
+                    Good Examples:
+                    - Apple.com: Easy to spell and pronounce.
+                    - JetBlue.com: Descriptive and easy to remember.
+                    - Amazon.com: Short, memorable, and now synonymous with online shopping.
+
+                    Bad Examples:
+                    - Axelon.com: Sounds like a common English word but isn't, leading to potential confusion.
+                    - Altus.com: Lacks immediate brandability.
+                    - Prius.com: Pronunciation challenges may hinder global brand recall.
+
+                    Return only the domain names, one per line.
+                  `;
+
+                  const response = await fetch("/api/openai", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt, ptemp: 0.7, ptop: 1 }),
+                  });
+
+                  if (!response.ok) {
+                    throw new Error('Failed to generate domains');
+                  }
+
+                  const data = await response.json();
+                  const generatedDomains = data.result
+                    .split('\n')
+                    .map((domain: string) => domain.trim())
+                    .filter((domain: string) => domain.length > 0)
+                    .slice(0, 3)
+                    .map((domain: string) => domain.replace(/^-+\s*/, '')); // Remove leading dashes
+
+                  setSuggestedDomains(generatedDomains);
+                  setShowDomainSuggestion(true);
+                } catch (error) {
+                  console.error('Error generating domains:', error);
+                  // Fallback to simple suggestions if AI fails
                   const domains = generateDomainSuggestions(textDescription);
                   setSuggestedDomains(domains);
+                  setShowDomainSuggestion(true);
+                } finally {
+                  setLoading(false);
                 }
-                setShowDomainSuggestion(true);
               }}
               className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 flex items-center space-x-2 shadow-md hover:shadow-lg"
+              disabled={loading}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
               </svg>
-              <span>Buy Domain</span>
+              <span>{loading ? 'Generating...' : 'Buy Domain'}</span>
             </button>
           )}
           <div className="relative">
