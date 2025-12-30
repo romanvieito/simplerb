@@ -102,6 +102,9 @@ const DomainPurchaseModal: React.FC<DomainPurchaseModalProps> = ({
 }) => {
   const theme = useTheme();
   const [loading, setLoading] = React.useState(false);
+  const [checkingAvailability, setCheckingAvailability] = React.useState(false);
+  const [domainAvailable, setDomainAvailable] = React.useState<boolean | null>(null);
+  const [availabilityChecked, setAvailabilityChecked] = React.useState(false);
   const { control, handleSubmit, reset, formState: { errors } } = useForm<FormInputs>({
     defaultValues: {
       firstName: '',
@@ -122,6 +125,13 @@ const DomainPurchaseModal: React.FC<DomainPurchaseModalProps> = ({
   }
   const { dataUser } = context;
 
+  // Check domain availability when modal opens
+  React.useEffect(() => {
+    if (open && domain) {
+      checkDomainAvailability();
+    }
+  }, [open, domain]);
+
   // Pre-fill with user data if available
   React.useEffect(() => {
     if (open && dataUser?.email) {
@@ -133,9 +143,42 @@ const DomainPurchaseModal: React.FC<DomainPurchaseModalProps> = ({
     }
   }, [open, dataUser, reset]);
 
+  const checkDomainAvailability = async () => {
+    if (!domain) return;
+
+    setCheckingAvailability(true);
+    setAvailabilityChecked(false);
+    setDomainAvailable(null);
+
+    try {
+      const response = await fetch(`/api/check-availability-godaddy?domain=${encodeURIComponent(domain)}`);
+      const result = await response.json();
+
+      if (response.ok) {
+        setDomainAvailable(result.available);
+        setAvailabilityChecked(true);
+      } else {
+        console.error('Failed to check domain availability:', result.error);
+        setDomainAvailable(false);
+        setAvailabilityChecked(true);
+      }
+    } catch (error) {
+      console.error('Error checking domain availability:', error);
+      setDomainAvailable(false);
+      setAvailabilityChecked(true);
+    } finally {
+      setCheckingAvailability(false);
+    }
+  };
+
   const onSubmit = async (data: FormInputs) => {
     try {
       setLoading(true);
+
+      // Double-check domain availability before proceeding
+      if (!domainAvailable) {
+        throw new Error('Domain is not available for registration');
+      }
 
       const registrationData = {
         domain,
@@ -278,14 +321,34 @@ const DomainPurchaseModal: React.FC<DomainPurchaseModalProps> = ({
                 }}>
                   Purchase {domain}
                 </Typography>
-                <Typography variant="h6" sx={{
-                  color: '#4caf50',
-                  fontWeight: 600,
-                  fontSize: '1.1rem',
-                  mt: 0.5
-                }}>
-                  $12.99 USD / year
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                  <Typography variant="h6" sx={{
+                    color: '#4caf50',
+                    fontWeight: 600,
+                    fontSize: '1.1rem'
+                  }}>
+                    $12.99 USD / year
+                  </Typography>
+                  {checkingAvailability ? (
+                    <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                      Checking availability...
+                    </Typography>
+                  ) : availabilityChecked && domainAvailable !== null ? (
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontSize: '0.875rem',
+                        fontWeight: 500,
+                        color: domainAvailable ? '#4caf50' : '#f44336',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.5
+                      }}
+                    >
+                      {domainAvailable ? '● Available' : '● Unavailable'}
+                    </Typography>
+                  ) : null}
+                </Box>
               </Box>
             </Box>
             <Button
@@ -310,6 +373,21 @@ const DomainPurchaseModal: React.FC<DomainPurchaseModalProps> = ({
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
               Complete your information to register this domain. Registration includes 1 year of ownership.
             </Typography>
+
+            {/* Domain Availability Message */}
+            {availabilityChecked && domainAvailable === false && (
+              <Box sx={{
+                p: 2,
+                mb: 3,
+                borderRadius: 2,
+                background: alpha('#f44336', 0.1),
+                border: `1px solid ${alpha('#f44336', 0.3)}`
+              }}>
+                <Typography variant="body2" sx={{ color: '#d32f2f', fontWeight: 500 }}>
+                  ❌ This domain is not available for registration. Please try a different domain name.
+                </Typography>
+              </Box>
+            )}
 
             {/* Pricing Summary */}
             <Box sx={{
@@ -556,7 +634,7 @@ const DomainPurchaseModal: React.FC<DomainPurchaseModalProps> = ({
               loading={loading}
               loadingPosition="end"
               variant="contained"
-              disabled={loading}
+              disabled={loading || checkingAvailability || domainAvailable === false}
               aria-label="Purchase domain"
               sx={{
                 borderRadius: 2,
