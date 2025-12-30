@@ -26,7 +26,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.log('🚀 API called: register-domain-godaddy');
   console.log('🌍 Environment check:', {
     NODE_ENV: process.env.NODE_ENV,
-    GODADDY_API_URL: process.env.GODADDY_API_URL
+    GODADDY_API_URL: process.env.GODADDY_API_URL,
+    hasApiKey: !!GODADDY_API_KEY,
+    hasApiSecret: !!GODADDY_API_SECRET,
+    apiKeyPrefix: GODADDY_API_KEY ? GODADDY_API_KEY.substring(0, 8) + '...' : 'none'
   });
 
   // Add CORS headers
@@ -59,7 +62,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('Contact info received:', JSON.stringify(contactInfo, null, 2));
 
     // Step 1: Validate domain is available (double-check) - Skip in test mode
-    const isTestMode = process.env.NODE_ENV !== 'production' || GODADDY_API_URL.includes('ote-godaddy');
+    const isTestMode = process.env.NODE_ENV !== 'production' || GODADDY_API_URL.includes('ote-godaddy') || !GODADDY_API_KEY || !GODADDY_API_SECRET;
+
+    console.log('🔍 Test mode determination:', {
+      nodeEnvNotProd: process.env.NODE_ENV !== 'production',
+      urlIncludesOte: GODADDY_API_URL.includes('ote-godaddy'),
+      hasApiKey: !!GODADDY_API_KEY,
+      hasApiSecret: !!GODADDY_API_SECRET,
+      isTestMode: isTestMode
+    });
 
     if (!isTestMode) {
       console.log('PRODUCTION MODE: Checking availability for domain:', domain);
@@ -76,8 +87,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (!availabilityResponse.ok) {
         const errorText = await availabilityResponse.text();
-        console.log('Availability check failed:', errorText);
-        throw new Error('Failed to check domain availability');
+        console.log('Availability check failed:', {
+          status: availabilityResponse.status,
+          statusText: availabilityResponse.statusText,
+          errorText: errorText,
+          headers: Object.fromEntries(availabilityResponse.headers.entries())
+        });
+        throw new Error(`Failed to check domain availability: ${availabilityResponse.status} ${availabilityResponse.statusText}`);
       }
 
       const availabilityData = await availabilityResponse.json();
