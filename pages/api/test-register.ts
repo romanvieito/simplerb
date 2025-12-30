@@ -41,7 +41,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const { domain, contactInfo }: DomainRegistrationData = req.body;
 
-    console.log('Domain registration request received:', { domain, contactInfo });
+    console.log('🎯 TEST API called - Environment check:', {
+      NODE_ENV: process.env.NODE_ENV,
+      GODADDY_API_URL: process.env.GODADDY_API_URL,
+      GODADDY_API_KEY: process.env.GODADDY_API_KEY ? 'SET' : 'NOT SET',
+      GODADDY_API_SECRET: process.env.GODADDY_API_SECRET ? 'SET' : 'NOT SET'
+    });
 
     // For now, just return a mock success response to test the API endpoint
     res.status(200).json({
@@ -49,7 +54,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       domain: domain,
       orderId: 'MOCK-' + Date.now(),
       total: 12.99,
-      message: 'Domain registration simulated successfully (mock response)'
+      environment: {
+        NODE_ENV: process.env.NODE_ENV,
+        GODADDY_API_URL: process.env.GODADDY_API_URL,
+        hasApiKey: !!process.env.GODADDY_API_KEY,
+        hasApiSecret: !!process.env.GODADDY_API_SECRET
+      },
+      message: 'Environment variables check'
     });
   } catch (error) {
     console.error('Domain registration error:', error);

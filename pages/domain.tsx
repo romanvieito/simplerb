@@ -130,6 +130,7 @@ const DomainPage: React.FC = () => {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
   const [selectedDomainForPurchase, setSelectedDomainForPurchase] = useState("");
+  const [advancedMenuOpen, setAdvancedMenuOpen] = useState<string | null>(null);
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -342,6 +343,18 @@ const DomainPage: React.FC = () => {
       toast.error("Failed to update favorite status");
     }
   };
+
+  // Close advanced menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (advancedMenuOpen && !(event.target as Element).closest('.advanced-menu')) {
+        setAdvancedMenuOpen(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [advancedMenuOpen]);
 
   // Load saved domain search data on component mount
   useEffect(() => {
@@ -1038,24 +1051,56 @@ const DomainPage: React.FC = () => {
                         <div className="flex-grow mb-4 relative w-full">
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-2xl font-bold text-gray-800 block break-words group-hover:text-blue-600 transition-colors duration-200">{domain.domain}</span>
-                            <button
-                              onClick={() => toggleFavorite(domain.domain)}
-                              className={`p-1 rounded-full transition-all duration-200 hover:scale-110 ${
-                                favorites.has(domain.domain)
-                                  ? 'text-yellow-500 hover:text-yellow-600'
-                                  : 'text-gray-300 hover:text-yellow-400'
-                              }`}
-                              title={favorites.has(domain.domain) ? "Remove from favorites" : "Add to favorites"}
-                            >
-                              <svg
-                                className={`w-6 h-6 ${
-                                  favorites.has(domain.domain) ? 'fill-current' : 'stroke-current fill-transparent'
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => toggleFavorite(domain.domain)}
+                                className={`p-1 rounded-full transition-all duration-200 hover:scale-110 ${
+                                  favorites.has(domain.domain)
+                                    ? 'text-yellow-500 hover:text-yellow-600'
+                                    : 'text-gray-300 hover:text-yellow-400'
                                 }`}
-                                viewBox="0 0 24 24"
+                                title={favorites.has(domain.domain) ? "Remove from favorites" : "Add to favorites"}
                               >
-                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                              </svg>
-                            </button>
+                                <svg
+                                  className={`w-6 h-6 ${
+                                    favorites.has(domain.domain) ? 'fill-current' : 'stroke-current fill-transparent'
+                                  }`}
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                              </button>
+
+                              {/* Advanced Menu Dropdown */}
+                              <div className="relative">
+                                <button
+                                  onClick={() => setAdvancedMenuOpen(advancedMenuOpen === domain.domain ? null : domain.domain)}
+                                  className="p-1 rounded-full transition-all duration-200 hover:bg-gray-100 hover:scale-110 text-gray-400 hover:text-gray-600"
+                                  title="More options"
+                                >
+                                  <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                  </svg>
+                                </button>
+
+                                {advancedMenuOpen === domain.domain && (
+                                  <div className="advanced-menu absolute right-0 top-8 z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[140px]">
+                                    <button
+                                      onClick={() => {
+                                        generateWebsiteForDomain(domain.domain);
+                                        setAdvancedMenuOpen(null);
+                                      }}
+                                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors duration-200 flex items-center space-x-2"
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                                      </svg>
+                                      <span>Preview</span>
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                         <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 mt-auto items-center justify-center w-full">
@@ -1086,19 +1131,6 @@ const DomainPage: React.FC = () => {
                               <span>Check Availability</span>
                             </button>
                           )}
-
-                            <button
-                              onClick={() => {
-                                // Directly generate website for the domain
-                                generateWebsiteForDomain(domain.domain);
-                              }}
-                              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl px-4 py-3 hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-semibold flex items-center justify-center space-x-2 group text-sm w-full sm:w-auto shadow-lg hover:shadow-xl"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-                              </svg>
-                              <span>Preview</span>
-                            </button>
                         </div>
                       </li>
                     ))}

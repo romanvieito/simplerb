@@ -23,6 +23,12 @@ interface DomainRegistrationData {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log('🚀 API called: register-domain-godaddy');
+  console.log('🌍 Environment check:', {
+    NODE_ENV: process.env.NODE_ENV,
+    GODADDY_API_URL: process.env.GODADDY_API_URL
+  });
+
   // Add CORS headers
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
