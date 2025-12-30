@@ -1681,13 +1681,13 @@ const WebPage = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
               {suggestedDomains.map((domain, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    setSelectedDomainForPurchase(domain);
-                    setPurchaseModalOpen(true);
-                    setShowDomainSuggestion(false);
-                  }}
+                      <button
+                        key={index}
+                        onClick={() => {
+                          setSelectedDomainForPurchase(domain);
+                          setPurchaseModalOpen(true);
+                          // Don't close the suggestions modal - keep it open behind the purchase modal
+                        }}
                   className="bg-white border-2 border-gray-200 rounded-xl p-5 hover:border-blue-400 hover:shadow-lg transition-all duration-300 text-left group hover:scale-[1.02]"
                 >
                   <div className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors text-lg mb-2">
