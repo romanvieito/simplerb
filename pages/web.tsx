@@ -16,6 +16,7 @@ import DOMPurify from 'dompurify';
 import { useUser } from "@clerk/nextjs";
 import { Button, Box } from "@mui/material";
 import { VibeType } from "../utils/Definitions";
+import DomainPurchaseModal from "../components/DomainPurchaseModal";
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -57,6 +58,10 @@ const WebPage = () => {
   const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(null);
   const [actionChipPos, setActionChipPos] = useState<{ top: number; left: number } | null>(null);
   const [undoStack, setUndoStack] = useState<string[]>([]);
+  const [showDomainSuggestion, setShowDomainSuggestion] = useState(false);
+  const [suggestedDomains, setSuggestedDomains] = useState<string[]>([]);
+  const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
+  const [selectedDomainForPurchase, setSelectedDomainForPurchase] = useState("");
   const selectedElementRef = useRef<HTMLElement | null>(null);
 
   const toTitleCaseWord = (word: string): string =>
@@ -75,6 +80,25 @@ const WebPage = () => {
       .split(/\s+/)
       .map(toTitleCaseWord)
       .join(' ');
+  };
+
+  const generateDomainSuggestions = (description: string): string[] => {
+    const brandName = deriveBrandName(description);
+    const cleanName = brandName.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    if (!cleanName || cleanName.length < 2) {
+      return ['yourbrand', 'mybusiness', 'launchstudio'].map(name => `${name}.com`);
+    }
+
+    const suggestions = [
+      `${cleanName}.com`,
+      `${cleanName}pro.com`,
+      `${cleanName}studio.com`,
+      `${cleanName}hub.com`,
+      `${cleanName}lab.com`
+    ];
+
+    return suggestions.slice(0, 3); // Return top 3 suggestions
   };
 
   const deriveBrandName = (description: string): string => {
@@ -1031,9 +1055,17 @@ const WebPage = () => {
       }
 
       setPublishedUrl(publishedUrl);
-      
+
       const action = editingSite ? 'Site updated successfully!' : 'Site published successfully!';
       toast.success(action);
+
+      // Show domain suggestion after successful publishing (not for edits)
+      if (!editingSite && textDescription) {
+        const domains = generateDomainSuggestions(textDescription);
+        setSuggestedDomains(domains);
+        setShowDomainSuggestion(true);
+      }
+
       mixpanel.track('Site Published', {
         userId: dataUser.id,
         siteUrl: data.url,
@@ -1188,6 +1220,74 @@ const WebPage = () => {
               </a>
             </div>
           )}
+        </div>
+
+        {/* Domain Suggestion Card */}
+        {showDomainSuggestion && publishedUrl && (
+          <div className="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center space-x-2 mb-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Get a Custom Domain</h3>
+                </div>
+                <p className="text-gray-600 mb-4">
+                  Make your website more professional with a custom domain. Here are some suggestions based on your business:
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                  {suggestedDomains.map((domain, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setSelectedDomainForPurchase(domain);
+                        setPurchaseModalOpen(true);
+                      }}
+                      className="bg-white border border-gray-200 rounded-lg p-3 hover:border-blue-300 hover:shadow-md transition-all duration-200 text-left group"
+                    >
+                      <div className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+                        {domain}
+                      </div>
+                      <div className="text-sm text-gray-500 mt-1">Check availability</div>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => setShowDomainSuggestion(false)}
+                    className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    Maybe later
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Navigate to domain search page
+                      window.open('/domain', '_blank');
+                      setShowDomainSuggestion(false);
+                    }}
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                  >
+                    Browse all domains →
+                  </button>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowDomainSuggestion(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors ml-4"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
         </div>
       </div>
     </div>
@@ -1535,6 +1635,18 @@ const WebPage = () => {
             </div>
           </Dialog>
         )}
+
+        {/* Domain Purchase Modal */}
+        <DomainPurchaseModal
+          open={purchaseModalOpen}
+          onClose={() => setPurchaseModalOpen(false)}
+          domain={selectedDomainForPurchase}
+          onSuccess={() => {
+            setPurchaseModalOpen(false);
+            setShowDomainSuggestion(false);
+            toast.success(`Domain ${selectedDomainForPurchase} purchased successfully!`);
+          }}
+        />
       </div>
     </DashboardLayout>
   );
