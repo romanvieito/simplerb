@@ -1042,7 +1042,7 @@ const DomainPage: React.FC = () => {
               )}
               
               {!loading && generatedDomains.length > 0 && (
-                  <ul className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                  <ul className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                     {(availableOnly && isSignedIn && isPremiumUser ? filteredDomains : generatedDomains).map((domain, index) => (
                       <li
                         key={index}
