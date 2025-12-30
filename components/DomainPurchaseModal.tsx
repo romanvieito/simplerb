@@ -151,14 +151,36 @@ const DomainPurchaseModal: React.FC<DomainPurchaseModalProps> = ({
     setDomainAvailable(null);
 
     try {
-      const response = await fetch(`/api/check-availability-godaddy?domain=${encodeURIComponent(domain)}`);
-      const result = await response.json();
+      const response = await fetch('/api/check-availability-godaddy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          domains: [domain]
+        }),
+      });
 
       if (response.ok) {
+        const results = await response.json();
+        console.log('Domain availability API response:', results);
+        // The API returns an array, so get the first result
+        const result = results[0];
+        console.log('Domain availability result:', result);
         setDomainAvailable(result.available);
         setAvailabilityChecked(true);
       } else {
-        console.error('Failed to check domain availability:', result.error);
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          errorData = { error: 'Unknown error' };
+        }
+        console.error('Failed to check domain availability:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData.error
+        });
         setDomainAvailable(false);
         setAvailabilityChecked(true);
       }
