@@ -1028,13 +1028,19 @@ const DomainPage: React.FC = () => {
                      <div className="h-4 w-48 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg animate-pulse mx-auto"></div>
                    </div>
                    {[...Array(3)].map((_, index) => (
-                     <div key={index} className="flex flex-col justify-between bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg border border-gray-200 h-full animate-pulse">
-                        <div className="flex-grow mb-4">
-                          <div className="h-8 w-48 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg mb-4"></div>
+                     <div key={index} className="flex flex-col justify-stretch items-center bg-white p-6 rounded-2xl shadow-md border border-gray-100 h-full animate-pulse">
+                        <div className="flex-grow mb-6 relative w-full">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="h-6 w-20 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full"></div>
+                          </div>
+                          <div className="text-center">
+                            <div className="h-10 w-48 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg mx-auto mb-2"></div>
+                            <div className="h-4 w-32 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg mx-auto"></div>
+                          </div>
                         </div>
-                        <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 mt-auto">
-                          <div className="h-12 flex-1 bg-gradient-to-r from-gray-200 to-gray-300 rounded-xl"></div>
-                          <div className="h-12 flex-1 bg-gradient-to-r from-gray-200 to-gray-300 rounded-xl"></div>
+                        <div className="w-full space-y-4">
+                          <div className="h-20 bg-gradient-to-r from-gray-200 to-gray-300 rounded-xl"></div>
+                          <div className="h-16 bg-gradient-to-r from-gray-200 to-gray-300 rounded-xl"></div>
                         </div>
                      </div>
                     ))}
@@ -1046,11 +1052,23 @@ const DomainPage: React.FC = () => {
                     {(availableOnly && isSignedIn && isPremiumUser ? filteredDomains : generatedDomains).map((domain, index) => (
                       <li
                         key={index}
-                        className="flex flex-col justify-stretch items-center bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 h-full group"
+                        className="flex flex-col justify-stretch items-center bg-white p-6 rounded-2xl shadow-md hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-gray-200 h-full group relative overflow-hidden hover:-translate-y-1"
                       >
-                        <div className="flex-grow mb-4 relative w-full">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-2xl font-bold text-gray-800 block break-words group-hover:text-blue-600 transition-colors duration-200">{domain.domain}</span>
+                        <div className="flex-grow mb-6 relative w-full">
+                          {/* Status Badge */}
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center space-x-2">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                domain.available
+                                  ? 'bg-green-100 text-green-800 border border-green-200'
+                                  : 'bg-gray-100 text-gray-800 border border-gray-200'
+                              }`}>
+                                <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                                  domain.available ? 'bg-green-500' : 'bg-gray-500'
+                                }`}></span>
+                                {domain.available ? 'Available' : 'Unavailable'}
+                              </span>
+                            </div>
                             <div className="flex items-center space-x-2">
                               <button
                                 onClick={() => toggleFavorite(domain.domain)}
@@ -1102,35 +1120,60 @@ const DomainPage: React.FC = () => {
                               </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 mt-auto items-center justify-center w-full">
+
+                          {/* Domain Name with Extension Highlighting */}
+                          <div className="text-center">
+                            <h3 className="text-3xl font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors duration-300 leading-tight">
+                              {domain.domain.split('.').slice(0, -1).join('.')}
+                              <span className="text-blue-500 font-semibold">.{domain.domain.split('.').pop()}</span>
+                            </h3>
+                            <p className="text-sm text-gray-500 font-medium">Professional domain name</p>
+                          </div>
+                        {/* Action Section */}
+                        <div className="w-full">
                           {domain.available ? (
-                            <>
-                              <div className="text-center mb-2 sm:mb-0">
-                                <div className="text-lg font-bold text-green-600">$12.99</div>
-                                <div className="text-xs text-gray-500">per year</div>
+                            <div className="space-y-4">
+                              {/* Price Display */}
+                              <div className="text-center bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100">
+                                <div className="flex items-baseline justify-center space-x-1">
+                                  <span className="text-3xl font-bold text-green-600">$12.99</span>
+                                  <span className="text-lg text-green-500 font-medium">USD</span>
+                                </div>
+                                <p className="text-sm text-green-600 font-medium mt-1">per year + registration</p>
                               </div>
+
+                              {/* Buy Button */}
                               <button
                                 onClick={() => handlePurchaseDomain(domain.domain)}
-                                className="bg-green-600 text-white rounded-xl px-4 py-3 hover:bg-green-700 transition-all duration-200 font-semibold flex items-center justify-center space-x-2 group text-sm w-full sm:w-auto"
+                                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl px-6 py-4 font-bold text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 flex items-center justify-center space-x-3 group"
                               >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
                                   <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
                                 </svg>
                                 <span>Buy Domain</span>
                               </button>
-                            </>
+                            </div>
                           ) : (
-                            <button
-                              onClick={() => handleCheckAvailability(domain.domain)}
-                              className="bg-gray-100 text-gray-800 rounded-xl px-4 py-3 hover:bg-gray-200 transition-all duration-200 font-semibold flex items-center justify-center space-x-2 group text-sm w-full sm:w-auto"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 00 0017 3H6.28l-.31-1.243A1 1 0 00 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-                              </svg>
-                              <span>Check Availability</span>
-                            </button>
+                            <div className="space-y-4">
+                              {/* Unavailable Message */}
+                              <div className="text-center bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl p-4 border border-gray-100">
+                                <div className="text-gray-500 font-medium">Domain Unavailable</div>
+                                <p className="text-sm text-gray-400 mt-1">Try a different variation</p>
+                              </div>
+
+                              {/* Check Availability Button */}
+                              <button
+                                onClick={() => handleCheckAvailability(domain.domain)}
+                                className="w-full bg-gradient-to-r from-gray-600 to-slate-600 hover:from-gray-700 hover:to-slate-700 text-white rounded-xl px-6 py-4 font-semibold text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 flex items-center justify-center space-x-3 group"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                                <span>Check Again</span>
+                              </button>
+                            </div>
                           )}
+                        </div>
                         </div>
                       </li>
                     ))}
