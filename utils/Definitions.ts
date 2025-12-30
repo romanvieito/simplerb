@@ -43,6 +43,13 @@ export interface EmailModalProps {
 
 export type VibeType = 'Professional' | 'Friendly' | 'Sophisticated' | 'Creative';
 
+export interface DomainPurchaseModalProps {
+  open: boolean;
+  onClose: () => void;
+  domain: string;
+  onSuccess: () => void;
+}
+
 export interface VpTransform {
     vpHiremecom: boolean;
     vpFlickercom: boolean;

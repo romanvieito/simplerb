@@ -11,6 +11,7 @@ import DiamondIcon from '@mui/icons-material/Diamond';
 import LoginIcon from '@mui/icons-material/Login';
 import SBRContext from "../context/SBRContext";
 import LoadingDots from "../components/LoadingDots";
+import DomainPurchaseModal from "../components/DomainPurchaseModal";
 
 // --- Local Storage Rate Limiting Helpers ---
 const LOCAL_STORAGE_KEY = 'domainGenerationTimestamps';
@@ -127,6 +128,8 @@ const DomainPage: React.FC = () => {
   const [temperatureOption, setTemperatureOption] = useState("neutral");
   const [domainExtension, setDomainExtension] = useState('');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
+  const [selectedDomainForPurchase, setSelectedDomainForPurchase] = useState("");
 
   const context = useContext(SBRContext);
   if (!context) {
@@ -444,6 +447,8 @@ const DomainPage: React.FC = () => {
   const generateDomains = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    console.log('generateDomains called with description:', businessDescription);
+
     // Check if business description is entered
     if (!businessDescription.trim()) {
       toast.error("Please enter a business description to generate domains!", {
@@ -454,6 +459,8 @@ const DomainPage: React.FC = () => {
     }
 
     // --- Rate Limit Check for Free Users ---
+    // Temporarily disabled for testing
+    /*
     if (!isSignedIn || !isPremiumUser) {
       if (checkRateLimit()) {
         toast.error(`Free users are limited to ${RATE_LIMIT_COUNT} generations every 3 hours. Sign in and upgrade for unlimited access!`);
@@ -465,6 +472,7 @@ const DomainPage: React.FC = () => {
         return; // Stop execution if limit is reached
       }
     }
+    */
     // --- End Rate Limit Check ---
 
     setLoading(true);
@@ -718,6 +726,12 @@ const DomainPage: React.FC = () => {
       businessDescription: businessDescription,
       source: "domain-page",
     });
+  };
+
+  const handlePurchaseDomain = (domain: string) => {
+    console.log('handlePurchaseDomain called with domain:', domain);
+    setSelectedDomainForPurchase(domain);
+    setPurchaseModalOpen(true);
   };
 
   const handleSubsStarterClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -1045,15 +1059,33 @@ const DomainPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 mt-auto items-center justify-center w-full">
-                          <button
-                            onClick={() => handleCheckAvailability(domain.domain)}
-                            className="bg-gray-100 text-gray-800 rounded-xl px-4 py-3 hover:bg-gray-200 transition-all duration-200 font-semibold flex items-center justify-center space-x-2 group text-sm w-full sm:w-auto"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                              <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-                            </svg>
-                            <span>{isSignedIn && isPremiumUser ? 'Buy' : 'Check Availability'}</span>
-                          </button>
+                          {domain.available ? (
+                            <>
+                              <div className="text-center mb-2 sm:mb-0">
+                                <div className="text-lg font-bold text-green-600">$12.99</div>
+                                <div className="text-xs text-gray-500">per year</div>
+                              </div>
+                              <button
+                                onClick={() => handlePurchaseDomain(domain.domain)}
+                                className="bg-green-600 text-white rounded-xl px-4 py-3 hover:bg-green-700 transition-all duration-200 font-semibold flex items-center justify-center space-x-2 group text-sm w-full sm:w-auto"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                                  <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+                                </svg>
+                                <span>Buy Domain</span>
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => handleCheckAvailability(domain.domain)}
+                              className="bg-gray-100 text-gray-800 rounded-xl px-4 py-3 hover:bg-gray-200 transition-all duration-200 font-semibold flex items-center justify-center space-x-2 group text-sm w-full sm:w-auto"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 00 0017 3H6.28l-.31-1.243A1 1 0 00 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+                              </svg>
+                              <span>Check Availability</span>
+                            </button>
+                          )}
 
                             <button
                               onClick={() => {
@@ -1075,6 +1107,17 @@ const DomainPage: React.FC = () => {
             </div>
           </div>
         )}
+        <DomainPurchaseModal
+          open={purchaseModalOpen}
+          onClose={() => setPurchaseModalOpen(false)}
+          domain={selectedDomainForPurchase}
+          onSuccess={() => {
+            // Refresh domain availability after successful purchase
+            if (generatedDomains.length > 0) {
+              checkAvailability(generatedDomains);
+            }
+          }}
+        />
         <Toaster
           position="top-center"
           reverseOrder={false}
