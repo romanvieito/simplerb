@@ -1222,69 +1222,86 @@ const WebPage = () => {
           )}
         </div>
 
-        {/* Domain Suggestion Card */}
+        {/* Domain Suggestion Card - Fixed positioning */}
         {showDomainSuggestion && publishedUrl && (
-          <div className="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 shadow-sm">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center space-x-2 mb-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
-                    </svg>
+          <div className="w-full max-w-4xl mx-auto mt-8 animate-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border border-blue-200 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-md">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">Get a Custom Domain</h3>
+                      <p className="text-sm text-blue-600 font-medium">Upgrade your website</p>
+                    </div>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Get a Custom Domain</h3>
-                </div>
-                <p className="text-gray-600 mb-4">
-                  Make your website more professional with a custom domain. Here are some suggestions based on your business:
-                </p>
+                  <p className="text-gray-700 mb-6 leading-relaxed">
+                    Make your website more professional with a custom domain. Here are personalized suggestions based on your business:
+                  </p>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                  {suggestedDomains.map((domain, index) => (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+                    {suggestedDomains.map((domain, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          setSelectedDomainForPurchase(domain);
+                          setPurchaseModalOpen(true);
+                        }}
+                        className="bg-white border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all duration-200 text-left group hover:scale-[1.02]"
+                      >
+                        <div className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors text-base">
+                          {domain}
+                        </div>
+                        <div className="text-sm text-gray-500 mt-2 flex items-center">
+                          <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Check availability
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-4 border-t border-blue-100">
                     <button
-                      key={index}
-                      onClick={() => {
-                        setSelectedDomainForPurchase(domain);
-                        setPurchaseModalOpen(true);
-                      }}
-                      className="bg-white border border-gray-200 rounded-lg p-3 hover:border-blue-300 hover:shadow-md transition-all duration-200 text-left group"
+                      onClick={() => setShowDomainSuggestion(false)}
+                      className="flex items-center space-x-2 text-sm text-gray-500 hover:text-gray-700 transition-colors px-3 py-2 rounded-lg hover:bg-gray-50"
                     >
-                      <div className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
-                        {domain}
-                      </div>
-                      <div className="text-sm text-gray-500 mt-1">Check availability</div>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>Maybe later</span>
                     </button>
-                  ))}
+                    <button
+                      onClick={() => {
+                        // Navigate to domain search page
+                        window.open('/domain', '_blank');
+                        setShowDomainSuggestion(false);
+                      }}
+                      className="flex items-center space-x-2 text-sm bg-blue-600 text-white hover:bg-blue-700 font-medium transition-colors px-4 py-2 rounded-lg shadow-md hover:shadow-lg"
+                    >
+                      <span>Browse all domains</span>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <button
-                    onClick={() => setShowDomainSuggestion(false)}
-                    className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-                  >
-                    Maybe later
-                  </button>
-                  <button
-                    onClick={() => {
-                      // Navigate to domain search page
-                      window.open('/domain', '_blank');
-                      setShowDomainSuggestion(false);
-                    }}
-                    className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
-                  >
-                    Browse all domains →
-                  </button>
-                </div>
+                <button
+                  onClick={() => setShowDomainSuggestion(false)}
+                  className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors p-2 rounded-full ml-4 flex-shrink-0"
+                  title="Close suggestion"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
-
-              <button
-                onClick={() => setShowDomainSuggestion(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors ml-4"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
             </div>
           </div>
         )}
