@@ -1,7 +1,7 @@
 // pages/api/check-availability.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const GODADDY_API_URL = 'https://api.ote-godaddy.com/v1';
+const GODADDY_API_URL = process.env.GODADDY_API_URL || 'https://api.godaddy.com/v1';
 const GODADDY_API_KEY = process.env.GODADDY_API_KEY;
 const GODADDY_API_SECRET = process.env.GODADDY_API_SECRET;
 
@@ -24,8 +24,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Invalid request body' });
   }
 
+  console.log('GODADDY_API_URL:', GODADDY_API_URL);
   console.log('GODADDY_API_KEY exists:', !!GODADDY_API_KEY);
   console.log('GODADDY_API_SECRET exists:', !!GODADDY_API_SECRET);
+  console.log('GODADDY_API_KEY prefix:', GODADDY_API_KEY ? GODADDY_API_KEY.substring(0, 8) + '...' : 'none');
 
   const availabilityResults = [];
 
@@ -46,7 +48,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`GoDaddy API error for ${domain}:`, errorText);
+        console.error(`GoDaddy API error for ${domain}:`, {
+          status: response.status,
+          statusText: response.statusText,
+          errorText: errorText,
+          url: `${GODADDY_API_URL}/domains/available?domain=${domain}`,
+          headers: Object.fromEntries(response.headers.entries())
+        });
+
         // If the HTTP request fails, add the error to the results
         availabilityResults.push({
           domain,

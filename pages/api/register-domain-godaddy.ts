@@ -1,7 +1,7 @@
 // pages/api/register-domain-godaddy.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const GODADDY_API_URL = process.env.GODADDY_API_URL || 'https://api.ote-godaddy.com/v1';
+const GODADDY_API_URL = process.env.GODADDY_API_URL || 'https://api.godaddy.com/v1';
 const GODADDY_API_KEY = process.env.GODADDY_API_KEY;
 const GODADDY_API_SECRET = process.env.GODADDY_API_SECRET;
 
