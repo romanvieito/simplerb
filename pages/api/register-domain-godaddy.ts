@@ -24,6 +24,8 @@ interface DomainRegistrationData {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log('🚀 API called: register-domain-godaddy');
+  console.log('📨 Request method:', req.method);
+  console.log('📨 Request headers:', req.headers);
   console.log('🌍 Environment check:', {
     NODE_ENV: process.env.NODE_ENV,
     GODADDY_API_URL: process.env.GODADDY_API_URL,
@@ -43,17 +45,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // Handle OPTIONS request
   if (req.method === 'OPTIONS') {
+    console.log('✅ Handling OPTIONS request');
     res.status(200).end();
     return;
   }
 
   if (req.method !== 'POST') {
+    console.log('❌ Method not allowed:', req.method);
     return res.status(405).end('Method Not Allowed');
   }
 
+  console.log('✅ Method is POST, proceeding...');
+
+  console.log('📦 Raw request body:', req.body);
+
   const { domain, contactInfo }: DomainRegistrationData = req.body;
 
+  console.log('📦 Parsed domain:', domain);
+  console.log('📦 Parsed contactInfo exists:', !!contactInfo);
+
   if (!domain || !contactInfo) {
+    console.log('❌ Missing domain or contactInfo');
     return res.status(400).json({ error: 'Domain and contact information are required' });
   }
 

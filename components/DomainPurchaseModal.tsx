@@ -219,6 +219,8 @@ const DomainPurchaseModal: React.FC<DomainPurchaseModalProps> = ({
         }
       };
 
+      console.log('📤 Sending registration data:', registrationData);
+
       const response = await fetch('/api/register-domain-godaddy', {
         method: "POST",
         headers: {
@@ -226,6 +228,9 @@ const DomainPurchaseModal: React.FC<DomainPurchaseModalProps> = ({
         },
         body: JSON.stringify(registrationData),
       });
+
+      console.log('📥 Registration API response status:', response.status);
+      console.log('📥 Registration API response headers:', Object.fromEntries(response.headers.entries()));
 
       const result = await response.json();
 
