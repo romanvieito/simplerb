@@ -12,7 +12,7 @@ It means your token has expired and needs to be refreshed.
 ### Option 1: One-Click in App
 1. When you see the error, click the link in the error message
 2. Or go to `/admin/oauth-refresh` in your browser
-3. Enter your Google Ads customer ID (the numbers from your Google Ads URL)
+3. **Your Google Ads customer ID is automatically filled in** ✨
 4. Click "Connect Google Ads"
 5. Sign in to Google and approve access
 6. Done! Your connection is refreshed
@@ -38,7 +38,9 @@ node get-refresh-token.js
 
 ## Prevent Future Issues
 
-Add a calendar reminder every 5 months to refresh your token. It's quick and takes less than 2 minutes.
+- **Your customer ID is automatically remembered** - no need to look it up again
+- Add a calendar reminder every 5 months to refresh your token (takes < 2 minutes)
+- The refresh process gets easier each time you do it
 
 ## Need Help?
 

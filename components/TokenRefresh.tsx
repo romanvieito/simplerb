@@ -18,6 +18,11 @@ export default function TokenRefresh({ variant = 'button', className = '' }: Tok
     setTimeout(() => setIsRefreshing(false), 1000); // Reset after opening
   };
 
+  const clearStoredId = () => {
+    localStorage.removeItem('google_ads_customer_id');
+    // Note: Database clearing would need a separate API call
+  };
+
   if (!user) return null;
 
   if (variant === 'link') {

@@ -1,12 +1,65 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/router';
+
+const STORAGE_KEY = 'google_ads_customer_id';
 
 export default function OAuthRefresh() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const [customerId, setCustomerId] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load customer ID from localStorage and database
+  useEffect(() => {
+    const loadCustomerId = async () => {
+      if (!user) return;
+
+      try {
+        // First, try to get from database
+        const response = await fetch('/api/user/google-ads-customer-id');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.customerId) {
+            setCustomerId(data.customerId);
+            // Also save to localStorage as backup
+            localStorage.setItem(STORAGE_KEY, data.customerId);
+            setIsLoading(false);
+            return;
+          }
+        }
+      } catch (error) {
+        console.warn('Could not load customer ID from database:', error);
+      }
+
+      // Fallback to localStorage
+      const savedId = localStorage.getItem(STORAGE_KEY);
+      if (savedId) {
+        setCustomerId(savedId);
+      }
+
+      setIsLoading(false);
+    };
+
+    if (isLoaded && user) {
+      loadCustomerId();
+    } else if (isLoaded && !user) {
+      // For anonymous users, just load from localStorage
+      const savedId = localStorage.getItem(STORAGE_KEY);
+      if (savedId) {
+        setCustomerId(savedId);
+      }
+      setIsLoading(false);
+    }
+  }, [isLoaded, user]);
+
+  // Save to localStorage whenever customer ID changes
+  useEffect(() => {
+    if (customerId && !isLoading) {
+      localStorage.setItem(STORAGE_KEY, customerId);
+    }
+  }, [customerId, isLoading]);
 
   const initiateOAuthFlow = () => {
     if (!customerId || customerId.trim().length === 0) {
@@ -69,15 +122,31 @@ export default function OAuthRefresh() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Google Ads Customer ID
                 </label>
-                <input
-                  type="text"
-                  value={customerId}
-                  onChange={(e) => setCustomerId(e.target.value.replace(/-/g, ''))}
-                  placeholder="1234567890"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={isLoading ? 'Loading...' : customerId}
+                    onChange={(e) => setCustomerId(e.target.value.replace(/-/g, ''))}
+                    placeholder="1234567890"
+                    disabled={isLoading}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
+                  />
+                  {customerId && !isLoading && (
+                    <button
+                      onClick={() => setCustomerId('')}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      title="Clear customer ID"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Find this in your Google Ads account URL (remove dashes)
+                  {customerId && !isLoading ? (
+                    <span className="text-green-600">✓ Using saved customer ID</span>
+                  ) : (
+                    'Find this in your Google Ads account URL (remove dashes)'
+                  )}
                 </p>
               </div>
 
