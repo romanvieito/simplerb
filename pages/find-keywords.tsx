@@ -457,9 +457,11 @@ export default function FindKeywords(): JSX.Element {
         if (data?.isTokenExpired) {
           toast.error(
             <div>
-              <div className="font-semibold">Google Ads credentials expired</div>
+              <div className="font-semibold">Google Ads connection needed</div>
               <div className="text-sm mt-1">
-                Please <a href="/admin/oauth-refresh" className="underline text-blue-600 hover:text-blue-800" target="_blank" rel="noopener noreferrer">refresh your token</a> to continue.
+                <a href="/admin/oauth-refresh" className="underline text-blue-600 hover:text-blue-800" target="_blank" rel="noopener noreferrer">
+                  Click here to refresh your connection
+                </a>
               </div>
             </div>,
             { duration: 8000 }
@@ -495,11 +497,21 @@ export default function FindKeywords(): JSX.Element {
             toast.success('Google Ads results ready');
           }
         } else if (data[0]._meta.dataSource === 'mock_fallback') {
-          toast.error('⚠️ Fallback data used - Google Ads API returned no results (unusual with Standard Access)');
+          toast(
+            <div>
+              <div>Using sample data - <a href="/admin/oauth-refresh" target="_blank" rel="noopener noreferrer" className="underline text-blue-600 hover:text-blue-800 font-medium">connect Google Ads</a> for real results</div>
+            </div>,
+            { duration: 6000 }
+          );
         } else if (data[0]._meta.dataSource === 'openai_generated') {
           toast.success('AI-generated keyword ideas ready');
         } else {
-          toast('📊 Using mock data - Enable GADS_USE_KEYWORD_PLANNING for real data', { icon: '⚠️' });
+          toast(
+            <div>
+              <div>Using sample data - <a href="/admin/oauth-refresh" target="_blank" rel="noopener noreferrer" className="underline text-blue-600 hover:text-blue-800 font-medium">connect Google Ads</a> for real results</div>
+            </div>,
+            { duration: 6000 }
+          );
         }
       } else {
         toast.success('Keyword research completed!');
