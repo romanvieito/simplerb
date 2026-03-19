@@ -20,12 +20,12 @@ export default function CFAQ() {
       borderBottom: '1px solid rgba(41, 37, 36, 0.12)',
       padding: '1rem 0',
       '&:hover': {
-        backgroundColor: 'rgba(41, 37, 36, 0.03)',
+        backgroundColor: 'rgba(41, 37, 36, 0.02)',
       },
     },
     '& .MuiAccordionDetails-root': {
       borderTop: 'none',
-      padding: '0 0 1.25rem 0',
+      padding: '0 0 1.4rem 0',
     },
     '& .MuiSvgIcon-root': {
       color: '#1f6f43',
@@ -41,12 +41,12 @@ export default function CFAQ() {
     {
       question: 'What does it actually do?',
       answer:
-        'SimplerB plans work, writes code and content, launches assets, promotes projects, and keeps iterating based on performance signals. The goal is continuous execution, not one-off assistance.',
+        'It plans work, writes code and content, launches assets, promotes projects, and keeps iterating based on performance signals. The goal is continuous execution, not one-off assistance.',
     },
     {
       question: 'Is this just another AI copilot?',
       answer:
-        'No. The positioning here is more ambitious: SimplerB is meant to operate like an autonomous layer for execution. Instead of only helping on command, it is designed to keep moving projects forward continuously.',
+        'No. The whole point is to move beyond an assistant that waits for instructions all day. SimplerB is meant to keep projects moving forward continuously.',
     },
     {
       question: 'Who is it for?',
@@ -56,12 +56,12 @@ export default function CFAQ() {
     {
       question: 'How does SimplerB improve over time?',
       answer:
-        'It adapts to data, looks at outcomes, and uses those signals to refine what it builds, how it markets, and what it does next.',
+        'It adapts to data, looks at outcomes, and uses those signals to refine what it builds, how it markets, and what it should do next.',
     },
     {
       question: 'Can I still control what it does?',
       answer:
-        'Yes. Autonomy does not mean losing control. You set the direction, priorities, and constraints. SimplerB handles execution inside that frame.',
+        'Yes. You set the direction, priorities, and constraints. SimplerB handles execution inside that frame.',
     },
   ];
 
@@ -73,7 +73,7 @@ export default function CFAQ() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.4, delay: index * 0.06 }}
+          transition={{ duration: 0.35, delay: index * 0.05 }}
         >
           <CustomAccordion>
             <AccordionSummary
@@ -81,12 +81,12 @@ export default function CFAQ() {
               aria-controls={`panel${index}-content`}
               id={`panel${index}-header`}
             >
-              <Typography className="text-lg font-semibold text-stone-900">
+              <Typography className="text-xl font-black text-stone-900">
                 {item.question}
               </Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Typography className="text-lg leading-8 text-stone-700">
+              <Typography className="max-w-3xl text-lg leading-8 text-stone-700">
                 {item.answer}
               </Typography>
             </AccordionDetails>

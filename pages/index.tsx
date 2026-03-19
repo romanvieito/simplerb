@@ -251,6 +251,22 @@ const Home: NextPage = () => {
           </Container>
         </section>
 
+        <section className="border-b border-stone-200 bg-[#fbf8f0]">
+          <Container maxWidth="lg" className="px-6 py-20 md:py-24">
+            <div className="max-w-5xl">
+              <h2 className="text-4xl font-black tracking-tight text-stone-900 md:text-5xl">
+                Small teams should be able to move like companies with far more people.
+              </h2>
+              <p className="mt-6 text-2xl leading-9 text-stone-700">
+                That is the promise here. Not more busywork. Not more dashboards. Not more prompts for every tiny step.
+              </p>
+              <p className="mt-6 text-2xl leading-9 text-stone-700">
+                SimplerB exists to keep execution alive: thinking, building, launching, promoting, and improving without needing constant human babysitting.
+              </p>
+            </div>
+          </Container>
+        </section>
+
         <section className="border-b border-stone-200 bg-[#1f6f43] text-white">
           <Container maxWidth="lg" className="px-6 py-20 md:py-24">
             <div className="max-w-4xl">
