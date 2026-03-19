@@ -1,17 +1,106 @@
-import Link from 'next/link';
+import Link from "next/link";
+import { Box } from "@mui/material";
+import EmailIcon from '@mui/icons-material/Email';
+import { useState } from "react";
+import EmailModal from "./EmailModal";
+import { useUser } from "@clerk/nextjs";
+import mixpanel from "mixpanel-browser";
 
 export default function Footer() {
+
+  const {isLoaded, user, isSignedIn } = useUser();
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const handleOpenModal = () => {
+    mixpanel.track("Feedback Click", {
+    });  
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+  };
+
   return (
-    <footer className="border-t border-stone-200 bg-[#fbf8f0]">
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-center gap-3 px-6 py-8 text-sm text-stone-600">
-        <Link href="/terms" className="underline decoration-stone-300 underline-offset-4 hover:text-stone-900">
+    <footer className="text-center w-full border-t flex sm:flex-row justify-between items-center p-4 ">
+      <Box className="group">
+        <div className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors duration-200">
+          <span className="animate-pulse">💙</span>
+          <span>For creators</span>
+          <a
+            href="https://adaved.com/"
+            target="_blank"
+            rel="noreferrer"
+            className="font-semibold text-blue-600 hover:text-blue-800 transition-all duration-200 hover:scale-105 inline-flex items-center gap-1"
+            title="Visit our team"
+          >
+            <span>by creators</span>
+            <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+        </div>
+      </Box>
+
+      <Box className="flex items-center gap-2">
+        <Link
+          href="/terms"
+          className="hover:underline transition underline-offset-2"
+        >
           Terms
         </Link>
         <span>·</span>
-        <Link href="/privacy" className="underline decoration-stone-300 underline-offset-4 hover:text-stone-900">
-          Privacy
+        <Link
+          href="/privacy"
+          className="hover:underline transition underline-offset-2"
+        >
+          Privacy Policy
         </Link>
-      </div>
+      </Box>
+      
+      <Box className="flex items-center">
+        {
+          isLoaded && isSignedIn ? 
+          <>
+          <div className="mr-3">
+             <button
+              className="bg-white border border-black rounded-md text-black font-medium px-4 py-2 hover:bg-gray-300 w-full"
+              onClick={handleOpenModal}
+            >
+              <i className="fas fa-comment"></i>
+              <EmailIcon />{" "}
+              <span>Feedback</span>
+            </button>
+          </div>
+          </> : 
+          null
+        }
+        <div className="">
+          <EmailModal open={modalOpen} onClose={handleCloseModal} subjectType='feedback' />                
+        {" "}
+        <Link
+          href="https://www.linkedin.com/in/yaibolanos"
+          className="group"
+          target="_blank"
+          aria-label="Yai on Linkedin"
+        >
+          <svg
+            aria-hidden="true"
+            className="h-6 w-6 fill-slate-500 group-hover:fill-slate-700"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+          >
+            <path d="M20.447,20.452H16.883V14.884c0-1.328-0.027-3.037-1.852-3.037c-1.853,0-2.136,1.447-2.136,2.942v5.664H9.341V9.004h3.414v1.561
+              h0.049c0.475-0.902,1.637-1.851,3.37-1.851c3.602,0,4.273,2.369,4.273,5.455v6.284 M5.337,7.433c-1.144,0-2.068-0.93-2.068-2.074
+              c0-1.146,0.924-2.074,2.068-2.074s2.067,0.928,2.067,2.074C7.404,6.503,6.481,7.433,5.337,7.433 M7.119,20.452H3.554V9.004h3.565
+              V20.452z M22.225,0H1.771C0.792,0,0,0.792,0,1.771v20.452c0,0.979,0.792,1.771,1.771,1.771h20.452c0.979,0,1.771-0.792,1.771-1.771
+              V1.771C24,0.792,23.204,0,22.225,0"
+            ></path>
+          </svg>
+        </Link>
+        </div>
+        
+      </Box>
     </footer>
   );
 }
