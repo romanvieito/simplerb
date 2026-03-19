@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import Head from 'next/head';
-import Image from 'next/image';
 import type { NextPage } from 'next';
 import { Container } from '@mui/material';
 import { useClerk, useUser, SignedOut } from '@clerk/nextjs';
@@ -155,13 +154,10 @@ const Home: NextPage = () => {
                   <div className="border-b border-stone-200 bg-[#efe8d8] px-5 py-3 text-sm font-bold text-stone-700">
                     simplerB at work
                   </div>
-                  <Image
+                  <img
                     src="/screenshot.png"
                     alt="simplerB product screenshot"
-                    width={1400}
-                    height={950}
-                    className="h-auto w-full"
-                    priority
+                    className="block h-auto w-full"
                   />
                 </div>
                 <div className="mt-4 rounded-[1.25rem] bg-[#fff8d6] px-5 py-4">
@@ -298,13 +294,28 @@ const Home: NextPage = () => {
 
         <section className="bg-[#f7f3ea] py-20 md:py-24">
           <Container maxWidth="lg" className="px-6">
-            <div className="max-w-3xl">
-              <h2 className="text-4xl font-black tracking-tight text-stone-900 md:text-5xl">
-                I have questions.
-              </h2>
-            </div>
-            <div className="mt-10">
-              <CFAQ />
+            <div className="grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start">
+              <div className="max-w-xl">
+                <div className="inline-flex rounded-full bg-white px-4 py-1.5 text-sm font-bold text-stone-700 ring-1 ring-stone-200">
+                  Questions
+                </div>
+                <h2 className="mt-5 text-4xl font-black tracking-tight text-stone-900 md:text-5xl">
+                  I have questions.
+                </h2>
+                <p className="mt-5 text-xl leading-8 text-stone-700">
+                  Fair. A product making claims this big should answer them clearly.
+                </p>
+                <div className="mt-8 space-y-3 rounded-[1.75rem] border border-stone-200 bg-white p-6">
+                  <div className="text-sm font-bold uppercase tracking-[0.14em] text-stone-500">What this section covers</div>
+                  <div className="text-lg text-stone-800">What simplerB is.</div>
+                  <div className="text-lg text-stone-800">How autonomous it really is.</div>
+                  <div className="text-lg text-stone-800">Who it is for.</div>
+                  <div className="text-lg text-stone-800">How much control you keep.</div>
+                </div>
+              </div>
+              <div>
+                <CFAQ />
+              </div>
             </div>
           </Container>
         </section>

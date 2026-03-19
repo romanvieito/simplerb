@@ -8,8 +8,12 @@ import { motion } from 'framer-motion';
 
 export default function CFAQ() {
   const CustomAccordion = styled(Accordion)(() => ({
-    background: 'transparent',
+    background: '#ffffff',
     boxShadow: 'none',
+    border: '1px solid rgba(41, 37, 36, 0.10)',
+    borderRadius: '24px',
+    overflow: 'hidden',
+    marginBottom: '14px',
     '&:before': {
       display: 'none',
     },
@@ -17,15 +21,18 @@ export default function CFAQ() {
       display: 'none',
     },
     '& .MuiAccordionSummary-root': {
-      borderBottom: '1px solid rgba(41, 37, 36, 0.12)',
-      padding: '1rem 0',
+      minHeight: 'unset',
+      padding: '1.1rem 1.4rem',
       '&:hover': {
         backgroundColor: 'rgba(41, 37, 36, 0.02)',
       },
     },
+    '& .MuiAccordionSummary-content': {
+      margin: 0,
+    },
     '& .MuiAccordionDetails-root': {
-      borderTop: 'none',
-      padding: '0 0 1.4rem 0',
+      borderTop: '1px solid rgba(41, 37, 36, 0.08)',
+      padding: '1.15rem 1.4rem 1.35rem',
     },
     '& .MuiSvgIcon-root': {
       color: '#1f6f43',
@@ -66,14 +73,14 @@ export default function CFAQ() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl">
       {faqItems.map((item, index) => (
         <motion.div
           key={item.question}
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.35, delay: index * 0.05 }}
+          transition={{ duration: 0.3, delay: index * 0.04 }}
         >
           <CustomAccordion>
             <AccordionSummary
@@ -81,7 +88,7 @@ export default function CFAQ() {
               aria-controls={`panel${index}-content`}
               id={`panel${index}-header`}
             >
-              <Typography className="text-xl font-black text-stone-900">
+              <Typography className="pr-4 text-xl font-black leading-8 text-stone-900">
                 {item.question}
               </Typography>
             </AccordionSummary>
