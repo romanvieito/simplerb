@@ -9,25 +9,25 @@ import CFAQ from '../components/CFAQ';
 import { trackConversion } from '../utils/analytics';
 
 const operatingSystemPoints = [
-  'It thinks through what to do next.',
-  'It builds the assets your project needs.',
+  'It decides what to do next.',
+  'It builds what the project needs.',
   'It markets what is ready to sell.',
-  'It keeps learning from the data it sees.',
+  'It keeps learning from results.',
 ];
 
 const walkthrough = [
   {
-    title: 'Start with a direction, not a whole org chart.',
+    title: 'Start with a direction, not a staffing plan.',
     description:
-      'Give simplerB an idea, a business, or a project. It turns that into an execution track instead of leaving you with another blank page.',
+      'Give simplerB an idea, a business, or a project. It turns that into an execution track instead of another pile of unfinished thinking.',
   },
   {
     title: 'It plans, writes, codes, and ships.',
     description:
-      'From pages to campaigns to project assets, simplerB handles the actual making — not just the brainstorming.',
+      'Pages, campaigns, assets, copy, iterations. SimplerB handles the actual making — not just the brainstorming.',
   },
   {
-    title: 'It keeps going after normal work hours end.',
+    title: 'It keeps going after you stop for the day.',
     description:
       'While you sleep, it keeps promoting, adapting, refining, and pushing the project forward based on what the numbers say.',
   },
@@ -115,57 +115,52 @@ const Home: NextPage = () => {
 
         <section className="border-b border-stone-200 bg-[#fbf8f0]">
           <Container maxWidth="lg" className="px-6 py-16 md:py-24">
-            <div className="grid gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)] lg:items-center">
-              <div className="max-w-4xl">
-                <div className="inline-flex rounded-full bg-[#e7f2e9] px-4 py-1.5 text-sm font-bold text-[#1f6f43]">
-                  New mission
-                </div>
-                <h1 className="mt-6 text-5xl font-black leading-[0.95] tracking-tight text-stone-900 md:text-7xl">
-                  AI that runs your company while you sleep.
-                </h1>
-                <p className="mt-6 max-w-3xl text-2xl leading-9 text-stone-700">
-                  SimplerB thinks, builds, and markets your projects autonomously. It plans, codes, and promotes your ideas continuously — operating 24/7, adapting to data, and improving itself without human intervention.
-                </p>
+            <div className="max-w-5xl">
+              <div className="inline-flex rounded-full bg-[#e7f2e9] px-4 py-1.5 text-sm font-bold text-[#1f6f43]">
+                New mission
+              </div>
+              <h1 className="mt-6 max-w-5xl text-5xl font-black leading-[0.95] tracking-tight text-stone-900 md:text-7xl">
+                AI that runs your company while you sleep.
+              </h1>
+              <p className="mt-6 max-w-4xl text-2xl leading-9 text-stone-700">
+                SimplerB thinks, builds, and markets your projects autonomously. It plans, codes, and promotes your ideas continuously — operating 24/7, adapting to data, and improving itself without human intervention.
+              </p>
 
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <SignedOut>
-                    <button
-                      onClick={handlePrimaryClick}
-                      className="rounded-full bg-[#1f6f43] px-6 py-3.5 text-base font-bold text-white transition hover:bg-[#195b37]"
-                    >
-                      Start with simplerB
-                    </button>
-                  </SignedOut>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <SignedOut>
                   <button
-                    onClick={handleSecondaryClick}
-                    className="rounded-full border border-stone-300 bg-white px-6 py-3.5 text-base font-bold text-stone-900 transition hover:bg-stone-50"
+                    onClick={handlePrimaryClick}
+                    className="rounded-full bg-[#1f6f43] px-6 py-3.5 text-base font-bold text-white transition hover:bg-[#195b37]"
                   >
-                    See plans
+                    Start with simplerB
                   </button>
-                </div>
+                </SignedOut>
+                <button
+                  onClick={handleSecondaryClick}
+                  className="rounded-full border border-stone-300 bg-white px-6 py-3.5 text-base font-bold text-stone-900 transition hover:bg-stone-50"
+                >
+                  See plans
+                </button>
+              </div>
+            </div>
 
-                <p className="mt-8 max-w-2xl text-lg leading-8 text-stone-600">
-                  You set the direction. SimplerB keeps the work moving — planning the next move, building what is missing, and promoting what is ready.
+            <div className="mt-14 grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-start">
+              <div className="rounded-[1.75rem] border border-stone-200 bg-white p-7">
+                <div className="text-sm font-bold uppercase tracking-[0.14em] text-stone-500">In plain English</div>
+                <p className="mt-4 text-3xl font-black leading-[1.15] tracking-tight text-stone-900">
+                  SimplerB is your autonomous operator for ideas that need to ship, sell, and improve.
                 </p>
               </div>
-
-              <div className="rounded-[2rem] border-2 border-stone-900 bg-white p-4 shadow-[0_18px_50px_rgba(28,26,23,0.10)]">
-                <div className="overflow-hidden rounded-[1.4rem] border border-stone-200 bg-[#f5f1e8]">
-                  <div className="border-b border-stone-200 bg-[#efe8d8] px-5 py-3 text-sm font-bold text-stone-700">
-                    simplerB at work
-                  </div>
-                  <img
-                    src="/screenshot.png"
-                    alt="simplerB product screenshot"
-                    className="block h-auto w-full"
-                  />
-                </div>
-                <div className="mt-4 rounded-[1.25rem] bg-[#fff8d6] px-5 py-4">
-                  <p className="text-sm font-bold uppercase tracking-[0.14em] text-stone-600">In plain English</p>
-                  <p className="mt-2 text-xl font-bold leading-8 text-stone-900">
-                    SimplerB is your autonomous operator for ideas that need to ship, sell, and improve.
-                  </p>
-                </div>
+              <div className="rounded-[1.75rem] border border-stone-200 bg-[#f2ecdf] p-7">
+                <div className="text-sm font-bold uppercase tracking-[0.14em] text-stone-500">What it keeps doing</div>
+                <ul className="mt-4 space-y-3">
+                  {operatingSystemPoints.map((item) => (
+                    <li key={item} className="flex gap-3 text-xl leading-8 text-stone-800">
+                      <span className="text-[#1f6f43]">✓</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           </Container>
@@ -178,7 +173,7 @@ const Home: NextPage = () => {
                 Let’s walk through it.
               </h2>
               <p className="mt-4 text-xl leading-8 text-stone-700">
-                This is not about giving you another dashboard full of ideas. It is about continuous execution.
+                This is not about another dashboard full of ideas. It is about continuous execution.
               </p>
             </div>
 
@@ -213,14 +208,6 @@ const Home: NextPage = () => {
                 <p className="mt-6 text-xl leading-9 text-stone-700">
                   It keeps the cycle moving by deciding what to do next, building what matters, marketing what is ready, and adjusting based on outcomes.
                 </p>
-                <ul className="mt-8 space-y-4">
-                  {operatingSystemPoints.map((item) => (
-                    <li key={item} className="flex gap-3 text-xl leading-8 text-stone-800">
-                      <span className="text-[#1f6f43]">✓</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
               </div>
             </div>
           </Container>
@@ -239,7 +226,7 @@ const Home: NextPage = () => {
 
             <ul className="mt-10 grid gap-4 md:grid-cols-2">
               {yesList.map((item) => (
-                <li key={item} className="rounded-[1.5rem] border border-stone-200 bg-[#fbf8f0] px-6 py-5 text-lg leading-8 text-stone-800">
+                <li key={item} className="rounded-[1.25rem] border border-stone-200 bg-[#fbf8f0] px-6 py-5 text-lg leading-8 text-stone-800">
                   {item}
                 </li>
               ))}
@@ -305,13 +292,6 @@ const Home: NextPage = () => {
                 <p className="mt-5 text-xl leading-8 text-stone-700">
                   Fair. A product making claims this big should answer them clearly.
                 </p>
-                <div className="mt-8 space-y-3 rounded-[1.75rem] border border-stone-200 bg-white p-6">
-                  <div className="text-sm font-bold uppercase tracking-[0.14em] text-stone-500">What this section covers</div>
-                  <div className="text-lg text-stone-800">What simplerB is.</div>
-                  <div className="text-lg text-stone-800">How autonomous it really is.</div>
-                  <div className="text-lg text-stone-800">Who it is for.</div>
-                  <div className="text-lg text-stone-800">How much control you keep.</div>
-                </div>
               </div>
               <div>
                 <CFAQ />
